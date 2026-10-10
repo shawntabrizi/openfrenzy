@@ -421,4 +421,15 @@ int FUN_001b72b0(void *self, void *boat, void *a, void *b, float *out);
 int FUN_001b7700(int a, int b, int c, int d, void *context);
 int FUN_001b8680(void *self, void *boat, void *a, void *b, float *out);
 
+/* ---------- the game mode (Rowing/unplaced_gamemode.c) */
+
+/* rowing_a entry points missing from the function table (thunk targets of the game mode;
+   weak stand-ins in Rowing/unplaced_gamemode.c) */
+void FUN_0019d8e0(void *game);
+void FUN_0019d900(void *game, int top);
+void FUN_001a2890(void *game, int top);
+void FUN_0019dc80(void *game, int top);
+
+extern const void *const vtable_00276180[];
+
 #endif

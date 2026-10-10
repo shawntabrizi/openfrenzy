@@ -148,3 +148,37 @@
 001b6da0 void RowSound_Init(void *package, void *languagePackage);
 001b6ee0 void RowSound_Queue3D(int index, float *pos, int volume);
 001b6f50 void RowSound_Free(void);
+
+# Rowing/CRowing_Tokens.cpp (0x001b57d0 tagged; 0x001b5730-0x001b5a00 inferred)
+001b5730 void RowTokens_LoadAssets(int unused);
+001b5740 struct CToken *RowTokens_FindNear(float x, float z, float radius);
+001b5790 void RowTokens_DrawGlow(void);
+001b57b0 void RowTokens_DrawShadows(void);
+001b57d0 void RowTokens_Spawn(void);
+001b5a00 void RowTokens_Update(void);
+
+# Rowing (file not known): the direction arrows (0x001b5b10-0x001b5ea0)
+001b5b10 void RowArrow_Free(struct RowArrow *self);
+001b5b30 struct RowArrow *RowArrow_ctor(struct RowArrow *self, float *pos, float yaw);
+001b5c50 void RowArrow_Update(struct RowArrow *self, float unused);
+001b5ea0 void RowArrow_Draw(struct RowArrow *self, float t);
+
+# Rowing (file not known): CGameMode_Rowing (0x001b60c0-0x001b6200)
+001b60c0 void *CGameModeRowing_ctor(void *self);
+001b60e0 void CGameModeRowing_dtor(void *self);
+001b60f0 void CGameModeRowing_Pushed(void *self);
+001b6110 void CGameModeRowing_Resume(void *self);
+001b6120 void CGameModeRowing_Update(void *self, int top);
+001b6130 void CGameModeRowing_Process(void *self, int top);
+001b6150 void CGameModeRowing_Draw(void *self, int top);
+001b6170 void CGameModeRowing_LoadingStarted(void *self);
+001b6180 void CGameModeRowing_Start(void *self);
+001b61e0 void *CGameModeRowing_DeletingDtor(void *self, unsigned int flags);
+001b6200 void CGameModeRowing_Popped(void *self);
+
+# Rowing (file not known): path geometry (0x001b93a0-0x001b9c30)
+001b93a0 int RowSegment_Intersect(float *out, float *a, float *b);
+001b9490 int RowCheckpoint_Progress(int index, float x, float z, float *frac, float *heading);
+001b99e0 int RowGate_Side(float *side, float x, float z, struct RowPath *gate);
+001b9ac0 int RowGates_Check(float x, float z, int *state, char *done, int count, struct RowPath *gates);
+001b9c30 float RowSegment_Distance(float *seg, float *p, float *closest, float *foot, float *perp, float *along);
