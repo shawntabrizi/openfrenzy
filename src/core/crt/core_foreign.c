@@ -33,7 +33,7 @@ int DAT_002ed340;                 /* 0x002ed340 classlib_fx: debris off */
 void *DAT_002b95cc, *DAT_002b95d0, *DAT_002b9c78;  /* core_modes_a/b mode objects */
 int DAT_002b95ac;                 /* 0x002b95ac core_modes_a */
 void *DAT_002b9670;               /* 0x002b9670 core_modes_a */
-int DAT_002b9c58, DAT_002b9c64;   /* core_modes_b */
+/* DAT_002b9c58, DAT_002b9c64: aliases into the score table 0x002b9968 (core_modes_b cmb_globals.c) */
 uint32_t DAT_002bc898[256], DAT_002bd640[256], DAT_002bc490[256], DAT_002bce18[256];  /* bdisplay */
 
 /* .data of other modules (XBE values) */

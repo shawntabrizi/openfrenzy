@@ -33,7 +33,18 @@ __attribute__((weak)) int DAT_0028ffb8 = -1;          /* current soundtrack */
 
 int DAT_002b95cc;                 /* attract-mode game mode */
 int DAT_002b95d0;                 /* the BG_Effects game mode */
-struct CScoreTable DAT_002b9968;  /* the score table */
+/* the score table: the one strong definition here, so that the names of its fields that other
+modules use (rank order 0x002b9c58[4] and its last entry 0x002b9c64, places 0x002b9c48[4], ties
+0x002b9c68[4]) can alias into it. As separate common symbols they were separate storage that
+CScoreTable_Rank never wrote: BumperCars started directly indexed its players with garbage
+(minigame launcher triage, 2026-10-10). */
+__attribute__((nocommon)) struct CScoreTable DAT_002b9968;
+__asm__(
+	".globl DAT_002b9c48\n.set DAT_002b9c48, DAT_002b9968 + 0x2e0\n"  /* place[4] */
+	".globl DAT_002b9c58\n.set DAT_002b9c58, DAT_002b9968 + 0x2f0\n"  /* by_place[4] */
+	".globl DAT_002b9c64\n.set DAT_002b9c64, DAT_002b9968 + 0x2fc\n"  /* by_place[3] */
+	".globl DAT_002b9c68\n.set DAT_002b9c68, DAT_002b9968 + 0x300\n"  /* ties[4] */
+);
 int DAT_002b9c78;                 /* the options game mode */
 struct cmb_meter_vertex DAT_002b9c80[10][4];
 int DAT_002ba550;                 /* party game mode */
