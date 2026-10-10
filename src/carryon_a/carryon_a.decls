@@ -29,7 +29,15 @@
 000bdd50 void CFire_Game_Update(struct CFireGame *self, int update);
 
 # CharLib/CharLibShadow.cpp (gap functions; file inferred from their data)
-000be460 void CharLibShadow_DeleteAll(void);
+000be3f0 void Shadows_SetFov(float fovX, float fovY);
+000be430 void Shadows_SetDistance(float distance);
+000be440 void Shadows_SetPitchLimits(float lowest, float highest);
+000be460 void Shadows_DeleteAll(void);
+000be4a0 void Shadows_RenderMaps(void);
+000be550 int Shadows_ApplyStages(void);
+000be5a0 void Shadows_RestoreStages(void);
+000be5d0 void Shadows_SetInUse(int player, int on);
+000be610 void Shadows_RenderMapsFor(void **held);
 
 # CarryOn/CCarryOn_Player.cpp
 000bf760 void CCarryOn_Player_PlanRoute(void *route, float *from, float *target, float unused, float *step);
@@ -78,10 +86,14 @@
 # the text reader (vtable 0x00267bb8) and CarryOn/CFire_ASEImport.cpp
 000c3a20 struct CoTextReader *CFire_TextReader_Ctor(struct CoTextReader *self);
 000c3a30 void CFire_TextReader_Dtor(struct CoTextReader *self);
+000c3a40 void CFire_TextReader_Rewind(struct CoTextReader *self);
+000c3a50 void CFire_TextReader_SkipLine(struct CoTextReader *self);
+000c3aa0 struct CoTextReader *CFire_TextReader_DeletingDtor(struct CoTextReader *self, unsigned int flags);
 000c3ac0 struct CFireASEImport *CFire_ASEImport_Ctor(struct CFireASEImport *self);
 000c3ad0 void CFire_ASEImport_Dtor(struct CFireASEImport *self);
 000c3ae0 void CFire_ASEImport_ReadPaths(struct CFireASEImport *self, struct CoTextReader *reader, void **paths, int *count, const char *name);
 000c3eb0 void CFire_ASEImport_FreePaths(struct CFireASEImport *self, void *paths, int count);
+000c3f00 struct CFireASEImport *CFire_ASEImport_DeletingDtor(struct CFireASEImport *self, unsigned int flags);
 
 # CarryOn/CFire_Carry.cpp
 000c4d60 void *CFire_Carry_Ctor(void *self, void *levelPackage, void *genericPackage, int variant);

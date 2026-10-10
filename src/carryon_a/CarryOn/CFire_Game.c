@@ -1191,7 +1191,7 @@ void CFire_Game_Shutdown(struct CFireGame *self)
 		co_DemoCam_Dtor(object);
 		bkHeapFree(object);
 	}
-	CharLibShadow_DeleteAll();
+	Shadows_DeleteAll();
 	CTweakMenu_SaveAll();
 	CLRumble_Shutdown((int *)DAT_002ed324);
 	if (DAT_002f6b88 != NULL)
