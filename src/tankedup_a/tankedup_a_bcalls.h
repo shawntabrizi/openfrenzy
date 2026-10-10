@@ -31,6 +31,13 @@ Owner: tankedup_a.
 /* 0x001d6820 / 0x001d6860  render states for the floor decals (no `this`) */
 #define TUB_Decal_BeginStates ((void (*)(void))FUN_001d6820)
 #define TUB_Decal_StencilOn ((void (*)(void))FUN_001d6860)
+/* 0x001d6d80  the debug draw switches: 1 hides the world (shows the object meshes), 2 shows
+   the boundaries and checkpoints */
+#define TUB_Debug_GetDrawFlags ((int (*)(void *))FUN_001d6d80)
+/* 0x001d6680  (no `this`) draws a collision mesh in a colour (debug) */
+#define TUB_Debug_DrawMesh ((void (*)(void *, unsigned int, int))FUN_001d6680)
+/* 0x001d6750  (no `this`) sets an animated texture's time without looping */
+#define TUB_Texture_SetTimeOnce ((void (*)(void *, int))FUN_001d6750)
 /* 0x001d67c0  (no `this`) 1 when the debug "single player" option is on in a one-minigame
    game (0x00283ef0, g_GameType 1); *player (may be NULL) gets the first present player */
 #define TUB_Debug_SinglePlayer ((int (*)(int *))FUN_001d67c0)
@@ -39,7 +46,7 @@ Owner: tankedup_a.
 
 /* ---------- tankedup_b: the sound system (CTank_Game +0xa34) */
 
-#define TUB_Sound_Ctor ((void (*)(void *))FUN_001d5880)
+#define TUB_Sound_Ctor ((void *(*)(void *))FUN_001d5880)
 #define TUB_Sound_Initialise ((int (*)(void *))FUN_001d5960)
 #define TUB_Sound_Free ((void (*)(void *))FUN_001d5a10)
 /* 0x001d5a50  plays sound `kind` at `pos`; returns the channel */
@@ -65,9 +72,9 @@ Owner: tankedup_a.
 #define TUB_Entities_DriveTracks ((void (*)(void *, int, float, float))FUN_001d1e80)
 #define TUB_Entities_DriveStick ((void (*)(void *, int, float, float))FUN_001d20e0)
 #define TUB_Entities_DriveCamera ((void (*)(void *, int, float, float))FUN_001d2340)
-/* 0x001d4cc0 / 0x001d2c80  tank `id` fires its primary / secondary weapon */
+/* 0x001d4cc0  tank `id` fires (primary button); 0x001d2c80  tank `id` reverses (secondary) */
 #define TUB_Entities_FirePrimary ((int (*)(void *, int))FUN_001d4cc0)
-#define TUB_Entities_FireSecondary ((void (*)(void *, int))FUN_001d2c80)
+#define TUB_Entities_Reverse ((void (*)(void *, int))FUN_001d2c80)
 /* 0x001d62d0  (no `this`) ranks four scores: out[i] = the place (1-4) of in[i] */
 #define TUB_RankScores ((void (*)(int *, int *))FUN_001d62d0)
 /* 0x001d1770  the centre of the active tanks (and two more points the camera ignores) */
@@ -75,7 +82,7 @@ Owner: tankedup_a.
 
 /* ---------- tankedup_b: the character system (CTank_Game +0xfd0) */
 
-#define TUB_Chars_Ctor ((void (*)(void *))FUN_001d5af0)
+#define TUB_Chars_Ctor ((void *(*)(void *))FUN_001d5af0)
 #define TUB_Chars_Initialise ((int (*)(void *, void *, void *))FUN_001d5b80)
 #define TUB_Chars_Free ((void (*)(void *))FUN_001d5da0)
 #define TUB_Chars_Update ((int (*)(void *, float, int))FUN_001d5ee0)

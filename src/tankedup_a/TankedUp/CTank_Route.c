@@ -2,7 +2,7 @@
 TankedUp/CTank_Route.c  <-  C:\BlitzParty\Game\Src\TankedUp\CTank_Route.cpp
 
 CTank_Route (CTank_Game +0xcdc, "routeSystem"): a graph of route nodes for the AI tanks.
-The nodes are fixed in the code (two sets, by the world's mode); nodes that see each other
+The nodes are fixed in the code (two sets: battle worlds, LAPS 0, and race worlds); nodes that see each other
 (the world's ground sweep) are linked. For each of five targets the route keeps, per node,
 the cost to the target and the next node (a flood from the nodes that see the target; a
 node's cost grows by 1000 for each entity near it). The ROUTEFILE is loaded but not read.
@@ -196,7 +196,7 @@ void CTankRoute_LinkNodes(void *self)
 
 /* 0x001c76f0  TankedUp/CTank_Route.cpp (inferred: "CTank_Route::Initialise")
 Initialise: clears the targets, loads the route file (its text is not read), and adds the
-node set of the world's mode, then links the nodes. Always returns 1. */
+node set of the world (by its LAPS setting), then links the nodes. Always returns 1. */
 int CTankRoute_Initialise(void *self, void *package, char *file, void *world)
 {
 	struct TuRoute *route = (struct TuRoute *)self;
@@ -219,7 +219,7 @@ int CTankRoute_Initialise(void *self, void *package, char *file, void *world)
 			BCarTextReader_Init((struct BCarTextReader *)&reader, (char *)buffer, (int)size, file);
 			TU_DPRINTF("Loading Routeing info\n");
 			route->nodes = NULL;
-			if (CTankWorld_GetMode(world) == 0) {
+			if (CTankWorld_GetLaps(world) == 0) {
 				CTankRoute_AddNode(self, 1500.0f, 1500.0f, 1000.0f);
 				CTankRoute_AddNode(self, 1500.0f, -1500.0f, 1000.0f);
 				CTankRoute_AddNode(self, -1500.0f, 1500.0f, 1000.0f);

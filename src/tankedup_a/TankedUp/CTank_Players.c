@@ -4,7 +4,7 @@ TankedUp/CTank_Players.c  <-  C:\BlitzParty\Game\Src\TankedUp\CTank_Players.cpp
 CTank_Players (CTank_Game +0xc38, "playerSystem", vtable 0x00279fd8): the players' tanks
 ("player1".."player4" entities), their pads (tracks, two fire buttons), rumble, engine
 sounds, the HUD (score boxes, icons, the clock, the bars, the winner text) and the ranking.
-Variations whose world mode is 0 score kills ("battle"); the others are races (laps,
+Variations whose world has no LAPS (0) score kills ("battle"); the others are races (laps,
 finishing order, progress bars).
 
 0x001c7f40 is tagged with this file; the functions from 0x001c7f20 to 0x001c9d30 are placed
@@ -64,19 +64,13 @@ OF_ASSERT_OFFSET(struct TuPlayers, rank, 0x20);
 OF_ASSERT_OFFSET(struct TuPlayers, hud, 0x60);
 OF_ASSERT_SIZE(struct TuPlayers, 0xa4);
 
-/* an entity message of tankedup_b (6 words, sent by value) */
-struct TuEntityMessage {
-	int unknown0;
-	int id;                      /* the entity */
-	int unknown8;
-	int type;                    /* 4: a person stopped driving it, 5: a person drives it */
-	int unknown10;
-	int unknown14;
-};
-
-/* 0x001d2880 (tankedup_b)  CTank_Entities::SendDelayedMessage(kind, message, delay) */
+/* 0x001d2880 (tankedup_b)  CTank_Entities::SendDelayedMessage(kind, message, delay): the
+   message is 6 words passed by value on the stack; tankedup_b declares them as 6 arguments:
+   (0, entity id, 1, type, 0, unused). Type 4: a person stopped driving the tank, 5: a person
+   drives it. */
 #define TUB_Entities_SendDelayedMessage \
-	((void (*)(void *, int, struct TuEntityMessage, float))FUN_001d2880)
+	((void (*)(void *, int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, \
+		unsigned int, float))FUN_001d2880)
 
 /* classlib_ui's rumble manager (0x002ed324) */
 extern unsigned char DAT_002ed324[];
@@ -127,15 +121,9 @@ static int players_find(struct TuPlayers *self, int id)
 
 static void players_send(struct TuPlayers *self, int id, int type)
 {
-	struct TuEntityMessage message;
-
-	message.unknown0 = 0;
-	message.id = id;
-	message.unknown8 = 1;
-	message.type = type;
-	message.unknown10 = 0;
-	message.unknown14 = 0;   /* uninitialised in the original */
-	TUB_Entities_SendDelayedMessage(self->entities, type, message, 0.0f);
+	/* the last word is uninitialised in the original */
+	TUB_Entities_SendDelayedMessage(self->entities, type, 0, (unsigned int)id, 1, (unsigned int)type,
+		0, 0, 0.0f);
 }
 
 /* 0x001c7f20  TankedUp (gap) */
@@ -235,7 +223,7 @@ void CTankPlayers_Rumble(void *self, int player, int kind)
 
 	if (players->players[player].human == 0 || players->gameState != 4)
 		return;
-	if (CTankWorld_GetMode(players->world) != 0 && players->rank[player] == 9)
+	if (CTankWorld_GetLaps(players->world) != 0 && players->rank[player] == 9)
 		return;
 	if (kind == 1) {
 		amplitude = TU_DBG_RUMBLE_AMP;
@@ -379,7 +367,7 @@ static float players_stick(void *channel)
 
 /* 0x001c8510  TankedUp/CTank_Players.cpp (inferred)
 Drives the human tanks from their pads (three control schemes; the simple controls option
-of core uses the tank controls) and fires. */
+of core uses the tank controls); primary fire fires, secondary fire reverses. */
 void CTankPlayers_Input(void *self)
 {
 	struct TuPlayers *players = (struct TuPlayers *)self;
@@ -403,7 +391,7 @@ void CTankPlayers_Input(void *self)
 		if (TU_I32(players->players[i].primary, 0x14) != 0)
 			TUB_Entities_FirePrimary(players->entities, players->players[i].id);
 		if (TU_I32(players->players[i].secondary, 0x14) != 0)
-			TUB_Entities_FireSecondary(players->entities, players->players[i].id);
+			TUB_Entities_Reverse(players->entities, players->players[i].id);
 	}
 }
 
@@ -584,7 +572,7 @@ int CTankPlayers_GetRank(void *self, int id)
 	int ranks[TU_MAX_PLAYERS];
 	int i;
 
-	if (CTankWorld_GetMode(players->world) == 0) {
+	if (CTankWorld_GetLaps(players->world) == 0) {
 		i = players_find(players, id);
 		return i == -1 ? 4 : players->rank[i];
 	}
@@ -666,7 +654,7 @@ void CTankPlayers_StateChange(void *self, int from, int to)
 		players->state = to;
 		return;
 	}
-	if (CTankWorld_GetMode(players->world) != 0) {
+	if (CTankWorld_GetLaps(players->world) != 0) {
 		players_race_ranks(players, ranks);
 		TU_DPRINTF("finshed ranking [%d,%d,%d,%d]\n", players->rank[0], players->rank[1],
 			players->rank[2], players->rank[3]);
@@ -685,7 +673,7 @@ void CTankPlayers_StateChange(void *self, int from, int to)
 			TU_I32(players->camera, winners * 4) = players->players[i].id;
 			winners++;
 		}
-		if (players->rank[i] == 4 && CTankWorld_GetMode(players->world) != 0)
+		if (players->rank[i] == 4 && CTankWorld_GetLaps(players->world) != 0)
 			CLSamples_PlayVoice((char)DAT_002baed4[i * 10], 0x10, NULL, 0xff, 180.0f, 0, -1, 0);
 	}
 	TU_I32(players->camera, 0x10) = winners;
@@ -745,7 +733,7 @@ void CTankPlayers_CreateHud(void *self)
 	CLHud_CreateScoreBoxes(TU_HUD);
 	CLHud_CreateClock(TU_HUD, 60.0f);
 	CLHud_SetClock(TU_HUD, 60.0f, 1);
-	if (CTankWorld_GetMode(players->world) == 0)
+	if (CTankWorld_GetLaps(players->world) == 0)
 		CLHud_CreateScoreTexts(TU_HUD, zeros);
 	else
 		CLHud_CreateScoreLabels(TU_HUD, "", 1);
@@ -758,7 +746,7 @@ void CTankPlayers_CreateHud(void *self)
 		players->hud[i].shellIcon = players_icon(parent, "icon\\icon-shell.bmp", 18.0f, 20.0f, 32.0f);
 		players->hud[i].speedIcon = players_icon(TU_I32(TU_HUD, 0xf0 + i * 4), "icon\\icon-speed.bmp",
 			18.0f, 20.0f, 32.0f);
-		if (CTankWorld_GetMode(players->world) != 0) {
+		if (CTankWorld_GetLaps(players->world) != 0) {
 			int character = DAT_002baed4[i * 10];
 			int overlay;
 
@@ -832,7 +820,7 @@ void CTankPlayers_UpdateHud(void *self, int *state)
 				TU_U16(players->hud[i].speedIcon, 0x54) = 0;
 		}
 	}
-	if (CTankWorld_GetMode(players->world) == 0) {
+	if (CTankWorld_GetLaps(players->world) == 0) {
 		int kills, b, c, laps, finished;
 		int low, high;
 		float clock;
@@ -863,7 +851,7 @@ void CTankPlayers_UpdateHud(void *self, int *state)
 		players->players[1].winner = players->rank[1] == 1;
 		players->players[2].winner = players->rank[2] == 1;
 		players->players[3].winner = players->rank[3] == 1;
-		if (CTankWorld_GetMode(players->world) == 0)
+		if (CTankWorld_GetLaps(players->world) == 0)
 			CLHud_SetScores(TU_HUD, players->score);
 		for (i = 0; i < TU_MAX_PLAYERS; i++)
 			DAT_002baee8[i * 10] = players->score[i];
@@ -927,7 +915,7 @@ void CTankPlayers_UpdateHud(void *self, int *state)
 			value = laps + 1;
 			if (value <= 1)
 				value = 1;
-			CLHud_SetFraction(TU_HUD, i, value, CTankWorld_GetMode(players->world));
+			CLHud_SetFraction(TU_HUD, i, value, CTankWorld_GetLaps(players->world));
 			value = laps <= 0 ? 0 : laps;
 			players->score[i] = value;
 			players->teamScore[i] = value;

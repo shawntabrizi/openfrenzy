@@ -51,10 +51,10 @@ void CTankLights_GetAmbient(struct TuLight *self, int *r, int *g, int *b)
 }
 
 /* 0x001c38a0  TankedUp (gap)
-Sets the ambient light. */
-void CTankLights_SetAmbient(struct TuLight *self, int r, int g, int b)
+Sets the ambient light. (A __thiscall method that does not use `this`; written without it,
+as tankedup_b calls it.) */
+void CTankLights_SetAmbient(int r, int g, int b)
 {
-	(void)self;
 	baSetAmbientLight(r, g, b);
 }
 

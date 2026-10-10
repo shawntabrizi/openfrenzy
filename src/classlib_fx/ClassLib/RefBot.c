@@ -225,7 +225,7 @@ void RefBot_Delete(void)
 		AnimTex_DeleteList(&DAT_002ed448->textures);
 		bot = DAT_002ed448;
 		if (bot != NULL) {
-			FUN_001c4880(); /* the (empty) destructor of the texture list */
+			FUN_001c4880(bot); /* thiscall (ECX = bot): destroys the member at +0x20 */
 			CLF_Free(bot);
 		}
 		DAT_002ed448 = NULL;

@@ -58,7 +58,7 @@
 001c3820 int CTankLights_Initialise(struct TuLight *self);
 001c3850 void CTankLights_ApplyAmbient(struct TuLight *self);
 001c3870 void CTankLights_GetAmbient(struct TuLight *self, int *r, int *g, int *b);
-001c38a0 void CTankLights_SetAmbient(struct TuLight *self, int r, int g, int b);
+001c38a0 void CTankLights_SetAmbient(int r, int g, int b);
 001c38c0 void CTankLights_EnableSun(struct TuLight *self, int on);
 001c3960 void CTankLights_EnableAll(struct TuLight *self, int on);
 001c3990 void CTankLights_Remove(struct TuLight *self, int index);
@@ -153,18 +153,34 @@
 001c9c90 void CTankPlayers_Start(void *self);
 001c9d30 int CTankPlayers_Update(void *self, float step, int state);
 
-# TankedUp/CTank_World.cpp
+# TankedUp/CTank_World.cpp (0x001cbcd0, 0x001cd920 tagged; the rest inferred;
+# 0x001c9f50 is not in the table)
 001c9fb0 void *CTankWorld_Ctor(void *self);
+001c9fd0 void CTankWorldObject_Dtor(void *obj);
+001c9fe0 void CTankWorld_SwitchGroup(void *self, int group);
+001ca060 struct TuWorldObject *CTankWorld_FindObject(void *self, const char *name, struct TuWorldObject *after);
 001ca0b0 void CTankWorld_DrawSky(void *self, float time);
 001ca470 void CTankWorld_Draw(void *self);
 001ca9a0 void CTankWorld_Pause(void *self);
 001ca9d0 void CTankWorld_Resume(void *self);
-001caa80 int CTankWorld_GetMode(void *self);
+001caa00 void CTankWorld_ObjectMatrices(float *pos, float *rot, float *toLocal, float *toWorld, float *rotate);
+001caa70 float CTankWorld_GetGravity(void *self);
+001caa80 int CTankWorld_GetLaps(void *self);
+001caa90 void CTankWorld_ClearObject(void *self, struct TuWorldObject *obj);
+001cab50 void CTankWorld_StartObject(void *self, struct TuWorldObject *obj);
+001cac90 void CTankWorld_RunStartChains(void *self);
 001cad70 int CTankWorld_Update(void *self, float step, int state);
 001cb1a0 float CTankWorld_GroundDistance(void *self, float *pos, float radius, float *normal);
+001cb3f0 int CTankWorld_SphereHits(void *self, float *from, float *to, float radius, int startedOnly);
 001cb560 float CTankWorld_SweepGround(void *self, float *pos, float *delta, float *hit, float *normal);
 001cb7f0 int CTankWorld_CanSee(void *self, float *from, float *to);
+001cb860 int CTankWorld_InsideBoundary(struct TuWorldObject *obj, float *point);
+001cb970 int CTankWorld_CrossCheckpoint(void *self, float *pos, float *delta, unsigned int *flags);
+001cbc80 void CTankWorld_Start(void *self);
+001cbcd0 void CTankWorld_LoadWorldObjects(void *self, struct TuTextReader *reader);
 001cd320 void CTankWorld_Free(void *self);
+001cd3d0 int CTankWorld_Collide(void *self, float *pos, float *vel, float *rot, float radius, unsigned int *flags, float bounce, int *onGround, float *friction, float *normal, int *bounced);
+001cd8c0 float CTankWorld_FreeFraction(void *self, float *from, float *to);
 001cd920 int CTankWorld_Initialise(void *self, void *package, char *file, void *sound, void *lights);
 
 # TankedUp/CTank_Entities.cpp start (tankedup_b continues the file)
