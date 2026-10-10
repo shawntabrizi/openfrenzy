@@ -62,13 +62,14 @@ extern unsigned char DAT_00302210[0x10];  /* the 4 players (also used by classli
 extern unsigned char fh_bss2[0x003022bc - 0x00302220];
 extern unsigned char DAT_003022bc[0xc];   /* core static init: a list */
 extern unsigned char DAT_003022c8[0x4];   /* the speech object (also used by classlib_fx) */
-extern unsigned char DAT_003022cc[0x4];   /* core static init: 0x00133f80 (empty object) */
-extern unsigned char fh_bss3[0x00302300 - 0x003022d0];
+extern unsigned char DAT_003022cc[0x00302300 - 0x003022cc]; /* core static init: 0x00133f80; +4 is the lightning system */
+#define fh_bss3 (DAT_003022cc + 4)               /* 0x003022d0-0x00302300 (one block with 0x003022cc) */
 extern unsigned char DAT_00302300[0xc];   /* core static init: lists */
 extern unsigned char DAT_0030230c[0xc];
 extern unsigned char DAT_00302318[0xc];
 extern unsigned char DAT_00302324[0xc];
-extern unsigned char fh_bss4[0x00302340 - 0x00302330];
+extern unsigned char DAT_00302330[0x00302340 - 0x00302330]; /* core static init: the gate list */
+#define fh_bss4 DAT_00302330                     /* 0x00302330-0x00302340 */
 
 /* the port address of original data address `a` (a constant: the ternaries fold) */
 #define FH_ADDR(a) ((void *)( \

@@ -9,4 +9,9 @@ object 0x00312f50 starts.
 
 #include "scratchmatch.h"
 
-unsigned char sm_bss[SM_BSS_HI - SM_BSS_LO] __attribute__((aligned(16)));
+__attribute__((nocommon, aligned(16))) unsigned char sm_bss[SM_BSS_HI - SM_BSS_LO];
+
+/* Core's static constructor 0x001f4db0 initialises the list at 0x0030fea4 (the root overlay
+list of CGameMode_ScratchMatch_Start) by its Ghidra name: alias it into the block, so both
+modules use one storage (integration round 2). */
+__asm__(".globl DAT_0030fea4\n.set DAT_0030fea4, sm_bss + 0x14\n");

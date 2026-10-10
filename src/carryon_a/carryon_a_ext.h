@@ -186,7 +186,8 @@ extern void *DAT_002ba9a0;
 #define co_Hud_CountdownDone ((int (*)(void *))FUN_0007a900)
 #define co_Hud_ShowWinner ((int (*)(void *, int *, int))FUN_0007ad50)
 #define co_Hud_Draw ((void (*)(void *))FUN_0007bd80)
-#define co_Hud_DrawPlayerMarker ((void (*)(void *, int, float *, float *))FUN_0007b970)
+/* 0x0007b970 CLHud_DrawAIRing(player, pos, target): ECX (the HUD) is not used */
+#define co_Hud_DrawPlayerMarker ((void (*)(int, float *, float *))FUN_0007b970)
 #define co_Overlays_SetList ((void (*)(void *))FUN_00072720)
 #define co_PauseMenu_Update ((int (*)(void *))FUN_000772e0)
 

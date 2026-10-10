@@ -54,7 +54,8 @@ Entity fields used here (tankedup_b.h for the others):
 #define TA_NearestEnemy(ents, pos, id, out) \
 	TU_CALL(FUN_001ce7d0, void (*)(void *, float *, int, int *))(ents, pos, id, out)
 /* tankedup_a 0x001cdc30: an entity back to its template's health, timers, ... */
-#define TA_ResetEntity(ents, ent) TU_CALL(FUN_001cdc30, void (*)(void *, void *))(ents, ent)
+/* tankedup_a defines it without `this` (ECX = ents, unused): pass only ent */
+#define TA_ResetEntity(ents, ent) ((void)(ents), TU_CALL(FUN_001cdc30, void (*)(void *))(ent))
 
 /* classlib_fx: the particle emitter calls (their table names come from bumpercars_b) */
 #define TU_EmitterSetOn(emitter, on) AnimSwitch_Set((int *)(emitter), (on))

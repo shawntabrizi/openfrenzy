@@ -97,7 +97,7 @@ The constructor of the static game object (core's static constructor #19). */
 void *CDrillersGame_Ctor(void *self)
 {
 	*(const void *const **)self = vtable_0026bfdc;
-	CLList_Init((int *)DR_P(self, 4));
+	CLList_Init((int *)DR_P(self, 0x90)); /* lea ecx,[esi+0x90] */
 	return self;
 }
 

@@ -151,9 +151,9 @@ void FUN_00155e40(int *ai)
 		}
 	}
 	if (0.0f < MA_F32(ai, 0x1130)) {
-		goal = MA_DUAL(FUN_00166a60, int (*)(float, undefined4), int (*)(void *, float *),
+		goal = MA_DUAL(FUN_00166a60, int (*)(float, undefined4), int (*)(float *),
 			(ma_bitsf((unsigned int)DAT_00293948), (undefined4)(ai[0xc] + 0xd0)),
-			((void *)DAT_00293948, MA_FP(ai[0xc], 0xd0)));
+			(MA_FP(ai[0xc], 0xd0))); /* meta_b defines it without `this` */
 		if (goal != 0) {
 			at = MA_FP(goal, 0xe0);
 			/* 0x002657ec = 9 */

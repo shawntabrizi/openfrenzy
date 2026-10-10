@@ -17,10 +17,14 @@ unsigned char DAT_00302210[0x10] __attribute__((aligned(16)));
 unsigned char fh_bss2[0x003022bc - 0x00302220] __attribute__((aligned(16)));
 unsigned char DAT_003022bc[0xc] __attribute__((aligned(4)));
 unsigned char DAT_003022c8[0x4] __attribute__((aligned(4)));
-unsigned char DAT_003022cc[0x4] __attribute__((aligned(4)));
-unsigned char fh_bss3[0x00302300 - 0x003022d0] __attribute__((aligned(16)));
+/* 0x003022cc-0x00302300 is one block: the effects object at 0x003022cc is {sparks, lightning}
+(0x0013b910 writes +4 = 0x003022d0), so fh_bss3 is DAT_003022cc + 4 (foxhunt.h). Core's
+tentative 4-byte definition merges into this one (integration round 2: Tag shark list fault). */
+unsigned char DAT_003022cc[0x00302300 - 0x003022cc] __attribute__((aligned(4)));
 unsigned char DAT_00302300[0xc] __attribute__((aligned(4)));
 unsigned char DAT_0030230c[0xc] __attribute__((aligned(4)));
 unsigned char DAT_00302318[0xc] __attribute__((aligned(4)));
 unsigned char DAT_00302324[0xc] __attribute__((aligned(4)));
-unsigned char fh_bss4[0x00302340 - 0x00302330] __attribute__((aligned(16)));
+/* 0x00302330 is the gate list that core's static constructor initialises by this name
+(integration round 2: Tag variation 2 gate fault); fh_bss4 is this object (foxhunt.h). */
+unsigned char DAT_00302330[0x00302340 - 0x00302330] __attribute__((aligned(16)));

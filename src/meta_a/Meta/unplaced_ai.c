@@ -230,8 +230,8 @@ new_tile:
 /* the nearest goal (meta_b FUN_00166a60, a thiscall whose ECX is not used) */
 static int ma_nearest_goal(int ai)
 {
-	return MA_DUAL(FUN_00166a60, int (*)(float, undefined4), int (*)(void *, float *),
-		(0.0f, (undefined4)(MA_CHAR(ai) + 0xd0)), ((void *)0, MA_FP(MA_CHAR(ai), 0xd0)));
+	return MA_DUAL(FUN_00166a60, int (*)(float, undefined4), int (*)(float *),
+		(0.0f, (undefined4)(MA_CHAR(ai) + 0xd0)), (MA_FP(MA_CHAR(ai), 0xd0)));
 }
 
 /* 0x00158d90  vtable +0x18: set the AI mode (-1: choose one, the chunk at 0x00158260) */

@@ -159,8 +159,8 @@ undefined4 FUN_00151270(int ai)
 
 	if (MA_I32(MA_PTR(ai, 0x6c), 0x14) != 0 || DAT_002b05b0 != 0) {
 		/* meta_b FUN_00166a60: the nearest goal (thiscall; ECX unused) */
-		goal = MA_DUAL(FUN_00166a60, int (*)(float, undefined4), int (*)(void *, float *),
-			(0.0f, (undefined4)(MA_CHAR(ai) + 0xd0)), ((void *)MA_CHAR(ai), MA_FP(MA_CHAR(ai), 0xd0)));
+		goal = MA_DUAL(FUN_00166a60, int (*)(float, undefined4), int (*)(float *),
+			(0.0f, (undefined4)(MA_CHAR(ai) + 0xd0)), (MA_FP(MA_CHAR(ai), 0xd0)));
 		if (goal != 0) {
 			ch = MA_CHAR(ai);
 			if (MA_F32(goal, 0xe4) - 40.0f < MA_F32(ch, 0xd4) && /* 0x00255548 */

@@ -102,7 +102,7 @@ unsigned char DAT_0030a1d0[0x90];  /* 0x0030a1d0 */
 unsigned char DAT_0030ea20[0x10];  /* 0x0030ea20 */
 unsigned char DAT_0030ed00[0xc];  /* 0x0030ed00 */
 unsigned char DAT_0030ee30[0x10];  /* 0x0030ee30 */
-unsigned char DAT_0030fea4[0xc];  /* 0x0030fea4 */
+extern unsigned char DAT_0030fea4[];  /* 0x0030fea4 ScratchMatch root list, owned by scratchmatch (sm_bss.c) */
 unsigned char DAT_00312f50[0xa34];  /* 0x00312f50 */
 unsigned char DAT_003150b0[0x158];  /* 0x003150b0 */
 unsigned char DAT_00308f58[8 * 0x20];  /* 0x00308f58: 8 objects of 0x20 bytes (meta_b 0x001608b0) */

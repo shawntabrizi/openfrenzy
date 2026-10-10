@@ -848,8 +848,8 @@ void CCarryOn_Player_DrawEffects(struct CCarryOnPlayer *self)
 			DAT_00294040[CO_I32(self, CP_MODE)]);
 	}
 	bdSetWorldMatrix(DAT_002855f0);
-	co_Hud_DrawPlayerMarker(DAT_002ecfac, CO_U16(CP_ACTOR_OF(self), CA_PLAYER),
-		CO_FP(CP_ACTOR_OF(self), CA_POS), NULL);
+	co_Hud_DrawPlayerMarker(CO_U16(CP_ACTOR_OF(self), CA_PLAYER),
+		CO_FP(CP_ACTOR_OF(self), CA_POS), NULL); /* ECX = DAT_002ecfac, unused */
 }
 
 /* 0x000c10d0  CarryOn/CCarryOn_Player.cpp (file inferred)
