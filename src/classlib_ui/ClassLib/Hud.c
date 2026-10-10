@@ -773,3 +773,114 @@ void CLHud_CreateScoreBoxes(int self)
 		OV_F(self, 0xb8 + player * 4) = 0.0f;
 	}
 }
+
+/* 0x002ecfa0  score bar state */
+#define clu_bar_state CLU_VAR(int, 0x002ecfa0)
+
+/* 0x0007a080  ClassLib/Hud.cpp (inferred; thiscall)
+Creates the per-player score bars (thin bars in twice the character colour). */
+void CLHud_CreateBars(int self)
+{
+	undefined4 desc[0xec];
+	const unsigned char *rgb;
+	int player;
+	int slot;
+	int bar;
+
+	for (player = 0; player < DAT_002bae94; player++) {
+		OV_I(self, 0x4c + player * 4) = 0;
+		slot = player;
+		if (DAT_002baebc != 0)
+			slot = DAT_002baed4[player * 10 + 9] + DAT_002baed4[player * 10 + 8] * 2;
+		memset(desc, 0, sizeof(desc));
+		rgb = (const unsigned char *)&clu_characters[DAT_002baed4[player * 10]].colour;
+		DESC_F(desc, 0x250) = (float)((unsigned int)rgb[0] << 1);
+		DESC_F(desc, 0x254) = (float)((unsigned int)rgb[1] << 1);
+		DESC_F(desc, 0x258) = (float)((unsigned int)rgb[2] << 1);
+		DESC_I(desc, 0x288) = 0;
+		DESC_F(desc, 0x2a8) = (float)(slot * -6 + 0xaa);
+		DESC_F(desc, 0xc) = DESC_F(desc, 0x2a8);
+		DESC_F(desc, 0x25c) = 255.0f;
+		DESC_F(desc, 0x2a4) = -180.0f;
+		DESC_I(desc, 4) = 0;
+		DESC_F(desc, 0x308) = 1.0f;
+		DESC_F(desc, 0x30c) = 5.0f;
+		DESC_F(desc, 8) = -180.0f;
+		DESC_F(desc, 0x284) = 4.0f;
+		DESC_F(desc, 0x314) = 4.0f;
+		DESC_U(desc, 0x290) = 0x8000;
+		bar = COverlay_Create((int *)desc);
+		OV_I(self, 0x78 + player * 4) = bar;
+		OV_S(bar, 0x54) = (short)DAT_002baeb8;
+		if (DAT_002baed0 != 0)
+			OV_S(OV_I(self, 0x78 + player * 4), 0x54) = 1;
+	}
+	clu_bar_state = 5;
+}
+
+/* 0x0007a200  ClassLib/Hud.cpp (inferred; thiscall)
+Creates the score texts ("%d" of scores[player]) in the score boxes. */
+void CLHud_CreateScoreTexts(int self, int *scores)
+{
+	undefined4 desc[0xec];
+	char text[64];
+	int player;
+
+	for (player = 0; player < DAT_002bae94; player++) {
+		memset(desc, 0, sizeof(desc));
+		DESC_I(desc, 0x44) = OV_I(self, 0x20);
+		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+		DESC_I(desc, 0x288) = 2;
+		DESC_S(desc, 0x24c) = 2;
+		DESC_U(desc, 0x290) = 0x8000;
+		DESC_F(desc, 0x2b4) = 126.0f;
+		DESC_F(desc, 0x2b8) = 20.0f;
+		DESC_F(desc, 0x25c) = 127.0f;
+		DESC_F(desc, 0x30c) = 200.0f;
+		sprintf(text, "%d", scores[player]);
+		FUN_0004a330((ushort *)((unsigned char *)desc + 0x48), (byte *)text);
+		OV_I(self, 0x28 + player * 4) = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
+	}
+}
+
+/* 0x0007a360  ClassLib/Hud.cpp (inferred; thiscall)
+Creates the same text `text` in every score box and, with `flag`, a hidden
+chequered flag (cheqflag.bmp) for each player. */
+void CLHud_CreateScoreLabels(int self, char *text, int flag)
+{
+	undefined4 desc[0xec];
+	int player;
+	int texture;
+	int overlay;
+
+	for (player = 0; player < DAT_002bae94; player++) {
+		memset(desc, 0, sizeof(desc));
+		DESC_I(desc, 0x44) = OV_I(self, 0x20);
+		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+		DESC_I(desc, 0x288) = 2;
+		DESC_U(desc, 0x290) = 0x8000;
+		DESC_F(desc, 0x2b4) = 126.0f;
+		DESC_F(desc, 0x2b8) = 20.0f;
+		DESC_F(desc, 0x25c) = 127.0f;
+		DESC_S(desc, 0x24c) = 2;
+		DESC_F(desc, 0x30c) = 200.0f;
+		FUN_0004a330((ushort *)((unsigned char *)desc + 0x48), (byte *)text);
+		OV_I(self, 0x28 + player * 4) = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
+		if (flag != 0 && (texture = FUN_0004bb30(0, "cheqflag.bmp", 0, 0xdefa)) != 0) {
+			memset(desc, 0, sizeof(desc));
+			DESC_I(desc, 0x288) = 0;
+			DESC_F(desc, 0x250) = 127.0f;
+			DESC_F(desc, 0x254) = 127.0f;
+			DESC_F(desc, 0x258) = 127.0f;
+			DESC_F(desc, 0x25c) = 127.0f;
+			DESC_F(desc, 0x2b4) = 126.0f;
+			DESC_F(desc, 0x2b8) = 20.0f;
+			DESC_S(desc, 0x24c) = 2;
+			DESC_U(desc, 0x290) = 0x8000;
+			DESC_I(desc, 4) = texture;
+			overlay = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
+			OV_I(self, 0x150 + player * 4) = overlay;
+			OV_S(overlay, 0x54) = 1;
+		}
+	}
+}

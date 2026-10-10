@@ -115,3 +115,6 @@
 000792f0 void CLHud_SetClock(int self, float seconds, int sound);
 00079490 void CLHud_CreateClock(int self, float seconds);
 000796c0 void CLHud_CreateScoreBoxes(int self);
+0007a080 void CLHud_CreateBars(int self);
+0007a200 void CLHud_CreateScoreTexts(int self, int *scores);
+0007a360 void CLHud_CreateScoreLabels(int self, char *text, int flag);
