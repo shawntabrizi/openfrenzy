@@ -7,7 +7,7 @@ the game mode CGameMode "Hopper" forwards its virtuals to it, and it drives the 
   0x002ae878 antics (CHopper_Antics.c)   0x002ae948 resources (CHopper_Resources.c)
   0x002aebd8 the camera                   0x002aec10 the arena (blades, arm, disc)
   0x002afe80 the rules (counters)        0x002affa0 the effects
-  0x002b0038 the debug timers            0x002b0378 the debug overlay (input map at +4)
+  0x002b0038 the play (clock, HUD, end)  0x002b0378 the "anypressed" input
 Only 0x0013f3a0 carries the file name; 0x0013eae0-0x0013f380 are placed here by address
 (file inferred).
 
@@ -74,7 +74,7 @@ sounds of the variation */
 void HopGame_Start(void *self)
 {
 	HopAntics_Start(hop_Antics);
-	HopTimers_Start(HOP_ADDR(0x002b0038));
+	HopPlay_Start(HOP_ADDR(0x002b0038));
 	HopCamera_Start(HOP_ADDR(0x002aebd8));
 	HopArena_Start(HOP_ADDR(0x002aec10));
 	HopRules_Start(HOP_ADDR(0x002afe80));
@@ -118,7 +118,7 @@ void HopGame_Exit(void *self)
 	FUN_001d5950();    /* the rules (empty) */
 	HopArena_Shutdown(HOP_ADDR(0x002aec10));
 	FUN_001d5950();    /* the camera (empty) */
-	FUN_001d5950();    /* the debug timers (empty) */
+	FUN_001d5950();    /* the play (empty) */
 	HopRes_Free(hop_Res);
 	HopAntics_Shutdown(hop_Antics);
 	HopRes_SetRenderStates(hop_Res);
@@ -128,11 +128,11 @@ void HopGame_Exit(void *self)
 void HopGame_Resume(void *self)
 {
 	(void)self;
-	HopOverlay_Resume(HOP_ADDR(0x002b0378));
+	HopInput_Resume(HOP_ADDR(0x002b0378));
 	HopRes_SetRenderStates(hop_Res);
 }
 
-/* 0x0013eda0  (gap; not in the function table): suspend: deletes the debug overlay's input
+/* 0x0013eda0  (gap; not in the function table): suspend: deletes the "anypressed" input's
 map (rowing_a 0x001af950, thiscall) */
 void HopGame_Suspend(void *self)
 {
@@ -196,7 +196,7 @@ void HopGame_Process(void *self, int top)
 
 	if (top == 0)
 		return;
-	HopTimers_Begin(HOP_ADDR(0x002b0038), 0, "all");
+	HopPlay_ProfileBegin(HOP_ADDR(0x002b0038), 0, "all");
 	if (GAME_I(self, 0x20) == 1)
 		return;
 	HopGame_CheckPlayers(self);
@@ -241,7 +241,7 @@ pause_menu:
 play:
 	if (GAME_I(self, 0x20) == 1)
 		return;
-	HopTimers_Update(HOP_ADDR(0x002b0038));
+	HopPlay_UpdateHud(HOP_ADDR(0x002b0038));
 	if (DAT_002ecdec == 0) {
 		HopCamera_Update(HOP_ADDR(0x002aebd8));
 		if (*pause != 0 && hop_Play == 5) {
@@ -267,14 +267,14 @@ play:
 /* 0x0013f0a0  (gap; not in the function table): draw: fog (variation 4 doubles the fog end
 before the play), the near plane (variation 1: 750 while playing, else 100; others 5), the
 camera, the arena, the players, the effects, the tokens, the variation's extras and the
-debug overlay; each part is timed by the debug timers */
+overlays; each part is timed by the play object's profile */
 void HopGame_Draw(void *self, int top)
 {
 	int v;
 
 	if (top == 0)
 		return;
-	HopTimers_Begin(HOP_ADDR(0x002b0038), 1, "render");
+	HopPlay_ProfileBegin(HOP_ADDR(0x002b0038), 1, "render");
 	if (GAME_I(self, 0x20) == 1)
 		return;
 	v = hop_Variation;
@@ -294,14 +294,14 @@ void HopGame_Draw(void *self, int top)
 		bdSetNearFar(5.0f, 50000.0f);
 	}
 	HopCamera_Apply(HOP_ADDR(0x002aebd8));
-	HopTimers_Begin(HOP_ADDR(0x002b0038), 2, "arena");
+	HopPlay_ProfileBegin(HOP_ADDR(0x002b0038), 2, "arena");
 	HopArena_Draw(HOP_ADDR(0x002aec10), 0);
-	HopTimers_End(HOP_ADDR(0x002b0038), 2);
+	HopPlay_ProfileEnd(HOP_ADDR(0x002b0038), 2);
 	FUN_001d5950();    /* the rules. draw (empty) */
-	HopTimers_Begin(HOP_ADDR(0x002b0038), 3, "antics");
+	HopPlay_ProfileBegin(HOP_ADDR(0x002b0038), 3, "antics");
 	HopAntics_Draw(hop_Antics);
-	HopTimers_End(HOP_ADDR(0x002b0038), 3);
-	HopTimers_Begin(HOP_ADDR(0x002b0038), 4, "pretty");
+	HopPlay_ProfileEnd(HOP_ADDR(0x002b0038), 3);
+	HopPlay_ProfileBegin(HOP_ADDR(0x002b0038), 4, "pretty");
 	HopFx_Draw(HOP_ADDR(0x002affa0));
 	CToken_DrawAll();
 	if (hop_Variation == 2)
@@ -311,13 +311,13 @@ void HopGame_Draw(void *self, int top)
 	if (hop_Variation == 4)
 		HopArena_DrawExtras4(HOP_ADDR(0x002aec10));
 	bdSetRenderState(4, 0, 0);
-	HopTimers_DrawOverlay(HOP_ADDR(0x002b0038));
-	HopTimers_End(HOP_ADDR(0x002b0038), 4);
+	HopPlay_DrawOverlay(HOP_ADDR(0x002b0038));
+	HopPlay_ProfileEnd(HOP_ADDR(0x002b0038), 4);
 	GAME_I(self, 0x28) = (int)FUN_0003f010();
 	DAT_002bc48c = 0;
-	HopTimers_End(HOP_ADDR(0x002b0038), 1);
-	HopTimers_End(HOP_ADDR(0x002b0038), 0);
-	HopTimers_Draw(HOP_ADDR(0x002b0038));
+	HopPlay_ProfileEnd(HOP_ADDR(0x002b0038), 1);
+	HopPlay_ProfileEnd(HOP_ADDR(0x002b0038), 0);
+	HopPlay_DrawProfile(HOP_ADDR(0x002b0038));
 }
 
 /* 0x0013f2c0  (gap): restart (the debug menu's "restart"): puts everything back for a new
@@ -330,7 +330,7 @@ void HopGame_Restart(void *self)
 	HopRes_SetRenderStates(hop_Res);
 	Debris_Init(NULL, 1000);
 	HopAntics_Reset(hop_Antics);
-	HopTimers_Start(HOP_ADDR(0x002b0038));
+	HopPlay_Start(HOP_ADDR(0x002b0038));
 	HopCamera_Start(HOP_ADDR(0x002aebd8));
 	HopArena_Start(HOP_ADDR(0x002aec10));
 	HopRules_Start(HOP_ADDR(0x002afe80));

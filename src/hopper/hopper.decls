@@ -141,14 +141,23 @@
 0014adb0 void HopFx_Update4(void *self);
 0014b090 void HopFx_Update(void *self);
 
-# ---- provisional shapes (written later in this module)
-0014c970 void HopShader_SetConstant(float r, float g, float b, float a);
-0014b100 void HopTimers_Start(void *self);
-0014b340 void HopTimers_Begin(void *self, int index, const char *name);
-0014b380 void HopTimers_End(void *self, int index);
-0014b6e0 void HopTimers_Update(void *self);
-0014c800 void HopTimers_DrawOverlay(void *self);
-0014b3a0 void HopTimers_Draw(void *self);
-0014c880 void HopOverlay_Resume(void *self);
+# ---- Hopper/unplaced_play.c (the play object 0x002b0038)
+0014b100 void HopPlay_Start(void *self);
+0014b270 int HopPlay_WinnerPressed(void *self, int *winner);
+0014b340 void HopPlay_ProfileBegin(void *self, int index, const char *name);
+0014b380 void HopPlay_ProfileEnd(void *self, int index);
+0014b3a0 void HopPlay_DrawProfile(void *self);
+0014b6c0 void *HopPlay_Destroy(void *self, byte flags);
+0014b6e0 void HopPlay_UpdateHud(void *self);
+0014b830 void HopPlay_Winner(void *self);
+0014c4a0 void HopPlay_Clock(void *self);
+0014c800 void HopPlay_DrawOverlay(void *self);
+
+# ---- Hopper/unplaced_shader.c (the input object 0x002b0378, the shader fragments)
+0014c880 void HopInput_Resume(void *self);
+0014c8d0 void *HopInput_Destroy(void *self, byte flags);
 0014c8f0 void *HopShaderColour_Ctor(void *self);
+0014c910 void HopShader_Begin(void);
+0014c930 void HopShader_End(void);
 0014c950 void *HopShaderLit_Ctor(void *self);
+0014c970 void HopShader_SetConstant(float r, float g, float b, float a);

@@ -184,7 +184,7 @@ extern int DAT_00293eb8[4];            /* charlib: the shadow projector of each 
 #define hop_RouteObject ((void *)HOP_ADDR(0x003024c8)) /* core static init: the shared route object */
 #define hop_Platforms ((void **)HOP_ADDR(0x002af098)) /* the arena's platform actors (27) */
 #define hop_CamAngle HOP_F(0x002aebfc)         /* the camera angle (degrees; camera +0x24) */
-/* the play time left (hundredths of a second; a 64-bit value at the debug timers +0xd8,
+/* the play time left (hundredths of a second; a 64-bit value at the play object +0xd8,
 only 4-byte aligned, so it is read in halves) */
 #define hop_TimeLeft hop_GetTimeLeft()
 #define hop_Sink HOP_F(0x002af15c)             /* how far the arena has sunk */
@@ -200,8 +200,8 @@ extern const void *const vtable_0026edd4[];   /* the arena */
 extern const void *const vtable_0026ee50[];   /* the Hopper player (an AI player) */
 extern const void *const vtable_0026eeb4[];
 extern const void *const vtable_0026eeb8[];   /* the effects */
-extern const void *const vtable_0026f038[];   /* the debug timers */
-extern const void *const vtable_0026f05c[];
+extern const void *const vtable_0026f038[];   /* the play object (clock, HUD) */
+extern const void *const vtable_0026f05c[];   /* the "anypressed" input */
 extern const void *const vtable_0026f060[];   /* shader fragment (colour) */
 extern const void *const vtable_0026f08c[];   /* shader fragment (lit colour) */
 
