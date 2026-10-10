@@ -143,3 +143,14 @@
 001a8830 void FUN_001a8830(void *self, int anim, float blend);
 001a75c0 void FUN_001a75c0(void *self);
 001a7540 void FUN_001a7540(void *self);
+001a8d30 void FUN_001a8d30(void *self, float dt, int *leftX, int *leftY, int *rightX, int *rightY);
+001a9480 int FUN_001a9480(void *self, void *path);
+001a99f0 void FUN_001a99f0(void *self);
+001a9a40 void FUN_001a9a40(float x, float z, void *gate, float *out);
+001a9af0 void FUN_001a9af0(void *self);
+001a9e60 void FUN_001a9e60(void *self);
+001aa000 void FUN_001aa000(void *self, float dt);
+001aaa30 void FUN_001aaa30(void *self, float dt);
+001afc80 void FUN_001afc80(float *from, float *to, int r, int g, int b);
+001ab0c0 void FUN_001ab0c0(void *self, int lx, int ly, int rx, int ry, float dt);
+001aba70 void FUN_001aba70(void *self);

@@ -417,7 +417,8 @@ struct RowObject *RowModel_CreateInstance(struct RowModel *self, float *pos, flo
 	struct RowObject *obj = NULL;
 	void *mem;
 
-	if (self->actor == NULL) {
+	/* (the original tests the CRC at +0x08; it stays 0 when the actor did not load) */
+	if (self->crc == 0) {
 		bkPrintf("CERROR: Actor not loaded\n");
 		return NULL;
 	}
