@@ -97,7 +97,7 @@ set(_guest_args
   "-DOPENFRENZY_REBASE_PLUGIN=${OPENFRENZY_REBASE_PLUGIN}"
   "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_BINARY_DIR}")
 
-# Build skeleton: an empty main() and a memory probe (port/macos/tests/skeleton).
+# Build skeleton: an empty main(), a memory probe and the adrp-bias test (port/macos/tests/skeleton).
 ExternalProject_Add(guest_skeleton
   SOURCE_DIR "${OF_MACOS}/tests/skeleton"
   BINARY_DIR "${CMAKE_BINARY_DIR}/guest-skeleton"
@@ -106,7 +106,8 @@ ExternalProject_Add(guest_skeleton
   BUILD_ALWAYS ON
   INSTALL_COMMAND ""
   BUILD_BYPRODUCTS "${CMAKE_BINARY_DIR}/openfrenzy_skeleton.elf"
-                   "${CMAKE_BINARY_DIR}/openfrenzy_probe.elf")
+                   "${CMAKE_BINARY_DIR}/openfrenzy_probe.elf"
+                   "${CMAKE_BINARY_DIR}/openfrenzy_adrp.elf")
 
 # Platform layer, smoke test and the game (port/guest): musl, guest runtime, src/.
 ExternalProject_Add(guest_main
@@ -127,7 +128,7 @@ ExternalProject_Add(guest_main
 # ---------- tests: run guest images in the host arena
 
 enable_testing()
-foreach(_case "skeleton;0" "probe;42" "platform_check;0" "guest;0")
+foreach(_case "skeleton;0" "probe;42" "adrp;0" "platform_check;0" "guest;0")
   list(GET _case 0 _name)
   list(GET _case 1 _code)
   add_test(NAME guest_${_name}_runs

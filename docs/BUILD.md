@@ -42,10 +42,11 @@ the rebase pass). Outputs in `build-<id>/`:
 | `openfrenzy_guest.elf` | the game image: decompiled code + weak stubs + platform layer |
 | `openfrenzy_smoke.elf` | smoke test: SDL3 window + GLES clear + disc reads |
 | `openfrenzy_platform_check.elf` | links every platform object (catches undefined symbols) |
-| `openfrenzy_skeleton.elf`, `openfrenzy_probe.elf` | toolchain tests without musl |
+| `openfrenzy_skeleton.elf`, `openfrenzy_probe.elf`, `openfrenzy_adrp.elf` | toolchain tests without musl |
 | `guest-main/gen/` | generated `of_decls.h`, `of_stubs.c`, `of_crt_init.c`, GL/posix wrappers |
 
 Tests (`ctest`): `guest_skeleton_runs` (exit 0), `guest_probe_runs` (exit 42),
+`guest_adrp_runs` (global addresses have a zero upper half; exit N = check N failed),
 `guest_platform_check_runs`, `guest_guest_runs` (the game image boots and exits 0),
 `guest_smoke_runs` (needs `orig/game.xiso.iso`; not registered without it). Tests run headless
 (`SDL_VIDEO_DRIVER=dummy`), so they also pass in the sandbox.

@@ -82,6 +82,14 @@ fails the build otherwise. It is an ABI adapter, not a sandbox.
 Known trap (from OpenCE): ILP32 instruction selection can add the bias twice when it splits an
 unaligned 64-bit load from a stack pointer. The pass keeps OpenCE's machine-level fix.
 
+Known trap (openfrenzy): code runs at BIAS + address, so `adrp`/`add :lo12:` give biased global
+addresses, but LLVM's ILP32 known-bits say their upper 32 bits are 0. The pass therefore sends
+every value use of a global address (not load/store addresses or direct callees) through an
+opaque `mov wD, wS`. Test: `guest_adrp_runs`.
+
+Every guest C object depends on `guest_rebase.dylib` and `port/macos/tools/*.py`
+(`guest_cc.py` appends them to the compiler's depfile), so a toolchain change rebuilds the guest.
+
 ## 5. Memory: the 4 GB arena
 
 - The host reserves a 4 GB **virtual** arena at `0x10000000000`. A guest address `p` is host

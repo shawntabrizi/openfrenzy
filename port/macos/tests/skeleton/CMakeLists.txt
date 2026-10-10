@@ -2,6 +2,7 @@
 # cmake/guest-toolchain.cmake. Produces two guest images:
 #   openfrenzy_skeleton.elf  empty main(), exit code 0
 #   openfrenzy_probe.elf     rebased memory probe, exit code 42
+#   openfrenzy_adrp.elf      global addresses keep a zero upper half (adrp bias), exit code 0
 cmake_minimum_required(VERSION 3.24)
 project(openfrenzy_guest_skeleton C ASM)
 
@@ -21,7 +22,7 @@ target_include_directories(skeleton_runtime PUBLIC "${OF_MACOS}/include")
 target_compile_options(skeleton_runtime PUBLIC
   $<$<COMPILE_LANGUAGE:C>:-ffreestanding -DOPENFRENZY_MACOS=1>)
 
-foreach(_name skeleton probe)
+foreach(_name skeleton probe adrp)
   add_executable(openfrenzy_${_name} ${_name}.c)
   # An OBJECT library: the image header must be linked although nothing calls it.
   target_link_libraries(openfrenzy_${_name} PRIVATE skeleton_runtime)

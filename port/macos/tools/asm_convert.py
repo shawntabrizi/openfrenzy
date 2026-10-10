@@ -36,9 +36,6 @@ RODATA_SECTIONS = {
 }
 
 
-PACK_LSL32 = re.compile(r'^\s*x(\d+)\s*,\s*x(\d+)\s*,\s*x(\d+)\s*,\s*lsl\s*#32\s*$')
-
-
 class ConvertError(Exception):
     pass
 
@@ -234,48 +231,7 @@ class Converter:
                 raise ConvertError("unsupported GOT access: " + stripped)
             self.emit(f"\tadd x{gm.group(2)}, {gm.group(3)}, :lo12:{self.sym(gm.group(4))}")
             return
-        if op == "orr":
-            pm = PACK_LSL32.match(args)
-            if pm and self.from_adrp(pm.group(2)):
-                self.pack_pair(*pm.groups())
-                return
         self.emit(f"\t{op} {self.operands(args)}" if args else f"\t{op}")
-
-    def from_adrp(self, reg: str, depth: int = 0) -> bool:
-        """True when the last write of xREG in this block was an adrp/add :lo12: address
-        (or a mov of one). Scans back to the previous label."""
-        for line in reversed(self.out):
-            if not line.startswith("\t"):
-                if line.startswith(".LLloh"):
-                    continue   # linker-optimisation-hint labels are not block starts
-                return False   # a label: the start of the block
-            parts = line.strip().split(None, 1)
-            if len(parts) < 2 or parts[0].startswith("."):
-                continue
-            dest = parts[1].split(",")[0].strip()
-            if dest not in ("x" + reg, "w" + reg):
-                continue
-            if parts[0] == "adrp" or (parts[0] == "add" and ":lo12:" in parts[1]):
-                return True
-            mm = re.match(r'^x(\d+)$', parts[1].split(",")[1].strip()) if parts[0] == "mov" else None
-            if mm and depth < 4:
-                return self.from_adrp(mm.group(1), depth + 1)
-            return False
-        return False
-
-    def pack_pair(self, d: str, a: str, b: str):
-        """openfrenzy: `orr xD, xA, xB, lsl #32` packs two 32-bit values into one register
-        (a struct of two pointers passed by value). llc assumes the upper half of xA is zero,
-        because ILP32 code believes that adrp/add give addresses below 4 GB. Guest code runs
-        at BIAS + address, so adrp/add results carry the bias in bits 32-40, and the bias
-        leaks into the high pointer (docs/INTEGRATION_NOTES.md). Zero-extend xA explicitly.
-        Only the low 32 bits of xB are used by `lsl #32`, so they need no fix."""
-        if d == a:
-            self.emit(f"\tmov w{d}, w{a}")
-            self.emit(f"\torr x{d}, x{d}, x{b}, lsl #32")
-        else:
-            self.emit(f"\tlsl x{d}, x{b}, #32")
-            self.emit(f"\tbfxil x{d}, x{a}, #0, #32")
 
     def run(self):
         for i, raw in enumerate(self.lines):

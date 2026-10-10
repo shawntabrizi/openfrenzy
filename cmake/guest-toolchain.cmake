@@ -8,6 +8,8 @@
 #
 # The compiler is port/macos/tools/guest_cc.py. It runs clang -> opt (of-rebase) -> llc ->
 # asm_convert.py -> ELF object. The linker is ld.lld with port/macos/guest.ld.
+# guest_cc.py adds the pass plugin and port/macos/tools/*.py to each object's depfile, so a
+# toolchain change rebuilds every guest C object (no OBJECT_DEPENDS needed here).
 
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR arm64_32)

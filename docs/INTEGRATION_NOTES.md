@@ -27,10 +27,12 @@ before you fix the build, and remove an item when it is fixed.
   pools load through them without the pass). Needs an architect fix in the toolchain; a local
   workaround (not tested) is to not build pointer structs from `adrp` values (for vfs: a
   non-const `functions`, so it is loaded from memory).
-  Integration round 1: asm_convert.py now zero-extends the low half of `orr xD, xA, xB, lsl #32`
-  when xA comes from adrp/add in the same block (1 site in the tree: vfs_fopen; the pc=0 crash
-  is gone). Other 64-bit uses of adrp results (64-bit stores, compares, `lsr #32`) are not
-  handled; LLVM's ILP32 known-bits for ADRP/ADDlow assume the upper 32 bits are zero.
+  Fixed (integration round 1, toolchain): the of-rebase pass sends every value use of a
+  global address through `mov wD, wS` (inline asm, opaque to known-bits), so the upper half
+  is 0 for zext, 64-bit stores, compares, `lsr #32`, pointer arguments and register pairs.
+  Load/store address operands, direct callees and llc's own adrp uses (jump tables, constant
+  pools) keep the biased address. The earlier asm_convert.py `orr ... lsl #32` patch is
+  removed. Test: `guest_adrp_runs` (port/macos/tests/skeleton/adrp.c).
 
 ## Shared storage
 
@@ -69,8 +71,9 @@ before you fix the build, and remove an item when it is fixed.
 - File-scope asm uses Mach-O names: asm_convert.py strips one leading underscore. Write the C
   name `_DAT_x` as `__DAT_x`. The core and classlib_ui generators do; the generators of
   hopper, charlib, classlib_fx, bumpercars_a and meta_a still write `_DAT_x` (= C `DAT_x`).
-- Tool changes (port/macos/tools/*.py, the pass) are not build dependencies: after changing
-  one, delete the build directory.
+- Tool changes (port/macos/tools/*.py, the pass) are build dependencies of every guest C
+  object (guest_cc.py adds them to the depfile). A build directory made before this change
+  needs one clean build.
 
 ## Library identifications
 

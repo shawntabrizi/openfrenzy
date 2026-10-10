@@ -23,6 +23,107 @@ bool isHandle(StringRef name, unsigned argument) {
             (name == "hostgl_glVertexAttribPointer" || name == "hostgl_glDrawRangeElements")) ||
            (argument == 4 && name == "hostgl_glVertexAttribIPointer");
 }
+// openfrenzy: guest code runs at BIAS + address, so adrp/adr (and :lo12: adds) give the
+// biased address 0x100_xxxxxxxx. LLVM 22's AArch64 ILP32 known-bits say that ADRP/ADDlow/LOADgot
+// results have zero upper 32 bits, so instruction selection drops every zero-extension of a
+// global address: a zext to i64 then a 64-bit store, `lsr #32`, a pointer argument (the
+// callee assumes it is zero-extended) or two pointers packed into one register all carry the
+// bias (docs/INTEGRATION_NOTES.md, "Codegen trap"). Fix: every value use of a global address
+// goes through `mov wD, wS`, opaque to known-bits; a write of a w register clears bits 32-63.
+// Not changed: direct callees, load/store/atomic address operands (rebase() ORs the bias in,
+// which is idempotent for an already-biased address), thread-local globals (lowered by llc),
+// immarg intrinsic operands, and llc's own adrp uses (jump tables, constant pools), which
+// need the biased 64-bit address.
+struct OpaqueGlobals {
+    DenseMap<Constant *, bool> cache;
+    // 1: holds a non-TLS global address; 0: no global; TLS globals make the constant untouchable
+    bool hasGlobal(Constant *constant, bool &tls) {
+        if (auto *global = dyn_cast<GlobalValue>(constant)) {
+            if (global->isThreadLocal()) tls = true;
+            return true;
+        }
+        if (!isa<ConstantExpr>(constant) && !isa<ConstantAggregate>(constant))
+            return false; // BlockAddress keeps its biased code address (indirectbr)
+        auto found = cache.find(constant);
+        if (found != cache.end()) return found->second;
+        bool result = false;
+        for (Value *operand : constant->operands())
+            if (auto *inner = dyn_cast<Constant>(operand))
+                result |= hasGlobal(inner, tls);
+        if (!tls) cache[constant] = result;
+        return result;
+    }
+    Value *materialize(IRBuilder<> &builder, Constant *constant) {
+        bool tls = false;
+        if (!hasGlobal(constant, tls) || tls) return constant;
+        Type *type = constant->getType();
+        if ((type->isPointerTy() && type->getPointerAddressSpace() == 0) ||
+            (type->isIntegerTy() && type->getIntegerBitWidth() <= 64)) {
+            auto *asmCall = InlineAsm::get(FunctionType::get(type, {type}, false),
+                                           "mov ${0:w}, ${1:w}", "=r,r", false);
+            return builder.CreateCall(asmCall, {constant});
+        }
+        if (auto *aggregate = dyn_cast<ConstantAggregate>(constant)) {
+            Value *result = PoisonValue::get(type);
+            for (unsigned i = 0; i < aggregate->getNumOperands(); i++) {
+                Value *element = materialize(builder, aggregate->getOperand(i));
+                result = type->isVectorTy()
+                             ? builder.CreateInsertElement(result, element, builder.getInt32(i))
+                             : builder.CreateInsertValue(result, element, {i});
+            }
+            return result;
+        }
+        if (auto *expression = dyn_cast<ConstantExpr>(constant)) {
+            Instruction *expanded = expression->getAsInstruction();
+            for (unsigned i = 0; i < expanded->getNumOperands(); i++)
+                if (auto *operand = dyn_cast<Constant>(expanded->getOperand(i)))
+                    expanded->setOperand(i, materialize(builder, operand));
+            builder.Insert(expanded);
+            return expanded;
+        }
+        report_fatal_error("of-rebase: cannot make a global address opaque in this constant");
+    }
+    void run(Function &function) {
+        SmallVector<Instruction *, 64> work;
+        for (BasicBlock &block : function)
+            for (Instruction &instruction : block)
+                work.push_back(&instruction);
+        for (Instruction *instruction : work) {
+            auto *call = dyn_cast<CallBase>(instruction);
+            auto *intrinsic = dyn_cast<IntrinsicInst>(instruction);
+            if (intrinsic && intrinsic->getIntrinsicID() == Intrinsic::threadlocal_address)
+                continue;
+            DenseMap<std::pair<BasicBlock *, Value *>, Value *> incomingValues;
+            for (Use &operand : instruction->operands()) {
+                auto *constant = dyn_cast<Constant>(operand.get());
+                if (!constant) continue;
+                if (call && (&operand == &call->getCalledOperandUse() ||
+                             (call->isArgOperand(&operand) &&
+                              call->paramHasAttr(call->getArgOperandNo(&operand), Attribute::ImmArg))))
+                    continue;
+                if ((isa<LoadInst>(instruction) && operand.getOperandNo() == 0) ||
+                    (isa<StoreInst>(instruction) && operand.getOperandNo() == 1) ||
+                    (isa<AtomicRMWInst>(instruction) && operand.getOperandNo() == 0) ||
+                    (isa<AtomicCmpXchgInst>(instruction) && operand.getOperandNo() == 0))
+                    continue;
+                if (auto *phi = dyn_cast<PHINode>(instruction)) {
+                    // One SSA value per predecessor (a switch may give several equal edges).
+                    BasicBlock *incoming = phi->getIncomingBlock(operand);
+                    auto key = std::make_pair(incoming, operand.get());
+                    auto found = incomingValues.find(key);
+                    if (found == incomingValues.end()) {
+                        IRBuilder<> builder(incoming->getTerminator());
+                        found = incomingValues.insert({key, materialize(builder, constant)}).first;
+                    }
+                    operand.set(found->second);
+                } else {
+                    IRBuilder<> builder(instruction);
+                    operand.set(materialize(builder, constant));
+                }
+            }
+        }
+    }
+};
 struct RebasePass : PassInfoMixin<RebasePass> {
     bool ios = false;
     explicit RebasePass(bool ios = false) : ios(ios) {}
@@ -53,7 +154,10 @@ struct RebasePass : PassInfoMixin<RebasePass> {
                 old->getLinkage(), originalName, module);
             hostFunctions[old] = host;
         }
+        OpaqueGlobals opaque;
         for (Function &function : module) {
+            if (!ios)
+                opaque.run(function);
             if (ios) {
                 SmallVector<IntrinsicInst *, 8> tls;
                 for (BasicBlock &block : function)

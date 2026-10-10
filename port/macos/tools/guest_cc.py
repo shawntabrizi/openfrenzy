@@ -78,7 +78,21 @@ def main():
          "-emulated-tls", rebased, "-o", darwin_s])
     run([sys.executable, "-I", HERE / "asm_convert.py", darwin_s, elf_s])
     run([clang, ELF_TARGET, "-c", elf_s, "-o", output])
+    add_toolchain_deps(args, plugin)
     return 0
+
+
+def add_toolchain_deps(args, plugin):
+    """openfrenzy: make the object depend on the toolchain itself. The build system takes the
+    object's dependencies from the depfile (-MF) that clang wrote in the first step; append
+    the pass plugin and these scripts, so a toolchain change rebuilds every guest object."""
+    if "-MF" not in args:
+        return
+    depfile = Path(args[args.index("-MF") + 1])
+    tools = [plugin, *sorted(HERE.glob("*.py"))]
+    text = depfile.read_text().rstrip()
+    extra = "".join(" \\\n  " + str(Path(t).resolve()).replace(" ", "\\ ") for t in tools)
+    depfile.write_text(text + extra + "\n")
 
 
 if __name__ == "__main__":
