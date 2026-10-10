@@ -208,3 +208,24 @@
 000d5770 int FireAI_StateTake(void *ai, int entered);
 000d57f0 int FireAI_StateLoad(void *ai, int entered);
 000d5870 int FireAI_StateDrop(void *ai, int entered);
+# CCamera.cpp
+000d58d0 void CCamera_Reset(void *cam);
+000d5970 void CCamera_Shake(void *cam, int amp, int frames);
+000d59b0 void CCamera_Sway(void *cam);
+000d5a40 void CCamera_TargetBounds(void *cam);
+000d5b60 void CCamera_SetStatic(void *cam);
+000d5bb0 void CameraTarget_Remove(void *target);
+000d5bc0 void CCamera_UpdateShake(void *cam);
+000d5d00 void CCamera_ScreenBounds(void *cam);
+000d5eb0 void CCamera_ViewBounds(void *cam);
+000d5fe0 void CCamera_UpdateFollow(void *cam);
+000d60d0 void CCamera_ResetAuto(void *cam);
+000d6260 void CCamera_SetMode(void *cam, int mode);
+000d62c0 void *CCamera_AddTarget(void *cam, float *pos, int param, float *vel);
+000d6320 void CameraTarget_Predict(void *target);
+000d63f0 void *CCamera_Ctor(void *cam, int mode);
+000d64a0 void CCamera_Dtor(void *cam);
+000d6540 void CCamera_UpdateAuto(void *cam);
+000d6e80 void CCamera_Update(void *cam);
+000d7030 void CCamera_UpdateIntro(void *cam);
+000d7420 void CCamera_SwitchMode(void *cam, void *data, int mode);

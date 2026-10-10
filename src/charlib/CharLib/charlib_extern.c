@@ -59,3 +59,7 @@ __attribute__((weak)) int DAT_00293f30 = 1;
 __attribute__((weak)) int DAT_00293f34 = 1;
 __attribute__((weak)) float DAT_00294a7c = 5.0f;
 __attribute__((weak)) float DAT_00294a80 = 1.5f;
+/* CCamera.cpp: data of other modules (tentative; -fcommon merges them with the owners') */
+float DAT_002be430[16];           /* 0x002be430 bdisplay: world * view matrix */
+int DAT_002ecdec;                 /* 0x002ecdec the game is paused */
+int DAT_003055e0;                 /* 0x003055e0 bdisplay/core: skip request */
