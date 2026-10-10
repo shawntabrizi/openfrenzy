@@ -114,3 +114,28 @@
 000573e0 int bsAdpcmCreateBuffer(struct BAudioStream *stream);
 000575f0 int bsPlayAudioStreamADPCM(struct BAudioStream *stream, unsigned int flags, int volume, int pan, int frequency, void *callback);
 00057890 void bsStopAudioStreamADPCM(struct BAudioStream *stream);
+
+# BMATHS animating collision (animatingCollision.cpp)
+00052060 struct BCollNode *bmInitInstanceNodes(void *instances, struct BCollShape *shapes, struct BCollNode *nodes, struct BCollNode *parent);
+00052130 struct BAnimatingCollision *bmCreateAnimatingCollision(struct BAnimatingCollision *coll, unsigned char *resource, unsigned char *actor);
+000521c0 unsigned char *bmCollisionFixup(int package, int name);
+00052200 int bmCollideNodes(struct BSphere *sphere, void *coll, struct BCollNode *nodes, float *delta, int maxHits, int *count, struct BAnimHit *hits);
+00052510 void bmUpdateNodes(struct BCollNode *nodes);
+00052590 int bmCollideAnimating(struct BSphere *sphere, struct BAnimatingCollision *coll, float *delta, int *count, struct BAnimHit *hits);
+000526f0 void bmUpdateAnimatingCollision(struct BAnimatingCollision *coll);
+
+# BMATHS collision tests (unplaced)
+00052700 void bmCollMeshFixup(int package, int name);
+00052770 int bmRaySphere(struct BRay *ray, struct BSphere *sphere, struct BCollHit *hit);
+00052960 int bmRayMesh(struct BRay *ray, struct BCollMesh *mesh, int *count, struct BCollHit *hits);
+00052ce0 int bmSphereSideOfPlane(struct BSphere *sphere, float *delta, float *plane);
+00052da0 int bmSweepSphereSphere(struct BSphere *a, struct BSphere *b, float *dir, float length, struct BCollHit *hit);
+00052ea0 void bmSegmentSphere(float *segment, struct BSphere *sphere, struct BCollHit *hit);
+00052f30 int bmSweepSphereTriangle(struct BSphere *sphere, struct BTriangle *tri, float *delta, struct BCollHit *hit);
+00053720 int bmSweepSphereMesh(struct BSphere *sphere, struct BCollMesh *mesh, float *delta, int *count, struct BCollHit *hits);
+00053af0 void bmSweepSphereSphereVec(struct BSphere *a, struct BSphere *b, float *vec, struct BCollHit *hit);
+00053b60 int bmSweepSphereEdge(struct BSphere *sphere, struct BEdge *edge, float *delta, struct BCollHit *hit);
+00054050 int bmRayTriangle(struct BRay *ray, struct BTriangle *tri, struct BCollHit *hit);
+00054420 int bmClosestLinePoints(float *a, float *b, float *s, float *t);
+00054590 float bmProjectFactor(float *a, float *b);
+000545d0 void bmVec2Divide(float *out, float *in, float s);

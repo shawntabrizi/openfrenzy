@@ -69,26 +69,33 @@ Owner: engine_misc. Other modules: do not rely on these names.
 #define em_biInitPads ((void (*)(int))FUN_00049d40)
 
 /* BMATHS vector/matrix helpers (module bkernel) */
-#define em_bmMatCopy ((void (*)(void *, const void *))FUN_000502f0)
+/* 0x000502f0: dst = inverse of src (returns non-zero when invertible) */
+#define em_bmMatInvert ((int (*)(void *, const void *))FUN_000502f0)
 #define em_bmMatMul ((void (*)(void *, const void *, const void *))FUN_00050150)
 #define em_bmMatMulUnaligned ((void (*)(void *, const void *, const void *))FUN_0004ff30)
 #define em_bmMatTranslation ((void (*)(void *, float, float, float))FUN_00050250)
 #define em_bmMatScale ((void (*)(void *, float, float, float))FUN_000502a0)
-#define em_bmMatTransformVec ((void (*)(void *, const void *, const void *))FUN_000505c0)
-#define em_bmMatTransformVecTr ((void (*)(const void *, void *))FUN_00050530)
-#define em_bmMatInverse ((void (*)(void *, const void *))FUN_00050650)
+/* 0x000505c0: out = mat * in (out, mat, in) */
+#define em_bmMatTransformVec ((void (*)(float *, const void *, const float *))FUN_000505c0)
+/* 0x00050530: vec = vec * mat, in place (4 components) */
+#define em_bmMatTransformInPlace ((void (*)(const void *, float *))FUN_00050530)
+/* 0x00050650: dst = transpose of src */
+#define em_bmMatTranspose ((void (*)(void *, const void *))FUN_00050650)
 #define em_bmMatRotXY ((void (*)(void *, float, float))FUN_00050840)
 #define em_bmMatRotXYZ ((void (*)(void *, float, float, float))FUN_00050d20)
 #define em_bmSqrt ((float (*)(float))FUN_00050f80)
 #define em_bmVecRotateByAngle ((void (*)(float *, int, float, float))FUN_00051220)
 #define em_bmVecNormalise ((void (*)(float *, const float *))FUN_000514a0)
-#define em_bmVecDistance ((float (*)(const float *, const float *))FUN_00051540)
+/* 0x00051540: squared distance */
+#define em_bmVecDistSq ((float (*)(const float *, const float *))FUN_00051540)
 #define em_bmMatFromQuat ((void (*)(void *, const void *))FUN_000515c0)
 
 /* ---------- bActor (module bactor) */
 
 #define em_baFindInstanceByCrc ((void *(*)(void *, int))FUN_00035b40)
-#define em_baCountInstances ((int (*)(void *))FUN_00051f80)
+/* 0x00051f80, 0x00051fe0: count / fix up the shapes of a collision resource (bkernel) */
+#define em_bmCountShapes ((int (*)(void *))FUN_00051f80)
+#define em_bmFixupShapes ((void (*)(void *, void *))FUN_00051fe0)
 
 /* ---------- other modules' vector helpers */
 
