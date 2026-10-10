@@ -47,8 +47,6 @@
 000b3d50 void CRColl_BuildMesh(void *actor);
 000b3dc0 void CRColl_BuildMeshFrom(void *actor, void *inst);
 000b6270 void CRColl_MoveActor(void *actor);
-000b69d0 void Lights_EnableAll(int enable, int restore_ambient);
-000b7270 void Light_SetPosition(void *light, float *pos);
 000b8520 void Platform_RotateActor(void *actor);
 000b8960 void Platform_GetVelocity(float *out, void *platform, int absolute);
 000b8a40 void Platform_AddVelocity(float *vel, float *add);
@@ -106,3 +104,26 @@
 000b5980 void CRColl_Recheck(void *actor);
 000b5af0 void CRColl_ActorVsActors(void *actor);
 000b61c0 void CRColl_Collide(void *actor, int push);
+# AI.cpp
+000b6520 int AI_WalkLineX(int col, int row, int dx, int dz, int sx, int sz, float y);
+000b65e0 int AI_WalkLineZ(int col, int row, int dx, int dz, int sx, int sz, float y);
+000b66a0 int AI_CanWalkStraight(int a, int b, float y);
+# lights.cpp
+000b6910 void *Light_InitDirectional(void *light, unsigned char r, unsigned char g, unsigned char b, float *dir);
+000b69d0 void Lights_EnableAll(int enable, int restore_ambient);
+000b6aa0 void Lights_SetLimitMode(int mode);
+000b6ab0 int Lights_Limit(void *light, int on);
+000b6b80 void *Light_InitSpot(void *light, unsigned char r, unsigned char g, unsigned char b, float *pos, float *target, float range, float angle);
+000b6c70 void *Light_InitTurning(void *light, unsigned char r, unsigned char g, unsigned char b, float turn, float *dir);
+000b6d60 void *Light_InitTurningFade(void *light, int *colour, float turn, float *dir, float duration, float delay);
+000b6eb0 void *Light_InitPoint(void *light, unsigned char r, unsigned char g, unsigned char b, float *pos, float range);
+000b6fa0 void *Light_InitFadingPoint(void *light, int *from, int *to, float *pos, float range, float range_to, float duration, float delay);
+000b7100 void *Light_InitAttached(void *light, void *attach, void *node, float *pos, int *colour, float range, int visible);
+000b7270 void Light_SetPosition(void *light, float *pos);
+000b72d0 void *Light_NewTurningFade(int r, int g, int b, float turn, float *dir, float duration, float delay);
+000b7380 void *Light_NewFlash(float *pos, float strength, int duration, int r, int g, int b, float delay);
+000b7490 void *Light_NewAttached(void *attach, void *node, float *pos, float strength, int r, int g, int b, int visible);
+000b7570 void Light_Flash(float *pos, int r, int g, int b);
+000b7620 void Lights_SetAttachedVisible(int visible);
+000b7680 void *Light_Delete(void *light);
+000b76f0 void Light_Update(void *light);

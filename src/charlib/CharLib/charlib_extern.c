@@ -37,3 +37,7 @@ __attribute__((weak)) unsigned char DAT_00293ad8[0xc];
 __attribute__((weak)) void *DAT_00293ae4 = 0;
 __attribute__((weak)) int DAT_00293b28 = 0;
 int DAT_002ba99c;                 /* 0x002ba99c core: frame counter */
+/* bactor .data: the ambient colour (weak until bactor defines them; values from the XBE) */
+__attribute__((weak)) int DAT_00284b10 = 0x1e;
+__attribute__((weak)) int DAT_00284b14 = 0x1e;
+__attribute__((weak)) int DAT_00284b18 = 0x1e;
