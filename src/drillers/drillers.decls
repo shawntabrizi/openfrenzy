@@ -138,3 +138,6 @@
 # Drillers/unplaced_ai.c (the AI object 0x002aadf8)
 00121a80 void DrAi_Init(void *self);
 00121c60 void *DrAi_DeletingDtor(void *self, unsigned int flags);
+
+# Drillers/unplaced_snare.c (called by the drillers helper 0x00125090 in foxhunt)
+00124c00 void DrSnare_Close(void *self, int player, int count);
