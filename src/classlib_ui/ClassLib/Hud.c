@@ -429,3 +429,347 @@ void CLHud_UpdateMarkers(int self)
 		}
 	}
 }
+
+/* ---------- clock and score boxes */
+
+/* overlay descriptor fields (the 0x3b0-byte descriptor of COverlay_Create*) */
+#define DESC_I(d, off) (*(int *)((unsigned char *)(d) + (off)))
+#define DESC_U(d, off) (*(unsigned int *)((unsigned char *)(d) + (off)))
+#define DESC_F(d, off) (*(float *)((unsigned char *)(d) + (off)))
+#define DESC_S(d, off) (*(short *)((unsigned char *)(d) + (off)))
+
+/* 0x00290c04  colour fade rate of the clock in the last seconds */
+#define clu_clock_flash_rate CLU_VAR(int, 0x00290c04)
+/* 0x00290c98 / 0x00290c9c  score box spacing and width on the results screen */
+#define clu_box_gap CLU_VAR(float, 0x00290c98)
+#define clu_box_width CLU_VAR(float, 0x00290c9c)
+/* 0x002ecf3c  versus animation state */
+#define clu_versus_state CLU_VAR(int, 0x002ecf3c)
+
+extern int DAT_002baea8;     /* core: quit to the board allowed */
+extern int DAT_002baebc;     /* core: team game */
+extern int DAT_002ba6a4;     /* core */
+extern int DAT_002b9c68;     /* core: number of score boxes on the results screen */
+
+/* 0x000792f0  ClassLib/Hud.cpp (inferred; thiscall)
+Shows the clock "m:ss" (or "-:--" for -1). With `sound`, the last ten seconds flash
+and tick and the commentator says "almost over" once. */
+void CLHud_SetClock(int self, float seconds, int sound)
+{
+	char text[64];
+	float shown;
+	int whole;
+	int previous;
+
+	if (sound != 0)
+		CLHud_UpdatePrompts(self);
+	if (seconds == -1.0f) {
+		sprintf(text, "-:--");
+		if (OV_I(self, 0xd0) != 0)
+			FUN_0004a330((ushort *)(OV_I(self, 0xd0) + 0xa4), (byte *)text);
+		return;
+	}
+	shown = seconds + 0.999f;
+	OV_U(self, 0x94) = OV_U(self, 0x90);
+	OV_F(self, 0x90) = seconds;
+	whole = (int)((double)seconds + (double)0.999f) % 0x3c;
+	sprintf(text, "%d:%02d", (int)((double)shown * (double)0.016666668f), whole);
+	if (OV_I(self, 0xd0) != 0)
+		FUN_0004a330((ushort *)(OV_I(self, 0xd0) + 0xa4), (byte *)text);
+	if (sound == 0 || !(shown < 11.0f))
+		return;
+	previous = (int)((double)OV_F(self, 0x94) + (double)0.999f) % 0x3c;
+	if (whole != previous) {
+		if (OV_I(self, 0xd0) != 0) {
+			OV_F(OV_I(self, 0xd0), 0x2b0) = 0.0f;
+			OV_F(OV_I(self, 0xd0), 0x2b4) = 0.0f;
+			OV_U(OV_I(self, 0xd0), 0x2f4) = OV_U(OV_I(self, 0xd0), 0x2f4) | 1;
+			OV_I(OV_I(self, 0xd0), 0x2bc) = clu_clock_flash_rate;
+		}
+		CLSamples_PlayGeneric(7, 0x7f, 0, 0, NULL);
+	}
+	if (OV_I(self, 0xcc) == 0) {
+		CLSamples_PlayCommentary(0x1b, -1, 0xff, 0, 0, NULL);
+		OV_I(self, 0xcc) = 1;
+	}
+}
+
+/* 0x00079490  ClassLib/Hud.cpp (inferred; thiscall)
+Creates the clock (seconds `seconds`) and, when the game may be quit or the results
+are shown, the "press start" prompt. */
+void CLHud_CreateClock(int self, float seconds)
+{
+	undefined4 desc[0xec];
+	char text[68];
+	int clock;
+
+	OV_F(self, 0x18) = seconds;
+	OV_F(self, 0x90) = seconds;
+	memset(desc, 0, sizeof(desc));
+	DESC_I(desc, 0x2ac) = 0;
+	DESC_F(desc, 0x258) = 0.0f;
+	DESC_I(desc, 0x264) = 0x7f;
+	DESC_I(desc, 0x268) = 0x7f;
+	DESC_I(desc, 0x278) = 0x7f;
+	DESC_I(desc, 0x26c) = 0x7f;
+	OV_I(self, 0x38) = 0;
+	OV_I(self, 8) = 0;
+	DESC_I(desc, 0x288) = 2;
+	DESC_I(desc, 0x28c) = 1;
+	DESC_I(desc, 0x298) = 8;
+	DESC_F(desc, 0x2a4) = -260.0f;
+	DESC_F(desc, 0x2a8) = 174.0f;
+	DESC_F(desc, 0x250) = 127.0f;
+	DESC_F(desc, 0x254) = 70.0f;
+	DESC_F(desc, 0x25c) = 127.0f;
+	DESC_I(desc, 0x44) = OV_I(self, 0x1c);
+	DESC_I(desc, 0x274) = 0;
+	DESC_I(desc, 0x270) = 0x46;
+	DESC_I(desc, 0x280) = 0;
+	DESC_I(desc, 0x27c) = 0;
+	sprintf(text, "%2.0f", (double)seconds);
+	FUN_0004a330((ushort *)((unsigned char *)desc + 0x48), (byte *)text);
+	DESC_U(desc, 0x290) = 0x8000;
+	clock = COverlay_Create((int *)desc);
+	OV_I(self, 0xd0) = clock;
+	if (DAT_002baeb8 != 0)
+		OV_S(clock, 0x54) = 1;
+	CLHud_SetClock(self, OV_F(self, 0x90), 0);
+	OV_I(self, 0xcc) = 0;
+	if ((DAT_002baea8 != 0 || DAT_002baeb8 != 0) && DAT_002ba6a4 == 0) {
+		DESC_I(desc, 0x44) = OV_I(self, 0x20);
+		DESC_F(desc, 0x2a4) = 0.0f;
+		DESC_F(desc, 0x2a8) = 194.0f;
+		DESC_I(desc, 0x2ac) = 0;
+		DESC_F(desc, 0x250) = 127.0f;
+		DESC_F(desc, 0x254) = 127.0f;
+		DESC_F(desc, 0x258) = 127.0f;
+		DESC_F(desc, 0x25c) = 127.0f;
+		DESC_S(desc, 0x24c) = 1;
+		if (DAT_002baea8 == 0)
+			DESC_U(desc, 0x248) = *(unsigned int *)(*(int *)(clu_language + 0x20) + 0x1b00);
+		else
+			DESC_U(desc, 0x248) = *(unsigned int *)(*(int *)(clu_language + 0x20) + 0x1260);
+		DESC_U(desc, 0x298) = DESC_U(desc, 0x298) | 4;
+		OV_I(self, 0xdc) = COverlay_Create((int *)desc);
+		return;
+	}
+	OV_I(self, 0xdc) = 0;
+}
+
+/* sets the scale animation of a descriptor: scale x, y and rotation start at 20 and
+shrink by 0.6 per frame to 1 */
+static void CLHud_DescZoomIn(undefined4 *desc)
+{
+	DESC_F(desc, 0x31c) = -0.6f;
+	DESC_F(desc, 0x324) = -0.6f;
+	DESC_F(desc, 0x32c) = -0.6f;
+	DESC_F(desc, 0x318) = 20.0f;
+	DESC_F(desc, 0x320) = 20.0f;
+	DESC_F(desc, 0x328) = 20.0f;
+	DESC_F(desc, 0x334) = 20.0f;
+	DESC_F(desc, 0x33c) = 20.0f;
+	DESC_F(desc, 0x344) = 20.0f;
+	DESC_F(desc, 0x330) = 1.0f;
+	DESC_F(desc, 0x338) = 1.0f;
+	DESC_F(desc, 0x340) = 1.0f;
+}
+
+/* sets the colour r, g, b of a descriptor from a character's colour */
+static void CLHud_DescCharacterColour(undefined4 *desc, int character)
+{
+	const unsigned char *rgb = (const unsigned char *)&clu_characters[character].colour;
+
+	DESC_F(desc, 0x250) = (float)rgb[0];
+	DESC_F(desc, 0x254) = (float)rgb[1];
+	DESC_F(desc, 0x258) = (float)rgb[2];
+}
+
+/* 0x000796c0  ClassLib/Hud.cpp (inferred; thiscall)
+Creates the score boxes: "vs" for team games, per player a box (portrait on the
+results screen), score line, CPU label, rank digits and name, and the per-player
+name markers and position markers. */
+void CLHud_CreateScoreBoxes(int self)
+{
+	undefined4 desc[0xec];
+	char name[36];
+	const unsigned char *rgb;
+	int *rank_slot;
+	int box;
+	int child;
+	int player;
+	int slot;
+	int results_index;
+	unsigned int box_y;
+	int k;
+	int text;
+
+	memset(desc, 0, sizeof(desc));
+	OV_I(self, 0xd0) = 0;
+	box_y = 0xc3070000; /* -135.0f */
+	if (DAT_002baebc == 0) {
+		OV_I(self, 0xd8) = 0;
+		OV_I(self, 0xd4) = 0;
+	} else {
+		clu_versus_state = 0;
+		DESC_I(desc, 0x288) = 0;
+		DESC_F(desc, 0x2a4) = 0.0f;
+		DESC_F(desc, 0x2a8) = -170.0f;
+		DESC_I(desc, 0x2ac) = 0;
+		DESC_F(desc, 0x250) = 127.0f;
+		DESC_F(desc, 0x254) = 127.0f;
+		DESC_F(desc, 0x258) = 127.0f;
+		DESC_F(desc, 0x25c) = 0.0f;
+		DESC_F(desc, 0x308) = 64.0f;
+		DESC_F(desc, 0x30c) = 64.0f;
+		DESC_I(desc, 0x28c) = 3;
+		DESC_I(desc, 0x260) = 2;
+		DESC_I(desc, 0x268) = 0;
+		DESC_I(desc, 0x264) = 0x7f;
+		DESC_I(desc, 0x37c) = 0;
+		CLHud_DescZoomIn(desc);
+		DESC_I(desc, 4) = FUN_0004bb30(0, "vs.bmp", 0, 0xdefa);
+		OV_I(self, 0xd4) = COverlay_Create((int *)desc);
+		OV_S(OV_I(self, 0xd4), 0x54) = 1;
+		DESC_S(desc, 0x24c) = 1;
+		DESC_S(desc, 0x24e) = 1;
+		DESC_I(desc, 0x288) = 2;
+		DESC_U(desc, 0x290) = 0x8000;
+		DESC_F(desc, 0x2b4) = -1.0f;
+		DESC_F(desc, 0x2b8) = -7.0f;
+		DESC_I(desc, 0x2bc) = 0;
+		DESC_F(desc, 0x250) = 127.0f;
+		DESC_F(desc, 0x254) = 127.0f;
+		DESC_F(desc, 0x258) = 127.0f;
+		DESC_F(desc, 0x25c) = 127.0f;
+		DESC_F(desc, 0x308) = 4.0f;
+		DESC_F(desc, 0x30c) = 18.0f;
+		DESC_I(desc, 0x28c) = 3;
+		DESC_I(desc, 0x260) = 2;
+		DESC_I(desc, 0x268) = 0;
+		DESC_I(desc, 0x264) = 0x7f;
+		DESC_I(desc, 0x37c) = 0;
+		CLHud_DescZoomIn(desc);
+		DESC_I(desc, 0x44) = clu_font_light;
+		DESC_F(desc, 0x348) = 0.33f;
+		DESC_U(desc, 0x248) = *(unsigned int *)(*(int *)(clu_language + 0x20) + 0x18c0);
+		OV_I(self, 0xd8) = COverlay_CreateChild(OV_I(self, 0xd4), desc);
+	}
+
+	results_index = 0;
+	rank_slot = (int *)(self + 0x110);
+	for (player = 0; player < DAT_002bae94; player++) {
+		memset(desc, 0, sizeof(desc));
+		OV_I(self, 0x28 + player * 4) = 0;
+		OV_I(self, 0x150 + player * 4) = 0;
+		DESC_I(desc, 0x288) = 0;
+		if (DAT_002baed0 != 0) {
+			DESC_F(desc, 8) = (float)(((double)clu_box_gap + (double)clu_box_gap + (double)clu_box_width) *
+							  (double)results_index -
+						  ((double)(DAT_002b9c68 - 1) * (double)clu_box_gap +
+						   (double)DAT_002b9c68 * (double)clu_box_width * (double)0.5f));
+			if (DAT_002b9c48[player] == 0)
+				results_index = results_index + 1;
+			box_y = 0xc2f00000; /* -120.0f */
+		} else {
+			if (DAT_002baebc != 0)
+				slot = DAT_002baed4[player * 10 + 9] + DAT_002baed4[player * 10 + 8] * 2;
+			else
+				slot = player;
+			DESC_F(desc, 8) = (float)((double)slot * (double)136.0f - (double)270.0f);
+		}
+		DESC_F(desc, 0x2a4) = DESC_F(desc, 8);
+		DESC_U(desc, 0x2a8) = box_y;
+		DESC_U(desc, 0xc) = box_y;
+		DESC_I(desc, 0x28c) = DESC_I(desc, 0x28c) | 4;
+		DESC_I(desc, 0x2ac) = 0;
+		DESC_I(desc, 0x10) = 0;
+		if (DAT_002baebc != 0)
+			DESC_I(desc, 0x28c) = 4;
+		DESC_U(desc, 0x290) = 0x8000;
+		rgb = (const unsigned char *)&clu_characters[DAT_002baed4[player * 10]].colour;
+		if (DAT_002baed0 != 0) {
+			DESC_I(desc, 4) = FUN_0004bb30(0, (char *)clu_characters[DAT_002baed4[player * 10]].portrait, 0, 0xdefa);
+			DESC_F(desc, 0x250) = 127.0f;
+			DESC_F(desc, 0x254) = 127.0f;
+			DESC_F(desc, 0x258) = 127.0f;
+		} else {
+			DESC_I(desc, 4) = FUN_0004bb30(0, "score4.tga", 0, 0xdefa);
+			DESC_F(desc, 0x250) = (float)(rgb[0] / 3);
+			DESC_F(desc, 0x254) = (float)(rgb[1] / 3);
+			DESC_F(desc, 0x258) = (float)(rgb[2] / 3);
+		}
+		DESC_F(desc, 0x25c) = 127.0f;
+		box = COverlay_Create((int *)desc);
+		OV_I(self, 0xf0 + player * 4) = box;
+		OV_S(box, 0x54) = (short)DAT_002baeb8;
+
+		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+		DESC_F(desc, 0x25c) = 127.0f;
+		DESC_I(desc, 4) = FUN_0004bb30(0, "scoreline.tga", 0, 0xdefa);
+		OV_I(self, 0x100 + player * 4) = COverlay_CreateChild(box, desc);
+
+		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+		DESC_U(desc, 0x290) = 0x8000;
+		DESC_F(desc, 0x25c) = 127.0f;
+		DESC_I(desc, 4) = FUN_0004bb30(0, "cpu.tga", 0, 0xdefa);
+		child = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
+		OV_I(self, 0xe0 + player * 4) = child;
+		OV_S(child, 0x54) = (short)DAT_002baed8[player * 10];
+
+		DESC_U(desc, 0x290) = 0;
+		for (k = 0; k < 4; k++) {
+			CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+			DESC_F(desc, 0x25c) = 127.0f;
+			sprintf(name, "score%d.tga", k + 1);
+			DESC_I(desc, 4) = FUN_0004bb30(0, name, 0, 0xdefa);
+			child = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
+			*rank_slot = child;
+			rank_slot++;
+			OV_S(child, 0x54) = 1;
+		}
+
+		memset(desc, 0, sizeof(desc));
+		DESC_I(desc, 0x44) = clu_font_light;
+		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+		DESC_I(desc, 0x288) = 2;
+		DESC_F(desc, 0x2b4) = 95.0f;
+		DESC_F(desc, 0x2b8) = 25.0f;
+		DESC_F(desc, 0x25c) = 0.0f;
+		DESC_S(desc, 0x24c) = 1;
+		DESC_I(desc, 0x30c) = 0;
+		DESC_F(desc, 0x40) = -6.0f;
+		DESC_U(desc, 0x248) = *(unsigned int *)(*(int *)(clu_language + 0x20) + 0xca0);
+		DESC_U(desc, 0x290) = 0x8000;
+		OV_I(self, 0x160 + player * 4) = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
+	}
+
+	for (player = 0, text = 0x1900; text < 0x1940; player++, text += 0x10) {
+		memset(desc, 0, sizeof(desc));
+		DESC_I(desc, 0x268) = 0;
+		DESC_I(desc, 0x44) = OV_I(self, 0x20);
+		DESC_I(desc, 0x288) = 2;
+		DESC_I(desc, 0x28c) = 1;
+		DESC_I(desc, 0x260) = -3;
+		DESC_I(desc, 0x264) = 0x7f;
+		DESC_S(desc, 0x24c) = 1;
+		DESC_U(desc, 0x248) = *(unsigned int *)((DAT_002baed4[player * 10] + 0x143) * 0x10 +
+							*(int *)(clu_language + 0x20));
+		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+		DESC_F(desc, 0x25c) = 127.0f;
+		DESC_F(desc, 0x40) = -10.0f;
+		DESC_U(desc, 0x290) = 0x8000;
+		child = COverlay_Create((int *)desc);
+		OV_I(self, 0x170 + player * 4) = child;
+		OV_S(child, 0x54) = 1;
+		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+		DESC_F(desc, 0x25c) = 127.0f;
+		DESC_U(desc, 0x248) = *(unsigned int *)(text + *(int *)(clu_language + 0x20));
+		DESC_U(desc, 0x290) = 0x8000;
+		child = COverlay_Create((int *)desc);
+		OV_I(self, 0x180 + player * 4) = child;
+		OV_S(child, 0x54) = 1;
+		OV_U(OV_I(self, 0x180 + player * 4), 0x2f4) = OV_U(OV_I(self, 0x180 + player * 4), 0x2f4) | 4;
+		OV_F(self, 0xb8 + player * 4) = 0.0f;
+	}
+}

@@ -56,3 +56,6 @@ int DAT_002baed0;                 /* core: game over */
 int DAT_002baeb8;                 /* core: results shown */
 int DAT_002b9c48[4];              /* core */
 float DAT_002ed350[16];           /* per-player world positions (bumpercars / classlib_fx data) */
+int DAT_002baebc;                 /* core: team game */
+int DAT_002ba6a4;                 /* core */
+int DAT_002b9c68;                 /* core */

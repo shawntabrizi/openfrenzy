@@ -112,3 +112,6 @@
 00078cb0 void CLHud_Create(undefined4 context);
 00078e00 void CLHud_UpdatePrompts(int self);
 00078fb0 void CLHud_UpdateMarkers(int self);
+000792f0 void CLHud_SetClock(int self, float seconds, int sound);
+00079490 void CLHud_CreateClock(int self, float seconds);
+000796c0 void CLHud_CreateScoreBoxes(int self);
