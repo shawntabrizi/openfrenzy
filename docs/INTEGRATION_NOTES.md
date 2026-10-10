@@ -27,6 +27,10 @@ before you fix the build, and remove an item when it is fixed.
   pools load through them without the pass). Needs an architect fix in the toolchain; a local
   workaround (not tested) is to not build pointer structs from `adrp` values (for vfs: a
   non-const `functions`, so it is loaded from memory).
+  Integration round 1: asm_convert.py now zero-extends the low half of `orr xD, xA, xB, lsl #32`
+  when xA comes from adrp/add in the same block (1 site in the tree: vfs_fopen; the pc=0 crash
+  is gone). Other 64-bit uses of adrp results (64-bit stores, compares, `lsr #32`) are not
+  handled; LLVM's ILP32 known-bits for ADRP/ADDlow assume the upper 32 bits are zero.
 
 ## Shared storage
 
@@ -49,11 +53,24 @@ before you fix the build, and remove an item when it is fixed.
 - core_modes_a: `CGameMode_GameWinner_ctor`, `CGameMode_GameStats_*` undeclared.
 - classlib_ui `CIntroCam.c`: `ParseMap_*` undeclared.
 
-## Boot path
+## Boot path (integration round 1, 2026-10-10)
 
-- `bkRun` 0x4e690 (bkernel) is a stub, so nothing runs past the start of core_init.
-- With a throwaway bkRun, boot faults in `CGameMode_Root_CreateDebugMenu`, because `g_Games[k]`
-  is NULL while the 13 game constructors are stubs.
+- bkRun is on. A clean build boots, loads packages from the disc image, shows the title
+  screen, main menu, character select and the board map, and starts Hopper (verified with
+  frame dumps, see below). ctest guest_guest_runs sets OPENFRENZY_BOOT_ONLY=1.
+- Automated runs: `OPENFRENZY_DEBUG_TEST_INPUT="START@8000,A@11000,..."` (pad 0 presses),
+  `OPENFRENZY_DEBUG_SCREENSHOT_EVERY=300 OPENFRENZY_DEBUG_SCREENSHOT_DIRECTORY=<abs dir>`
+  (BMP frame dumps; needs a real window, so run outside the sandbox),
+  `OPENFRENZY_BKLOG=1` (Babel log to stderr). The host prints a guest backtrace on a fault;
+  symbolize with `llvm-symbolizer --obj=build/openfrenzy_guest.elf 0x<addr>`.
+- `scripts/check_split_globals.py build/openfrenzy_guest.elf` lists DAT_ names whose storage
+  is split from the owner's data block. Remaining: of_co_data2 names (carryon_b has its own
+  strong copies) and DAT_002f27d0 (of_clf_ray_bss overlaps of_chl_bss by 4 bytes).
+- File-scope asm uses Mach-O names: asm_convert.py strips one leading underscore. Write the C
+  name `_DAT_x` as `__DAT_x`. The core and classlib_ui generators do; the generators of
+  hopper, charlib, classlib_fx, bumpercars_a and meta_a still write `_DAT_x` (= C `DAT_x`).
+- Tool changes (port/macos/tools/*.py, the pass) are not build dependencies: after changing
+  one, delete the build directory.
 
 ## Library identifications
 
