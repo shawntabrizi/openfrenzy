@@ -974,15 +974,6 @@ void CGameMode_MouseWhack_Exit(void *self)
 	bkPrintf("Free3DBuffers = %d\n", (int)caps.dwFree3DBuffers);
 }
 
-/* out = a * b with the aligned (SIMD) or the plain multiply, as the original chose */
-static void mw_MatrixMultiply(float *out, const float *a, const float *b)
-{
-	if ((((uintptr_t)out | (uintptr_t)a | (uintptr_t)b) & 0xf) == 0)
-		bmMatrixMultiplyCopy(out, a, b);
-	else
-		bmMatrixMultiply(out, a, b);
-}
-
 /* 0x0016fe50  (gap): draw: the arena sets, the variation's props (burger stands, traps),
 the players and their weapons, the bugs, bullets, splats, shadows, HUD and fades */
 void CGameMode_MouseWhack_Draw(void *self, int top)

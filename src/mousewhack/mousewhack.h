@@ -180,6 +180,22 @@ static inline float mw_bitsf(unsigned int bits)
 	return value;
 }
 
+/* out = a * b with the aligned (SIMD) or the plain bKernel multiply, as the original chose
+by the alignment of the three matrices (both give the same product) */
+static inline void mw_MatrixMultiply(float *out, const float *a, const float *b)
+{
+	if ((((uintptr_t)out | (uintptr_t)a | (uintptr_t)b) & 0xf) == 0)
+		bmMatrixMultiplyCopy(out, a, b);
+	else
+		bmMatrixMultiply(out, a, b);
+}
+
+/* foxhunt 0x001334f0: the heading of a direction (dx, -dz) */
+#define mw_Heading(dx, dz) ((float (*)(float, float))FUN_001334f0)((dx), (dz))
+
+/* charlib 0x000b3ff0: the ground height under `pos` (x87 float result) */
+#define mw_GroundProbe(pos, radius) CLColl_GroundProbe((pos), (radius), NULL, NULL, 0)
+
 extern const char mw_GameModeFile[];   /* "C:\BlitzParty\Game\Src\MouseWhack\CGameMode_MouseWhack.cpp" */
 
 /* ======================================================================== other modules' globals */
