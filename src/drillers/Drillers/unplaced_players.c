@@ -269,7 +269,9 @@ void DrPlayers_UpdateLoops(void *self)
 			pos[2] = (float)DR_CELL * fz;
 			/* the original leaves a stack word (the object pointer) in w */
 			pos[3] = 1.0f;
-			DrFxGroup_Start(&DR_FX->groups[j], pos, owner);
+			/* the burst and the rumble are the victim's (the original pushes the loop
+			   counter j, 0x00116ec1) */
+			DrFxGroup_Start(&DR_FX->groups[j], pos, j);
 			baAddExtraItem(DR_FX->scorch, (double)pos[0], 15.0, (double)pos[2]);
 			bsPlaySample(DR_SAMPLE(0x002aa9c8u), 200, 0, 0, 0);
 		}

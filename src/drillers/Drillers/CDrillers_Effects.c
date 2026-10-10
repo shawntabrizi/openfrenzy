@@ -837,7 +837,7 @@ void DrEffects_CreateGen(DrEffects *self)
 }
 
 /* 0x00112980  Drillers (gap; CDrillers_Effects.cpp inferred)
-A floating score ("1", "3", "5" or "x2" by type) at x, 336, z in the colour of the player's
+A floating score ("1", "3", "5" or "x2" by type) at x, 340, z in the colour of the player's
 character. */
 void DrFx_AddScoreFloaty(float x, float z, char type, char player)
 {
@@ -860,7 +860,7 @@ void DrFx_AddScoreFloaty(float x, float z, char type, char player)
 		break;
 	}
 	character = DAT_002baed4[player * 10];
-	baAddExtraItem(DR_VAR(struct BExtraSystem *, 0x003014e8u), DR_FONT_FLOATY, (double)x, 336.0,
+	baAddExtraItem(DR_VAR(struct BExtraSystem *, 0x003014e8u), DR_FONT_FLOATY, (double)x, 340.0,
 		(double)z, (int)DAT_00290718[character * 0x60], (int)DAT_00290718[character * 0x60 + 1],
 		(int)DAT_00290718[character * 0x60 + 2], text);
 }
