@@ -93,3 +93,4 @@
 00075c10 void CLPause_LayoutFrame(int self);
 00076110 void CLPause_ColourItems(int self);
 000762e0 void CLPause_DrawMessages(int self);
+00076700 void CLPause_Begin(int self, int player);

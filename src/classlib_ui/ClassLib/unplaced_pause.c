@@ -725,3 +725,237 @@ void CLPause_DrawMessages(int self)
 	FUN_00046d00(3);
 	FUN_00046d00(7);
 }
+
+/* ---------- opening the pause menu */
+
+/* 0x0029096c  character colours (4 bytes r, g, b, 0 per character) */
+#define clu_character_rgb CLU_ARR(unsigned char, 0x0029096c)
+/* 0x00290984 .. 0x00290998  layout: title y 4, window y 30, first line y 14, line step 40,
+title x 264, window height base 48 */
+#define clu_title_y CLU_VAR(float, 0x00290984)
+#define clu_window_y CLU_VAR(float, 0x00290988)
+#define clu_lines_y CLU_VAR(float, 0x0029098c)
+#define clu_line_step CLU_VAR(float, 0x00290990)
+#define clu_window_base CLU_VAR(float, 0x00290998)
+
+/* overlay descriptor fields (desc is the 0x3b0-byte descriptor of COverlay_Create*) */
+#define DESC_I(d, off) (*(int *)((unsigned char *)(d) + (off)))
+#define DESC_U(d, off) (*(unsigned int *)((unsigned char *)(d) + (off)))
+#define DESC_F(d, off) (*(float *)((unsigned char *)(d) + (off)))
+#define DESC_S(d, off) (*(short *)((unsigned char *)(d) + (off)))
+
+extern int DAT_002bae68; /* core: effects volume */
+extern int DAT_002bae6c; /* core: music volume */
+
+/* 0x00076700  ClassLib (pause menu; thiscall)
+Opens the pause menu for player `player`: pauses the sound, makes the menu input map,
+builds the window (frame, volume bars, title and lines) and hides the overlays marked
+to hide while paused. */
+void CLPause_Begin(int self, int player)
+{
+	undefined4 desc[0xec];
+	undefined4 line[0xec];
+	char name[64];
+	int character;
+	int i;
+	int node;
+
+	memset(desc, 0, sizeof(desc));
+	memset(line, 0, sizeof(line));
+	CLU_DebugPrintf("Paused!\n");
+	clu_menu_track = clu_music_track;
+	CLPause_PauseSound();
+	FUN_0002b8f0(player);
+	FUN_00080230(CLU_ARR(int, 0x002ed324)); /* the rumble manager (CRumble.cpp) stops */
+	OV_I(self, 0x7c) = 0;
+	OV_I(self, 0x6c) = 1;
+	OV_I(self, 0x60) = 0;
+	OV_I(self, 0x64) = 0;
+	FUN_00054800(1);
+	OV_I(self, 0x1c) = (int)FUN_000488c0(5);
+	OV_I(self, 0x20) = FUN_00048a10((int *)OV_I(self, 0x1c), "y", 3, 0, 0, 0, 0);
+	OV_I(self, 0x24) = FUN_00048a10((int *)OV_I(self, 0x1c), "x", 3, 0, 0, 0, 0);
+	OV_I(self, 0x28) = FUN_00048a10((int *)OV_I(self, 0x1c), "select", 1, 1, 0, 0, 0);
+	OV_I(self, 0x2c) = FUN_00048a10((int *)OV_I(self, 0x1c), "back", 1, 1, 0, 0, 0);
+	OV_I(self, 0x30) = FUN_00048a10((int *)OV_I(self, 0x1c), "cheat", 1, 0, 0, 0, 0);
+	FUN_00048b20(OV_I(self, 0x20), DAT_002baee0[player * 10] | 0xbe, DAT_002baee0[player * 10] | 0xbd);
+	FUN_00048b20(OV_I(self, 0x24), DAT_002baee0[player * 10] | 0xc0, DAT_002baee0[player * 10] | 0xbf);
+	FUN_00048b20(OV_I(self, 0x20), DAT_002baee0[player * 10] | 0xba, 0);
+	FUN_00048b20(OV_I(self, 0x24), DAT_002baee0[player * 10] | 0xb9, 0);
+	FUN_00048b20(OV_I(self, 0x28), DAT_002baee0[player * 10] | 0xc5, 0);
+	FUN_00048b20(OV_I(self, 0x28), DAT_002baee0[player * 10] | 0xc1, 0);
+	FUN_00048b20(OV_I(self, 0x2c), DAT_002baee0[player * 10] | 0xc6, 0);
+	FUN_00048b20(OV_I(self, 0x2c), DAT_002baee0[player * 10] | 0xc2, 0);
+	FUN_00048b20(OV_I(self, 0x30), DAT_002baee0[player * 10] | 0xcb, 0);
+	FUN_00048d40(OV_I(self, 0x28));
+	FUN_00048d40(OV_I(self, 0x2c));
+	OV_I(self, 0x68) = player;
+
+	/* the window: an untextured image in the pausing player's colour */
+	memset(desc, 0, sizeof(desc));
+	character = DAT_002baed4[player * 10];
+	DESC_F(desc, 0x250) = (float)clu_character_rgb[character * 4];
+	DESC_F(desc, 0x2a8) = clu_window_y;
+	DESC_F(desc, 0x254) = (float)clu_character_rgb[character * 4 + 1];
+	DESC_I(desc, 0x288) = 0;
+	DESC_I(desc, 4) = 0;
+	DESC_F(desc, 0x258) = (float)clu_character_rgb[character * 4 + 2];
+	DESC_I(desc, 0x308) = 0;
+	DESC_I(desc, 0x30c) = 0;
+	DESC_U(desc, 0x2a4) = 0x80000000; /* -0.0f */
+	DESC_I(desc, 0x2ac) = 0;
+	DESC_I(desc, 0x25c) = 0;
+	OV_I(self, 0x84) = COverlay_Create((int *)desc);
+
+	/* the frame: four corners, four edges */
+	for (i = 0; i < 8; i++) {
+		if (i < 4)
+			sprintf(name, "corner_pause%d.bmp", DAT_002baed4[player * 10] + 1);
+		else
+			sprintf(name, "edge_pause%d.bmp", DAT_002baed4[player * 10] + 1);
+		DESC_I(desc, 4) = FUN_0004bb30(0, name, 0, 0xdefa);
+		DESC_F(desc, 0x250) = 127.0f;
+		DESC_F(desc, 0x254) = 127.0f;
+		DESC_F(desc, 0x258) = 127.0f;
+		DESC_F(desc, 0x25c) = 100.0f;
+		DESC_I(desc, 0x308) = 0;
+		OV_I(self, 0x88 + i * 4) = COverlay_CreateChild(OV_I(self, 0x84), desc);
+	}
+
+	/* the music and effects volume bars */
+	memset(desc, 0, sizeof(desc));
+	DESC_F(desc, 0x2b8) = (float)((double)clu_line_step + (double)clu_lines_y + (double)5.0f);
+	DESC_U(desc, 0x290) = 0x8000;
+	DESC_I(desc, 0x288) = 0;
+	DESC_F(desc, 0x2b4) = 224.0f;
+	DESC_I(desc, 0x2bc) = 0;
+	DESC_F(desc, 0x250) = 255.0f;
+	DESC_F(desc, 0x254) = 255.0f;
+	DESC_F(desc, 0x258) = 255.0f;
+	DESC_I(desc, 0x25c) = 0;
+	DESC_I(desc, 4) = 0;
+	DESC_F(desc, 0x308) = 50.0f;
+	DESC_F(desc, 0x30c) = 15.0f;
+	DESC_I(desc, 0x378) = (DAT_002bae6c * 0xb) / 256;
+	OV_I(self, 0xdc) = COverlay_CreateChild(OV_I(self, 0x84), desc);
+	OV_U(OV_I(self, 0xdc), 0x20) = (uint32_t)FUN_00074c10;
+	memset(desc, 0, sizeof(desc));
+	DESC_I(desc, 0x2bc) = 0;
+	DESC_I(desc, 0x25c) = 0;
+	DESC_F(desc, 0x2b8) = (float)((double)clu_line_step + (double)clu_line_step + (double)clu_lines_y +
+				      (double)5.0f);
+	DESC_I(desc, 0x378) = (DAT_002bae68 * 0xb) / 256;
+	DESC_U(desc, 0x290) = 0x8000;
+	DESC_I(desc, 0x288) = 0;
+	DESC_F(desc, 0x2b4) = 224.0f;
+	DESC_F(desc, 0x250) = 255.0f;
+	DESC_F(desc, 0x254) = 255.0f;
+	DESC_F(desc, 0x258) = 255.0f;
+	DESC_I(desc, 4) = 0;
+	DESC_F(desc, 0x308) = 50.0f;
+	DESC_F(desc, 0x30c) = 15.0f;
+	OV_I(self, 0xd8) = COverlay_CreateChild(OV_I(self, 0x84), desc);
+	OV_U(OV_I(self, 0xd8), 0x20) = (uint32_t)FUN_00074c10;
+
+	/* the title */
+	memset(desc, 0, sizeof(desc));
+	DESC_I(desc, 0x44) = OV_I(self, 0x80);
+	DESC_U(desc, 0x290) = 0x8000;
+	DESC_I(desc, 0x288) = 2;
+	DESC_F(desc, 0x2b4) = clu_title_x;
+	DESC_F(desc, 0x2b8) = clu_title_y;
+	DESC_I(desc, 0x2bc) = 0;
+	DESC_S(desc, 0x24c) = 2;
+	DESC_F(desc, 0x250) = (float)clu_item_selected_rgba[0];
+	DESC_I(desc, 0x25c) = 0;
+	DESC_F(desc, 0x254) = (float)clu_item_selected_rgba[1];
+	DESC_F(desc, 0x258) = (float)clu_item_selected_rgba[2];
+	CL_WStrCpy((unsigned char *)desc + 0x48, CL_TEXT(0x60));
+	OV_I(self, 0xbc) = COverlay_CreateChild(OV_I(self, 0x84), desc);
+
+	/* the six menu lines */
+	memset(desc, 0, sizeof(desc));
+	DESC_I(desc, 0x2bc) = 0;
+	DESC_I(desc, 0x44) = OV_I(self, 0x80);
+	DESC_F(desc, 0x250) = (float)clu_item_rgba[0];
+	DESC_S(desc, 0x24c) = 0;
+	DESC_I(desc, 0x25c) = 0;
+	DESC_F(desc, 0x254) = (float)clu_item_rgba[1];
+	DESC_I(desc, 0x288) = 2;
+	DESC_F(desc, 0x2b4) = 4.0f;
+	DESC_F(desc, 0x308) = 440.0f;
+	DESC_U(desc, 0x290) = 0x18000;
+	DESC_F(desc, 0x258) = (float)clu_item_rgba[2];
+	DESC_F(desc, 0x2b8) = (float)((double)clu_line_step + (double)clu_lines_y);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(0xa0));
+	OV_I(self, 0xc0) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_line_step + (double)clu_line_step + (double)clu_lines_y);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(0x70));
+	OV_I(self, 0xc4) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_line_step * (double)3.0f + (double)clu_lines_y);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(0x1a40));
+	OV_I(self, 200) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_line_step * (double)4.0f + (double)clu_lines_y);
+	memcpy(line, desc, sizeof(line));
+	swprintf((wchar_t *)((unsigned char *)line + 0x48), L"%s %s", CL_TEXT(0xc0),
+		 CL_TEXT((DAT_002baed4[player * 10] + 0x149) * 0x10));
+	OV_I(self, 0xcc) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_line_step * (double)5.0f + (double)clu_lines_y);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(0x30));
+	OV_I(self, 0xd0) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_line_step * (double)6.0f + (double)clu_lines_y);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(0x1280));
+	OV_I(self, 0xd4) = COverlay_CreateChild(OV_I(self, 0x84), line);
+
+	/* the title page lines (page 5): heading and the button help */
+	DESC_F(desc, 0x2b8) = (float)((double)clu_lines_y + (double)10.0f);
+	DESC_F(desc, 0x250) = (float)clu_item_selected_rgba[0];
+	DESC_I(desc, 0x3c) = 1;
+	DESC_I(desc, 0x25c) = 0;
+	DESC_F(desc, 0x254) = (float)clu_item_selected_rgba[1];
+	DESC_F(desc, 0x258) = (float)clu_item_selected_rgba[2];
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(0x1240));
+	OV_I(self, 0xa8) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_lines_y + (double)30.0f);
+	DESC_F(desc, 0x2b4) = (float)((double)DESC_F(desc, 0x2b4) + (double)20.0f);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(OV_I(self, 0xc) * 0x10));
+	OV_I(self, 0xac) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_lines_y + (double)130.0f);
+	DESC_F(desc, 0x2b4) = (float)((double)DESC_F(desc, 0x2b4) - (double)20.0f);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(0x1250));
+	OV_I(self, 0xb0) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_lines_y + (double)150.0f);
+	DESC_F(desc, 0x2b4) = (float)((double)DESC_F(desc, 0x2b4) + (double)20.0f);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(OV_I(self, 0x14) * 0x10));
+	OV_I(self, 0xb4) = COverlay_CreateChild(OV_I(self, 0x84), line);
+	DESC_F(desc, 0x2b8) = (float)((double)clu_lines_y + (double)230.0f);
+	memcpy(line, desc, sizeof(line));
+	CL_WStrCpy((unsigned char *)line + 0x48, CL_TEXT(OV_I(self, 0x10) * 0x10));
+	OV_I(self, 0xb8) = COverlay_CreateChild(OV_I(self, 0x84), line);
+
+	OV_I(self, 0x5c) = 1;
+	for (node = (int)CLList_Next((unsigned int *)clu_overlay_root, NULL); node != 0;
+	     node = (int)CLList_Next((unsigned int *)clu_overlay_root, (unsigned int *)node)) {
+		if ((*(unsigned char *)(node + 0x2e4) & 4) != 0) {
+			*(short *)(node + 0x46) = *(short *)(node + 0x44);
+			*(short *)(node + 0x44) = 1;
+		}
+	}
+	OV_I(self, 0x74) = 6;
+	OV_I(self, 0) = 0;
+	OV_F(self, 4) = 268.0f;
+	OV_F(self, 8) = (float)((double)((DAT_002baea8 != 0) + 5) * (double)clu_line_step + (double)clu_window_base);
+	CLPause_LayoutFrame(self);
+	OV_I(self, 0x70) = 1;
+	CLList_Remove((int *)clu_overlay_root, (int *)(OV_I(self, 0x84) + 0x10));
+	CLList_Insert((int *)clu_overlay_root, (int *)(OV_I(self, 0x84) + 0x10), 1);
+}

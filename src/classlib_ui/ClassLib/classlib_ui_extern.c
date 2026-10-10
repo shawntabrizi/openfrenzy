@@ -51,3 +51,4 @@ unsigned short DAT_002ba7a8[0x88]; /* core */
 int DAT_002ba99c;                 /* core */
 int DAT_00284408;                 /* core */
 int DAT_002db810;                 /* engine_misc */
+int DAT_002bae68;                 /* core: effects volume */
