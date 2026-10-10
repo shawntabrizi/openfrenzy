@@ -230,5 +230,6 @@ add_executable(openfrenzy_guest ${_game_sources} "${GEN}/of_crt_init.c"
   "${SRC}/runtime/of_boot.c" $<TARGET_OBJECTS:game_stubs> $<TARGET_OBJECTS:guest_runtime>)
 add_dependencies(openfrenzy_guest guest_runtime game_decls guest_headers)
 target_compile_options(openfrenzy_guest PRIVATE ${GAME_FLAGS})
-target_link_libraries(openfrenzy_guest PRIVATE ${_link_libs})
+# Whole archive: a weak stand-in in game code must not keep a real platform member out of the link.
+target_link_libraries(openfrenzy_guest PRIVATE "-whole-archive" ofplatform "-no-whole-archive" guestc)
 set_target_properties(openfrenzy_guest PROPERTIES SUFFIX ".elf" LINK_DEPENDS "${OPENFRENZY_GUEST_LD_SCRIPT}")
