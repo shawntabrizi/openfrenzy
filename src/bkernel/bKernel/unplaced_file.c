@@ -38,7 +38,7 @@ void *bkLoadFile(struct bkPackage *package, const char *name, void *buffer, uint
 bkOpenFile: opens a file for reading; 1 and *file on success. */
 int bkOpenFile(const char *name, FILE **file)
 {
-	FILE *opened = fopen(name, "rb");
+	FILE *opened = bkFopen(name, "rb");
 
 	if (opened != NULL)
 	{

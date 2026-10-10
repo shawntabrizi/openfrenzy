@@ -48,7 +48,7 @@ bkLogFile *bkCreateLogFile(bkLogFile *log, const char *name, uint flags)
 	log->flags = flags;
 	if (log->path[0] != '\0' && (flags & BK_LOG_TRUNCATE) != 0)
 	{
-		file = fopen(log->path, "w");
+		file = bkFopen(log->path, "w");
 		if (file != NULL)
 			fclose(file);
 	}
@@ -75,7 +75,7 @@ static void bkPrintOutput(void)
 		OutputDebugStringA(bkPrintBuffer);
 	if (bkCurrentLog->path[0] != '\0')
 	{
-		file = fopen(bkCurrentLog->path, "a");
+		file = bkFopen(bkCurrentLog->path, "a");
 		if (file != NULL)
 		{
 			fprintf(file, "%s", bkPrintBuffer);

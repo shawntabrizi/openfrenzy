@@ -468,7 +468,7 @@ int bkCacheOpenFile(const char *name, FILE **file, char *path)
 	if (index == -1)
 		return 0;
 	sprintf(cached, "z:\\%08X_%08X.___", DAT_002d15e8[index].crc, DAT_002d15e8[index].group);
-	opened = fopen(cached, "rb");
+	opened = bkFopen(cached, "rb");
 	if (opened == NULL)
 		return 0;
 	if (path != NULL)
@@ -509,7 +509,7 @@ void bInitCache(void)
 	DAT_002d15dc = 0;
 	DAT_002d15e0 = NULL;
 	bkCacheBuildFileList();
-	test = fopen("d:\\_T_E_S_T.___", "wb");
+	test = bkFopen("d:\\_T_E_S_T.___", "wb");
 	if (test == NULL)
 		DAT_002d73ac = 1;
 	else

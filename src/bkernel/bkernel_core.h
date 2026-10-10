@@ -18,32 +18,18 @@ its original address in a comment.
 #pragma clang diagnostic ignored "-Wduplicate-decl-specifier"
 #include "xtl.h"
 #include "xkernel.h"
-#if __has_include("vfs_files.h")
 #include "vfs_files.h"
-#else
-/* vfs module (src/vfs/vfs_files.h, not committed yet): Win32 GetFileInformationByHandle,
-BY_HANDLE_FILE_INFORMATION (0x34 bytes) */
-struct vfs_by_handle_file_information
-{
-	unsigned long dwFileAttributes;
-	unsigned long ftCreationTime[2];
-	unsigned long ftLastAccessTime[2];
-	unsigned long ftLastWriteTime[2];
-	unsigned long dwVolumeSerialNumber;
-	unsigned long nFileSizeHigh;
-	unsigned long nFileSizeLow;
-	unsigned long nNumberOfLinks;
-	unsigned long nFileIndexHigh;
-	unsigned long nFileIndexLow;
-};
-int __stdcall GetFileInformationByHandle(void *file, struct vfs_by_handle_file_information *information);
-#endif
 /* input module (src/input/input_xpp.h) */
 DWORD WINAPI XGetDevices(PXPP_DEVICE_TYPE device_type);
 #pragma clang diagnostic pop
 #include <float.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+/* bkFopen: fopen by Xbox path (d:\ on the disc image, other drives under the save root).
+The game flags define HALO_LINUX_PLATFORM_LAYER, so <stdio.h>'s fopen is the C library's,
+which knows no Xbox paths; the vfs module's vfs_fopen does. */
+#define bkFopen(path, mode) vfs_fopen(path, mode)
 
 /* BK_ALIAS(name, target, offset): makes name a global symbol at target + offset (Mach-O
 assembly from llc; asm_convert.py turns it into ELF). target must be a defined (not common)
