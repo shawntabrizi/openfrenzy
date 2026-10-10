@@ -22,6 +22,7 @@ Conventions carried over from the Xbox:
 */
 
 #include "xgpu.h"
+#include "d3d8_ff.h"
 #include "sdl_platform.h"
 #include "halo_ui_pointer.h"
 #include "port_config.h"
@@ -321,6 +322,10 @@ struct vertex_shader_object
 {
 	unsigned long signature;
 	unsigned long id;
+	/* nonzero: a fixed-function vertex of this FVF code (d3d8_ff.c), whose
+	elements follow from the code and which has no instructions */
+	DWORD fvf;
+	struct vertex_shader_object *next_fvf;
 	DWORD *instructions;
 	unsigned long instruction_count;
 	struct vertex_element elements[XGPU_VERTEX_ATTRIBUTE_COUNT];
@@ -398,6 +403,10 @@ struct program_entry
 	constants_serial at their last upload */
 	GLint model_lights;
 	unsigned long long model_lights_serial;
+	/* the fixed-function uniforms (d3d8_ff.h ff[]), and ff_uniforms_serial
+	at their last upload */
+	GLint ff;
+	unsigned long ff_serial;
 
 	/* the vertex constants c[0..constant_count) the program uses; with
 	consecutive locations, a changed range is uploaded by itself */
@@ -607,6 +616,17 @@ struct gl_device
 	unsigned long next_vertex_shader_id;
 	BOOL gl_ready;
 	BOOL created;
+
+	/* a pixel shader program is set (SetPixelShaderProgram); without one the
+	texture stage states are the pixel shader (d3d8_ff_combiners) */
+	BOOL pixel_shader_program;
+	/* the fixed-function vertices made for each FVF code used */
+	struct vertex_shader_object *fvf_objects;
+	/* the last fence InsertFence handed out */
+	DWORD fence;
+	/* DrawVerticesUP: stream 0 is the caller's memory (streamed, never
+	mirrored: it may be the stack) */
+	const void *user_stream;
 };
 
 static struct gl_device device;
@@ -1836,8 +1856,27 @@ HRESULT WINAPI Direct3D_CreateDevice(UINT adapter, D3DDEVTYPE device_type, void 
 		D3D__RenderState[D3DRS_STENCILFAIL] = D3DSTENCILOP_KEEP;
 		D3D__RenderState[D3DRS_STENCILZFAIL] = D3DSTENCILOP_KEEP;
 		D3D__RenderState[D3DRS_STENCILPASS] = D3DSTENCILOP_KEEP;
+		/* the fixed-function defaults (Direct3D 8's): lighting on, vertex
+		colors as the diffuse and specular material, stage 0 modulating its
+		texture by the diffuse color, the other stages off */
+		D3D__RenderState[D3DRS_LIGHTING] = TRUE;
+		D3D__RenderState[D3DRS_COLORVERTEX] = TRUE;
+		D3D__RenderState[D3DRS_DIFFUSEMATERIALSOURCE] = D3DMCS_COLOR1;
+		D3D__RenderState[D3DRS_SPECULARMATERIALSOURCE] = D3DMCS_COLOR2;
+		D3D__RenderState[D3DRS_AMBIENTMATERIALSOURCE] = D3DMCS_MATERIAL;
+		D3D__RenderState[D3DRS_EMISSIVEMATERIALSOURCE] = D3DMCS_MATERIAL;
+		D3D__RenderState[D3DRS_TEXTUREFACTOR] = 0xffffffff;
+		D3D__RenderState[D3DRS_SHADEMODE] = 0x1d01; /* D3DSHADE_GOURAUD (GL_SMOOTH) */
 		for (index = 0; index < D3DTSS_MAXSTAGES; index++)
 		{
+			D3D__TextureState[index][D3DTSS_COLOROP] = index ? D3DTOP_DISABLE : D3DTOP_MODULATE;
+			D3D__TextureState[index][D3DTSS_COLORARG1] = D3DTA_TEXTURE;
+			D3D__TextureState[index][D3DTSS_COLORARG2] = D3DTA_CURRENT;
+			D3D__TextureState[index][D3DTSS_ALPHAOP] = index ? D3DTOP_DISABLE : D3DTOP_SELECTARG1;
+			D3D__TextureState[index][D3DTSS_ALPHAARG1] = D3DTA_TEXTURE;
+			D3D__TextureState[index][D3DTSS_ALPHAARG2] = D3DTA_CURRENT;
+			D3D__TextureState[index][D3DTSS_TEXCOORDINDEX] = (DWORD)index;
+			D3D__TextureState[index][D3DTSS_MIPFILTER] = D3DTEXF_NONE;
 			D3D__TextureState[index][D3DTSS_ADDRESSU] = D3DTADDRESS_WRAP;
 			D3D__TextureState[index][D3DTSS_ADDRESSV] = D3DTADDRESS_WRAP;
 			D3D__TextureState[index][D3DTSS_ADDRESSW] = D3DTADDRESS_WRAP;
@@ -1995,6 +2034,17 @@ ULONG WINAPI D3DDevice_Release(void)
 	return 1;
 }
 
+/* 0x002022f0 (D3D_GetDeviceCaps): adapter 0, the hardware device only */
+HRESULT WINAPI Direct3D_GetDeviceCaps(UINT adapter, D3DDEVTYPE device_type, D3DCAPS8 *caps)
+{
+	if (adapter != 0)
+		return D3DERR_INVALIDCALL;
+	if (device_type != D3DDEVTYPE_HAL)
+		return (HRESULT)0x8876086BL; /* D3DERR_INVALIDDEVICE */
+	D3DDevice_GetDeviceCaps(caps);
+	return S_OK;
+}
+
 void WINAPI D3DDevice_GetDeviceCaps(D3DCAPS8 *caps)
 {
 	memset(caps, 0, sizeof(*caps));
@@ -2104,6 +2154,31 @@ void WINAPI D3DDevice_KickPushBuffer(void)
 {
 	if (device.gl_ready)
 		glFlush();
+}
+
+/* 0x001f5510: everything drawn so far is finished */
+void WINAPI D3D_KickOffAndWaitForIdle(void)
+{
+	if (device.gl_ready)
+		glFinish();
+}
+
+/* 0x001f5550: GL keeps its own ordering, so a fence is passed as soon as it
+is inserted; it is only counted */
+DWORD WINAPI D3DDevice_InsertFence(void)
+{
+	return ++device.fence;
+}
+
+/* 0x001f6200: the display is progressive (no interlaced fields) */
+void WINAPI D3DDevice_GetDisplayFieldStatus(D3DFIELD_STATUS *status)
+{
+	if (!status)
+		return;
+	pthread_mutex_lock(&vertical_blank_lock);
+	status->VBlankCount = (DWORD)vertical_blank_count;
+	pthread_mutex_unlock(&vertical_blank_lock);
+	status->Field = D3DFIELD_PROGRESSIVE;
 }
 
 void WINAPI D3DDevice_InsertCallback(D3DCALLBACKTYPE type, D3DCALLBACK callback, DWORD context)
@@ -2394,7 +2469,9 @@ void WINAPI D3DDevice_SetPalette(DWORD stage, D3DPalette *palette)
 
 void WINAPI D3DDevice_SetPixelShaderProgram(D3DPIXELSHADERDEF *definition)
 {
-	/* the definition's members are the pixel shader render states */
+	/* the definition's members are the pixel shader render states; none
+returns the pixels to the texture stage states */
+	device.pixel_shader_program = definition != NULL;
 	if (!definition)
 		return;
 	memcpy(&D3D__RenderState[D3DRS_PSALPHAINPUTS0], definition->PSAlphaInputs, sizeof(definition->PSAlphaInputs));
@@ -2509,17 +2586,53 @@ HRESULT WINAPI D3DDevice_CreateVertexShader(CONST DWORD *declaration, CONST DWOR
 		memcpy(object->instructions, function + 1, object->instruction_count * 4 * sizeof(DWORD));
 	}
 	parse_declaration(object, declaration);
-	/* odd values are FVF codes; programmable shader handles are even */
-	*handle = (DWORD)object;
+	/* as on the Xbox, a programmable shader's handle is its address plus
+	one; even values are FVF codes (openfrenzy: OpenCE used the address
+	itself, as Halo sets no FVF code) */
+	*handle = (DWORD)object | 1;
 	return S_OK;
 }
 
 static struct vertex_shader_object *vertex_shader_from_handle(DWORD handle)
 {
-	struct vertex_shader_object *object = (struct vertex_shader_object *)handle;
+	struct vertex_shader_object *object = (struct vertex_shader_object *)(handle & ~(DWORD)1);
 
-	if (!handle || (handle & 1) || object->signature != VERTEX_SHADER_SIGNATURE)
+	if (!(handle & 1) || !object || object->signature != VERTEX_SHADER_SIGNATURE)
 		return NULL;
+	return object;
+}
+
+/* the fixed-function vertex of an FVF code: its elements in stream 0 */
+static struct vertex_shader_object *fvf_object(DWORD fvf)
+{
+	struct vertex_shader_object *object;
+	struct d3d8_ff_element elements[XGPU_VERTEX_ATTRIBUTE_COUNT];
+	unsigned long index;
+
+	for (object = device.fvf_objects; object; object = object->next_fvf)
+	{
+		if (object->fvf == fvf)
+			return object;
+	}
+	object = calloc(1, sizeof(*object));
+	if (!object)
+		return NULL;
+	object->signature = VERTEX_SHADER_SIGNATURE;
+	object->id = device.next_vertex_shader_id++;
+	object->fvf = fvf;
+	object->element_count = d3d8_ff_fvf_elements(fvf, elements, XGPU_VERTEX_ATTRIBUTE_COUNT, NULL);
+	for (index = 0; index < object->element_count; index++)
+	{
+		object->elements[index].reg = elements[index].reg;
+		object->elements[index].stream = 0;
+		object->elements[index].type = elements[index].type;
+		object->elements[index].bytes = elements[index].bytes;
+		object->elements[index].offset = elements[index].offset;
+	}
+	if ((fvf & D3DFVF_POSITION_MASK) >= D3DFVF_XYZB1 && (fvf & D3DFVF_POSITION_MASK) <= D3DFVF_XYZB4)
+		platform_log("Direct3D: FVF 0x%lx has blend weights: drawn without vertex blending", (unsigned long)fvf);
+	object->next_fvf = device.fvf_objects;
+	device.fvf_objects = object;
 	return object;
 }
 
@@ -2549,7 +2662,7 @@ void WINAPI D3DDevice_DeleteVertexShader(DWORD handle)
 
 void WINAPI D3DDevice_SetVertexShader(DWORD handle)
 {
-	struct vertex_shader_object *object = vertex_shader_from_handle(handle);
+	struct vertex_shader_object *object = (handle & 1) ? vertex_shader_from_handle(handle) : fvf_object(handle);
 
 	if (object)
 	{
@@ -2648,6 +2761,64 @@ static GLuint vertex_shader_get(struct vertex_shader_object *program, BOOL immed
 	return *shader;
 }
 
+/* the vertex shader of a fixed-function vertex for the current state
+(d3d8_ff.c), compiled once per state combination */
+struct ff_vertex_entry
+{
+	struct ff_vertex_entry *next;
+	struct d3d8_ff_vertex_key key;
+	GLuint shader;
+};
+
+#define FF_VERTEX_BUCKETS 256
+
+static GLuint ff_vertex_shader_get(DWORD fvf)
+{
+	static struct ff_vertex_entry *buckets[FF_VERTEX_BUCKETS];
+	static struct ff_vertex_entry *last;
+	struct d3d8_ff_vertex_key key;
+	struct ff_vertex_entry *entry, **bucket;
+	char *source;
+
+	d3d8_ff_vertex_key_build(fvf, &key);
+	if (last && !memcmp(&last->key, &key, sizeof(key)))
+		return last->shader;
+	bucket = &buckets[hash_words(&key, sizeof(key)) % FF_VERTEX_BUCKETS];
+	for (entry = *bucket; entry; entry = entry->next)
+	{
+		if (!memcmp(&entry->key, &key, sizeof(key)))
+		{
+			last = entry;
+			return entry->shader;
+		}
+	}
+	entry = calloc(1, sizeof(*entry));
+	if (!entry)
+		return 0;
+	entry->key = key;
+	source = d3d8_ff_vertex_glsl(&key);
+	entry->shader = xgpu_compile_shader(GL_VERTEX_SHADER, source, "fixed-function vertex");
+	if (debug_settings.dump_shaders)
+	{
+		char path[512];
+		FILE *file;
+
+		snprintf(path, sizeof(path), "%s/vs_ff_%08lx.glsl", debug_settings.dump_shaders,
+			hash_words(&key, sizeof(key)));
+		if ((file = fopen(path, "w")) != NULL)
+		{
+			fputs(source, file);
+			fclose(file);
+		}
+	}
+	free(source);
+	entry->next = *bucket;
+	*bucket = entry;
+	last = entry;
+	return entry->shader;
+}
+
+typedef char ff_vertex_key_size_assert[sizeof(struct d3d8_ff_vertex_key) % 4 == 0 ? 1 : -1];
 typedef char pixel_shader_key_size_assert[sizeof(struct nv2a_pixel_shader_key) % 4 == 0 ? 1 : -1];
 
 static GLuint fragment_shader_get(const struct nv2a_pixel_shader_key *key)
@@ -2779,6 +2950,7 @@ static struct program_entry *program_get(GLuint vertex_shader, GLuint fragment_s
 	entry->texture_lod_bias = glGetUniformLocation(entry->program, "texture_lod_bias");
 	entry->screen_offset = glGetUniformLocation(entry->program, "screen_offset");
 	entry->model_lights = glGetUniformLocation(entry->program, "model_lights");
+	entry->ff = glGetUniformLocation(entry->program, "ff");
 	for (stage = 0; stage < D3DTSS_MAXSTAGES; stage++)
 	{
 		char name[8];
@@ -2792,10 +2964,39 @@ static struct program_entry *program_get(GLuint vertex_shader, GLuint fragment_s
 
 /* ---------- per-draw state */
 
+/* the pixel shader state of the draw being prepared: the render states, or
+without a pixel shader program the texture stages' (prepare_draw) */
+static DWORD draw_texture_modes;
+static DWORD ff_combiner_state[D3DRS_PS_MAX];
+
 static unsigned long stage_texture_mode(int stage)
 {
-	return (D3D__RenderState[D3DRS_PSTEXTUREMODES] >> (5 * stage)) & 0x1f;
+	return (draw_texture_modes >> (5 * stage)) & 0x1f;
 }
+
+/* what each stage has bound, for the texture stages' texture modes */
+static void ff_texture_kinds(unsigned char kinds[D3DTSS_MAXSTAGES])
+{
+	int stage;
+
+	for (stage = 0; stage < D3DTSS_MAXSTAGES; stage++)
+	{
+		D3DBaseTexture *texture = device.textures[stage];
+
+		if (!texture || !texture->Data)
+			kinds[stage] = _d3d8_ff_texture_none;
+		else if (texture->Format & D3DFORMAT_CUBEMAP)
+			kinds[stage] = _d3d8_ff_texture_cube;
+		else if (((texture->Format & D3DFORMAT_DIMENSION_MASK) >> D3DFORMAT_DIMENSION_SHIFT) == 3)
+			kinds[stage] = _d3d8_ff_texture_3d;
+		else
+			kinds[stage] = _d3d8_ff_texture_2d;
+	}
+}
+
+/* the fixed-function vertex uniforms (d3d8_ff.h ff[]) and their serial */
+static float ff_uniforms[D3D8_FF_UNIFORM_COUNT][4];
+static unsigned long ff_uniforms_serial = 1;
 
 static GLenum address_mode(DWORD mode)
 {
@@ -3571,7 +3772,9 @@ static struct program_entry *prepare_draw(BOOL immediate)
 	BOOL has_depth = FALSE;
 	int stage;
 
-	if (!device.gl_ready || !program || !device.vertex_shader || !program->instructions)
+	const DWORD *ps_state = D3D__RenderState;
+
+	if (!device.gl_ready || !program || !device.vertex_shader || (!program->instructions && !program->fvf))
 	{
 		stats.skipped_no_program++;
 		return NULL;
@@ -3589,12 +3792,21 @@ static struct program_entry *prepare_draw(BOOL immediate)
 		}
 	}
 	memset(&key, 0, sizeof(key));
-	memcpy(key.combiner_state, D3D__RenderState, sizeof(key.combiner_state));
+	draw_texture_modes = D3D__RenderState[D3DRS_PSTEXTUREMODES];
+	if (!device.pixel_shader_program)
+	{
+		unsigned char kinds[D3DTSS_MAXSTAGES];
+
+		ff_texture_kinds(kinds);
+		d3d8_ff_combiners(kinds, ff_combiner_state, &draw_texture_modes);
+		ps_state = ff_combiner_state;
+	}
+	memcpy(key.combiner_state, ps_state, sizeof(key.combiner_state));
 	/* constants are uniforms, not part of the program */
 	memset(&key.combiner_state[D3DRS_PSCONSTANT0_0], 0, 16 * sizeof(DWORD));
 	key.combiner_state[D3DRS_PSFINALCOMBINERCONSTANT0] = 0;
 	key.combiner_state[D3DRS_PSFINALCOMBINERCONSTANT1] = 0;
-	key.texture_modes = D3D__RenderState[D3DRS_PSTEXTUREMODES];
+	key.texture_modes = draw_texture_modes;
 	/* the textures before the targets: a render target the draw samples
 	has its multisampled pixels resolved by a blit (render_target_resolve),
 	which binds framebuffers of its own, and the back buffer can be both
@@ -3629,7 +3841,13 @@ static struct program_entry *prepare_draw(BOOL immediate)
 #endif
 
 	entry = NULL;
-	if (program->lighting.lights && !program->lighting_failed && per_pixel_lighting())
+	if (program->fvf)
+	{
+		entry = program_get(ff_vertex_shader_get(program->fvf), fragment_shader_get(&key));
+		if (d3d8_ff_uniforms(device.transforms, ff_uniforms))
+			ff_uniforms_serial++;
+	}
+	else if (program->lighting.lights && !program->lighting_failed && per_pixel_lighting())
 	{
 		key.per_pixel_lighting = (unsigned char)program->lighting.lights;
 		entry = program_get(vertex_shader_get(program, immediate, TRUE), fragment_shader_get(&key));
@@ -3643,7 +3861,7 @@ static struct program_entry *prepare_draw(BOOL immediate)
 			key.per_pixel_lighting = 0;
 		}
 	}
-	if (!entry)
+	if (!entry && !program->fvf)
 		entry = program_get(vertex_shader_get(program, immediate, FALSE), fragment_shader_get(&key));
 	if (!entry)
 	{
@@ -3664,6 +3882,11 @@ static struct program_entry *prepare_draw(BOOL immediate)
 			(GLintptr)(device.counter_active * sizeof(GLuint)), sizeof(GLuint));
 #endif
 
+	if (entry->ff >= 0 && entry->ff_serial != ff_uniforms_serial)
+	{
+		glUniform4fv(entry->ff, D3D8_FF_UNIFORM_COUNT, ff_uniforms[0]);
+		entry->ff_serial = ff_uniforms_serial;
+	}
 	if (entry->constants >= 0 && entry->constants_serial != constants_serial)
 	{
 		unsigned long first = entry->constant_count, last = 0, index;
@@ -3753,11 +3976,11 @@ static struct program_entry *prepare_draw(BOOL immediate)
 		inputs[count++] = D3D__RenderState[D3DRS_POINTSIZE];
 		for (stage = 0; stage < 8; stage++)
 		{
-			inputs[count++] = D3D__RenderState[D3DRS_PSCONSTANT0_0 + stage];
-			inputs[count++] = D3D__RenderState[D3DRS_PSCONSTANT1_0 + stage];
+			inputs[count++] = ps_state[D3DRS_PSCONSTANT0_0 + stage];
+			inputs[count++] = ps_state[D3DRS_PSCONSTANT1_0 + stage];
 		}
-		inputs[count++] = D3D__RenderState[D3DRS_PSFINALCOMBINERCONSTANT0];
-		inputs[count++] = D3D__RenderState[D3DRS_PSFINALCOMBINERCONSTANT1];
+		inputs[count++] = ps_state[D3DRS_PSFINALCOMBINERCONSTANT0];
+		inputs[count++] = ps_state[D3DRS_PSFINALCOMBINERCONSTANT1];
 		inputs[count++] = D3D__RenderState[D3DRS_FOGCOLOR];
 		inputs[count++] = D3D__RenderState[D3DRS_FOGSTART];
 		inputs[count++] = D3D__RenderState[D3DRS_FOGEND];
@@ -3789,11 +4012,11 @@ static struct program_entry *prepare_draw(BOOL immediate)
 				dword_to_float(D3D__RenderState[D3DRS_POINTSIZE]) : 1.0f;
 			for (stage = 0; stage < 8; stage++)
 			{
-				color_to_vec4(D3D__RenderState[D3DRS_PSCONSTANT0_0 + stage], converted->ps_c0[stage]);
-				color_to_vec4(D3D__RenderState[D3DRS_PSCONSTANT1_0 + stage], converted->ps_c1[stage]);
+				color_to_vec4(ps_state[D3DRS_PSCONSTANT0_0 + stage], converted->ps_c0[stage]);
+				color_to_vec4(ps_state[D3DRS_PSCONSTANT1_0 + stage], converted->ps_c1[stage]);
 			}
-			color_to_vec4(D3D__RenderState[D3DRS_PSFINALCOMBINERCONSTANT0], converted->ps_final_c0);
-			color_to_vec4(D3D__RenderState[D3DRS_PSFINALCOMBINERCONSTANT1], converted->ps_final_c1);
+			color_to_vec4(ps_state[D3DRS_PSFINALCOMBINERCONSTANT0], converted->ps_final_c0);
+			color_to_vec4(ps_state[D3DRS_PSFINALCOMBINERCONSTANT1], converted->ps_final_c1);
 			color_to_vec4(D3D__RenderState[D3DRS_FOGCOLOR], converted->fog_color);
 			converted->fog_parameters[0] = dword_to_float(D3D__RenderState[D3DRS_FOGSTART]);
 			converted->fog_parameters[1] = dword_to_float(D3D__RenderState[D3DRS_FOGEND]);
@@ -4372,6 +4595,14 @@ static BOOL stream_has_colors(const struct vertex_shader_object *declaration, un
 }
 #endif
 
+/* where a stream's vertices are */
+static const unsigned char *stream_memory(unsigned long stream)
+{
+	if (stream == 0 && device.user_stream)
+		return device.user_stream;
+	return PLATFORM_PHYSICAL_TO_VIRTUAL(device.streams[stream].data);
+}
+
 static void setup_streams(unsigned long first, unsigned long count)
 {
 	struct vertex_shader_object *declaration = device.vertex_shader;
@@ -4401,11 +4632,12 @@ static void setup_streams(unsigned long first, unsigned long count)
 			continue;
 		placed[stream] = TRUE;
 		stream_buffers[stream] = 0;
-		base = (unsigned long)PLATFORM_PHYSICAL_TO_VIRTUAL(device.streams[stream].data) + first * stride;
+		base = (unsigned long)stream_memory(stream) + first * stride;
 #ifdef HALO_GLES
 		if (!stream_has_colors(declaration, stream))
 #endif
-		if (mirror_range(base, bytes, &stream_buffers[stream], &stream_offsets[stream], NULL))
+		if (!(stream == 0 && device.user_stream) &&
+			mirror_range(base, bytes, &stream_buffers[stream], &stream_offsets[stream], NULL))
 			continue;
 		stream_buffers[stream] = 0;
 		total += (bytes + 15) & ~15UL;
@@ -4424,7 +4656,7 @@ static void setup_streams(unsigned long first, unsigned long count)
 			continue;
 		if (!stream_buffers[stream])
 		{
-			const unsigned char *base = PLATFORM_PHYSICAL_TO_VIRTUAL(device.streams[stream].data);
+			const unsigned char *base = stream_memory(stream);
 			unsigned long bytes = stride ? stride * count : 64;
 
 #ifdef HALO_GLES
@@ -4559,6 +4791,23 @@ void WINAPI D3DDevice_DrawVertices(D3DPRIMITIVETYPE primitive_type, UINT start_v
 		glDrawArrays(primitive_mode(primitive_type), 0, (GLsizei)vertex_count);
 	}
 	gl_check_errors("draw");
+}
+
+/* 0x00201390: draws from the caller's memory through stream 0, which is
+then unset (as Direct3D leaves it) */
+void WINAPI D3DDevice_DrawVerticesUP(D3DPRIMITIVETYPE primitive_type, UINT vertex_count, CONST void *vertex_data,
+	UINT vertex_stride)
+{
+	if (!vertex_data || !vertex_stride)
+		return;
+	device.user_stream = vertex_data;
+	/* (any nonzero address: setup_streams reads user_stream) */
+	device.streams[0].data = 1;
+	device.streams[0].stride = vertex_stride;
+	D3DDevice_DrawVertices(primitive_type, 0, vertex_count);
+	device.user_stream = NULL;
+	device.streams[0].data = 0;
+	device.streams[0].stride = 0;
 }
 
 void WINAPI D3DDevice_DrawIndexedVertices(D3DPRIMITIVETYPE primitive_type, UINT vertex_count, CONST WORD *index_data)
