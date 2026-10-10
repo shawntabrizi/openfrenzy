@@ -2,7 +2,7 @@
 HALO_HOOKS.C
 
 openfrenzy: inert versions of the Halo-only features that OpenCE's platform
-layer (port/xdk/src) calls into. In OpenCE they live in Halo's game code or
+layer (src/<platform modules>) calls into. In OpenCE they live in Halo's game code or
 in Halo-specific port files (hud_hires.c, text_hires.c, menu_files.c,
 touch_input.c, voice_audio.c, source/main/console.c,
 port/linux/game/render_interpolation.c). Fuzion Frenzy has none of them, so

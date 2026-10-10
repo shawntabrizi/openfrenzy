@@ -2,7 +2,7 @@
 XDK_ENTRY_POINTS.C
 
 openfrenzy: the table that routes the XBE's statically linked XDK library
-functions (sections D3D, DSOUND, XGRPH, XPP) to the HLE layer in port/xdk/src.
+functions (sections D3D, DSOUND, XGRPH, XPP) to the HLE layer in src/<platform modules>.
 Rows come from xdk_entry_points.inc (scripts/gen_xdk_entry_points.py).
 Look-up is by original XBE address, so decompiled game code (or a tool that
 resolves FUN_xxxxxxxx call targets) can find the replacement.

@@ -1,8 +1,11 @@
-# port/xdk — XDK replacement (HLE) layer
+# XDK replacement (HLE) layer
 
-Note: `docs/ARCHITECTURE.md` §7–8 puts this layer under `src/platform/`. The
-integration task that created it asked for `port/xdk/`. One of the two must
-change; moving is a `git mv` plus the paths in `build_check.sh`.
+This file describes the OpenCE-derived XDK layer. It first lived in `port/xdk/`. It is now split
+over the platform modules `src/runtime` (shared headers `include/`, `compat/`, `entry/`,
+`platform.h`, `msvc_crt.c`), `src/vfs` (`xiso.c`, `xbox_files.c`, `posix.h`),
+`src/xkernel` (`xbox_kernel.c`, `xbox_xapi.c`, `xbox_memory.c`), `src/d3d8`
+(`d3d8_*.c`, `nv2a_*.c`, `xbox_textures.c`, `gl.h`, `xgpu.h`), `src/dsound` (`dsound_sdl.c`)
+and `src/input` (`xinput_sdl.c`). The table below gives the original OpenCE paths.
 
 The XBE statically links the Xbox SDK libraries (sections `D3D`, `DSOUND`,
 `XGRPH`, `XPP`, plus the kernel/XAPI imports). The port does not decompile
@@ -52,7 +55,7 @@ identifications of unnamed functions go in its `IDENTIFIED` map.
 ## Compile check
 
 ```sh
-port/xdk/build_check.sh [build-dir]   # default: build-fix-platform-layer
+src/runtime/build_check.sh [build-dir]   # default: build-fix-platform-layer
 ```
 
 It compiles every file with the guest ABI flags of OpenCE's

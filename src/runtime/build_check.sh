@@ -1,19 +1,22 @@
 #!/bin/sh
-# Compiles the XDK replacement layer (port/xdk/src) with the guest ABI
+# Compiles the XDK replacement layer (src/{runtime,vfs,xkernel,d3d8,dsound,input}) with the guest ABI
 # (ILP32 AArch64, arm64_32, musl headers), as OpenCE's tools/android_build.py
 # does for its platform layer. Objects only: no rebase pass, no link.
-# Usage: port/xdk/build_check.sh [build-dir]   (default build-fix-platform-layer)
+# The CMake build (port/guest) compiles and links the same files through the rebase pass;
+# this script is kept for regenerating src/runtime/entry/xdk_entry_points.inc.
+# Usage: src/runtime/build_check.sh [build-dir]   (default build-fix-platform-layer)
 set -eu
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 B=${1:-build-fix-platform-layer}
 case $B in /*) ;; *) B=$ROOT/$B ;; esac
-LLVM=${OPENFRENZY_LLVM_BIN:-/opt/homebrew/opt/llvm/bin}
+LLVM=${OPENFRENZY_LLVM_BIN:-/opt/homebrew/opt/llvm@22/bin}
 SDL=${OPENFRENZY_SDL_INCLUDE:-/opt/homebrew/opt/sdl3/include}
 MUSL_VERSION=1.2.5
 TP=$B/third_party
 M=$TP/musl-$MUSL_VERSION
 ARCH=$ROOT/port/guest/libc/arch/arm64_32
-X=$ROOT/port/xdk
+S=$ROOT/src
+X=$S/runtime
 mkdir -p "$TP" "$B/libc_include/bits" "$B/obj"
 
 # musl headers (public sources; fetched once)
@@ -50,7 +53,7 @@ done
 CLANG_INC=$("$LLVM/clang" -print-resource-dir)/include
 FLAGS="$ABI $CODE -std=gnu11 -D_GNU_SOURCE -DHALO_LINUX_PLATFORM_LAYER -w
  -include $X/include/linux/halo_linux_prefix.h -include $B/platform_msvc_semantics.h
- -I$X/src -I$X/compat -I$X/include/linux -I$X/include -I$X/include/xdk -I$SDL -I$G
+ -I$S/runtime -I$S/vfs -I$S/xkernel -I$S/d3d8 -I$S/dsound -I$S/input -I$X/compat -I$X/include/linux -I$X/include -I$X/include/xdk -I$SDL -I$G
  -isystem $B/libc_include -isystem $ARCH -isystem $M/arch/generic -isystem $M/include -isystem $CLANG_INC
  ${OPENFRENZY_EXTRA_CFLAGS:-}"
 
@@ -64,7 +67,7 @@ compile() {
 	fi
 }
 rm -f "$B"/obj/*.o
-for src in "$X"/src/*.c "$X"/compat/*.c; do
+for src in "$S"/runtime/*.c "$S"/vfs/*.c "$S"/xkernel/*.c "$S"/d3d8/*.c "$S"/dsound/*.c "$S"/input/*.c "$X"/compat/*.c; do
 	compile "$src" ""
 done
 

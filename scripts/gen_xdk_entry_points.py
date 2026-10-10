@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate port/xdk/entry/xdk_entry_points.inc.
+"""Generate src/runtime/entry/xdk_entry_points.inc.
 
 The XBE statically links the XDK libraries (sections D3D, DSOUND, XGRPH, XPP).
 The port does not decompile them: game code that calls into them is routed to
-the OpenCE-derived HLE layer in port/xdk/src. This script writes one X-macro
+the OpenCE-derived HLE layer in src/<platform modules>. This script writes one X-macro
 row per library function that matters:
 
   XDK_ENTRY(address, section, xbe_name, hle_name, kind)
@@ -16,7 +16,7 @@ kind:
 
 Rows: every named function in those sections, plus every unnamed one that game
 code calls. Inputs: export/functions.jsonl and the list of symbols the HLE
-objects define (llvm-nm of port/xdk/build_check.sh's objects).
+objects define (llvm-nm of src/runtime/build_check.sh's objects).
 
 Usage: gen_xdk_entry_points.py <functions.jsonl> <hle_symbols.txt> <output.inc>
 """

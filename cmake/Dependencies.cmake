@@ -57,3 +57,14 @@ if(NOT EXISTS "${_companion}")
   file(CREATE_LINK "${OPENFRENZY_GLES_FRAMEWORKS}/libGLESv2.framework/libGLESv2" "${_companion}"
        SYMBOLIC)
 endif()
+
+# musl (the guest C library, as in OpenCE tools/android_build.py) -> deps/musl-<version>
+string(JSON _url GET "${_of_manifest}" musl url)
+string(JSON _sha GET "${_of_manifest}" musl sha256)
+string(JSON _ver GET "${_of_manifest}" musl version)
+_of_download("${_url}" "${_sha}" "${OPENFRENZY_DEPS_DIR}/musl-${_ver}.tar.gz")
+set(OPENFRENZY_MUSL_DIR "${OPENFRENZY_DEPS_DIR}/musl-${_ver}" CACHE PATH "musl source directory")
+set(OPENFRENZY_MUSL_VERSION "${_ver}")
+if(NOT EXISTS "${OPENFRENZY_MUSL_DIR}/COPYRIGHT")
+  file(ARCHIVE_EXTRACT INPUT "${OPENFRENZY_DEPS_DIR}/musl-${_ver}.tar.gz" DESTINATION "${OPENFRENZY_DEPS_DIR}")
+endif()

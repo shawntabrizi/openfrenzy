@@ -19,4 +19,4 @@ comment that names its source path.
 | `dependencies.json`, `licenses/ANGLE.txt` | `port/macos/dependencies.json`, `port/macos/licenses/ANGLE.txt` |
 
 `host/host_syscall.c` includes the guest musl syscall numbers from
-`port/guest/libc/arch/arm64_32/bits/syscall.h.in`, and the host includes `port/xdk/src/posix.h`.
+`port/guest/libc/arch/arm64_32/bits/syscall.h.in`, and the host includes `src/vfs/posix.h`.
