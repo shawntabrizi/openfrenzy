@@ -136,6 +136,12 @@ extern int DAT_002f6d60;            /* debug drawing of the launch rack */
 extern int *DAT_002f7960;           /* set to 1 while the rack has rockets to launch */
 extern int DAT_00293b44;            /* rockets in flight (carryon_a) */
 extern int DAT_00293928;            /* AI voice volume (charlib) */
+extern unsigned int DAT_002943b8[];  /* the colour of each rocket type (carryon_a .data) */
+extern struct CFireGame DAT_00293ad8; /* the CarryOn game object (carryon_a) */
+extern long long DAT_002cd7a0;      /* the timer frequency, ticks per second (bkernel) */
+/* the clear colour (core): red, green, blue, alpha */
+extern int DAT_002ba940, DAT_002ba944, DAT_002ba948, DAT_002ba94c;
+extern void *DAT_002db808;          /* the DirectSound object (engine_misc) */
 /* launch rack tweakables (0x00294390-0x00294398) */
 extern int DAT_00294108;            /* tweak "V3:Parts/Firework" 3 */
 extern int DAT_0029410c;            /* tweak "V3:Part Types" 3 */

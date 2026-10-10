@@ -411,3 +411,24 @@ void CFire_Lights_EnableGroup(struct CFire_Lights *self, int group, int on)
 		if (light->group == group)
 			CFire_Lights_Enable(self, light, on);
 }
+
+/* 0x000d0fb0  CarryOn/CFire_Lights.cpp (file inferred)
+Frees every light (switching off and deleting its engine light) and clears DAT_002f7988. */
+void CFire_Lights_Free(struct CFire_Lights *self)
+{
+	struct CFire_Light *next;
+
+	while (self->list != NULL)
+	{
+		next = self->list->next;
+		if (self->list->blight != NULL)
+		{
+			baEnableLight(self->list->blight, 0);
+			baDeleteLight(self->list->blight);
+		}
+		self->list->blight = NULL;
+		bkHeapFree(self->list);
+		self->list = next;
+	}
+	DAT_002f7988 = NULL;
+}
