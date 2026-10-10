@@ -699,7 +699,9 @@ struct BShaderMode *baGenerateShader(struct BLightingState *state, struct BShade
 			effect = *(struct BShaderFragment **)(intptr_t)inst->passParam[pass];
 			noTexCoord = 1;
 		}
-		if (effect != NULL && (flags & 0x20) == 0)
+		/* every effect except the environment map replaces the diffuse output
+		   (flat, flat alpha, colour and black win over 0x20 when both are set) */
+		if (effect != NULL && !((flags & 0x5c) == 0 && (flags & 0x20) != 0))
 			noDiffuse = 1;
 	}
 	if (effect != NULL)
