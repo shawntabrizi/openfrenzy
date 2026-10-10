@@ -247,6 +247,25 @@ static void fault(int signal, siginfo_t *info, void *context) {
             break;
         fp = next;
     }
+    /* openfrenzy: a smashed stack has no frame chain (pc and lr hold data). List the words
+     * above sp that point into the guest image: saved return addresses of the callers,
+     * newest first. Symbolize them as above; some are stale. */
+    uint64_t sp = u->uc_mcontext->__ss.__sp;
+    if (sp >= OPENFRENZY_MACOS_BIAS && sp < OPENFRENZY_MACOS_BIAS + UINT64_C(0x100000000) - 0x1000 &&
+        !(sp & 7)) {
+        const uint64_t *word = (const uint64_t *)sp;
+        int hits = 0;
+        for (int i = 0; i < 0x1000 / 8 && hits < 24; i++) {
+            uint64_t v = word[i];
+            uint32_t g = (uint32_t)v;
+            if ((v >> 32) != 0 && (v >> 32) != (OPENFRENZY_MACOS_BIAS >> 32))
+                continue;
+            if (g >= host_image.base && g < host_image.end) {
+                fprintf(stderr, "  sp+0x%x guest %x\n", i * 8, g);
+                hits++;
+            }
+        }
+    }
     _exit(128 + signal);
 }
 void host_install_signal_handlers(void) {
