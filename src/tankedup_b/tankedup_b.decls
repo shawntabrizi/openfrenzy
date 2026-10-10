@@ -49,10 +49,23 @@
 001d68f0 void TankChar_SubstituteColours(char *name);
 001d6b40 void TankDraw_SetAlphaFactor(int alpha);
 
-# the game mode and the text reader (gap)
+# the game mode CGameMode_TankedUp and the text reader (gap; TankedUp/unplaced_mode.c)
+001d7b00 void *TankMode_Ctor(void *self);
+001d7b20 void TankMode_Dtor(void *self);
+001d7b30 void TankMode_Pushed(void *self);
+001d7b60 void TankMode_Resume(void *self);
+001d7b70 void TankMode_Suspend(void *self);
+001d7b80 void TankMode_Input(void *self, int active);
+001d7b90 void TankMode_Update(void *self, int active);
+001d7bc0 void *TankMode_DeletingDtor(void *self, unsigned int flags);
+001d7be0 void TankMode_Popped(void *self);
+001d7c20 void TankMode_Render(void *self, int active);
+001d7c30 void TankMode_LoadingStarted(void *self);
+001d7c40 void TankMode_Start(void *self);
 001d7c70 void TankReader_Ctor(void *self);
 001d7c80 void TankReader_Dtor(void *self);
 001d7c90 char *TankReader_GetLine(void *self, char *buffer);
+001d7d40 void *TankReader_DeletingDtor(void *self, unsigned int flags);
 
 # TankedUp/Decal.cpp
 001de090 void *TankDecal_Ctor(void *self, int maxPoints, float width, float life, void *texture, void *texture2);
@@ -106,3 +119,13 @@
 001d6960 void TankDebug_DrawCone(float *pos, float *target, float angle, int r, int g, int b);
 001d6bd0 void TankPoint_RotateAround(float *out, float *point, float angle, float *centre);
 001d6c40 void TankPoint_SetDistance(float *point, float distance, float *centre);
+
+# TankedUp/CTank_AI.cpp (0x001d9bb0 and later tagged; 0x001d7d80-0x001d9b50 gap, inferred)
+001d7d80 int TankAI_PositionClear(void *self, float *pos, void *ignore);
+001d7e10 int TankAI_CommandPoint(void *self, void *entity, int event, int *data);
+001d8440 void TankAI_MineExplode(void *self, void *entity);
+001d84e0 int TankAI_Mine(void *self, void *entity, int event, int *data);
+001d8820 int TankAI_Think(void *self, void *entity, int event, int *data);
+001d9b50 void TankEnts_GetTanks(void *self, float *positions, int *scores);
+001d9bb0 int TankAI_GetTokenSpawn(void *self, int *unused, float *pos, float *rot);
+001d9d30 int TankAI_TokenMaster(void *self, void *entity, int event, int *data);

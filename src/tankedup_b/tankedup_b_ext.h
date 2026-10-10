@@ -85,6 +85,9 @@ callee's `ret N` (thiscall `this` first). Owner: tankedup_b.
 	TU_CALL(FUN_001c4110, float *(*)(void *, const char *, int))(spawn, name, player)
 #define TA_SpawnRandom(spawn, name, out) \
 	TU_CALL(FUN_001c4420, void (*)(void *, const char *, float *))(spawn, name, out)
+/* the point list of a name (pos[4], rot[4], +0x20 weight, +0x24 next) and its length */
+#define TA_SpawnGetPoints(spawn, name) TU_CALL(FUN_001c40d0, void *(*)(void *, const char *))(spawn, name)
+#define TA_SpawnGetCount(spawn, name) TU_CALL(FUN_001c4160, int (*)(void *, const char *))(spawn, name)
 
 /* ---------- engine_misc: the original returns the inner test's result (the table and
    engine_misc's definitions say void; reported for integration) */
