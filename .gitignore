@@ -11,3 +11,14 @@ ghidra/
 *.rep/
 
 .DS_Store
+
+# Ghidra export (derived from the game binary)
+export/
+
+# Reference checkouts (OpenCE and Mac forks)
+ref/
+
+# Build output and downloaded build dependencies (ANGLE, Khronos headers)
+build/
+build-*/
+deps/

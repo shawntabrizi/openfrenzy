@@ -205,17 +205,37 @@ Rules:
 
 ## 10. Build
 
-Target (not yet implemented in this repo; see section 12):
+CMake plus Ninja. The build skeleton works (integration round 1): an empty guest `main()` builds
+and runs in the host arena.
 
 ```sh
-brew install python cmake llvm@22 lld@22 sdl3 ninja
-export OPENFRENZY_LLVM_BIN="$(brew --prefix llvm@22)/bin"
-export PATH="$(brew --prefix lld@22)/bin:$PATH"
-python3 tools/macos_build.py --build-dir build-<name>
+brew install python cmake ninja llvm@22 lld@22 sdl3
+cmake -S . -B build-<name> -G Ninja        # first run downloads ANGLE + Khronos headers to deps/
+cmake --build build-<name>
+ctest --test-dir build-<name> --output-on-failure
 ```
 
+| Path | Job |
+|---|---|
+| `CMakeLists.txt` | Host project (Apple clang): the `of-rebase` pass, the `openfrenzy` host, guest sub-projects, tests. |
+| `cmake/guest-toolchain.cmake` | Toolchain for guest sub-projects: compiler `port/macos/tools/guest_cc.py`, linker `ld.lld` with `port/macos/guest.ld`. |
+| `cmake/Dependencies.cmake` | Pinned, SHA-256-checked ANGLE and Khronos headers from `port/macos/dependencies.json`. |
+| `port/macos/tools/guest_cc.py` | One guest compile: clang -emit-llvm -> opt `of-rebase` -> llc -> `asm_convert.py` -> ELF object. |
+| `port/macos/tools/host_imports.py` | Guest import stubs and the host's import table, from `port/macos/host_imports.list`. |
+| `port/macos/tests/skeleton/` | Guest without musl: `skeleton.c` (empty `main`, exit 0) and `probe.c` (rebased memory, exit 42). |
+
+- Outputs: `build-<name>/openfrenzy` (host), `build-<name>/*.elf` (guest images).
+  Run one with `build-<name>/openfrenzy build-<name>/openfrenzy_skeleton.elf`.
+- `OPENFRENZY_LLVM_BIN` (cache variable) selects LLVM 22. `ld.lld` is searched in `lld@22` first.
+- ANGLE has no Homebrew formula. It is the pinned prebuilt download from OpenCE (section 6).
+- The tests set `SDL_VIDEO_DRIVER=dummy`, so they also run without a window server (sandbox, CI).
+- Build scripts live in `port/macos/tools/`, not `tools/`: `tools/` is git-ignored (Ghidra).
 - Each agent uses its own build directory (`build-<task>`), to allow parallel work.
-- Build outputs, game data, `orig/`, `export/`, `ref/` and `tools/ghidra_*` stay out of git.
+- Build outputs, `deps/`, game data, `orig/`, `export/`, `ref/` and `tools/ghidra_*` stay out of git.
+
+Not done yet: guest musl (`libguestc.a`), the generated GL and posix import stubs (OpenCE
+`android_gl_stubs.py`, `android_posix_stubs.py`), the compiler runtime (`libclang_rt.builtins`) in the
+guest link, the game guest project, and the `.app` bundle.
 
 ## 11. Attribution
 
@@ -226,7 +246,7 @@ Third-party licenses (ANGLE, SDL3, musl) go in `port/macos/licenses/`.
 ## 12. Status (when this file was written)
 
 - Done: Ghidra export, source map (`export/source_map.json`), work modules (`export/modules.json`).
-- Not done: no `CMakeLists.txt`, no build scripts, no `src/`, no `port/macos/` in this repo yet.
-  The build commands in section 10 are the target, not a working command.
+- Done (round 1): `CMakeLists.txt`, guest toolchain, `port/macos/` (host, compiler pass), skeleton tests.
+- Not done: no `src/` yet; see the "Not done yet" list in section 10.
 - Open: the exact arena layout for the Xbox physical-memory window; the WMA decoder need; the XDK
   entry-point map (section 7).
