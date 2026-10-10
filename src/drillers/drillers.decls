@@ -35,12 +35,6 @@
 00110b90 void CDrillersGame_UpdateSnare(void *self);
 
 # callees (prototypes from the disassembly; renamed when their file is written)
-00114990 void FUN_00114990(void *self);
-00115410 char FUN_00115410(void *self, char x, char y);
-00115710 void FUN_00115710(void *self);
-00116970 void FUN_00116970(void *self, int player);
-00116cf0 void FUN_00116cf0(void *self);
-00118f00 void FUN_00118f00(void *self, int player);
 0011c7e0 int FUN_0011c7e0(void *self);
 0011e140 void FUN_0011e140(void *self);
 0011e1e0 void FUN_0011e1e0(void *self);
@@ -103,3 +97,21 @@
 00113fd0 void DrEffects_AddTokenAt(struct DrEffects *self, float x, float z);
 00114230 void DrEffects_AddRandomToken(struct DrEffects *self);
 001145d0 void DrEffects_UpdateTokens(struct DrEffects *self);
+
+# Drillers/unplaced_map.c (the map 0x00298da0; DrMap in drillers.h)
+001148f0 void DrMap_FillCell(struct DrMap *self, char x, char z);
+00114990 void DrMap_Build(struct DrMap *self);
+00115410 char DrMap_CheckHeld(struct DrMap *self, char x, char z);
+00115710 void DrMap_Free(struct DrMap *self);
+00115740 struct DrMap *DrMap_DeletingDtor(struct DrMap *self, unsigned int flags);
+
+# Drillers/unplaced_players.c (the players object 0x00298e70)
+00116970 void DrPlayers_Reset(void *self, char player);
+00116be0 void DrPlayers_StartLoop(void *self, int count, int player);
+00116cf0 void DrPlayers_UpdateLoops(void *self);
+00118f00 void DrPlayers_DrawWinner(void *self, char player);
+00117440 void *DrPlayers_DeletingDtor(void *self, unsigned int flags);
+
+# Drillers/unplaced_ai.c (the AI object 0x002aadf8)
+00121920 float DrAi_AngleDiff(void *self, float a, float b);
+00121990 char DrAi_InPolygon(void *self, float px, float pz, int n, const float *poly);

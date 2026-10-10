@@ -262,6 +262,81 @@ OF_ASSERT_SIZE(DrEffects, 0xfb0);
 #define DR_FX_FLOATY_LIFE(fx) DR_F32((fx)->floaty, 0x88)
 #define g_DrFx DR_PTR(DrEffects, DR_FX_ADDR)
 
+/* ---------- Drillers/unplaced_map.c: the map of cells (0x00298da0, vtable 0x0026c294) */
+
+/* a cell (0x2d8 bytes); the map is 2 * DR_HALF_X columns of 2 * DR_HALF_Z cells */
+typedef struct DrCell
+{
+	unsigned char unk000[0x2d0]; /* 0x000 */
+	short height;                /* 0x2d0 0x400 full; drilled down to 0 */
+	signed char state;           /* 0x2d2 0 gone, 1 inner, 2 held by the edge */
+	signed char unk2d3;          /* 0x2d3 */
+	signed char look;            /* 0x2d4 texture variant 0-6 */
+	unsigned char pad2d5[3];
+} DrCell;
+OF_ASSERT_SIZE(DrCell, 0x2d8);
+
+/* a vertex of the cell boxes (fvf 0x252: position, normal, colour, two uv sets) */
+typedef struct DrMapVertex
+{
+	float pos[3];        /* 0x00 */
+	float normal[3];     /* 0x0c */
+	unsigned int colour; /* 0x18 */
+	float uv0[2];        /* 0x1c */
+	float uv1[2];        /* 0x24 */
+} DrMapVertex;
+OF_ASSERT_SIZE(DrMapVertex, 0x2c);
+
+#define DR_CELL_VERTS 19
+
+typedef struct DrMap
+{
+	const void *const *vtable;      /* 0x00 */
+	DrCell *columns[40];            /* 0x04 */
+	int unka4[2];                   /* 0xa4 */
+	int drawCount;                  /* 0xac frames the grid was drawn in this state */
+	int gridR;                      /* 0xb0 */
+	int gridG;                      /* 0xb4 */
+	int gridB;                      /* 0xb8 */
+	int numGridVerts;               /* 0xbc */
+	int numCellVerts;               /* 0xc0 */
+	struct bdVertexBuffer *vbCells; /* 0xc4 */
+	struct bdVertexBuffer *vbGrid;  /* 0xc8 */
+	int unkcc;                      /* 0xcc */
+} DrMap;
+OF_ASSERT_SIZE(DrMap, 0xd0);
+#define g_DrMap DR_PTR(DrMap, 0x00298da0u)
+/* cell z of column x (indices from 0) */
+#define DR_MAP_CELL(map, x, z) (&(map)->columns[(x)][(z)])
+
+/* ---------- Drillers/unplaced_players.c: the players object (0x00298e70, vtable 0x0026c2ec)
+
+Four player records of 0x730 bytes from +0x000 (the record of player i is reached as the
+object + i * 0x730 with the original offsets +0x004 .. +0x733; the prior DR_PL macro uses
+0x00298e74 as player 0's base), a vertex scratch buffer at +0x1cc4, 16 snare loops of
+0x618 bytes from +0x64cc, and per-player values from +0xc644. Fields at original offsets:
+  +0x004 x, +0x008 z (1024 per cell, cell centres at 512)   +0x00c heading (degrees)
+  +0x014 shown heading   +0x018 speed   +0x01c, +0x01d cell x, z (char)
+  +0x01e, +0x01f last cell drilled   +0x020 (char) in play (1)   +0x02c the pad
+  +0x04c, +0x050 the actors (driver, driller)   +0x05c height   +0x060 points
+  +0x064 (short) trail length   +0x06c x[128], +0x26c z[128], +0x46c w[128] the trail
+  +0x6f4 hit timer   +0x6f8 fade   +0x700 round points   +0x704 (char) human
+  +0x710 tilt   +0x724 out   +0x72c winner */
+#define DR_PLAYERS_ADDR 0x00298e70u
+#define DR_PLR(i) ((char *)DR_ADDR(DR_PLAYERS_ADDR) + (i) * 0x730)
+#define DR_PF(i, off, type) DR_AT(DR_PLR(i), off, type)
+/* trail point j of player i */
+#define DR_TRAIL_X(i, j) DR_PF(i, 0x6c + (j) * 4, float)
+#define DR_TRAIL_Z(i, j) DR_PF(i, 0x26c + (j) * 4, float)
+#define DR_TRAIL_W(i, j) DR_PF(i, 0x46c + (j) * 4, int)
+/* snare loop k (16): +0x6acc on, +0x6ad0 timer, +0x6ad4 points, +0x6ad8 player,
+   x[] at +0x64cc, z[] at +0x66cc */
+#define DR_LOOP(k, off, type) DR_AT((char *)DR_ADDR(DR_PLAYERS_ADDR) + (k) * 0x618, off, type)
+#define DR_LOOP_X(k, j) DR_LOOP(k, 0x64cc + (j) * 4, float)
+#define DR_LOOP_Z(k, j) DR_LOOP(k, 0x66cc + (j) * 4, float)
+/* the vertex scratch buffer */
+#define DR_PLAYERS_VTX ((bdVertex *)((char *)DR_ADDR(DR_PLAYERS_ADDR) + 0x1cc4))
+
 /* ---------- other modules (real shapes where the table prototype is a Ghidra guess) */
 
 /* the mode stack (core, CGameModeStack at 0x002ba750) */
@@ -284,6 +359,7 @@ extern int DAT_002baef4[];          /* team of player i: [i * 10] */
 extern int DAT_002baee8[];          /* minigame score of player i: [i * 10] */
 extern int DAT_002baf00;            /* player 1 human ([10] of 0x002baed8) */
 extern int DAT_002baf28;            /* player 2 human */
+extern int DAT_002baf1c, DAT_002baf44, DAT_002baf6c;  /* team of players 1-3 */
 extern int DAT_002baf50;            /* player 3 human */
 /* the player colours, 0x60 bytes per character (classlib_ui) */
 extern unsigned char DAT_00290718[];
@@ -336,16 +412,22 @@ int FUN_001135a0(struct BExtraSystem *system, int count, void **items, void *arg
 /* hopper's range, not in the table: the item callback of "steam" (weak copy in
    CDrillers_Effects.c) */
 int FUN_00149650(struct BExtraSystem *system, void *item, void *args);
-/* the map object (0x00298da0) */
-void FUN_001151f0(void *self);
-void FUN_001154b0(void *self);
-void FUN_001160f0(void *self);
-void FUN_001164d0(void *self);
-/* the players object (0x00298e70) */
-void FUN_00117200(void *self, int player);
+/* Drillers/unplaced_map.c: the map object (0x00298da0) */
+void FUN_001151f0(void *map);
+void FUN_001154b0(void *map);
+void FUN_00115760(void *map, char cx, char cz, DrMapVertex *verts);
+void FUN_001160f0(void *map);
+void FUN_001164d0(void *map);
+/* Drillers/CDrillers_Lom.c */
+void FUN_0011bc40(void);
+/* Drillers/unplaced_players.c: the players object (0x00298e70) */
+void FUN_00116f80(int player, float x, float z, int r, int g, int b, int y);
+void FUN_00117200(void *self, char player);
 void FUN_00117460(void *self);
-void FUN_001195c0(void *self, int player);
-void FUN_00119cd0(void *self, int player);
+void FUN_00117d00(void *self, int player);
+void FUN_00118400(void *self, int player);
+void FUN_001195c0(void *self, char player);
+void FUN_00119cd0(void *self, unsigned int player);
 /* the HUD extras object (0x002aab08) */
 void FUN_00120870(void *self, int player, int behind);
 void FUN_00120d00(void *self);
