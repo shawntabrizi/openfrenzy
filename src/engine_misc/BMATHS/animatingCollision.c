@@ -167,13 +167,15 @@ int bmCollideNodes(struct BSphere *sphere, void *coll, struct BCollNode *nodes, 
 }
 
 /* 0x00052510  BMATHS (animatingCollision.cpp?)
-Copies the instances' current vectors and matrices into the nodes (recursively). */
+Copies the instances' current vectors and matrices into the nodes (recursively). The
+original starts at nodes->next and stops when it is back at nodes, so the first node of
+a list of two or more is not updated (a lone node is). Kept as in the original. */
 void bmUpdateNodes(struct BCollNode *nodes)
 {
 	struct BCollNode *node;
 	struct BCollNode *children;
 
-	node = nodes;
+	node = nodes->next;
 	do {
 		memcpy(node->vec10, node->instance + 0x10, 16);
 		memcpy(node->vec30, node->instance + 0x30, 16);

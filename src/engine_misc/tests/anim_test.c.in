@@ -1,0 +1,95 @@
+/*
+anim_test.c.in: host test of engine_misc's animating collision node update (run_tests.sh).
+
+Why this check matters: bmUpdateNodes (0x00052510) copies each actor instance's current
+vectors and matrix into the collision nodes, and hit records report a node's vec10. The
+original walks a node list from nodes->next back to nodes, so the head node of a list of
+two or more keeps its old values, while a lone node is updated. A functional port must
+keep that behaviour, or hit records on animated actors differ from the original game.
+*/
+
+#include <stdio.h>
+#include <string.h>
+
+#include "engine_misc_maths.h"
+
+struct BCollNode *bmInitInstanceNodes(void *instances, struct BCollShape *shapes, struct BCollNode *nodes,
+	struct BCollNode *parent);
+void bmUpdateNodes(struct BCollNode *nodes);
+
+/* the helpers animatingCollision.c references; only bmUpdateNodes runs here */
+void FUN_0004b230() {}
+void FUN_0004c480() {}
+void FUN_0004c4b0() {}
+void FUN_000502f0() {}
+void FUN_000505c0() {}
+void FUN_00050530() {}
+void FUN_00035b40() {}
+void FUN_00051f80() {}
+void FUN_00051fe0() {}
+void *FUN_0004e390(int a, int b, int c, int d, int e, int f)
+{
+	(void)a; (void)b; (void)c; (void)d; (void)e; (void)f;
+	return NULL;
+}
+int bmSweepSphereTriangle(struct BSphere *sphere, struct BTriangle *tri, float *delta, struct BCollHit *hit)
+{
+	(void)sphere; (void)tri; (void)delta; (void)hit;
+	return 0;
+}
+
+static int failures;
+
+static void check(int ok, const char *what)
+{
+	printf("%s %s\n", ok ? "ok  " : "FAIL", what);
+	if (!ok)
+		failures++;
+}
+
+/* an actor instance node: vec10 at +0x10, vec30 at +0x30, matrix at +0x80 */
+static unsigned char instances[3][0xc0];
+
+static void set_instance(int i, float v)
+{
+	float f[16];
+	int k;
+
+	for (k = 0; k < 16; k++)
+		f[k] = v;
+	memcpy(instances[i] + 0x10, f, 16);
+	memcpy(instances[i] + 0x30, f, 16);
+	memcpy(instances[i] + 0x80, f, 64);
+}
+
+int main(void)
+{
+	struct BCollNode nodes[3];
+	int i;
+
+	/* a circular list of three nodes, all with stale values */
+	memset(nodes, 0, sizeof(nodes));
+	for (i = 0; i < 3; i++) {
+		nodes[i].next = &nodes[(i + 1) % 3];
+		nodes[i].prev = &nodes[(i + 2) % 3];
+		nodes[i].instance = instances[i];
+		set_instance(i, (float)(i + 1));
+	}
+	bmUpdateNodes(nodes);
+	check(nodes[0].vec10[0] == 0.0f && nodes[0].matrix[0] == 0.0f,
+		"list of 3: the head node is not updated (as the original)");
+	check(nodes[1].vec10[0] == 2.0f && nodes[1].vec30[3] == 2.0f && nodes[1].matrix[15] == 2.0f,
+		"list of 3: the second node is updated");
+	check(nodes[2].vec10[0] == 3.0f && nodes[2].matrix[0] == 3.0f, "list of 3: the third node is updated");
+
+	/* a lone node is its own next: it is updated */
+	memset(nodes, 0, sizeof(nodes));
+	nodes[0].next = &nodes[0];
+	nodes[0].prev = &nodes[0];
+	nodes[0].instance = instances[0];
+	bmUpdateNodes(nodes);
+	check(nodes[0].vec10[0] == 1.0f && nodes[0].matrix[15] == 1.0f, "lone node: updated");
+
+	printf("%s: %d failure(s)\n", failures ? "FAILED" : "passed", failures);
+	return failures != 0;
+}

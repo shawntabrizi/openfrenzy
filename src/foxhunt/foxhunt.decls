@@ -57,11 +57,44 @@
 00134400 void FoxHunt_LoadPropActors(void);
 
 # ---- FoxHunt/unplaced_player.c
+0012e9a0 void FoxHunt_Player_Dtor(void *self);
+0012e9b0 void FoxHunt_Player_RouteTo(void *self, float *to);
+0012e9e0 void FoxHunt_Player_CheckGoal(void *self);
+0012ea60 void FoxHunt_Player_UseEscalator(void *self, float *target);
+0012edb0 void FoxHunt_CreatePlayerInputs(void);
+0012ef90 void FoxHunt_Player_Rumble(void *self, int kind);
 0012f0a0 void *FoxHunt_Player_Ctor(void *self, int index, float *pos);
+0012f410 void FoxHunt_Player_FollowRoute(void *self);
+0012fb60 void FoxHunt_Player_Think(void *self);
+0012fe30 void FoxHunt_Player_Act(void *self);
+0012ff00 void FoxHunt_Player_ChooseCooperation(void *self);
+00130310 void FoxHunt_Player_ChooseBonus(void *self);
+00130400 int FoxHunt_Player_NextPatrolPoint(void *self);
+001306b0 int FoxHunt_Player_Retaliate(void *self);
+00130780 int FoxHunt_Player_RandomOther(void *self, int skip_down);
+00130830 void FoxHunt_Player_AvoidNearest(void *self);
+00130d10 void FoxHunt_Player_Hit(void *self, float *from, float power, int side);
+00130f30 void FoxHunt_Player_Update(void *self);
+00131240 void FoxHunt_UpdatePlayers(void);
+00131270 void FoxHunt_Player_RespawnAt(void *self, char *point);
+00131530 void FoxHunt_Player_DrawRoute(void *self);
+001316e0 void FoxHunt_Player_SetModel(void *self, int normal);
+00131810 void FoxHunt_Player_ChooseEnergyBall(void *self);
+00131a20 void FoxHunt_Player_ChooseOddOneOut(void *self);
+00131af0 void FoxHunt_Player_ChooseVictim(void *self);
+00131d30 int FoxHunt_Player_Plan(void *self);
+00132a40 int FoxHunt_Player_Attack(void *self);
+001331f0 void FoxHunt_Player_Respawn(void *self);
+00133310 void FoxHunt_Player_SetMode(void *self, int mode);
+00133370 void FUN_00133370(int player);
+00133490 void FoxHunt_SharkView(int id, float *pos, float *heading);
+001334f0 float FUN_001334f0(float x, float z);
 
 # ---- FoxHunt/CFHunt_Throwable.c
 00134460 void *CFHunt_Throwable_Ctor(void *self, int type, float *pos, float size);
+00134620 int FoxHunt_Throwable_CanThrow(void *self);
 00135840 void *FoxHunt_Button_Ctor(void *self, int id, float a, float b, int c, int d, float *pos, float heading);
+00135cd0 int FoxHunt_Button_IsNear(void *self, char *actor);
 00135d80 void *FoxHunt_Shark_Ctor(void *self, float *pos, int index);
 
 # ---- FoxHunt/CFHunt_Flag.c

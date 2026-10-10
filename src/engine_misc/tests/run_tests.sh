@@ -18,3 +18,11 @@ cc -std=gnu11 -O1 -Wall -Wno-unused-function -x c \
 	"$ROOT/src/engine_misc/tests/maths_test.c.in" \
 	-o "$OUT/maths_test" -lm
 "$OUT/maths_test"
+cc -std=gnu11 -O1 -Wall -Wno-unused-function -Wno-deprecated-non-prototype \
+	-Wno-pointer-to-int-cast -Wno-int-to-void-pointer-cast -x c \
+	-include "$ROOT/src/engine_misc/tests/engine_misc_test_shim.h" \
+	-I "$ROOT/src/engine_misc" \
+	"$ROOT/src/engine_misc/BMATHS/animatingCollision.c" \
+	"$ROOT/src/engine_misc/tests/anim_test.c.in" \
+	-o "$OUT/anim_test"
+"$OUT/anim_test"

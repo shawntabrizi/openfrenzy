@@ -48,4 +48,16 @@ void FUN_00036ac0(float *out, const float *a, const float *b);
 void FUN_000514a0(float *out, const float *in);
 void *FUN_0004e390(int, int, int, int, int, int);
 
+/* the helpers BMATHS/animatingCollision.c calls (anim_test.c.in; unprototyped, so the
+casts in engine_misc_extern.h apply) */
+void FUN_0004b230();
+void FUN_0004c480();
+void FUN_0004c4b0();
+void FUN_000502f0();
+void FUN_000505c0();
+void FUN_00050530();
+void FUN_00035b40();
+void FUN_00051f80();
+void FUN_00051fe0();
+
 #endif

@@ -451,12 +451,6 @@ void CGameMode_FoxHunt_Init(void *self)
 #define GOAL_A() FH_P(0x00302194)                /* the two goals of variations 1-2 */
 #define GOAL_B() FH_P(0x0030219c)
 
-/* a random number in [0, 1] (rand() / 32767 with the original float 0x38000100) */
-static inline float fh_randf(void)
-{
-	return (float)fh_rand() * 3.05185094e-05f;
-}
-
 /* the colour bytes of the character of player record `rec` */
 #define CHAR_R(rec) DAT_00290718[DAT_002baed4[(rec) * 10] * 0x60 + 0]
 #define CHAR_G(rec) DAT_00290718[DAT_002baed4[(rec) * 10] * 0x60 + 1]

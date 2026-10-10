@@ -151,6 +151,12 @@ static inline int fh_rand(void)
 	return (int)((DAT_00285630 >> 16) & 0x7fff);
 }
 
+/* a random number in [0, 1] (rand() / 32767 with the original float 0x38000100) */
+static inline float fh_randf(void)
+{
+	return (float)fh_rand() * 3.05185094e-05f;
+}
+
 /* a float's bit pattern, for an undefined4 parameter that carries a float */
 static inline unsigned int fh_fbits(float value)
 {
@@ -194,6 +200,7 @@ extern float DAT_00294b98[8];         /* charlib: the camera's start position an
 extern int DAT_002bae6c;              /* core: sound effect volume 0-255 */
 extern float DAT_002ba990;            /* core: frames per second */
 extern int DAT_002ba56c;              /* the camera path editor is on */
+extern int DAT_002bae70;              /* core: difficulty 0-2 */
 extern int DAT_002bae94;              /* core: number of players */
 extern int DAT_002bae98;              /* core: 1 tournament, 2 ... */
 extern int DAT_002baeb8;              /* core: this game mode has no RefBot / skips the intro */
