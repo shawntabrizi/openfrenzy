@@ -237,7 +237,8 @@ int FUN_0013b4d0(struct BExtraSystem *system, int count, void **items, void *arg
 		next[1] = step[1] + item[1];
 		next[2] = step[2] + item[2];
 		if (hop_SparkCollide == NULL) {
-			if (!(next[1] < item[8])) {
+			/* fcomp; test ah, 0x41; jp: moves only when above the ground (or NaN) */
+			if (!(next[1] <= item[8])) {
 				memcpy(item, next, 16);
 				i++;
 				continue;
