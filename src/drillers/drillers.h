@@ -149,6 +149,37 @@ extern int DAT_002baf50;            /* player 3 human */
 /* the DirectSound object (engine_misc) */
 extern void *DAT_002db808;
 
-/* ---------- functions of this module that are missing from of_functions.tsv */
+/* ---------- functions of this module that are missing from of_functions.tsv
+   (prototypes from the disassembly; `self` is ECX) */
+
+/* Drillers/CDrillers_Game.c: the game object (0x002ff9f0) */
+void FUN_0010ff70(void *self, int top);    /* input (game-mode slot +0x14) */
+void FUN_0010ffa0(void *self);             /* update of Rubble Alliance */
+void FUN_001100e0(void *self);             /* update of Erodeo */
+void FUN_00110270(void *self, int top);    /* render (slot +0x1c) */
+void FUN_00110bf0(void *self, int top);    /* update (slot +0x18) */
+/* the effects object (0x00300c78) */
+void FUN_00111770(void *self);
+void FUN_001117a0(void *self);
+void FUN_00112a70(void *self);
+void FUN_00113c60(void *self);
+/* the map object (0x00298da0) */
+void FUN_001151f0(void *self);
+void FUN_001154b0(void *self);
+void FUN_001160f0(void *self);
+void FUN_001164d0(void *self);
+/* the players object (0x00298e70) */
+void FUN_00117200(void *self, int player);
+void FUN_00117460(void *self);
+void FUN_001195c0(void *self, int player);
+void FUN_00119cd0(void *self, int player);
+/* the HUD extras object (0x002aab08) */
+void FUN_00120870(void *self, int player, int behind);
+void FUN_00120d00(void *self);
+/* the AI object (0x002aadf8) */
+void FUN_00121c80(void *self, int player);
+void FUN_00122530(void *self, int player);
+void FUN_00122c10(void *self, int player);
+void FUN_001230b0(void *self, int player);
 
 #endif
