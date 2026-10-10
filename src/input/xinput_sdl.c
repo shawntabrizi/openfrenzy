@@ -259,6 +259,13 @@ HANDLE WINAPI XInputOpen(PXPP_DEVICE_TYPE device_type, DWORD port, DWORD slot,
 	HANDLE handle = NULL;
 
 	(void)polling_parameters;
+	/* the original accepts only the gamepad, keyboard and IR dongle types;
+	any other (a memory unit) fails with ERROR_INVALID_PARAMETER */
+	if (device_type != XDEVICE_TYPE_GAMEPAD && device_type != XDEVICE_TYPE_DEBUG_KEYBOARD)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return NULL;
+	}
 	pthread_mutex_lock(&input_lock);
 	if (device_type == XDEVICE_TYPE_GAMEPAD && port < INPUT_PORT_COUNT && slot == XDEVICE_NO_SLOT)
 	{
@@ -308,7 +315,10 @@ static int controller_port_locked(HANDLE device)
 }
 
 /* 0x0024d2ae XInputGetState: ERROR_SUCCESS, or ERROR_DEVICE_NOT_CONNECTED (state
-zeroed) for a closed handle or a device gone since XInputOpen. The packet
+zeroed) for a closed handle or a device gone since XInputOpen. (The original
+copies the last report even then; the game ignores the result, so a zeroed
+state keeps buttons from sticking for up to a second after an unplug.)
+ERROR_INVALID_PARAMETER for the keyboard's handle, as the original. The packet
 number changes only when the state does, as on the Xbox. */
 DWORD WINAPI XInputGetState(HANDLE device, PXINPUT_STATE state)
 {
@@ -317,6 +327,8 @@ DWORD WINAPI XInputGetState(HANDLE device, PXINPUT_STATE state)
 	XINPUT_GAMEPAD pad;
 	int port;
 
+	if (device == (HANDLE)&keyboard_device)
+		return ERROR_INVALID_PARAMETER;
 	memset(state, 0, sizeof(*state));
 	pthread_mutex_lock(&input_lock);
 	refresh_locked();
@@ -353,7 +365,8 @@ DWORD WINAPI XInputSetState(HANDLE device, PXINPUT_FEEDBACK feedback)
 	unsigned int id = 0;
 	int port;
 
-	if (!feedback)
+	/* the original refuses the keyboard's handle and leaves feedback alone */
+	if (!feedback || device == (HANDLE)&keyboard_device)
 		return ERROR_INVALID_PARAMETER;
 	pthread_mutex_lock(&input_lock);
 	refresh_locked();

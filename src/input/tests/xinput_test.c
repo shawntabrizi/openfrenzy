@@ -304,6 +304,22 @@ static void test_xpp(void)
 	CHECK(XInputSetState(pad0, &feedback) == ERROR_IO_PENDING);
 	CHECK(feedback.Header.dwStatus == ERROR_SUCCESS && rumble_calls == 0);
 
+	/* XAPI 0x0024d22d / 0x0024d2ae / 0x0024d31f: a type XInputOpen does not know
+	(a memory unit) is a bad parameter, not a missing device; the keyboard's
+	handle has no pad state and no motors */
+	CHECK(XInputOpen(XDEVICE_TYPE_MEMORY_UNIT, XDEVICE_PORT0, XDEVICE_NO_SLOT, NULL) == NULL);
+	CHECK(GetLastError() == ERROR_INVALID_PARAMETER);
+	{
+		HANDLE keyboard = XInputOpen(XDEVICE_TYPE_DEBUG_KEYBOARD, XDEVICE_PORT0, XDEVICE_NO_SLOT, NULL);
+
+		CHECK(keyboard != NULL);
+		CHECK(XInputGetState(keyboard, &state) == ERROR_INVALID_PARAMETER);
+		feedback.Header.dwStatus = ERROR_IO_PENDING;
+		CHECK(XInputSetState(keyboard, &feedback) == ERROR_INVALID_PARAMETER);
+		CHECK(feedback.Header.dwStatus == ERROR_IO_PENDING);
+		XInputClose(keyboard);
+	}
+
 	/* a closed handle */
 	XInputClose(pad0);
 	CHECK(XInputGetState(pad0, &state) == ERROR_DEVICE_NOT_CONNECTED);
