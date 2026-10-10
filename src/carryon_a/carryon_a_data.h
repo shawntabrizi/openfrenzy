@@ -67,6 +67,14 @@ extern unsigned int DAT_00294040[];     /* debug colour per AI mode */
 extern float DAT_00294090[3];           /* variant 2 CPU glitter weight by difficulty */
 extern float DAT_0029409c[3];           /* variant 2 CPU basic burden by difficulty */
 extern float DAT_002940a8[4];
+extern float DAT_002940b8;              /* glitter cone: bottom height (-10) */
+extern float DAT_002940bc;              /* top height (38) */
+extern float DAT_002940c0;              /* bottom radius (12) */
+extern float DAT_002940c4;              /* top radius (20) */
+extern const char *DAT_002940c8[1];     /* variant 4: objects\tapir.obe */
+extern const char *DAT_002940cc[5];     /* variant 3: the five part models */
+extern const char *DAT_002940e0[1];     /* variant 2: objects\glitter_net.obe */
+extern const char *DAT_002940e4[5];     /* variant 1: objects\rocket1.obe .. rocket5.obe */
 extern unsigned char DAT_00294998[];    /* AI priorities (carryon_b) */
 extern void *DAT_00294a84[];            /* AI conditions (carryon_b) */
 extern void *DAT_00294ac0[];            /* AI state functions (carryon_b) */
@@ -134,11 +142,15 @@ extern float DAT_002f6d40;              /* time the bully's victim has been afte
 extern void *DAT_002f6d44;              /* route globals saved by FUN_000c39b0 */
 extern void *DAT_002f6d48;
 extern void *DAT_002f6d4c;              /* the carried objects (CFire_Carry) */
+extern float *DAT_002f6d50;             /* tapir trail widths (30) */
+extern float *DAT_002f6d54;             /* tapir trail screen widths (30) */
+extern int *DAT_002f6d58;               /* tapir trail colours (30 x 4) */
 extern struct CFireResource *DAT_002f6d5c;  /* the resources and frame timing */
 #define g_fireRes DAT_002f6d5c
 extern int DAT_002f6d60;                /* tweak "Debug Lines" */
 extern struct CFireCamera *DAT_002f7960;  /* the camera */
 #define g_fireCam DAT_002f7960
 extern void *DAT_002f7968;              /* carryon_b: the sprites (+0xc sparks) */
+extern void *DAT_002f798c;              /* carryon_b: the flames */
 
 #endif

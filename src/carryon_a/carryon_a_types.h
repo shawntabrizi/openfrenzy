@@ -177,6 +177,40 @@ OF_ASSERT_SIZE(struct CCarryOnPlayer, 0x1204);
 #define CA_YAW 0x1e8            /* float */
 #define CA_PLAYER_OF(p) (CO_U16(CO_PTR(p, CP_ACTOR), CA_PLAYER))
 
+/* ---------- CFire_Carry.cpp */
+
+/* one carried object of one player (0x88 bytes): a model instance shown in the hands */
+struct CoCarried
+{
+	int player;                 /* +0x00 */
+	int type;                   /* +0x04 0..4 rockets, 5 glitter net, 6..10 parts, 0xb tapir */
+	void *inst;                 /* +0x08 its model instance */
+	void *anim;                 /* +0x0c "default" / "default_noloop" */
+	int visible;                /* +0x10 in the player's hands */
+	void *leftHand;             /* +0x14 the character's left palm node */
+	void *rightHand;            /* +0x18 */
+	void *handle;               /* +0x1c the "handle" node */
+	void *flame;                /* +0x20 tapir: the "flame" node */
+	void *vb;                   /* +0x24 net / trail vertex buffer */
+	void *streak;               /* +0x28 alphatex\tapir_streak.bmp */
+	float *trail;               /* +0x2c tapir: 30 trail points (float[4]) */
+	float *trailVel;            /* +0x30 their velocities */
+	int trailCount;             /* +0x34 */
+	float phase[10];            /* +0x38 glitter net: wave phases */
+	float speed[10];            /* +0x60 their speeds */
+};
+OF_ASSERT_OFFSET(struct CoCarried, trailCount, 0x34);
+OF_ASSERT_SIZE(struct CoCarried, 0x88);
+
+/* the carried objects of all players (0x68 bytes; also DAT_002f6d4c) */
+struct CFireCarry
+{
+	int variant;                /* +0x00 */
+	void *models[5];            /* +0x04 */
+	struct CoCarried *items[4][5];  /* +0x18 per player and type */
+};
+OF_ASSERT_SIZE(struct CFireCarry, 0x68);
+
 /* ---------- the text reader used by the ASE import (vtable 0x00267bb8; other minigames
 use it too: rollerball_b 0x001989c0 sets it up on a file buffer) */
 struct CoTextReader

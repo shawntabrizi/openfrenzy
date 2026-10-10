@@ -29,6 +29,10 @@ extern void **DAT_002ba95c;             /* the tournament (vtable +0xc: next gam
 extern unsigned char DAT_002ecd90[];    /* the pause menu (classlib_ui 0x000772e0) */
 extern unsigned int DAT_00285630;       /* rand() seed */
 extern float DAT_002855f0[16];          /* the identity matrix */
+extern float DAT_00285634[4];           /* the identity quaternion */
+extern unsigned int DAT_002bc490[256], DAT_002bd640[256], DAT_002bc898[256], DAT_002bce18[256];
+                                        /* bdisplay colour channel tables */
+extern unsigned int DAT_002bca94;       /* bdisplay: opaque alpha */
 extern float DAT_0028fda8;              /* frame time scale (1.0) */
 extern float DAT_0028ffa8;              /* the display's near plane */
 extern float DAT_0028ffac;              /* the display's far plane */

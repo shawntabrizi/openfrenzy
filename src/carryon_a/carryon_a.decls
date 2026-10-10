@@ -96,12 +96,17 @@
 000c3f00 struct CFireASEImport *CFire_ASEImport_DeletingDtor(struct CFireASEImport *self, unsigned int flags);
 
 # CarryOn/CFire_Carry.cpp
-000c4d60 void *CFire_Carry_Ctor(void *self, void *levelPackage, void *genericPackage, int variant);
-000c52b0 void CFire_Carry_Draw(void *self, unsigned int passes);
-000c5310 void CFire_Carry_UpdateHeld(void *self, int player);
-000c5340 void *CFire_Carry_GetHeld(void *self, int player);
-000c5390 void CFire_Carry_Dtor(void *self);
-000c5490 void CFire_Carry_Update(void *self, float step);
+000c3f20 struct CoCarried *CFire_Carried_Ctor(struct CoCarried *self, int player, int type, void *model);
+000c4110 void CFire_Carried_UpdateHands(struct CoCarried *self);
+000c41b0 void *CFire_Carried_Place(struct CoCarried *self);
+000c43f0 void CFire_Carried_Update(struct CoCarried *self, float step);
+000c4830 void CFire_Carried_Draw(struct CoCarried *self, unsigned int passes);
+000c4d60 struct CFireCarry *CFire_Carry_Ctor(struct CFireCarry *self, void *levelPackage, void *genericPackage, int variant);
+000c52b0 void CFire_Carry_Draw(struct CFireCarry *self, unsigned int passes);
+000c5310 void CFire_Carry_UpdateHeld(struct CFireCarry *self, int player);
+000c5340 void *CFire_Carry_GetHeld(struct CFireCarry *self, int player);
+000c5390 void CFire_Carry_Dtor(struct CFireCarry *self);
+000c5490 void CFire_Carry_Update(struct CFireCarry *self, float step);
 
 # CarryOn/CFire_World.cpp
 000c6640 void CFire_World_Unload(void *self);
@@ -123,6 +128,8 @@
 000c7880 void CFire_Resource_PlayEvent(struct CFireResource *self, int player, int event);
 000c7a20 void CFire_Resource_DrawLines(float *points, int count, int closed, unsigned int colour);
 000c7ed0 void CFire_Resource_DrawActorFlat(void *instance, unsigned int colour);
+000c8170 void CFire_Resource_BeginStage(int flags);
+000c8200 void CFire_Resource_EndStage(void);
 000c8230 void CFire_Resource_DrawCircle(float *pos, float radius, int flags, unsigned int colour);
 000c7f30 void CFire_Resource_Printf(struct CFireResource *self, float x, float y, unsigned int colour, int align, const char *format, ...);
 
