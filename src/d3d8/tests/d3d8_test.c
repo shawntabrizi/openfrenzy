@@ -686,6 +686,64 @@ static void test_assembler(void)
 			"m4x4 position");
 	}
 
+	/* a whole program from the game's fragments (pcxbActor.cpp: the
+	strings after "xvs.1.1" in the XBE), as baGenerateShader joins them:
+	one bone (index v1.x), lit by an ambient color and one distant light,
+	fog from the clip w */
+	memset(&m, 0, sizeof(m));
+	set_constant(&m, -38, 320.0f, -240.0f, 16777215.0f, 0.0f);
+	set_constant(&m, -37, 320.0f, 240.0f, 0.0f, 0.0f);
+	for (i = 0; i < 4; i++)
+		set_constant(&m, 92 + i, i == 0 ? 1.0f : 0.0f, i == 1 ? 1.0f : 0.0f, i == 2 ? 1.0f : 0.0f, i == 3 ? 1.0f : 0.0f);
+	for (i = 0; i < 3; i++)
+		set_constant(&m, 20 + i, i == 0 ? 1.0f : 0.0f, i == 1 ? 1.0f : 0.0f, i == 2 ? 1.0f : 0.0f, i == 1 ? 2.0f : 0.0f);
+	set_constant(&m, 4, 0.1f, 0.2f, 0.3f, 1.0f);   /* ambient */
+	set_constant(&m, 5, 0.0f, 0.0f, 1.0f, 0.0f);   /* the light's reversed direction */
+	set_constant(&m, 6, 0.5f, 0.5f, 0.5f, 0.0f);   /* its color */
+	set_constant(&m, 7, 1.0f, 1.0f, 1.0f, 1.0f);   /* the material */
+	m.v[0][0] = 0.25f; m.v[0][1] = 0.5f; m.v[0][2] = 3.0f; m.v[0][3] = 1.0f;
+	m.v[1][0] = 20.0f;
+	m.v[3][0] = 0.0f; m.v[3][1] = 0.0f; m.v[3][2] = 2.0f;
+	m.v[4][0] = 0.125f; m.v[4][1] = 0.875f;
+	program = assemble(
+		"xvs.1.1\n"
+		"mov a0.x, v1.x\n"
+		"dp4 r0.x, v0, c[a0.x + 0]\n"
+		"dp4 r0.y, v0, c[a0.x + 1]\n"
+		"dp4 r0.z, v0, c[a0.x + 2]\n"
+		"mov r0.w, v0.w\n"
+		"dp3 r2.x, v3, c[a0.x + 0]\n"
+		"dp3 r2.y, v3, c[a0.x + 1]\n"
+		"dp3 r2.z, v3, c[a0.x + 2]\n"
+		"mov r2.w, v0.w\n"
+		"dp3 r11.w, r2, r2\n"
+		"rsq r11.w, r11.w\n"
+		"mul r2.xyz, r2.xyz, r11.w\n"
+		"mov r3, c[4]\n"
+		"dp3 r11.w, c[5], r2\n"
+		"max r11.w, c[6].w, r11.w\n"
+		"mad r3.xyz, c[6].xyz, r11.www, r3.xyz\n"
+		"dp4 oPos.x, r0, c[92]\n"
+		"dp4 oPos.y, r0, c[93]\n"
+		"dp4 oPos.z, r0, c[94]\n"
+		"dp4 oPos.w, r0, c[95]\n"
+		"dp4 oFog.x, r0, c[95]\n"
+		"mul oD0, r3, c[7]\n"
+		"mov oT0, v4\n", &result, NULL);
+	CHECK(program != NULL, "the game's fragments assemble");
+	if (program)
+	{
+		run_vertex_program(&m, program);
+		/* the bone moves y by 2: (0.25, 2.5, 3, 1); the normal (0, 0, 1)
+		faces the light fully */
+		CHECK(near(m.o[0][0], 0.25f * 320.0f + 320.0f, 1e-3f) && near(m.o[0][1], 2.5f * -240.0f + 240.0f, 1e-3f) &&
+			near(m.o[0][3], 1.0f, 1e-6f), "skinned position: (%f %f %f %f)", m.o[0][0], m.o[0][1], m.o[0][2], m.o[0][3]);
+		CHECK(near(m.o[3][0], 0.6f, 1e-5f) && near(m.o[3][1], 0.7f, 1e-5f) && near(m.o[3][2], 0.8f, 1e-5f) &&
+			near(m.o[3][3], 1.0f, 1e-5f), "lit color: (%f %f %f %f)", m.o[3][0], m.o[3][1], m.o[3][2], m.o[3][3]);
+		CHECK(near(m.o[5][0], 1.0f, 1e-6f), "oFog.x = clip w");
+		CHECK(near(m.o[9][1], 0.875f, 1e-6f), "oT0 = v4");
+	}
+
 	/* failures: a message, E_FAIL, and the buffers still there */
 	program = assemble("xvs.1.1\nfrob r0, v0\n", &result, &errors);
 	CHECK(!program && result < 0, "an unknown instruction fails");

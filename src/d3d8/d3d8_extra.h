@@ -14,6 +14,25 @@ the copies the XBE's library code makes (D3DMATERIAL8: 0x11 dwords at
 0x001f54a0, D3DLIGHT8: 0x1a dwords at 0x001f5cd0).
 
 Game code: #include "d3d8_extra.h" (it includes xtl.h).
+
+The XDK's inline functions were compiled into the game, so Ghidra shows
+some of them as writes to the D3D section's data. Write them as the HLE's
+globals (xdk_d3d8.h) or calls:
+
+  XBE address             what                          port
+  0x00203950 + 4 * n      D3D__RenderState[n]           D3D__RenderState[n] (same D3DRS_* numbers; the
+                                                        game's own code writes n = 57..74 after it calls
+                                                        D3DDevice_SetRenderState_Simple: keep both, or call
+                                                        the inline D3DDevice_SetRenderState(n, value))
+  0x00203750 + 128 * s    D3D__TextureState[s][n]       D3D__TextureState[s][n] (32 states a stage)
+    + 4 * n
+  0x0020374c              D3D__IndexData                D3D__IndexData (set by D3DDevice_SetIndices)
+  0x00203b90, 0x00203b94  push buffer cursor and end    nothing: use the D3DDevice_* calls
+  0x00203b98              D3D__DirtyFlags               nothing (the HLE reads the state when it draws)
+  0x00206720              D3D__pDevice                  nothing
+  FUN_001f6700            D3DDevice_SetTextureState_Deferred(stage, type, value): __fastcall, stage
+                          in ECX, type in EDX (Ghidra shows only the value)
+  D3DDevice_SetRenderState_Simple(method, value), _Deferred(state, value): __fastcall too
 */
 
 #ifndef OPENFRENZY_D3D8_EXTRA_H

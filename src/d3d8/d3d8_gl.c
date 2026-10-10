@@ -1891,6 +1891,11 @@ HRESULT WINAPI Direct3D_CreateDevice(UINT adapter, D3DDEVTYPE device_type, void 
 		else
 			platform_log("Direct3D: running without a window (nothing is displayed)");
 		device.created = TRUE;
+		/* the display's vertical blanks retire presented frames: the game
+		never asks for them (SetVerticalBlankCallback,
+		BlockUntilVerticalBlank), so without this its third Present would
+		wait for ever (openfrenzy) */
+		vertical_blank_start();
 	}
 	*returned_device = device_pointer();
 	return S_OK;
