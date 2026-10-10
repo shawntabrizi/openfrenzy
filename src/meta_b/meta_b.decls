@@ -146,3 +146,36 @@
 00165a90 void CBigGun_Aim(struct CBigGun *self, float *target);
 00165e20 void CBigGun_Free(struct CBigGun *self);
 00165e90 void CBigGun_Destruct(struct CBigGun *self);
+
+# Meta/CWater.cpp
+00162c40 void MetaWater_Init(void);
+00162c60 float MetaWater_Clamp(float value, float limit);
+00162cb0 void CMetaWater_UpdateField(struct CMetaWater *self);
+00162d30 void CMetaWater_Draw(struct CMetaWater *self);
+00162e10 void CMetaWater_Splash(struct CMetaWater *self, float *pos, float strength);
+00162e60 void CMetaWater_SetDrops(struct CMetaWater *self, float interval, float depth);
+00162e90 void MetaWater_Splash(float *pos, float strength);
+00162ee0 struct CMetaWater *MetaWater_Find(int tag);
+00162f30 void CMetaWater_Destruct(struct CMetaWater *self);
+00162f90 void MetaWater_DrawAll(void);
+00162fc0 void CMetaWater_CreateField(struct CMetaWater *self, float *pos, int nx, int nz, float sizeX, float sizeZ);
+001630c0 void MetaWater_SetLevel(int tag, float level, float speed);
+00163120 int MetaWater_PlayerSplash(void *meta, float depth, float minSpeed);
+00163260 int MbDrip_Update(struct MbDrip *self);
+001632d0 void MbDrip_Init(struct MbDrip *self, float x, float z, float timeMin, float timeRange, float depth, float inner, float outer);
+00163350 void CMetaWater_Update(struct CMetaWater *self);
+001633f0 struct CMetaWater *CMetaWater_Construct(struct CMetaWater *self, float *pos, int nx, int nz, float sizeX, float sizeZ, short tag);
+00163500 void CMetaWater_AddDrip(struct CMetaWater *self, float x, float z, float timeMin, float timeRange, float strength, float size);
+00163560 void MetaWater_DeleteAll(void);
+001635b0 void MetaWater_UpdateAll(void);
+
+# Meta/unplaced.c: particle emitters
+001635e0 void CMetaEmitter_SetRate(struct CMetaEmitter *self, float rate);
+00163600 struct CMetaEmitter *CMetaEmitter_InitLine(struct CMetaEmitter *self, void *ptype, uint colour, float *from, float *to, float rate, int flags, int arg);
+001636d0 struct CMetaEmitter *CMetaEmitter_InitWaterLine(struct CMetaEmitter *self, float strength, float *from, float *to, float rate, int flags, int arg);
+001637a0 struct CMetaEmitter *CMetaEmitter_InitCircle(struct CMetaEmitter *self, void *ptype, uint colour, float *centre, float radius, float rate, int flags, int arg);
+00163840 void CMetaEmitter_Emit(struct CMetaEmitter *self);
+00163ae0 void CMetaEmitter_SetVelocity(struct CMetaEmitter *self, float *vel, float *spread);
+00163b20 void MetaEmitters_DeleteAll(void);
+00163b60 struct CMetaEmitter *CMetaEmitter_Update(struct CMetaEmitter *self);
+00163c60 void MetaEmitters_UpdateAll(void);

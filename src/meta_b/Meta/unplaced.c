@@ -615,3 +615,305 @@ void *Meta_ReturnThis(void *self)
 {
 	return self;
 }
+
+/* ---------- particle emitters (0x001635e0-0x00163c60, after CWater.cpp): lines, circles
+   and water drip lines that the level script places. The list is at 0x003090d8. */
+
+/* 0x003090d0  sin of a slowly turning phase (0x003090d4), updated with the emitters */
+float DAT_003090d0;
+float DAT_003090d4;
+/* 0x003090d8  the emitters (count at 0x003090e0) */
+struct MbList DAT_003090d8;
+/* 0x002b0ca8  the phase's speed */
+float DAT_002b0ca8 = 0.15f;
+
+/* 0x001635e0  Meta (file unknown)
+Sets the emit rate: a line eases towards it, a water line takes it at once, a circle
+ignores it. */
+void CMetaEmitter_SetRate(struct CMetaEmitter *self, float rate)
+{
+	if (self->type != 0)
+	{
+		if (self->type != 1)
+			return;
+		self->rate = rate;
+	}
+	self->targetRate = rate;
+}
+
+/* 0x00163600  Meta (file unknown)
+A line emitter from `from` to `to` of particle `ptype` in `colour`; the rate is per unit
+of length / 100. */
+struct CMetaEmitter *CMetaEmitter_InitLine(struct CMetaEmitter *self, void *ptype,
+	unsigned int colour, float *from, float *to, float rate, int flags, int arg)
+{
+	float dx;
+	float dy;
+	float dz;
+	float len;
+
+	self->p0[0] = from[0];
+	self->p0[1] = from[1];
+	self->p0[2] = from[2];
+	self->p0[3] = from[3];
+	self->p1[0] = to[0];
+	self->p1[1] = to[1];
+	self->p1[2] = to[2];
+	self->p1[3] = to[3];
+	self->vel[3] = 1.0f;
+	self->vel[0] = 0.0f;
+	self->vel[1] = 0.0f;
+	self->vel[2] = 0.0f;
+	self->accum = 0.0f;
+	self->rate = rate;
+	self->targetRate = rate;
+	dx = from[0] - to[0];
+	dy = from[1] - to[1];
+	dz = from[2] - to[2];
+	self->ptype = ptype;
+	self->arg = arg;
+	self->colour = colour;
+	self->type = 0;
+	self->flags = flags;
+	len = sqrtf(dy * dy + dx * dx + dz * dz) * 0.01f;     /* 0x0025372c */
+	self->lengthFactor = len;
+	self->perFrame = len * rate;
+	MB_LIST_INSERT(&DAT_003090d8, self, 0);
+	return self;
+}
+
+/* 0x001636d0  Meta (file unknown)
+A water drip line from `from` to `to`: splashes of `strength` on the first water area. */
+struct CMetaEmitter *CMetaEmitter_InitWaterLine(struct CMetaEmitter *self, float strength,
+	float *from, float *to, float rate, int flags, int arg)
+{
+	float dx;
+	float dy;
+	float dz;
+	float len;
+
+	self->p0[0] = from[0];
+	self->p0[1] = from[1];
+	self->p0[2] = from[2];
+	self->p0[3] = from[3];
+	self->p1[0] = to[0];
+	self->p1[1] = to[1];
+	self->p1[2] = to[2];
+	self->p1[3] = to[3];
+	self->vel[0] = 0.0f;
+	self->vel[1] = 0.0f;
+	self->vel[2] = 0.0f;
+	self->vel[3] = 1.0f;
+	self->spread[3] = 1.0f;
+	self->spread[0] = 0.0f;
+	self->spread[1] = 0.0f;
+	self->spread[2] = 0.0f;
+	self->accum = 0.0f;
+	self->rate = rate;
+	self->targetRate = rate;
+	dx = from[0] - to[0];
+	dy = from[1] - to[1];
+	dz = from[2] - to[2];
+	self->arg = arg;
+	MB_F32(self, 0x68) = strength;
+	self->type = 1;
+	self->flags = flags;
+	len = sqrtf(dy * dy + dx * dx + dz * dz) * 0.01f;
+	self->lengthFactor = len;
+	self->perFrame = len * rate;
+	MB_LIST_INSERT(&DAT_003090d8, self, 0);
+	return self;
+}
+
+/* 0x001637a0  Meta (file unknown)
+A circle emitter of `radius` around `centre`. */
+struct CMetaEmitter *CMetaEmitter_InitCircle(struct CMetaEmitter *self, void *ptype,
+	unsigned int colour, float *centre, float radius, float rate, int flags, int arg)
+{
+	float len = radius * 0.06283185f;                      /* 0x00270210: 2 pi / 100 */
+
+	self->type = 2;
+	self->p0[0] = centre[0];
+	self->p0[1] = centre[1];
+	self->p0[2] = centre[2];
+	self->p0[3] = centre[3];
+	self->p1[0] = 0.0f;
+	self->p1[1] = 0.0f;
+	self->p1[2] = 0.0f;
+	self->p1[3] = 1.0f;
+	self->lengthFactor = len;
+	self->p1[3] = 1.0f;
+	self->p1[2] = radius;
+	self->perFrame = len * rate;
+	self->targetRate = rate;
+	self->rate = rate;
+	self->ptype = ptype;
+	self->arg = arg;
+	self->colour = colour;
+	self->accum = 0.0f;
+	self->flags = flags;
+	MB_LIST_INSERT(&DAT_003090d8, self, 0);
+	return self;
+}
+
+/* the velocity of a particle: random inside the spread */
+static void emitter_velocity(struct CMetaEmitter *self, float *v)
+{
+	v[0] = Core_RandUnit() * self->spread[0] + self->vel[0];
+	v[1] = Core_RandUnit() * self->spread[1] + self->vel[1];
+	v[3] = 1.0f;
+	v[2] = Core_RandUnit() * self->spread[2] + self->vel[2];
+}
+
+/* 0x00163840  Meta (file unknown)
+Emits one particle (or a splash) at a random point of the line or circle; flag 1 puts it
+on the first water area's surface, flag 2 gives it a velocity. */
+void CMetaEmitter_Emit(struct CMetaEmitter *self)
+{
+	float pos[4];
+	float vel[4];
+	float r;
+	float angle;
+
+	if (self->type == 0)
+	{
+		r = (float)mb_rand() * MB_RAND_SCALE;
+		FUN_00050ff0(pos, self->p0, r, self->p1, 1.0f - r);
+		if ((self->flags & 1) != 0 && DAT_003090b8[0] != NULL)
+			pos[1] = pos[1] + DAT_003090b8[0]->level;
+		if ((self->flags & 2) != 0)
+		{
+			emitter_velocity(self, vel);
+			FUN_00080d60((int)self->ptype, (undefined4)pos, (undefined4)vel, 0, self->colour);
+			return;
+		}
+	}
+	else if (self->type == 1)
+	{
+		r = (float)mb_rand() * MB_RAND_SCALE;
+		FUN_00050ff0(pos, self->p0, r, self->p1, 1.0f - r);
+		MetaWater_Splash(pos, MB_F32(self, 0x68));
+		return;
+	}
+	else if (self->type == 2)
+	{
+		angle = (float)mb_rand() * MB_RAND_ANGLE;
+		if (self->p1[2] == 0.0f)
+		{
+			pos[0] = self->p0[0];
+			pos[1] = self->p0[1];
+			pos[2] = self->p0[2];
+			pos[3] = self->p0[3];
+		}
+		else
+		{
+			FUN_00051170(pos, self->p1, angle);
+			pos[0] = pos[0] + self->p0[0];
+			pos[1] = pos[1] + self->p0[1];
+			pos[2] = pos[2] + self->p0[2];
+		}
+		if ((self->flags & 1) != 0 && DAT_003090b8[0] != NULL)
+			pos[1] = pos[1] + DAT_003090b8[0]->level;
+		if ((self->flags & 2) != 0)
+		{
+			emitter_velocity(self, vel);
+			FUN_00051170(vel, vel, angle);
+			FUN_00080d60((int)self->ptype, (undefined4)pos, (undefined4)vel, 0, self->colour);
+			return;
+		}
+	}
+	else
+	{
+		return;
+	}
+	FUN_00080d60((int)self->ptype, (undefined4)pos, (undefined4)DAT_002ea478, 0, self->colour);
+}
+
+/* 0x00163ae0  Meta (file unknown)
+Gives the particles a velocity with a random spread. */
+void CMetaEmitter_SetVelocity(struct CMetaEmitter *self, float *vel, float *spread)
+{
+	self->vel[0] = vel[0];
+	self->vel[1] = vel[1];
+	self->vel[2] = vel[2];
+	self->vel[3] = vel[3];
+	self->spread[0] = spread[0];
+	self->spread[1] = spread[1];
+	self->spread[2] = spread[2];
+	self->spread[3] = spread[3];
+	self->flags = self->flags | 2;
+}
+
+/* 0x00163b20  Meta (file unknown)
+Deletes every emitter. */
+void MetaEmitters_DeleteAll(void)
+{
+	void *e;
+
+	e = MB_LIST_NEXT(&DAT_003090d8, NULL);
+	while (e != NULL)
+	{
+		MB_LIST_REMOVE(&DAT_003090d8, e);
+		if (e != NULL)
+			MB_DELETE(e);
+		e = MB_LIST_NEXT(&DAT_003090d8, NULL);
+	}
+}
+
+/* 0x00163b60  Meta (file unknown)
+Per frame: the rate eases to its target (a water line dies away), then emits. Returns the
+emitter. */
+struct CMetaEmitter *CMetaEmitter_Update(struct CMetaEmitter *self)
+{
+	float d;
+
+	if (self->type == 0 || self->type == 2)
+	{
+		if (self->rate != self->targetRate)
+		{
+			d = self->targetRate - self->rate;
+			if (d <= -0.005f || 0.005f <= d)      /* 0x00270214, 0x002632d8 */
+				self->rate = DAT_0028fda8 * d * 0.04f + self->rate;   /* 0x0026fefc */
+			else
+				self->rate = self->targetRate;
+			self->perFrame = self->lengthFactor * self->rate;
+		}
+	}
+	else if (self->type == 1)
+	{
+		if (self->rate > 0.0f)
+			self->rate = self->rate * 0.5f;
+		if (self->rate < 0.1f)
+			self->rate = 0.0f;
+		self->perFrame = self->lengthFactor * self->rate;
+	}
+	if (self->rate > 0.0f)
+	{
+		self->accum = DAT_0028fda8 * self->perFrame + self->accum;
+		while (self->accum > 1.0f)
+		{
+			self->accum = self->accum - 1.0f;
+			CMetaEmitter_Emit(self);
+		}
+	}
+	return self;
+}
+
+/* 0x00163c60  Meta (file unknown)
+Per frame: the phase, then every emitter. */
+void MetaEmitters_UpdateAll(void)
+{
+	struct CMetaEmitter *e;
+
+	if (DAT_003090d8.count == 0)
+		return;
+	DAT_003090d4 = DAT_002b0ca8 * DAT_0028fda8 + DAT_003090d4;
+	DAT_003090d4 = CLMath_WrapAngle(DAT_003090d4);
+	DAT_003090d0 = sinf(DAT_003090d4);
+	e = MB_LIST_NEXT(&DAT_003090d8, NULL);
+	while (e != NULL)
+	{
+		e = CMetaEmitter_Update(e);
+		e = MB_LIST_NEXT(&DAT_003090d8, e);
+	}
+}

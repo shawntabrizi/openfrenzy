@@ -529,4 +529,72 @@ extern void *DAT_0030925c;
 extern void *DAT_00309260;
 extern struct MbList DAT_00309268;
 
+/* ---------- CWater.cpp */
+
+/* a drip that splashes at random times (0x20 bytes) */
+struct MbDrip
+{
+	float x;                    /* +0x00 */
+	float z;                    /* +0x04 */
+	float depth;                /* +0x08 splash */
+	float inner;                /* +0x0c */
+	float outer;                /* +0x10 */
+	float timer;                /* +0x14 */
+	float timeMin;              /* +0x18 */
+	float timeRange;            /* +0x1c */
+};
+OF_ASSERT_SIZE(struct MbDrip, 0x20);
+
+/* a water area (0x174 bytes, allocated by the level loader) */
+struct CMetaWater
+{
+	void *field;                /* +0x000 CWaterField (classlib_fx) */
+	float minX;                 /* +0x004 or the centre x when round */
+	float minZ;                 /* +0x008 or the centre z */
+	float maxX;                 /* +0x00c or the squared radius */
+	float maxZ;                 /* +0x010 */
+	float level;                /* +0x014 */
+	float targetLevel;          /* +0x018 */
+	float speed;                /* +0x01c of the level */
+	short tag;                  /* +0x020 */
+	short round;                /* +0x022 */
+	int numDrips;               /* +0x024 */
+	struct MbDrip drips[10];    /* +0x028 */
+	float dropDepth;            /* +0x168 */
+	float dropAccum;            /* +0x16c */
+	float dropInterval;         /* +0x170 */
+};
+OF_ASSERT_SIZE(struct CMetaWater, 0x174);
+
+extern int DAT_003090b4;
+extern struct CMetaWater *DAT_003090b8[6];
+
+/* ---------- particle emitters (Meta/unplaced.c) */
+
+/* an emitter (0x70 bytes, allocated by the level loader) */
+struct CMetaEmitter
+{
+	void *next;                 /* +0x00 node of the list 0x003090d8 */
+	void *prev;                 /* +0x04 */
+	float p0[4];                /* +0x08 line start or circle centre */
+	float p1[4];                /* +0x18 line end, or (0, 0, radius, 1) */
+	float vel[4];               /* +0x28 */
+	float spread[4];            /* +0x38 */
+	float accum;                /* +0x48 */
+	float rate;                 /* +0x4c */
+	float targetRate;           /* +0x50 */
+	float perFrame;             /* +0x54 */
+	float lengthFactor;         /* +0x58 */
+	int arg;                    /* +0x5c */
+	unsigned int colour;        /* +0x60 */
+	int type;                   /* +0x64 0 line, 1 water drip line, 2 circle */
+	void *ptype;                /* +0x68 particle type (a float strength for type 1) */
+	int flags;                  /* +0x6c 1: on the water, 2: with velocity */
+};
+OF_ASSERT_SIZE(struct CMetaEmitter, 0x70);
+
+extern float DAT_003090d0;
+extern float DAT_003090d4;
+extern struct MbList DAT_003090d8;
+
 #endif

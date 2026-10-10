@@ -43,6 +43,18 @@ __attribute__((weak)) int DAT_00290d90[4] = { 0x3c, 0, 0, 0x28 };
 __attribute__((weak)) char DAT_002b1ec8[4];
 __attribute__((weak)) char DAT_002b215c[4];
 
+/* 0x002b0580-0x002b058c  the water fog colour channels (owner not known) */
+__attribute__((weak)) int DAT_002b0580 = 0x8c;
+__attribute__((weak)) int DAT_002b0584 = 0x8c;
+__attribute__((weak)) int DAT_002b0588 = 0x8c;
+__attribute__((weak)) int DAT_002b058c = 0x70;
+/* 0x002ae578  CWaterField's default parameters (classlib_fx) */
+__attribute__((weak)) unsigned int DAT_002ae578[16] = {
+	0xc4fa0000, 0x00000000, 0xc4fa0000, 0x457a0000, 0x457a0000, 0x00000080, 0x00000080,
+	0x00000000, 0x3f70a3d7, 0x3e800000, 0x00000000, 0x40800000, 0x3dcccccd, 0xff272727,
+	0x00000000, 0x3f800000,
+};
+
 /* ---------- .bss (weak) */
 
 __attribute__((weak)) int DAT_002bae94;                 /* number of players */
@@ -61,3 +73,5 @@ __attribute__((weak)) unsigned char DAT_002ed324[0x14]; /* the rumble manager */
 __attribute__((weak)) int DAT_00290da4;                 /* CProjTrail texture */
 __attribute__((weak)) unsigned int DAT_0030a090;        /* the board's ambient light (meta_a) */
 __attribute__((weak)) int *DAT_002ea488;                /* charlib's actor list */
+__attribute__((weak)) int DAT_003055dc;                 /* the display blends the water */
+__attribute__((weak)) float DAT_002f6b74;               /* the water level (charlib) */
