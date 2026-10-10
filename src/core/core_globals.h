@@ -141,7 +141,7 @@ struct CoreCheat {
 #define g_RootModeName ((char *)CORE_ADDR(0x00283b18))        /* "BGeffects" */
 #define g_Cheats ((struct CoreCheat *)CORE_ADDR(0x00283d30))
 #define g_CheatSequences ((int *)CORE_ADDR(0x00283d34))         /* g_Cheats[k].sequence, 0x13-int stride */
-#define g_TurboCheat CORE_VAR(int, 0x00283e58)                  /* g_Cheats[2].state */
+#define g_TurboCheat CORE_VAR(int, 0x00283e58)                  /* g_Cheats[3].state ("Turbo Mode") */
 #define g_BoneColours ((float *)CORE_ADDR(0x00283f48))          /* 7 x 17 x 4 floats */
 #define g_BoneColour ((float *)CORE_ADDR(0x00284278))           /* 16 floats: a matrix */
 #define g_PreloadPackages ((const char **)CORE_ADDR(0x002842c0))
