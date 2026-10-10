@@ -128,3 +128,20 @@
 0002ad30 void CGameMode_Team_Loaded(struct CGameMode_Team *self);
 0002aeb0 void CGameMode_Team_Shuffle(struct CGameMode_Team *self);
 0002b0a0 void CGameMode_Team_Process(struct CGameMode_Team *self, int top);
+
+# Core/CSpinCube.c (CSpinCube 0x00257604, CMapCube 0x0025760c, CSelectCube 0x00257680)
+0002d560 void CSpinCube_BuildFaces(struct CSpinCube *self);
+0002d830 void CSpinCube_Draw(struct CSpinCube *self);
+0002da70 void CSelectCube_Set(struct CSpinCube *self, int unused1, int unused2, void *picture);
+0002da90 void CSelectCube_Turn(struct CSpinCube *self, int unused1, int unused2, void *picture, char forward);
+0002db40 void CSelectCube_Update(struct CSpinCube *self);
+0002dc10 struct CSpinCube *CSpinCube_Destroy(struct CSpinCube *self, int flags);
+0002dc30 struct CSpinCube *CSpinCube_Ctor(struct CSpinCube *self);
+0002dcf0 void CMapCube_Dtor(struct CSpinCube *self);
+0002dd50 void CMapCube_FindValidGames(struct CSpinCube *self, int zone, int depth);
+0002dff0 void CMapCube_Update(struct CSpinCube *self);
+0002e0d0 struct CSpinCube *CSelectCube_Ctor(struct CSpinCube *self);
+0002e160 void CSelectCube_Dtor(struct CSpinCube *self);
+0002e1b0 struct CSpinCube *CMapCube_Ctor(struct CSpinCube *self, int zone);
+0002e250 struct CSpinCube *CMapCube_Destroy(struct CSpinCube *self, int flags);
+0002e270 struct CSpinCube *CSelectCube_Destroy(struct CSpinCube *self, int flags);
