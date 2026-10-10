@@ -1060,7 +1060,7 @@ void CGameMode_FoxHunt_Update(void *self)
 		Shadows_Aim();
 	RefBot_Update();
 	Actor_UpdateAnimations();
-	FUN_00137940(FH_P(0x00302198) + 0x534, FH_AI(self, 0x164));
+	FUN_00137940((float *)(FH_P(0x00302198) + 0x534), FH_AI(self, 0x164));
 	FUN_00136390();
 	FoxHunt_Effects_Update(DAT_003022cc, DAT_0028fda8 * (1.0f / 60.0f));
 	CRayControl_UpdateAll();

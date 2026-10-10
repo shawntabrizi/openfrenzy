@@ -118,9 +118,25 @@
 00136be0 void CFHunt_Flag_Respawn(void *self);
 
 # ---- FoxHunt/unplaced_level.c
+00136ef0 char *CFHunt_Flag_Update(void *self, float *target, int smoke);
+00137940 void FoxHunt_UpdateFlags(float *target, int smoke);
 00137980 void *FoxHunt_Glass_Ctor(void *self, float *pos, int type);
-00137d00 void *FoxHunt_Escalator_Ctor(void *self, float *pos, int a, int b, int c);
-00138150 void *FoxHunt_Gate_Ctor(void *self, float *pos, float f, int a, int b, int c, int d);
+001379e0 void FoxHunt_UpdateGlass(void);
+00137a00 char *FoxHunt_Glass_Hit(void *self, float *vel, float *pos);
+00137cb0 void FoxHunt_HitGlass(int type, float *vel, float *pos);
+00137d00 void *FoxHunt_Escalator_Ctor(void *self, float *pos, int direction, int user, int id);
+00137e40 void FoxHunt_LoadEscalatorModels(void);
+00137e70 char *FoxHunt_Escalator_Toggle(void *self);
+00137f80 void FoxHunt_UpdateEscalators(void);
+00137fa0 int FoxHunt_EscalatorDirection(int id);
+00137fe0 void FoxHunt_ToggleEscalators(void);
+00138090 void FoxHunt_LoadGateModels(void);
+001380d0 int FoxHunt_NearestGate(int player);
+00138150 void *FoxHunt_Gate_Ctor(void *self, float *pos, float unused, int a, int b, int c, int id);
+001382a0 void FoxHunt_OpenGates(void);
+00138320 char *FoxHunt_Gate_Update(void *self);
+001385d0 void FoxHunt_GatePosition(float *out, int id);
+00138670 void FoxHunt_UpdateGates(void);
 001386a0 void FoxHunt_TextReader_Ctor(void *self);
 001386b0 void FoxHunt_TextReader_Dtor(void *self);
 001386c0 char *FoxHunt_TextReader_ReadLine(void *self, char *buffer);

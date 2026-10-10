@@ -1623,7 +1623,7 @@ int FoxHunt_Player_Plan(void *self)
 		}
 		if (FH_AI(self, 0x11bc) == 1 && FH_AI(self, 0x11f4) == 4)
 			PRESS(self, 0x6c);
-		FUN_001385d0((undefined4 *)a, FH_AI(self, 0x1174));
+		FUN_001385d0(a, FH_AI(self, 0x1174));
 		route_to_shared(self, a, 1, a[3]);
 		return 0;
 

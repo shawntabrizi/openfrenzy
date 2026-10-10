@@ -189,8 +189,7 @@ void FoxHunt_Throwable_Update(void *self)
 		FH_AI(self, 0x48) = -1;
 	}
 	if (STAGE() < 3 && 0 < FH_AI(FH_AP(a, 0x18c), 0x1d0) && FH_AI(self, 0xc) == 3)
-		FUN_00137cb0(-100.0f <= FH_AF(a, 0xd0) ? 2 : 1, (undefined4)(uintptr_t)((char *)self + 0x28),
-			(undefined4)(uintptr_t)FH_AV(a, 0xd0));
+		FUN_00137cb0(-100.0f <= FH_AF(a, 0xd0) ? 2 : 1, FH_AV(self, 0x28), FH_AV(a, 0xd0));
 	if (FH_AI(self, 0x8) == 0) {
 		FH_AF(THR_ACTOR(self), 0xd4) = -550.0f;
 		FH_AI(THR_ACTOR(self), 0x220) = 0;
@@ -300,8 +299,8 @@ void FoxHunt_Throwable_Update(void *self)
 		CRColl_Step(a);
 		a = THR_ACTOR(self);
 		if (STAGE() < 3 && 0 < FH_AI(FH_AP(a, 0x18c), 0x1d0))
-			FUN_00137cb0(-100.0f <= FH_AF(a, 0xd0) ? 2 : 1, (undefined4)(uintptr_t)((char *)self + 0x28),
-				(undefined4)(uintptr_t)FH_AV(a, 0xd0));
+			FUN_00137cb0(-100.0f <= FH_AF(a, 0xd0) ? 2 : 1, FH_AV(self, 0x28),
+				FH_AV(a, 0xd0));
 		i = FoxHunt_Throwable_FindTarget(self);
 		if (i < 0) {
 			FH_AI(THR_ACTOR(self), 0x194) = 0;
