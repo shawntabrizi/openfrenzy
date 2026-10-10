@@ -67,12 +67,26 @@
 0009d100 void BCarEntities_Update(float dt, int control);
 
 # BumperCars/CBCar_World.c
+0009e3b0 void BCarWorld_Reset(void);
 0009e5a0 float BCarWorld_GetMaxSpeed(void);
 0009e5c0 float BCarWorld_GetBoostValue(void);
 0009e5e0 float BCarWorld_GetEntitySpeed(void);
 0009e600 float BCarWorld_GetRestitution(void);
+0009e610 void BCarWorld_ResetScores(void);
+0009e690 void BCarWorld_LoadScoreInformation(struct BCarTextReader *reader);
+0009ed60 void BCarWorld_Pause(void);
+0009ed80 void BCarWorld_Resume(void);
+0009eda0 void BCarWorld_Shutdown(void);
+0009ee20 void BCarWorld_LoadSpawnInfo(struct BCarTextReader *reader);
 0009f030 struct BCarSpawn *BCarWorld_FindSpawn(struct BCarEntity *entity);
+0009f180 int BCarWorld_LoadScoreFile(struct bkPackage *package, const char *name);
+0009f250 void BCarWorld_Update(float dt, int control);
+0009f2e0 void BCarWorld_DrawSets(int reflection, int mirrored);
 0009f6d0 float BCarWorld_GetGroundHeight(float *pos, float radius, float *normal);
+0009f860 int BCarWorld_LoadSpawnFile(struct bkPackage *package, const char *name);
+0009f930 void BCarWorld_Draw(int reflection, int pass);
+0009f9b0 void BCarWorld_LoadInformation(struct bkPackage *package, struct BCarTextReader *reader);
+000a0620 int BCarWorld_Init(struct bkPackage *package, const char *name);
 
 # BumperCars/CBCar_FloatyScore.c
 000a0b70 void BCarFloatyScore_Update(struct BCarFloatyScore *self, float dt, float arg);
@@ -128,3 +142,17 @@
 000a1d30 void BCarPowerups_Draw(int draw);
 000a2020 void BCarPowerups_Update(int playing, float dt);
 000a24c0 void BCarEntity_DropCarried(struct BCarEntity *self);
+# BumperCars/CBCar_Keepsake.c
+000a2950 float BCarKeepsake_RayTest(float *origin, float *dir, float *point, float *normal);
+000a2d40 void BCarKeepsakes_Update(void);
+000a3080 void BCarKeepsakes_Draw(int glow, int glowPass);
+000a3450 void BCarKeepsakes_Delete(void);
+# BumperCars/CBCar_Explosion.c
+000a34b0 struct BCarExplosions *BCarExplosions_Construct(struct BCarExplosions *self);
+000a34f0 struct BCarExplosion *BCarExplosion_Construct(struct BCarExplosion *self, float *pos, float radius, float duration, struct bdTexture *texture);
+000a3740 int BCarExplosion_Update(struct BCarExplosion *self, float dt);
+000a3880 void BCarExplosion_Draw(struct BCarExplosion *self, int view);
+000a3aa0 void BCarExplosions_Update(struct BCarExplosions *self, float dt);
+000a3af0 void BCarExplosions_Draw(struct BCarExplosions *self, int view);
+000a3b20 int BCarExplosions_Add(struct BCarExplosions *self, float *pos, float radius);
+000a3bf0 void BCarExplosions_Delete(struct BCarExplosions *self);
