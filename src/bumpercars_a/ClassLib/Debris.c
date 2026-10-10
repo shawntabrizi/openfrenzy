@@ -483,6 +483,8 @@ void Debris_AddCone(struct DebrisType *type, int count, float *pos, float *dir, 
 		at[0] = perp[0] + pos[0];
 		at[1] = perp[1] + pos[1];
 		at[2] = perp[2] + pos[2];
+		/* the original advances the seed twice and uses only the second number */
+		bca_rand();
 		r = (unsigned int)bca_rand();
 		FUN_00050ff0(vel, axis, (float)r * speedRandom * (1.0f / 32767.0f) + speed, perp,
 			inv * outRandom * (float)r * (1.0f / 32767.0f) + out0);
