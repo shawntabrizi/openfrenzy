@@ -213,5 +213,15 @@ int FUN_0013b200(struct BExtraSystem *system, int count, void **items, void *arg
 int FUN_0013b260(struct BExtraSystem *system, int count, void **items, void *arg);
 int FUN_0013b4d0(struct BExtraSystem *system, int count, void **items, void *arg);
 int FUN_0013b7d0(struct BExtraSystem *system, int count, void **items, void *arg);
+void FUN_0013ed80(void *self);                 /* HopGame_Resume */
+void FUN_0013eda0(void *self);                 /* HopGame_Suspend */
+void FUN_0013edb0(void *self, int top);        /* HopGame_Update */
+void FUN_0013ee80(void *self, int top);        /* HopGame_Process */
+void FUN_0013f0a0(void *self, int top);        /* HopGame_Draw */
+#define HopGame_Resume FUN_0013ed80
+#define HopGame_Suspend FUN_0013eda0
+#define HopGame_Update FUN_0013edb0
+#define HopGame_Process FUN_0013ee80
+#define HopGame_Draw FUN_0013f0a0
 
 #endif
