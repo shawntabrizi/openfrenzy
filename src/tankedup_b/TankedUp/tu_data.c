@@ -1,7 +1,8 @@
 /*
 TankedUp/tu_data.c - the TankedUp globals of tankedup_b (see tankedup_b_data.h).
-The .bss ones are tentative definitions (no initialiser) so that tankedup_a can define the
-same names (merged by -fcommon).
+Only the globals outside tankedup_a's block (0x00312f50-0x003153a0) are defined here; that
+block (CTank_Game and the CTank_Debug object at 0x003150b0) is defined by tankedup_a, which
+exports the DAT_ names this module uses as aliases into it.
 */
 
 #include "tankedup_b.h"
@@ -10,11 +11,11 @@ same names (merged by -fcommon).
 /* 0x002b74a4  "grbyop" (.data) */
 char s_grbyop_002b74a4[8] = "grbyop";
 
-int DAT_003150c0;                   /* 0x003150c0 */
-float DAT_003150b4;                 /* 0x003150b4 */
-float DAT_00315158;                 /* 0x00315158 */
-float DAT_00315178;                 /* 0x00315178 */
-int DAT_0031519c;                   /* 0x0031519c */
-int DAT_003151a4;                   /* 0x003151a4 */
-void *DAT_003151b4;                 /* 0x003151b4 */
 struct TankVertex DAT_003153a0[4];  /* 0x003153a0 */
+struct TankVertex DAT_00315430[4];  /* 0x00315430 world mesh debug triangle */
+struct TankVertex DAT_003154c0[34]; /* 0x003154c0 light cone fan */
+void *DAT_00315988;                 /* 0x00315988 the AI spawn list (Token Master) */
+int DAT_0031598c;                   /* 0x0031598c its length */
+unsigned int DAT_00315990;          /* 0x00315990 bit 0: the list is set up (static guard) */
+struct TankVertex DAT_00315998[4];  /* 0x00315998 track decal quad */
+struct TankVertex DAT_00315a28[3];  /* 0x00315a28 track decal joint triangle */

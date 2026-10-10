@@ -61,3 +61,48 @@
 
 # TankedUp/CTank_MoveQue.cpp
 001de940 void TankMoveQue_Free(void *self);
+
+# gap 0x001d4730-0x001d5790: CTank_Entities methods (file inferred)
+001d4730 void TankEnts_Free(void *self);
+001d4830 void TankEnts_Fire(void *self, void *entity, float offset);
+001d4cc0 int TankEnts_FireCommand(void *self, int id);
+001d4e10 void TankEnts_Explode(void *self, void *entity);
+001d55a0 void TankEnts_ProcessDead(void *self);
+001d5790 int TankEnts_Update(void *self, float dt, int state);
+
+# gap 0x001d79d0-0x001d9b50 (the game mode, the text reader and AI helpers)
+001d86d0 void TankEnts_GetRespawnPos(void *self, void *entity);
+
+# TankedUp/CTank_Debug.cpp (0x001d6d90, 0x001d6f10 tagged; the rest inferred)
+001d6cb0 void *TankDebug_Ctor(void *self);
+001d6cd0 void TankDebug_Dtor(void *self);
+001d6ce0 void TankDebug_CreateInput(void *self);
+001d6d40 void TankDebug_ReleaseInput(void *self);
+001d6d80 int TankDebug_GetDetail(void *self);
+001d6d90 int TankDebug_Initialise(void *self);
+001d6f10 void TankDebug_Setup(void *self);
+001d79d0 void TankDebug_Free(void *self);
+
+# CTank_Sound (gap 0x001d5880-0x001d5a50; the class name is in its debug text)
+001d5880 void *TankSound_Ctor(void *self);
+001d5a10 void TankSound_Free(void *self);
+
+# TankedUp/CTank_Char.cpp (0x001d5b80 tagged; the rest inferred)
+001d5af0 void *TankChar_Ctor(void *self);
+001d5b00 void TankChar_PlayAnim(void *self, int player, const char *name);
+001d5b80 int TankChar_Initialise(void *self, void *players, void *lights);
+001d5da0 void TankChar_Free(void *self);
+001d5de0 void TankChar_StateChange(void *self, int from, int to);
+001d5ee0 int TankChar_Update(void *self, float dt, int state);
+001d6090 void TankChar_Draw(void *self);
+
+# TankedUp gap 0x001d62d0-0x001d6c40 (TankedUp/unplaced.c)
+001d62d0 void TankRanks(int *scores, int *ranks);
+001d6330 void TankMesh_DrawPart(void *mesh, int part, unsigned int colour, int shaded);
+001d6680 void TankMesh_Draw(void *mesh, unsigned int colour, int shaded);
+001d6750 void TankTexture_SetTime(void *texture, int time);
+001d6820 void TankDraw_DecalStates(void);
+001d6860 void TankDraw_StencilOn(void);
+001d6960 void TankDebug_DrawCone(float *pos, float *target, float angle, int r, int g, int b);
+001d6bd0 void TankPoint_RotateAround(float *out, float *point, float angle, float *centre);
+001d6c40 void TankPoint_SetDistance(float *point, float distance, float *centre);

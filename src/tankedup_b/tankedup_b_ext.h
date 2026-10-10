@@ -16,12 +16,14 @@ callee's `ret N` (thiscall `this` first). Owner: tankedup_b.
 
 /* 0x001cebd0 (entity init; the ECX it gets is not used) */
 #define TA_InitEntity(ent) TU_CALL(FUN_001cebd0, void (*)(void *))(ent)
-/* 0x001c3790, 0x001c3570, 0x001c36e0, 0x001c3700: the physics part at ENT_PHYS (thiscall) */
-#define TA_PhysCtor(phys) TU_CALL(FUN_001c3790, void (*)(void *))(phys)
-#define TA_PhysInit(phys) TU_CALL(FUN_001c3570, int (*)(void *))(phys)
-#define TA_PhysSetLife(phys, life) TU_CALL(FUN_001c36e0, void (*)(void *, float))(phys, life)
-#define TA_PhysStart(phys) TU_CALL(FUN_001c3700, void (*)(void *))(phys)
-/* the world (thiscall): gravity, laps of the race (0: no race), ground height under a
+/* 0x001c3790, 0x001c3570, 0x001c36e0, 0x001c3700: the life timer at ENT_TIMER
+   (CTankTimer_Ctor, _Reset, _SetLength, _StartOrResume; thiscall) */
+#define TA_TimerCtor(timer) TU_CALL(FUN_001c3790, void (*)(void *))(timer)
+#define TA_TimerReset(timer) TU_CALL(FUN_001c3570, int (*)(void *))(timer)
+#define TA_TimerSetLength(timer, seconds) TU_CALL(FUN_001c36e0, void (*)(void *, float))(timer, seconds)
+#define TA_TimerStart(timer) TU_CALL(FUN_001c3700, void (*)(void *))(timer)
+/* the world (thiscall): gravity, the mode (CTankWorld_GetMode; the race's lap count, 0: no
+   race), ground height under a
    sphere (and the ground normal), sphere sweep, ray length, the lap line test and the
    collision move */
 #define TA_WorldGravity(world) TU_CALL(FUN_001caa70, float (*)(void *))(world)
@@ -44,9 +46,14 @@ callee's `ret N` (thiscall `this` first). Owner: tankedup_b.
 #define TA_LightsRestore(lights) TU_CALL(FUN_001c3850, void (*)(void *))(lights)
 #define TA_LightsRemove(lights, light) TU_CALL(FUN_001c3990, void (*)(void *, int))(lights, light)
 #define TA_SetAmbient(r, g, b) TU_CALL(FUN_001c38a0, void (*)(int, int, int))(r, g, b)
-/* 0x001cdd50 (cdecl) */
-#define TA_DrawTokenShadow(pos, tokens, shadow) \
-	TU_CALL(FUN_001cdd50, void (*)(float *, void *, void *))(pos, tokens, shadow)
+/* 0x001cdd50 (cdecl): a glow sprite at pos, turned by angle (bdDrawSprite3D) */
+#define TA_DrawGlow(pos, angle, texture) \
+	TU_CALL(FUN_001cdd50, void (*)(float *, float, void *))(pos, angle, texture)
+/* the entities' per-frame steps of tankedup_a (thiscall on CTank_Entities) */
+#define TA_EntsFree(ents) TU_CALL(FUN_001ce300, void (*)(void *))(ents)
+#define TA_EntsThink(ents) TU_CALL(FUN_001cea10, void (*)(void *))(ents)
+#define TA_EntsStep2(ents) TU_CALL(FUN_001ceba0, void (*)(void *))(ents)
+#define TA_EntsStep3(ents) TU_CALL(FUN_001ceb30, void (*)(void *))(ents)
 /* the entities' message handlers (thiscall on CTank_Entities) */
 #define TA_HandleMessage(ents, msg) TU_CALL(FUN_001ce130, void (*)(void *, void *))(ents, msg)
 #define TA_SendMessageNow(ents, ent, flag, msg) \
@@ -54,19 +61,24 @@ callee's `ret N` (thiscall `this` first). Owner: tankedup_b.
 #define TA_TurnEntity(ents, id, turn) TU_CALL(FUN_001ce870, void (*)(void *, int, float))(ents, id, turn)
 #define TA_EntityCleanup(ent) TU_CALL(FUN_001ce280, void (*)(void *))(ent)
 #define TA_EntsSetup(ents) TU_CALL(FUN_001ce290, void (*)(void *))(ents)
-/* the camera (thiscall) */
-#define TA_CameraSetSpeed(camera, speed, id) \
-	TU_CALL(FUN_001c84b0, void (*)(void *, float, int))(camera, speed, id)
-#define TA_IsFriendly(camera, a, b) TU_CALL(FUN_001c82e0, int (*)(void *, int, int))(camera, a, b)
-#define TA_CameraShake(camera, id, kind) TU_CALL(FUN_001c8e80, void (*)(void *, int, int))(camera, id, kind)
-/* the players (thiscall) */
-#define TA_CameraHeading(players) TU_CALL(FUN_001c66f0, float (*)(void *))(players)
+/* the players (CTank_Players, thiscall): a tank's speed, whether two owners are friends,
+   a player event, a player's rank */
+#define TA_PlayersSetSpeed(players, speed, id) \
+	TU_CALL(FUN_001c84b0, void (*)(void *, float, int))(players, speed, id)
+#define TA_IsFriendly(players, a, b) TU_CALL(FUN_001c82e0, int (*)(void *, int, int))(players, a, b)
+#define TA_PlayersShake(players, id, kind) TU_CALL(FUN_001c8e80, void (*)(void *, int, int))(players, id, kind)
+#define TA_PlayersRank(players, id) TU_CALL(FUN_001c8ca0, int (*)(void *, int))(players, id)
+/* the camera (CTank_Camera, thiscall): its heading */
+#define TA_CameraHeading(camera) TU_CALL(FUN_001c66f0, float (*)(void *))(camera)
 /* 0x001ce940: an angle wrapped to 0..2 pi (returned on the x87 stack) */
 #define TA_WrapAngle(angle) TU_CALL(FUN_001ce940, float (*)(float))(angle)
-/* the explosions (thiscall) */
-#define TA_Boom(boom, kind, pos, vel, flags, colour) \
-	TU_CALL(FUN_001c3540, void (*)(void *, int, float *, float *, int, unsigned int))(boom, kind, pos, \
-		vel, flags, colour)
+/* the debris (TankDebris_Add, thiscall) and the explosions (CTankBoom_Add, thiscall) */
+#define TA_DebrisAdd(debris, kind, pos, vel, life, colour) \
+	TU_CALL(FUN_001c3540, void (*)(void *, int, float *, float *, int, unsigned int))(debris, kind, pos, \
+		vel, life, colour)
+#define TA_BoomAdd(boom, pos, height) TU_CALL(FUN_001c3180, void (*)(void *, float *, float))(boom, pos, height)
+/* the lights: a firing flash (CTankLights_AddFireFlash, thiscall) */
+#define TA_LightsFireFlash(lights, pos) TU_CALL(FUN_001c3e00, void (*)(void *, float *))(lights, pos)
 /* the spawn points (thiscall): a named point of a player (pos[4], rot[4]); a random point of
    a list */
 #define TA_SpawnFind(spawn, name, player) \

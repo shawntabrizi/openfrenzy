@@ -105,18 +105,18 @@ static inline int tu_rand(void)
 #define ENTS_LIST 0x00        /* first node */
 #define ENTS_WORLD 0x04       /* the world (tankedup_a) */
 #define ENTS_SPAWN 0x08       /* the spawn points (tankedup_a CTank_Spawn) */
-#define ENTS_BOOM 0x0c        /* the explosions (tankedup_a CTank_Boom) */
+#define ENTS_DEBRIS 0x0c      /* the debris system (tankedup_a TankDebris) */
 #define ENTS_ROUTE 0x10
 #define ENTS_LIGHTS 0x14      /* the tank light/shadow helper (tankedup_a 0x001c3850...) */
 #define ENTS_SOUND 0x18       /* the sound bank (Tank sound, 0x001d5960) */
-#define ENTS_OWNER 0x1c       /* the last Initialise argument */
-#define ENTS_PLAYERS 0x20     /* the players (tankedup_a) */
-#define ENTS_CAMERA 0x24
+#define ENTS_BOOM 0x1c        /* the explosions (tankedup_a CTank_Boom) */
+#define ENTS_CAMERA 0x20      /* the camera (tankedup_a CTank_Camera) */
+#define ENTS_PLAYERS 0x24     /* the players (tankedup_a CTank_Players) */
 #define ENTS_EFFECTS 0x28     /* particle effects (classlib_fx CParticleEffect) */
 #define ENTS_TEX_TRACK_DECAL 0x2c /* the track decal texture */
 #define ENTS_TEX_SHADOW 0x30  /* shadow textures per entity type */
 #define ENTS_TEX_TRACKS 0x40  /* animated track textures (2) */
-#define ENTS_SHELL_SHADOW 0x48
+#define ENTS_GLOW 0x48        /* "tokenglow.bmp" */
 #define ENTS_TICKS 0x50       /* long long: timer ticks per second */
 #define ENTS_MESSAGES 0x58    /* the delayed message queue (sorted by time) */
 #define ENTS_TEMPLATES 0x5c   /* the entity templates (linked by TPL_NEXT) */
@@ -131,7 +131,7 @@ static inline int tu_rand(void)
 #define ENTS_VARIANT 0xcc     /* the game variant (1-...) */
 #define ENTS_TWEAKS 0xe8      /* the "tokens" tweak menu */
 #define ENTS_TRACK_TIME 0xec  /* float: track decal accumulator */
-#define ENTS_TOKENS 0xf0
+#define ENTS_SPIN 0xf0        /* float: the glow sprites' angle (+0.05 a frame) */
 
 /* ---------- an entity template (0x6e0 bytes, "TEMPLATE {" in the entity file) */
 #define TPL_MENU 0x00
@@ -188,7 +188,7 @@ static inline int tu_rand(void)
 #define ENT_VEL 0xa38
 #define ENT_OLD_VEL 0xa48
 #define ENT_FORCE 0xa58
-#define ENT_PHYS 0xa88        /* tankedup_a's physics part (ctor 0x001c3790) */
+#define ENT_TIMER 0xa88       /* a struct TuTimer of tankedup_a (life time; ctor 0x001c3790) */
 #define ENT_MODEL 0xacc       /* bkResource * */
 #define ENT_INST 0xad0        /* BActorInstance * */
 #define ENT_TURRET_MODEL 0xad4
@@ -219,7 +219,7 @@ int FUN_001d7d60(int reason, void *instance, void *node, void *anim, void *conte
 extern int DAT_002baed4[];          /* core: players, 10 ints each, [0] character */
 extern int DAT_002baefc, DAT_002baf24, DAT_002baf4c; /* characters of players 2-4 */
 extern int DAT_002bae94;            /* core: number of players */
-extern int DAT_002bae70[];
+extern int DAT_002bae70;            /* core: the difficulty (0 easy, 1 medium, 2 hard) */
 extern int DAT_002bae8c;
 extern int DAT_002baeb8;
 extern int DAT_002baed8[];

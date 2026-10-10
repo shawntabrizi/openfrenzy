@@ -28,7 +28,7 @@ int TankEnts_SpawnEntity(void *self, void **outNode)
 	}
 	ent = bkHeapAlloc(0xf08, TU_FILE_ENTITIES, 0x1af, 0x1001);
 	if (ent != NULL)
-		TA_PhysCtor(TU_ADDR(ent, ENT_PHYS));
+		TA_TimerCtor(TU_ADDR(ent, ENT_TIMER));
 	*(void **)*outNode = ent;
 	if (ent == NULL) {
 		TU_DEBUG("CTank_Entities::SpawnEntity - Could not get memory for new object entity\n");
@@ -153,7 +153,7 @@ void TankEnts_LoadEntities(void *self, void *reader)
 						}
 						ent = (char *)bkHeapAlloc(0xf08, TU_FILE_ENTITIES, 0x289, 0x1001);
 						if (ent != NULL)
-							TA_PhysCtor(ent + ENT_PHYS);
+							TA_TimerCtor(ent + ENT_TIMER);
 						node[0] = ent;
 						if (ent == NULL) {
 							TU_DEBUG("CTank_Entities::LoadEntities - Could not get memory for new object entity\n");
@@ -183,7 +183,7 @@ void TankEnts_LoadEntities(void *self, void *reader)
 			}
 			ent = (char *)bkHeapAlloc(0xf08, TU_FILE_ENTITIES, 0x2b7, 0x1001);
 			if (ent != NULL)
-				TA_PhysCtor(ent + ENT_PHYS);
+				TA_TimerCtor(ent + ENT_TIMER);
 			node[0] = ent;
 			if (ent == NULL) {
 				TU_DEBUG("CTank_Entities::LoadEntities - Could not get memory for new object entity\n");
@@ -515,7 +515,7 @@ void TankEnts_EntityLoadTemplate(void *self, void *entity)
 			baPrepActorInstance((struct BActorInstance *)inst, 1);
 	}
 
-	TA_PhysInit(ent + ENT_PHYS);
+	TA_TimerReset(ent + ENT_TIMER);
 	TU_I32(ent, ENT_HEALTH) = TU_I32(tpl, TPL_HEALTH);
 	TU_I32(ent, ENT_MINES) = TU_I32(tpl, TPL_MINES);
 	TU_I32(ent, 0x98c) = TU_I32(tpl, TPL_MASS);
@@ -614,13 +614,12 @@ void TankEnts_Draw(void *self)
 		if (TU_I32(self, ENTS_VARIANT) >= 5 && (type == 5 || type == 9))
 			continue;
 		if (type == 5 && TU_I32(ent, 0x97c) < 0)
-			TA_DrawTokenShadow(TU_FP(ent, ENT_POS), TU_PTR(self, ENTS_TOKENS),
-				TU_PTR(self, ENTS_SHELL_SHADOW));
+			TA_DrawGlow(TU_FP(ent, ENT_POS), TU_F32(self, ENTS_SPIN), TU_PTR(self, ENTS_GLOW));
 		type = TU_ENT_TYPE(ent);
 		if ((type != 5 && type != 1 && type != 2 && type != 9) || TU_I32(ent, ENT_DEAD) != 0)
 			continue;
-		FUN_001d6820();
-		FUN_001d6860();
+		TankDraw_DecalStates();
+		TankDraw_StencilOn();
 		bdSetDepthOffset(-3.0f); /* 0xc0400000 */
 		type = TU_ENT_TYPE(ent);
 		if (type == 9) {
@@ -714,8 +713,8 @@ void TankEnts_Draw(void *self)
 		bdSetRenderState(3, 0, 0);
 		bdSetRenderState(5, 1, 0);
 		if (TU_PTR(ent, ENT_TRACKS) != NULL && DAT_0031519c != 0) {
-			FUN_001d6820();
-			FUN_001d6860();
+			TankDraw_DecalStates();
+			TankDraw_StencilOn();
 			TankDecal_Draw(TU_PTR(ent, ENT_TRACKS));
 			FUN_0018e640();
 		}
@@ -1150,12 +1149,12 @@ void TankEnts_DriveTracks(void *self, int id, float left, float right)
 			speed = limit;
 	}
 	if (TU_I32(self, ENTS_VARIANT) < 5) {
-		TA_CameraSetSpeed(TU_PTR(self, ENTS_CAMERA), speed, id);
+		TA_PlayersSetSpeed(TU_PTR(self, ENTS_PLAYERS), speed, id);
 		if (TU_I32(self, ENTS_VARIANT) == 4 && ent != NULL) {
 			TU_F32(ent, 0x9c0) = speed;
 			TankEnts_Push(self, id, speed, 0);
 			TA_TurnEntity(self, id, turn);
-			TA_CameraSetSpeed(TU_PTR(self, ENTS_CAMERA), speed, id);
+			TA_PlayersSetSpeed(TU_PTR(self, ENTS_PLAYERS), speed, id);
 			TU_F32(ent, 0x9c8) = right + TU_F32(ent, 0x9c8);
 			TU_F32(ent, 0x9c4) = left + TU_F32(ent, 0x9c4);
 		}
@@ -1199,7 +1198,7 @@ void TankEnts_DriveStick(void *self, int id, float x, float y)
 		return;
 	size = fabsf(x) > fabsf(y) ? fabsf(x) : fabsf(y);
 	angle = (float)atan2((double)y, (double)x) - TU_F32(ent, ENT_ROT_START + 4);
-	angle = TA_WrapAngle((TA_CameraHeading(TU_PTR(self, ENTS_PLAYERS)) + angle) -
+	angle = TA_WrapAngle((TA_CameraHeading(TU_PTR(self, ENTS_CAMERA)) + angle) -
 		1.57079625f); /* 0x00253898 */
 	if (angle < 0.0f || angle > 6.28318548f)
 		TU_DEBUG("Aabs error:  %f\n", (double)angle);
@@ -1234,7 +1233,7 @@ void TankEnts_DriveStickLinear(void *self, int id, float x, float y)
 	if (ent == NULL)
 		return;
 	size = fabsf(x) > fabsf(y) ? fabsf(x) : fabsf(y);
-	angle = TA_CameraHeading(TU_PTR(self, ENTS_PLAYERS));
+	angle = TA_CameraHeading(TU_PTR(self, ENTS_CAMERA));
 	angle = TA_WrapAngle((((float)atan2((double)y, (double)x) - TU_F32(ent, ENT_ROT_START + 4)) +
 		angle) - 1.57079625f);
 	if (angle < 0.0f || angle > 6.28318548f)
@@ -1431,7 +1430,7 @@ void TankEnts_DestroyEntity(void *self, void **node)
 	void *p;
 
 	TA_LightsRemove(TU_PTR(self, ENTS_LIGHTS), TU_I32(ent, 0x960));
-	/* the physics part's destructor is the empty function 0x001d5950 (ECX = ent + 0xa88) */
+	/* the life timer's destructor is the empty function 0x001d5950 (ECX = ent + 0xa88) */
 	FUN_001d5950();
 	if (TU_PTR(node[0], ENT_INST) != NULL)
 		baDeleteActorInstance((struct BActorInstance *)TU_PTR(node[0], ENT_INST));
@@ -1515,9 +1514,9 @@ int TankEnts_CreateEntity(void *self, int owner, const char *templateName, float
 	TU_I32(msg, 0) = 4;
 	TA_SendMessageNow(self, ent, 1, msg);
 	if (TU_F32(TU_PTR(ent, ENT_TEMPLATE), TPL_LIFE) != 0.0f) {
-		TA_PhysSetLife(ent + ENT_PHYS,
+		TA_TimerSetLength(ent + ENT_TIMER,
 			TU_F32(TU_PTR(ent, ENT_TEMPLATE), TPL_LIFE));
-		TA_PhysStart(ent + ENT_PHYS);
+		TA_TimerStart(ent + ENT_TIMER);
 	}
 	TU_I32(ent, 0x964) = 0;
 	if (TU_PTR(ent, ENT_ANIM_SEG) != NULL) {
@@ -1616,7 +1615,7 @@ int TankEnts_CollideEntity(void *self, void **node)
 	it = (void **)TU_PTR(self, ENTS_LIST);
 	hitNode = NULL;
 	best = 2.0f;
-	camera = TU_PTR(self, ENTS_CAMERA);
+	camera = TU_PTR(self, ENTS_PLAYERS);
 	if (it == NULL)
 		return 0;
 	for (; it != NULL; it = (void **)it[1]) {
@@ -1807,7 +1806,7 @@ void TankEnts_CheckWaypoints(void *self, void *entity)
 		} else {
 			TU_I32(ent, 0x95c) = 1;
 			TU_I32(ent, ENT_DEAD) = 1;
-			TA_Boom(TU_PTR(self, ENTS_BOOM), 10, TU_FP(ent, ENT_POS), DAT_002ea478, 0,
+			TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), 10, TU_FP(ent, ENT_POS), DAT_002ea478, 0,
 				((((red & 0xff) << 8) + (green & 0xff)) << 8) + (blue & 0xff));
 		}
 	}
@@ -1908,7 +1907,7 @@ void TankEnts_UpdatePhysics(void *self, int variant)
 				if (TU_ENT_TYPE(node[0]) == 10 && TankEnts_CollideEntity(self, node) != 0 &&
 					TankEnts_CollideEntity(self, node) != 0)
 					TU_I32(node[0], ENT_DEAD) = 1;
-				TA_CameraShake(TU_PTR(self, ENTS_CAMERA),
+				TA_PlayersShake(TU_PTR(self, ENTS_PLAYERS),
 					TU_I32(ent, ENT_ID), 2);
 				break;
 			}
@@ -2061,7 +2060,7 @@ CTank_Entities::Initialise: loads the shared textures and effects, reads the ent
 `name` from `package`, links the templates, scatters rocks in race mode and adds the tweak
 menus. 0 when the file is missing. */
 int TankEnts_Initialise(void *self, void *package, const char *name, void *world, void *route,
-	void *spawn, void *boom, void *lights, void *sound, void *players)
+	void *spawn, void *debris, void *lights, void *sound, void *boom)
 {
 	char reader[0x214];
 	unsigned int size;
@@ -2087,17 +2086,17 @@ int TankEnts_Initialise(void *self, void *package, const char *name, void *world
 	TU_PTR(self, ENTS_TEX_SHADOW) = bLoadResource(NULL, "decal\\shadowsq.bmp", 0, 0xdefa);
 	TU_PTR(self, ENTS_TEX_SHADOW + 4) = bLoadResource(NULL, "decal\\tankshad.bmp", 0, 0xdefa);
 	TU_PTR(self, ENTS_TEX_SHADOW + 12) = bLoadResource(NULL, "decal\\bombshad.bmp", 0, 0xdefa);
-	TU_PTR(self, ENTS_SHELL_SHADOW) = bLoadResource(NULL, "tokenglow.bmp", 0, 0xdefa);
+	TU_PTR(self, ENTS_GLOW) = bLoadResource(NULL, "tokenglow.bmp", 0, 0xdefa);
 	TU_PTR(self, ENTS_TEX_TRACK_DECAL) = bLoadResource(NULL, "decal\\decal-tracks.bmp", 0, 0xdefa);
 	if (TU_PTR(self, ENTS_TEX_TRACK_DECAL) == NULL)
 		TU_DEBUG("could not load decal texture\n");
-	TU_PTR(self, ENTS_OWNER) = players;
+	TU_PTR(self, ENTS_BOOM) = boom;
 	TU_F32(self, ENTS_TRACK_TIME) = 0.0f;
 	memset(TU_ADDR(self, 0x98), 0, 0xb * 4);
 	TU_PTR(self, ENTS_WORLD) = world;
 	TU_PTR(self, ENTS_ROUTE) = route;
 	TU_PTR(self, ENTS_SPAWN) = spawn;
-	TU_PTR(self, ENTS_BOOM) = boom;
+	TU_PTR(self, ENTS_DEBRIS) = debris;
 	TU_PTR(self, ENTS_LIGHTS) = lights;
 	TU_PTR(self, ENTS_SOUND) = sound;
 	TU_PTR(self, ENTS_MESSAGES) = NULL;
@@ -2164,4 +2163,387 @@ int TankEnts_Initialise(void *self, void *package, const char *name, void *world
 	}
 	TankReader_Dtor(reader);
 	return 1;
+}
+
+/* ======================================================================== gap functions
+   0x001d4730-0x001d5790: methods of CTank_Entities (file inferred: they work on the same
+   object between the last CTank_Entities.cpp tag and CTank_Sound) */
+
+/* 0x001d4730  TankedUp (gap; CTank_Entities.cpp inferred)
+CTank_Entities::Free: every entity, message, template and tweak menu. */
+void TankEnts_Free(void *self)
+{
+	void **node;
+	void **next;
+	char *tpl;
+	char *nextTpl;
+	void *p;
+
+	RefBot_Delete();
+	TA_EntsFree(self);
+	node = (void **)TU_PTR(self, ENTS_LIST);
+	while (node != NULL) {
+		next = (void **)node[1];
+		TankEnts_DestroyEntity(self, node);
+		node = next;
+	}
+	TU_PTR(self, ENTS_LIST) = NULL;
+	node = (void **)TU_PTR(self, ENTS_MESSAGES);
+	while (node != NULL) {
+		bkHeapFree(node[0]);
+		next = (void **)node[1];
+		bkHeapFree(node);
+		node = next;
+	}
+	p = TU_PTR(self, ENTS_EFFECTS);
+	TU_PTR(self, ENTS_MESSAGES) = NULL;
+	if (p != NULL) {
+		BCarGenericGoal_Destruct((struct CParticleEffect *)p);
+		bkHeapFree(p);
+	}
+	TU_PTR(self, ENTS_EFFECTS) = NULL;
+	tpl = (char *)TU_PTR(self, ENTS_TEMPLATES);
+	while (tpl != NULL) {
+		if (TU_I32(tpl, TPL_MENU) != 0 && TU_PTR(tpl, 4) != NULL) {
+			p = TU_PTR(tpl, 4);
+			CTweakMenu_Dtor((struct CTweakMenu *)p);
+			bkHeapFree(p);
+		}
+		nextTpl = (char *)TU_PTR(tpl, TPL_NEXT);
+		bkHeapFree(tpl);
+		tpl = nextTpl;
+	}
+	TU_PTR(self, ENTS_TEMPLATES) = NULL;
+	p = DAT_003151b4;
+	if (DAT_003151b4 != NULL) {
+		CTweakMenu_Dtor((struct CTweakMenu *)DAT_003151b4);
+		bkHeapFree(p);
+	}
+	p = TU_PTR(self, ENTS_TWEAKS);
+	if (p != NULL) {
+		CTweakMenu_Dtor((struct CTweakMenu *)p);
+		bkHeapFree(p);
+	}
+	DAT_003151b4 = NULL;
+	TU_PTR(self, ENTS_TWEAKS) = NULL;
+	TU_PTR(self, ENTS_WORLD) = NULL;
+}
+
+/* MSVC rand() scaled to -0.5..0.5 (0x00253740 = 1 / 32767) */
+#define TU_RAND_HALF() ((float)tu_rand() * 3.05185094e-05f - 0.5f)
+
+/* 0x001d4830  TankedUp (gap; CTank_Entities.cpp inferred)
+CTank_Entities::Fire: tank `ent` fires a "tank_shell" from its cannon, turned `offset`
+from the turret: recoil animation, sound 2, 30 sparks, and the shell hits anything it
+starts inside. */
+void TankEnts_Fire(void *self, void *entity, float offset)
+{
+	char *ent = (char *)entity;
+	char *shell;
+	char *other;
+	void **node;
+	void *anim;
+	float m[16];
+	float off[4];
+	float pos[4];
+	float rot[4];
+	float spark[4];
+	float s;
+	float sum;
+	float dx, dy, dz;
+	int id;
+	int i;
+
+	if (TU_PTR(ent, ENT_TURRET_INST) != NULL) {
+		anim = baFindSubObject((struct BActorInstance *)TU_PTR(ent, ENT_TURRET_INST), "recoil");
+		baQueueAnimation((struct BActorInstance *)TU_PTR(ent, ENT_TURRET_INST),
+			(struct BActorNode *)TU_PTR(TU_PTR(ent, ENT_TURRET_INST), 0x134), (struct BAnim *)anim,
+			0x400, -1, 0, NULL, NULL);
+	}
+	TankSound_Play(TU_PTR(self, ENTS_SOUND), 2, TU_FP(ent, ENT_POS), 200, 1, 0);
+	bmMatrixRotationYXZ(m, CLMath_WrapAngle(TU_F32(ent, ENT_ROT)),
+		CLMath_WrapAngle(TU_F32(ent, ENT_ROT + 4) + TU_F32(ent, 0x9a0) + offset), TU_F32(ent, ENT_ROT + 8));
+	off[1] = TU_F32(ent, ENT_RADIUS) * -0.5f; /* 0x00257b8c */
+	off[2] = DAT_00315170 * TU_F32(ent, ENT_RADIUS);
+	off[0] = 0.0f;
+	off[3] = 1.0f;
+	bmTransformVector4InPlace(m, off);
+	pos[0] = off[0] + TU_F32(ent, ENT_POS);
+	pos[1] = off[1] + TU_F32(ent, ENT_POS + 4);
+	pos[3] = 1.0f;
+	rot[0] = 0.0f;
+	rot[1] = 0.0f;
+	rot[2] = 0.0f;
+	pos[2] = off[2] + TU_F32(ent, ENT_POS + 8);
+	rot[3] = 1.0f;
+	TankEnts_DirToAngles(off, &rot[0], &rot[1]);
+	rot[0] = 0.0f;
+	id = TankEnts_CreateEntity(self, TU_I32(ent, ENT_ID), "tank_shell", pos, rot, 1.0f);
+	shell = tu_find_entity(self, id);
+	/* the original writes through a null entity when the shell was not made */
+	if (shell == NULL)
+		return;
+	TU_I32(shell, 0x928) = 0;
+	TU_DEBUG("CTank_Entities - entity [%s] has fired [%s], at offset [%.2f, %.2f, %.2f]\n",
+		ent + ENT_NAME, shell + ENT_NAME, (double)off[0], (double)off[1], (double)off[2]);
+	for (i = 0; i < 0x1e; i++) {
+		spark[0] = TU_RAND_HALF();
+		spark[2] = TU_RAND_HALF();
+		spark[1] = TU_RAND_HALF();
+		spark[3] = 1.0f;
+		bmVectorNormalise(spark, spark);
+		s = (float)tu_rand() * 0.000305185094f; /* 0x00265808 */
+		spark[0] = spark[0] * s;
+		spark[1] = spark[1] * s;
+		spark[2] = spark[2] * s;
+		/* 0x002687e4 = 3 / 32767 */
+		spark[0] = TU_F32(shell, 0xa38) / ((float)tu_rand() * 9.15555283e-05f + 2.0f) + spark[0];
+		spark[1] = TU_F32(shell, 0xa3c) / ((float)tu_rand() * 9.15555283e-05f + 2.0f) + spark[1];
+		spark[2] = TU_F32(shell, 0xa40) / ((float)tu_rand() * 9.15555283e-05f + 2.0f) + spark[2];
+		TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), (i >= 10) + 0xd, TU_FP(shell, ENT_POS), spark, 0,
+			0xffffffffu);
+	}
+	for (node = (void **)TU_PTR(self, ENTS_LIST); node != NULL; node = (void **)node[1]) {
+		other = (char *)node[0];
+		if (TU_I32(other, ENT_ID) == TU_I32(shell, ENT_ID) || TU_I32(other, ENT_ID) == TU_I32(ent, ENT_ID))
+			continue;
+		if ((signed char)TU_U8(TU_PTR(other, ENT_TEMPLATE), TPL_FLAGS) < 0 ||
+			TU_I32(other, 4) == TU_I32(shell, 4))
+			continue;
+		sum = TU_F32(other, ENT_RADIUS) + TU_F32(shell, ENT_RADIUS);
+		dy = TU_F32(other, ENT_POS + 4) - TU_F32(shell, ENT_POS + 4);
+		dx = TU_F32(other, ENT_POS) - TU_F32(shell, ENT_POS);
+		dz = TU_F32(other, ENT_POS + 8) - TU_F32(shell, ENT_POS + 8);
+		if (dy * dy + dx * dx + dz * dz <= sum * sum) {
+			TU_DEBUG("CTank_Entities::Fire - overlap found with shell [%s] and object [%s]\n",
+				shell + ENT_NAME, other + ENT_NAME);
+			TankEnts_EntityHit(self, other, shell);
+			TankEnts_EntityHit(self, shell, other);
+		}
+	}
+}
+
+/* 0x001d4cc0  TankedUp (gap; CTank_Entities.cpp inferred)
+CTank_Entities::FireCommand: tank `id` fires when it is loaded, alive and not frozen in
+the playing state (three shells with the triple-shot +0x94c, DAT_0031516c degrees apart);
+message 10 reloads it after a time by the player's rank (halved with triple shot). 1 when
+it fired. */
+int TankEnts_FireCommand(void *self, int id)
+{
+	char *ent = tu_find_entity(self, id);
+	float delay;
+
+	if (ent == NULL)
+		return 0;
+	if (TU_I32(ent, 0x938) == 0 || TU_I32(ent, ENT_DEAD) != 0 || TU_I32(ent, 0x944) != 0 ||
+		TU_I32(self, ENTS_VARIANT) != 4)
+		return 0;
+	TankEnts_Fire(self, ent, 0.0f);
+	if (TU_I32(ent, 0x94c) != 0) {
+		TankEnts_Fire(self, ent, DAT_0031516c * 0.0174532924f); /* 0x002640f8 */
+		TankEnts_Fire(self, ent, -DAT_0031516c * 0.0174532924f);
+	}
+	TU_I32(ent, 0x938) = 0;
+	/* the original keeps the bits of `id` (its argument slot) as the delay for other ranks */
+	delay = tu_bitsf((unsigned int)id);
+	switch (TA_PlayersRank(TU_PTR(self, ENTS_PLAYERS), id)) {
+	case 1:
+		delay = 2.5f;
+		break;
+	case 2:
+	case 3:
+		delay = 2.0f;
+		break;
+	case 4:
+		delay = 1.5f;
+		break;
+	}
+	if (TU_I32(ent, 0x94c) != 0)
+		delay = delay * 0.5f;
+	TankEnts_SendDelayedMessage(self, 10, (unsigned int)id, (unsigned int)id, 1, 0, 0, 0, delay);
+	return 1;
+}
+
+/* a random direction for debris: x and z -0.5..0.5, y 0..0.5 (0x0025389c = 0.5 / 32767),
+   normalised */
+static void tu_debris_dir(float *dir)
+{
+	dir[0] = TU_RAND_HALF();
+	dir[2] = TU_RAND_HALF();
+	dir[3] = 1.0f;
+	dir[1] = (float)tu_rand() * 1.52592547e-05f;
+	bmVectorNormalise(dir, dir);
+}
+
+/* the blast of a tank or an exploding crate: a flash, a scorch, 11 fragments and 200 sparks */
+static void tu_blast(void *self, char *ent)
+{
+	float *pos = TU_FP(ent, ENT_POS);
+	float normal[4];
+	float dir[4];
+	float f;
+	int i;
+
+	TA_LightsFireFlash(TU_PTR(self, ENTS_LIGHTS), pos);
+	TA_BoomAdd(TU_PTR(self, ENTS_BOOM), pos,
+		TA_WorldGroundHeight(TU_PTR(self, ENTS_WORLD), pos, 1.0f, normal));
+	for (i = 0; i < 0xb; i++) {
+		tu_debris_dir(dir);
+		f = i < 10 ? 1.0f : 0.1f; /* 0x00253850, 0x002536cc */
+		f = f * (float)tu_rand() * DAT_003150b8 * 3.05185094e-05f;
+		dir[0] = dir[0] * f;
+		dir[1] = dir[1] * f;
+		dir[2] = dir[2] * f;
+		TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), i < 10 ? 6 : 9, pos, dir, 0, 0xffffffffu);
+	}
+	for (i = 0; i < 200; i++) {
+		tu_debris_dir(dir);
+		dir[0] = dir[0] * 30.0f; /* 0x002553a8 */
+		dir[1] = dir[1] * 30.0f;
+		tu_rand(); /* drawn and not used */
+		dir[2] = dir[2] * 30.0f;
+		TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), (i > 0x31) + 0xd, pos, dir, 0, 0xffffffffu);
+	}
+}
+
+/* 0x001d4e10  TankedUp (gap; CTank_Entities.cpp inferred)
+CTank_Entities::Explode: the end of an entity by type: tanks (1) blast; shells and mines
+(2, 4) throw 6 fragments along their last velocity; type 9 sends message 0x1f, puts a new
+rock somewhere and blasts. */
+void TankEnts_Explode(void *self, void *entity)
+{
+	char *ent = (char *)entity;
+	float dir[4];
+	float base[3];
+	float b;
+	float f;
+	int i;
+
+	switch (TU_ENT_TYPE(ent)) {
+	case 1:
+		tu_blast(self, ent);
+		return;
+	case 2:
+	case 4:
+		for (i = 0; i < 6; i++) {
+			dir[0] = TU_RAND_HALF();
+			dir[2] = TU_RAND_HALF();
+			b = 1.0f / (TU_F32(self, ENTS_DT) * 4.0f); /* 0x00257c40 */
+			dir[3] = 1.0f;
+			base[0] = b * TU_F32(ent, ENT_OLD_VEL);
+			base[1] = b * TU_F32(ent, ENT_OLD_VEL + 4);
+			base[2] = b * TU_F32(ent, ENT_OLD_VEL + 8);
+			dir[1] = (float)tu_rand() * 1.52592547e-05f;
+			bmVectorNormalise(dir, dir);
+			f = i < 5 ? 1.0f : 0.1f;
+			f = f * (float)tu_rand() * DAT_003150b8 * 3.05185094e-05f;
+			dir[0] = base[0] + dir[0] * f;
+			dir[1] = base[1] + f * dir[1];
+			dir[2] = base[2] + dir[2] * f;
+			TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), i < 5 ? 6 : 9, TU_FP(ent, ENT_POS), dir, 0,
+				0xffffffffu);
+		}
+		break;
+	case 9:
+		TankEnts_SendDelayedMessage(self, 0x1f, TU_U32(ent, ENT_ID), TU_U32(self, 0xe4), 1, 0, 0, 0,
+			0.0f);
+		TankEnts_ScatterRocks(self, 1);
+		tu_blast(self, ent);
+		return;
+	}
+}
+
+/* 0x001d55a0  TankedUp (gap; CTank_Entities.cpp inferred)
+CTank_Entities::ProcessDead: entities that fell below -1000 die. A dead entity whose
+template has flag 8 explodes and (once) gets a respawn point and message 0xd after a time
+by its player's rank; any other dead entity explodes, gets message 2 at once and is
+destroyed. */
+void TankEnts_ProcessDead(void *self)
+{
+	void **link = (void **)TU_ADDR(self, ENTS_LIST);
+	void **node;
+	char *ent;
+	char msg[0x30];
+	float delay;
+
+	while (*link != NULL) {
+		ent = (char *)((void **)*link)[0];
+		if (TU_F32(ent, ENT_POS + 4) < -1000.0f) /* 0x002679f8 */
+			TU_I32(ent, ENT_DEAD) = 1;
+		if (TU_I32(ent, ENT_DEAD) == 0 || TU_I32(ent, 0x95c) != 0) {
+			link = &((void **)*link)[1];
+			continue;
+		}
+		if (TU_PTR(ent, ENT_TEMPLATE) != NULL && (TU_U8(TU_PTR(ent, ENT_TEMPLATE), TPL_FLAGS) & 8) != 0) {
+			TankEnts_Explode(self, ent);
+			if (TU_I32(ent, 0x95c) == 0) {
+				TankEnts_GetRespawnPos(self, ent);
+				delay = -1.0f;
+				switch (TA_PlayersRank(TU_PTR(self, ENTS_PLAYERS), TU_I32(ent, ENT_ID))) {
+				case 1:
+					delay = 3.0f;
+					break;
+				case 2:
+				case 3:
+					delay = 2.0f;
+					break;
+				case 4:
+					delay = 1.0f;
+					break;
+				}
+				if (delay >= 0.0f)
+					TankEnts_SendDelayedMessage(self, 0xd, TU_U32(ent, ENT_ID), TU_U32(ent, ENT_ID), 1, 0,
+						0, 0, delay);
+			}
+			TU_I32(ent, 0x95c) = 1;
+			link = &((void **)*link)[1];
+			continue;
+		}
+		node = (void **)*link;
+		*link = node[1];
+		TankEnts_Explode(self, ent);
+		memset(msg, 0, sizeof msg);
+		TU_I32(msg, 0x28) = 0;
+		TU_I32(msg, 0x1c) = TU_I32(ent, ENT_ID);
+		TU_I32(msg, 0x18) = TU_I32(ent, ENT_ID);
+		TU_I32(msg, 0) = 2;
+		TA_SendMessageNow(self, ent, 1, msg);
+		TankEnts_DestroyEntity(self, node);
+	}
+}
+
+/* 0x001d5790  TankedUp (gap; CTank_Entities.cpp inferred)
+CTank_Entities::Update: one frame of the entity system (`dt` frames, game `state`); returns
+the state to go to (5 when +0x60 asks to end; 4 while the RefBot flag holds a state <= 3). */
+int TankEnts_Update(void *self, float dt, int state)
+{
+	void **node;
+
+	CToken_UpdateAll();
+	TU_F32(self, ENTS_SPIN) = CLMath_WrapAngle(TU_F32(self, ENTS_SPIN) + 0.0500000007f); /* 0x00258b54 */
+	TU_F32(self, ENTS_DT) = dt;
+	TU_I32(self, ENTS_VARIANT) = state;
+	RefBot_Update();
+	CParticleEffect_Update((struct CParticleEffect *)TU_PTR(self, ENTS_EFFECTS), dt);
+	if (TU_I32(TU_PTR(self, ENTS_WORLD), 0) != 0)
+		TankEnts_KillBuriedTanks(self);
+	TA_EntsThink(self);
+	TankEnts_ProcessMessages(self);
+	TA_EntsStep2(self);
+	TankEnts_ProcessDead(self);
+	TankEnts_UpdatePhysics(self, state);
+	TA_EntsStep3(self);
+	TankEnts_UpdateTracks(self);
+	if (state < 5) {
+		if (TU_I32(self, 0x60) == 0)
+			goto done;
+		state = 5;
+	}
+	TankEnts_FlushMessages(self);
+	for (node = (void **)TU_PTR(self, ENTS_LIST); node != NULL; node = (void **)node[1])
+		TU_I32(node[0], 0x948) = 0;
+done:
+	if (DAT_002baeb8 == 0 || state > 3)
+		return state;
+	return 4;
 }
