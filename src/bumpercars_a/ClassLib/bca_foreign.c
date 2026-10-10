@@ -1,0 +1,25 @@
+/*
+ClassLib/bca_foreign.c  (module bumpercars_a)
+
+Weak fallbacks for data that the debris code uses but other modules own. A strong
+definition (or alias) in the owner replaces each of these at link time.
+*/
+
+#include "bumpercars_a.h"
+
+/* 0x00290ea8  (classlib_fx SpriteVB.cpp data) "debrisVB": a CSpriteVB whose batch list is
+   empty (next and prev point at the object). Same fallback as meta_a's. */
+__attribute__((weak, aligned(4))) unsigned int DAT_00290ea8[15] = {
+	(unsigned int)DAT_00290ea8, (unsigned int)DAT_00290ea8,
+};
+
+/* 0x00290ed8  (classlib_fx data, after debrisVB) debris drawing on: 0 in the XBE */
+__attribute__((weak)) int DAT_00290ed8 = 0;
+
+/* 0x00290cb4 (25.0, debris sprite size scale) and 0x00290cb8 (1, debris sprites on) lie in
+   classlib_ui's block of_clu_data (0x0028fda8-0x00290cc0), which names no alias for them:
+   weak aliases into that block. */
+__asm__(
+	".weak DAT_00290cb4\n.set DAT_00290cb4, of_clu_data + 0xf0c\n"
+	".weak DAT_00290cb8\n.set DAT_00290cb8, of_clu_data + 0xf10\n"
+);
