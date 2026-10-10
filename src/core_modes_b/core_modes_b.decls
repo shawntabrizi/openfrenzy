@@ -117,3 +117,32 @@
 00024fe0 void *CGameMode_MiniGameSelect_DeletingDtor(struct CGameMode_MiniGameSelect *self, unsigned char flags);
 00025000 void CGameMode_MiniGameSelect_Start(struct CGameMode_MiniGameSelect *self);
 00025290 void CGameMode_MiniGameSelect_Loaded(struct CGameMode_MiniGameSelect *self);
+
+# Core/CGameMode_ObjectViewer.c (all but 0x00025b40 are unplaced in the table)
+00025a20 struct CGameMode_ObjectViewer *CGameMode_ObjectViewer_ctor(struct CGameMode_ObjectViewer *self);
+00025a40 void CGameMode_ObjectViewer_dtor(struct CGameMode_ObjectViewer *self);
+00025a50 void CGameMode_ObjectViewer_Exit(struct CGameMode_ObjectViewer *self);
+00025a90 void CGameMode_ObjectViewer_Start(struct CGameMode_ObjectViewer *self);
+00025aa0 void CGameMode_ObjectViewer_Update(struct CGameMode_ObjectViewer *self, int active);
+00025ae0 void CGameMode_ObjectViewer_Render(struct CGameMode_ObjectViewer *self, int active);
+00025b40 void *CGameMode_ObjectViewer_MakeActor(struct CGameMode_ObjectViewer *self, void *resource);
+00025bd0 void *CGameMode_ObjectViewer_DeletingDtor(struct CGameMode_ObjectViewer *self, unsigned char flags);
+00025bf0 void CGameMode_ObjectViewer_Input(struct CGameMode_ObjectViewer *self, int active);
+00025e70 void CGameMode_ObjectViewer_Enter(struct CGameMode_ObjectViewer *self);
+
+# Core/CGameMode_PressStart.c (0x00026180 is unplaced in the table)
+00026180 struct CGameMode_PressStart *CGameMode_PressStart_ctor(struct CGameMode_PressStart *self);
+00026200 void CGameMode_PressStart_Suspend(struct CGameMode_PressStart *self);
+00026290 int CGameMode_PressStart_OnButton(struct CGameMode_PressStart *self, int button, int pad);
+000262d0 void *CGameMode_PressStart_DeletingDtor(struct CGameMode_PressStart *self, unsigned char flags);
+000262f0 void CGameMode_PressStart_dtor(struct CGameMode_PressStart *self);
+00026350 void CGameMode_PressStart_Start(struct CGameMode_PressStart *self);
+00026790 void CGameMode_PressStart_Update(struct CGameMode_PressStart *self, int active);
+00026a30 void CGameMode_PressStart_Render(struct CGameMode_PressStart *self, int active);
+
+# Core/unplaced.c
+00025920 void *cmb_six_lists_ctor(void *self);
+000259a0 void cmb_six_lists_dtor(void *self);
+00026bf0 void CGameMode_Root_PollGUI(void);
+00026c60 void *CGameMode_Root_ctor(void *self);
+00026ce0 void CGameMode_Root_dtor(void *self);

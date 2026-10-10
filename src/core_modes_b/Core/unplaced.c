@@ -195,3 +195,89 @@ void *FUN_0001ddb0(void *self)
 	((void (*)(void *))FUN_0002f570)((char *)self + 8);
 	return self;
 }
+
+/* 0x00025920  (unplaced): constructor of an object made of six lists (12 bytes each,
+   classlib_ui FUN_00071050); used by a static constructor and by Demolition */
+void *cmb_six_lists_ctor(void *self)
+{
+	int i;
+
+	for (i = 0; i < 6; i++)
+		((void (*)(void *))FUN_00071050)((char *)self + i * 0xc);
+	return self;
+}
+
+/* 0x000259a0  (unplaced): its destructor, last list first */
+void cmb_six_lists_dtor(void *self)
+{
+	int i;
+
+	for (i = 5; i >= 0; i--)
+		((void (*)(void *))FUN_001d5950)((char *)self + i * 0xc);
+}
+
+/* 0x00256010  CGameMode_Root vtable (the class is core's; its constructor is here) */
+const void *const vtable_00256010[13] = {
+	(const void *)FUN_00027db0, /* [0] scalar deleting destructor */
+	(const void *)FUN_001d5950, /* [1] empty */
+	(const void *)FUN_001d5950, /* [2] empty */
+	(const void *)FUN_000283a0, /* [3] */
+	(const void *)FUN_00027f10, /* [4] */
+	(const void *)FUN_00027dd0, /* [5] */
+	(const void *)FUN_001ec260, /* [6] empty */
+	(const void *)FUN_001ec260, /* [7] empty */
+	(const void *)FUN_001ec260, /* [8] empty */
+	(const void *)FUN_00012930, /* [9] core_modes_a */
+	(const void *)FUN_000128e0, /* [10] core_modes_a */
+	(const void *)FUN_001d5950, /* [11] empty */
+	(const void *)FUN_001d5950, /* [12] empty */
+};
+
+/* 0x00026bf0  (unplaced): give every pad that is plugged in the GUI activation buttons of
+   the root mode */
+void CGameMode_Root_PollGUI(void)
+{
+	void *root;
+	int pad;
+	int port;
+
+	root = ((void *(*)(void *, const char *))FUN_0002b5b0)(CMB_MODESTACK, "Root");
+	if (root == NULL)
+		return;
+	for (pad = 0; pad < 4; pad++) {
+		if (CMB_I32(root, 0x28 + pad * 4) != 0)
+			continue;
+		port = ((int (*)(int))FUN_0004a0d0)(pad);
+		if (port == -1)
+			continue;
+		CMB_I32(root, 0x28 + pad * 4) = 1;
+		((int (*)(void *, int, unsigned int, unsigned int))FUN_00048c40)(CMB_PTR(root, 0x3c), 2,
+			(unsigned int)port << 16 | 0xc3, (unsigned int)port << 16 | 0xc4);
+	}
+}
+
+/* 0x00026c60  (unplaced): CGameMode_Root constructor */
+void *CGameMode_Root_ctor(void *self)
+{
+	void *map;
+
+	((void *(*)(void *, const char *))FUN_00012800)(self, "Root");
+	CMB_PTR(self, 0) = (void *)vtable_00256010;
+	map = ((void *(*)(int))FUN_000488c0)(1);
+	CMB_PTR(self, 0x38) = map;
+	CMB_I32(self, 0x34) = 0;
+	CMB_I32(self, 0x30) = 0;
+	CMB_I32(self, 0x2c) = 0;
+	CMB_I32(self, 0x28) = 0;
+	CMB_PTR(self, 0x3c) = ((void *(*)(void *, const char *, int, unsigned int, int, int, int))FUN_00048a10)(
+		map, "GUI Activation", 1, 0, 0, 0, 0);
+	return self;
+}
+
+/* 0x00026ce0  (unplaced): CGameMode_Root destructor */
+void CGameMode_Root_dtor(void *self)
+{
+	CMB_PTR(self, 0) = (void *)vtable_00256010;
+	((void (*)(void *))FUN_00048970)(CMB_PTR(self, 0x38));
+	((void (*)(void *))FUN_00012860)(self);
+}

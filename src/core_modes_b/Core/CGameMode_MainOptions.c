@@ -115,6 +115,7 @@ void CGameMode_MainOptions_Start(struct CGameMode_MainOptions *self)
    function start; nothing calls it. Kept only so the table entry has a definition. */
 void FUN_0001d460(void)
 {
+	/* STUB: there is no function here to decompile */
 	of_unimplemented(0x0001d460, "FUN_0001d460 (not a function: inside 0x0001d200)");
 }
 

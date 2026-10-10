@@ -152,3 +152,25 @@ __attribute__((weak)) int _DAT_0028198c = -1;
 __attribute__((weak)) int DAT_00283984 = 5;
 __attribute__((weak)) float _DAT_00283988 = 0.15f;
 __attribute__((weak)) int DAT_0028452c[4] = { 0xff, 0xff, 0xff, 0xdc };
+
+/* used by CGameMode_ObjectViewer and CGameMode_PressStart */
+void *DAT_002ba4e8;
+void *DAT_002ba4ec;
+float DAT_002ea478[4];
+__attribute__((weak)) int DAT_0028398c = 1;
+__attribute__((weak)) float _DAT_00283990 = 3.05250319e-06f;
+__attribute__((weak)) float _DAT_00283994 = 3.05250319e-06f;
+__attribute__((weak)) float _DAT_00283998 = 3.05250319e-06f;
+__attribute__((weak)) float _DAT_0028399c = 0.000305250316f;
+__attribute__((weak)) float _DAT_002839a0 = 6.10500647e-05f;
+__attribute__((weak)) float _DAT_002839a4 = 0.002f;
+__attribute__((weak)) float _DAT_002839a8 = -0.01f;
+__attribute__((weak)) float DAT_002839ac = 0.87266463f;
+__attribute__((weak)) int _DAT_002839b0 = 1;
+__attribute__((weak)) float DAT_0028fdd8[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+int DAT_002baadc;
+char DAT_002ba538;
+int DAT_002ba940;
+int DAT_002ba944;
+int DAT_002ba948;
+int DAT_002ba94c;

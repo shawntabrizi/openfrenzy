@@ -471,6 +471,72 @@ extern float _DAT_00283988;               /* scroll speed */
 extern int DAT_0028452c[4];               /* heading colour */
 extern void *DAT_002ba954[13];            /* core: the module of each game */
 
+/* ---------- CGameMode_ObjectViewer: a debug viewer for every actor resource. Its base is
+   core_modes_a's FUN_00012800 class (not CGameMode); fields from 0x28. */
+
+struct CGameMode_ObjectViewer {
+	const void *vtable;         /* 0x00 */
+	unsigned int field_04;
+	unsigned int package;       /* 0x08 */
+	int refs;                   /* 0x0c */
+	unsigned int flags;         /* 0x10 */
+	unsigned char pad_14[0x14];
+	void *camera;               /* 0x28: previous camera */
+	void *input;                /* 0x2c: input map */
+	void *next_actor;           /* 0x30: input channels */
+	void *prev_actor;           /* 0x34 */
+	void *next_anim;            /* 0x38 */
+	void *prev_anim;            /* 0x3c */
+	void *zoom;                 /* 0x40 */
+	void *rot_x;                /* 0x44 */
+	void *rot_y;                /* 0x48 */
+	void *rot_z;                /* 0x4c */
+	void *cam_y;                /* 0x50 */
+	void *resource;             /* 0x54: current actor resource */
+	void *actor;                /* 0x58 */
+	unsigned int anim;          /* 0x5c */
+	float target[4];            /* 0x60 */
+	float distance;             /* 0x70 */
+};
+OF_ASSERT_OFFSET(struct CGameMode_ObjectViewer, camera, 0x28);
+OF_ASSERT_OFFSET(struct CGameMode_ObjectViewer, distance, 0x70);
+
+extern void *DAT_002ba4e8, *DAT_002ba4ec;     /* the viewer's two lights */
+extern float DAT_002ea478[4];                 /* camera target */
+extern int DAT_0028398c;                      /* lights on */
+extern float _DAT_00283990, _DAT_00283994, _DAT_00283998, _DAT_0028399c, _DAT_002839a0;
+extern float DAT_0028fdd8[4];
+
+/* ---------- CGameMode_PressStart: the title screen */
+
+struct CGameMode_PressStart {
+	struct cmb_CGameMode base;
+	int saved_flag;             /* 0x098: DAT_00284408 */
+	void *press_start;          /* 0x09c: texts */
+	void *legal;                /* 0x0a0 */
+	void *trademark;            /* 0x0a4 */
+	float fade;                 /* 0x0a8 */
+	float idle_time;            /* 0x0ac */
+	int pressed;                /* 0x0b0 */
+	unsigned char list_b4[0xc]; /* 0x0b4 */
+	unsigned char list[0xc];    /* 0x0c0 */
+	int field_cc;
+	unsigned char logo[0x134];  /* 0x0d0: BActorInstance of fusion_frontend.obe */
+	void *logo_node;            /* 0x204: the instance's node (+0x134) */
+	unsigned char pad_208[0x38];
+	float scroll;               /* 0x240: texture scroll */
+	float shine;                /* 0x244 */
+};
+OF_ASSERT_OFFSET(struct CGameMode_PressStart, logo_node, 0x204);
+OF_ASSERT_OFFSET(struct CGameMode_PressStart, shine, 0x244);
+
+extern int DAT_002baadc;                      /* skip the title */
+extern char DAT_002ba538;                     /* the map was shown once */
+extern int DAT_002ba940, DAT_002ba944, DAT_002ba948, DAT_002ba94c; /* clear colour */
+extern float _DAT_002839a4, _DAT_002839a8, DAT_002839ac;
+extern int _DAT_002839b0;
+extern const void *const vtable_00256010[13];     /* CGameMode_Root (core), built here */
+
 struct CGameMode_MetaVote {
 	struct cmb_CGameMode base;
 	int state;                  /* 0x098 */
