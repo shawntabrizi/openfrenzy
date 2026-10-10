@@ -285,6 +285,17 @@ long long host_syscall(long long number, long long a, long long b, long long c, 
             }
             if (t.tv_sec < 0)
                 return 0;
+            /* openfrenzy: only the guest's clock threads sleep to an absolute time
+             * (the 60 Hz vertical blank of d3d8_gl.c, which paces Present, and the
+             * DirectSound clock of dsound_sdl.c). At the default QoS, macOS wakes them
+             * up to about 7 ms late, so frames came 9 to 24 ms apart at 60 fps
+             * (docs/INTEGRATION_NOTES.md "Frame pacing"). User-interactive QoS gives
+             * them tight timers. */
+            static __thread int raised;
+            if (!raised) {
+                raised = 1;
+                pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+            }
         }
         int r = nanosleep(&t, &remaining);
         if (r)
