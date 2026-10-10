@@ -1020,3 +1020,82 @@ void FUN_00072720(undefined4 value)
 {
 	clu_eca3c = value;
 }
+
+/* ---------- debris effect system glue (0x00080bb0-0x00080cc0)
+
+These functions use the globals of the debris effect system of classlib_fx (0x002ed340
+and on, the effect object at 0x00290ea8); they sit at the end of this module's address
+range, so the original file is probably classlib_fx's first file. */
+
+extern int DAT_002ed340;          /* debris system disabled */
+extern int DAT_002ed344;          /* live debris count */
+extern int DAT_002ed348;          /* debris system started */
+extern int DAT_002ed34c;          /* debris effect system */
+extern int DAT_002ed44c;          /* extra debris effect system */
+extern unsigned char DAT_00290ea8[]; /* debris effect object (classlib_fx data) */
+
+/* 0x00080bb0  ClassLib (file unknown)
+Starts the debris system (once): stops the old effect system and restarts it. */
+void CLDebris_Start(void)
+{
+	if (DAT_002ed340 != 0)
+		return;
+	DAT_002ed348 = 1;
+	if (DAT_002ed34c != 0)
+		FUN_0003c8b0(DAT_002ed34c);
+	FUN_00086350((int *)DAT_00290ea8);
+	FUN_00085200();
+}
+
+/* 0x00080bf0  ClassLib (file unknown); missing from of_functions.tsv
+Debris particle kill callback: frees the particle's data and counts it out. Returns 1
+when the particle may go. */
+int FUN_00080bf0(undefined4 system, int particle)
+{
+	(void)system;
+	if (DAT_002ed340 != 0)
+		return 0;
+	if (*(signed char *)(particle + 0xa1) < 0 && DAT_002ed348 == 0)
+		return 0;
+	if (*(int *)(particle + 0xd8) != 0)
+		*(int *)(*(int *)(particle + 0xd8) + 0x14) = *(int *)(*(int *)(particle + 0xd8) + 0x14) + -1;
+	DAT_002ed344 = DAT_002ed344 + -1;
+	if (*(int *)(particle + 0x74) != 0) {
+		FUN_0004c110(*(int *)(particle + 0x74));
+		*(int *)(particle + 0x74) = 0;
+	}
+	return 1;
+}
+
+/* 0x00080c50  ClassLib (file unknown); missing from of_functions.tsv
+DebrisExtraSystemInitCallback: reason 0 initialises the system data, 1 frees it. */
+void FUN_00080c50(int system, int reason)
+{
+	undefined4 *data;
+
+	if (DAT_002ed340 != 0)
+		return;
+	data = *(undefined4 **)(system + 0x40);
+	CLU_DebugPrintf("DebrisExtraSystemInitCallback(..)\n");
+	CLU_DebugPrintf("reason = %i \neSystem->sysData =%i\n\n", reason, *(undefined4 *)(system + 0x40));
+	if (reason == 0) {
+		*(float *)&data[0] = 1.0f;
+		data[1] = 0;
+	} else if (reason == 1) {
+		if (data[1] != 0) {
+			FUN_0004c110(data[1]);
+			data[1] = 0;
+		}
+		DAT_002ed34c = 0;
+	}
+}
+
+/* 0x00080cc0  ClassLib (file unknown)
+Stops the debris effects. */
+void CLDebris_Stop(void)
+{
+	FUN_000863c0((int *)DAT_00290ea8);
+	FUN_0003c690(DAT_002ed34c, 0);
+	FUN_000861b0((undefined4 *)DAT_00290ea8);
+	FUN_0003c690(DAT_002ed44c, 0);
+}

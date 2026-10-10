@@ -59,3 +59,10 @@ float DAT_002ed350[16];           /* per-player world positions (bumpercars / cl
 int DAT_002baebc;                 /* core: team game */
 int DAT_002ba6a4;                 /* core */
 int DAT_002b9c68;                 /* core */
+int DAT_002bae7c;                 /* core: rumble enabled (options) */
+int DAT_002ed340;                 /* classlib_fx: debris system */
+int DAT_002ed344;
+int DAT_002ed348;
+int DAT_002ed34c;
+int DAT_002ed44c;
+unsigned char DAT_00290ea8[0x40]; /* classlib_fx: debris effect object */

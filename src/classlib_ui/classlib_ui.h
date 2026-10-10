@@ -114,5 +114,8 @@ int FUN_0007e340(int node, undefined4 unused);
 int FUN_0007d890(int property, int *counter);
 int FUN_0007da30(int property, int *counter);
 int FUN_0007db00(int property, int *counter);
+/* 0x00080bf0 / 0x00080c50  debris system callbacks (ClassLib/unplaced.c) */
+int FUN_00080bf0(undefined4 system, int particle);
+void FUN_00080c50(int system, int reason);
 
 #endif
