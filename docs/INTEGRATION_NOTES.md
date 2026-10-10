@@ -356,6 +356,41 @@ integration round 2 (921ec75); see below.
 - Board runs (window, 760-900 s): Power Station (Tube Tremors, Bug Bash v2, Hopper, ...), the first
   Meta stage and vote, Military Base minigames, the second Meta stage. Frame dumps look right.
 
+### Regression sweep after round 4 (fix-regression-sweep)
+
+Builds from `git archive HEAD` (the shared tree had another agent's uncommitted edit that did
+not compile), own build dirs, ctest 5/5 (smoke not registered: no `orig/` in the archive).
+No new fault was found, so no code changed. `OPENFRENZY_BKLOG=1` is needed for the
+`countdown PLAYING` lines; without it the log stops after the disc image line.
+
+- (a) Direct launch, all 12 games x variations 1-3, 90 s each, `SDL_VIDEO_DRIVER=dummy`, A every
+  3 s, 6 runs at a time. Done twice: at 9080c5e and at 7ee9e65 (after the Meta load fix and the
+  stub drop). Both times all 36 reach `countdown PLAYING` (Drillers, Clusteroids, Hopper,
+  Jetboats and Fireworks 1-2 reach it 2-6 times: later rounds), no `OpenFrenzy fault`, no
+  UNIMPLEMENTED; the only assertion is ScratchMatch 1-3 `CScratchmatch_Game.cpp(815)` (known,
+  original). The `Failed to find anim segment` (Demolition) and `allcrowd.obe` (RollerBall)
+  data errors are old; round-2 logs have them too.
+- (b) 6-stage tournament, window, round-3 recipe, `OPENFRENZY_DEBUG_SKIP_VIDEOS=true`, 2700 s, at
+  9080c5e. Two complete runs: 24 launches each (6 Meta stages, 18 minigames), then GameWinner
+  and the title (PressStart at about 2390-2413 s). No fault, no UNIMPLEMENTED, no assertion.
+  Frame dumps (every 150 frames, `OPENFRENZY_DISPLAY_RESOLUTION_SCALING=original` so a dump is
+  1.2 MB) show the "Final Score" table with 6 stage columns and totals, "Dub: Last",
+  "Samson: Third", "Jet Wins!", then "Press START to play".
+- (c) 4 humans, the docs/BUILD.md example (pads 2-4 scripted) plus, from 50 s, each of pads 2-4
+  pressing A or one full stick direction every 1.5 s; window, 420 s, at 9080c5e. All 4 pads join
+  and pick (Dub, Samson, Geena, Jet), START plays. Bombstruck (Demolition v1), Laser Snare
+  (Drillers, played twice), Blast Man Standing (Demolition v4), then the first Meta stage and
+  its vote. No fault. HUDs: in Blast Man Standing the 4 life counters go 3 -> 2 -> 1/2 per player
+  and end "Player 4 wins!"; the Meta deposit screen lists all 4 players with different counts.
+  In Bombstruck all 4 scores stay 0 (nobody throws with 150 ms taps; not a port bug as far as
+  the frames show). Pads 2-4's characters move in every game.
+- Test hazard, not a game bug: two window runs ended early with `halo-linux: quit requested`
+  then `Game exited (0)` (SDL_EVENT_QUIT). Both times another agent's window runs logged the
+  same quit in the same second (22:28:25), so something outside the game stopped all
+  `openfrenzy` processes (SDL turns SIGTERM/SIGINT into a quit event). The run that completed
+  used copies of the host and guest under other names in the scratchpad. For long runs while
+  other agents work, do the same, or check the log for `quit requested` before you report.
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and
