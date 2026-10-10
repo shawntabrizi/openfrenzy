@@ -1212,7 +1212,7 @@ attack:
 }
 
 /* 0x00179e10  (gap): tremor, state 0: rises: on the first frame it takes a random free
-hole, kills the bullets within 500 and hits the small bugs within 400; when the rise
+hole, smashes the props within 500 and hits the small bugs within 400; when the rise
 (anim 0) starts it shakes the camera, puts rubble collision on a fresh hole and roars */
 void Bug_Tremor_Rise(void *self)
 {
@@ -1263,7 +1263,8 @@ void Bug_Tremor_Rise(void *self)
 		BG_I(0x126c) = 0;
 		for (node = (unsigned char *)(uintptr_t)CLList_Next((unsigned int *)DAT_0030ed00, NULL); node != NULL;
 		     node = (unsigned char *)(uintptr_t)CLList_Next((unsigned int *)DAT_0030ed00, (unsigned int *)node)) {
-			/* node = bullet + 0x19c; the bullet's instance (+0) has its position at +0xe0 */
+			/* a prop (CBBash_Destructable.c): node = prop + 0x1b8, node - 0x19c its
+			platform (position at +0xe0), node + 10 its "smash" flag */
 			unsigned char *inst = (unsigned char *)MW_AP(node, -0x19c);
 			float dx, dy, dz;
 
@@ -2303,10 +2304,12 @@ void MW_Player_PlayVoice(void *player, int kind, int volume, float cooldown, uns
 		cooldown, flags, choice, allowRepeat);
 }
 
-/* 0x0017d100  (gap): removes the bullet that just hit the player (fastcall: the player;
-+0x1138 his character, whose collision (+0x18c) remembers the hitting instance at
-+0x1bc while +0x1d0 is set): the bullet's node gets its dead flags (+8, +10) */
-void MW_Player_KillHittingBullet(void *player)
+/* 0x0017d100  (gap): smashes the prop the player's hammer hit (fastcall: the player;
++0x1138 the hammer's hit actor, whose collision (+0x18c) remembers the platform it
+touched at +0x1bc while +0x1d0 is set). Props (CBBash_Destructable.c) are on the list
+0x0030ed00 with their node at +0x1b8: node - 0x19c is the prop's platform, node + 8/+10
+its flags +0x1c0 and +0x1c2 (smash it). */
+void MW_Player_SmashHitProp(void *player)
 {
 	unsigned char *coll = (unsigned char *)MW_AP(MW_AP(player, 0x1138), 0x18c);
 	unsigned char *node;

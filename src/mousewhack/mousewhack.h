@@ -226,7 +226,7 @@ extern unsigned char *DAT_002ea488;   /* classlib_ui: the actor list holder */
 void FUN_00170ec0(void *self);           /* CBbash_Arena::Initialise (CBbash_Arena.cpp) */
 void FUN_00172730(void *self);           /* CBbash_Arena: reset for a new round */
 void FUN_0017d1f0(void *self);           /* CBbash_Player::~CBbash_Player */
-void FUN_00181550(void *self, float *pos, float *rot, const char *model, const char *smashed,
+void *FUN_00181550(void *self, float *pos, float *rot, const char *model, const char *smashed,
 	const char *anim, const char *alpha, int flag);  /* CBbash_Bugs: a smashable prop */
 void FUN_00182c90(void);                 /* frees the splat vertex buffers */
 

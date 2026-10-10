@@ -47,6 +47,48 @@
 00174610 void CBbash_Game_Play(void *self);
 00175b70 void CBbash_Game_Update(void *self);
 
+# ---- MouseWhack/CBbash_Player.c
+0017d180 void CBbash_Player_UpdateAction(void *self);
+0017d200 void CBbash_Player_CheckChasedBug(void *self);
+0017d2f0 void CBbash_Player_UpdateKnockCount(void *self);
+0017d330 void CBbash_Player_CreateInputMaps(void);
+0017d510 float MW_RandSigned(void);
+0017d550 void CBbash_Player_SetModel(void *self, int lowDetail);
+0017d6d0 void *CBbash_Player_Ctor(void *self, int player, float *pos);
+0017df00 void CBbash_Player_UpdatePlatform(void *self);
+0017e050 void CBbash_Player_ChooseEnemy(void *self);
+0017e1d0 void CBbash_Player_ChooseThreat(void *self);
+0017e2d0 void CBbash_Player_ChooseBug(void *self);
+0017e640 int CBbash_Player_Tag(void *self);
+0017eb80 void CBbash_Player_LookAround(void *self);
+0017ed40 void CBbash_Player_Hit(void *self, float *from, int knockedDown);
+0017f000 int CBbash_Player_Steer(void *self);
+0017f8a0 void CBbash_Player_Strike(void *self);
+
+# ---- MouseWhack/CBbash_Bullets.c
+00180720 void *CBbash_Bullets_Ctor(void *self);
+001807c0 void *CBbash_Bullet_Ctor(void *self, float *pos, float *vel, short type);
+001808d0 void CBbash_Bullet_Update(void *self);
+00180c50 void CBbash_Bullets_Dtor(void *self);
+00180ce0 void CBbash_Bullets_Fire(void *self, float *from, float *dir, short player);
+00180de0 void CBbash_Bullets_Spit(void *self, float *from, float *to);
+00180f00 void CBbash_Bullets_Update(void *self);
+
+# ---- MouseWhack/CBBash_Destructable.c
+00180f60 void CBBash_Destructable_Update(void *self);
+00181040 void CBBash_Destructable_Draw(void *self);
+00181520 void CBBash_Destructable_Destroy(void *self);
+
+# ---- MouseWhack/CBbash_Bugs.c
+00181730 void *MW_Ring_Ctor(void *self);
+00181740 void MW_Ring_Update(void *self);
+00181770 void MW_LoadBugModels(void);
+001817c0 void *CBbash_Bug_Ctor(void *self);
+001817d0 void CBbash_Bug_Dtor(void *self);
+00181830 void CBbash_Bug_Update(void *self);
+00181d50 void Bug_PaintTag(void *self, short player);
+00181fc0 void CBbash_Bug_Spawn(void *self, short type);
+
 # ---- MouseWhack/unplaced.c
 00176100 void *MW_Timer_Ctor(void *self);
 00176140 void MW_Timer_Dtor(void *self);
@@ -97,43 +139,11 @@
 0017cfc0 int MW_PlaySoundAt(unsigned int index, int freqChange, float *pos);
 0017d090 void MW_StopSound(int channel);
 0017d0b0 void MW_Player_PlayVoice(void *player, int kind, int volume, float cooldown, unsigned int flags, int choice, int allowRepeat);
-0017d100 void MW_Player_KillHittingBullet(void *player);
-
-# ---- MouseWhack/CBbash_Player.c
-0017d180 void CBbash_Player_UpdateAction(void *self);
-0017d200 void CBbash_Player_CheckChasedBug(void *self);
-0017d2f0 void CBbash_Player_UpdateKnockCount(void *self);
-0017d330 void CBbash_Player_CreateInputMaps(void);
-0017d510 float MW_RandSigned(void);
-0017d550 void CBbash_Player_SetModel(void *self, int lowDetail);
-0017d6d0 void *CBbash_Player_Ctor(void *self, int player, float *pos);
-0017df00 void CBbash_Player_UpdatePlatform(void *self);
-0017e050 void CBbash_Player_ChooseEnemy(void *self);
-0017e1d0 void CBbash_Player_ChooseThreat(void *self);
-0017e2d0 void CBbash_Player_ChooseBug(void *self);
-0017e640 int CBbash_Player_Tag(void *self);
-0017eb80 void CBbash_Player_LookAround(void *self);
-0017ed40 void CBbash_Player_Hit(void *self, float *from, int knockedDown);
-0017f000 int CBbash_Player_Steer(void *self);
-0017f8a0 void CBbash_Player_Strike(void *self);
-
-# ---- MouseWhack/CBbash_Bullets.c
-00180720 void *CBbash_Bullets_Ctor(void *self);
-001807c0 void *CBbash_Bullet_Ctor(void *self, float *pos, float *vel, short type);
-001808d0 void CBbash_Bullet_Update(void *self);
-00180c50 void CBbash_Bullets_Dtor(void *self);
-00180ce0 void CBbash_Bullets_Fire(void *self, float *from, float *dir, short player);
-00180de0 void CBbash_Bullets_Spit(void *self, float *from, float *to);
-00180f00 void CBbash_Bullets_Update(void *self);
+0017d100 void MW_Player_SmashHitProp(void *player);
 
 # ---- provisional shapes (functions not written yet)
 001839b0 void FUN_001839b0(void);
-00181770 void FUN_00181770(void);
-00181730 void *FUN_00181730(void *self);
 00182c10 void FUN_00182c10(void);
-00181520 void FUN_00181520(void *self);
-001817d0 void FUN_001817d0(void *self);
-00181040 void FUN_00181040(void *self);
 001836b0 void FUN_001836b0(short index);
 00183300 void FUN_00183300(void);
 00186b00 void FUN_00186b00(void);
@@ -141,15 +151,9 @@
 00182ea0 void FUN_00182ea0(void);
 001853e0 void FUN_001853e0(void);
 00185110 void FUN_00185110(void);
-001817c0 void *FUN_001817c0(void *self);
-00181fc0 void FUN_00181fc0(void *self, short type);
-00181830 void FUN_00181830(void *self);
 00184930 void FUN_00184930(float *pos, void *player, float angle);
 00184bb0 void *FUN_00184bb0(void *bug);
 001842b0 void FUN_001842b0(void *bug, int arg);
-00180f60 void FUN_00180f60(void *self);
-00181740 void FUN_00181740(void *self);
 00183a70 void FUN_00183a70(float *pos, short player);
 00186280 void FUN_00186280(void);
 00184760 void Splat_AddCrumbs(float *pos, int unused);
-00181d50 void Bug_PaintTag(void *self, short player);
