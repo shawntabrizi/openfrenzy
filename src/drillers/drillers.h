@@ -360,6 +360,7 @@ extern int DAT_002baee8[];          /* minigame score of player i: [i * 10] */
 extern int DAT_002baf00;            /* player 1 human ([10] of 0x002baed8) */
 extern int DAT_002baf28;            /* player 2 human */
 extern int DAT_002baf1c, DAT_002baf44, DAT_002baf6c;  /* team of players 1-3 */
+extern int DAT_002baf10, DAT_002baf38, DAT_002baf60;  /* minigame score of players 1-3 */
 extern int DAT_002baf50;            /* player 3 human */
 /* the player colours, 0x60 bytes per character (classlib_ui) */
 extern unsigned char DAT_00290718[];
@@ -418,8 +419,12 @@ void FUN_001154b0(void *map);
 void FUN_00115760(void *map, char cx, char cz, DrMapVertex *verts);
 void FUN_001160f0(void *map);
 void FUN_001164d0(void *map);
-/* Drillers/CDrillers_Lom.c */
-void FUN_0011bc40(void);
+/* Drillers/CDrillers_Lom.c: the level object manager (0x002a54d8) */
+int FUN_0011add0(int node, int arg);
+int FUN_0011b0a0(int node, int arg);
+int FUN_0011b420(int node, int arg);
+void FUN_0011bc40(void *self);
+int FUN_0011c3f0(int node, int arg);
 /* Drillers/unplaced_players.c: the players object (0x00298e70) */
 void FUN_00116f80(int player, float x, float z, int r, int g, int b, int y);
 void FUN_00117200(void *self, char player);

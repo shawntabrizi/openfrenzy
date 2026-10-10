@@ -35,7 +35,6 @@
 00110b90 void CDrillersGame_UpdateSnare(void *self);
 
 # callees (prototypes from the disassembly; renamed when their file is written)
-0011c7e0 int FUN_0011c7e0(void *self);
 0011e140 void FUN_0011e140(void *self);
 0011e1e0 void FUN_0011e1e0(void *self);
 0011f770 void FUN_0011f770(void *self);
@@ -115,3 +114,15 @@
 # Drillers/unplaced_ai.c (the AI object 0x002aadf8)
 00121920 float DrAi_AngleDiff(void *self, float a, float b);
 00121990 char DrAi_InPolygon(void *self, float px, float pz, int n, const float *poly);
+
+# Drillers/CDrillers_Lom.cpp (the level object manager 0x002a54d8)
+0011af70 void DrLom_Free(void *self);
+0011b080 void *DrLom_DeletingDtor(void *self, unsigned int flags);
+0011b470 int DrLom_AddInstance(int node, int arg);
+0011c440 int DrLom_Load(void *self, struct bkPackage *package, const char *name);
+
+# Drillers/unplaced_camera.c (the camera object 0x002aa830)
+0011c620 void DrCamera_PrintBlank(void);
+0011c6f0 int DrCamera_WinnerPressed(void *self, int *flags);
+0011c7c0 void *DrCamera_DeletingDtor(void *self, unsigned int flags);
+0011c7e0 int DrCamera_Update(void *self);

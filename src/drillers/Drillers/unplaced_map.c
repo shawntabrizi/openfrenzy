@@ -721,7 +721,7 @@ void FUN_001164d0(void *map)
 	if (DR_DRAW_ARENA != 0) {
 		if (2 < g_DrVariant)
 			bdSetRenderState(3, 1, 0);
-		FUN_0011bc40();
+		FUN_0011bc40(DR_PTR(void, 0x002a54d8u));
 		bdSetRenderState(3, 0, 0);
 	}
 	if (DR_TUNE_NO_EDGE == 0.0f && 2 < g_DrVariant) {
