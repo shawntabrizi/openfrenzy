@@ -574,6 +574,8 @@ __asm__(
 	".globl DAT_00290ca0\n.set DAT_00290ca0, of_clu_data + 0xef8\n"  /* 0x00290ca0 */
 	".globl DAT_00290cb0\n.set DAT_00290cb0, of_clu_data + 0xf08\n"  /* 0x00290cb0 */
 	".globl _DAT_00290cb0\n.set _DAT_00290cb0, of_clu_data + 0xf08\n"  /* 0x00290cb0 */
+	".globl DAT_00290cb4\n.set DAT_00290cb4, of_clu_data + 0xf0c\n"  /* 0x00290cb4 */
+	".globl DAT_00290cb8\n.set DAT_00290cb8, of_clu_data + 0xf10\n"  /* 0x00290cb8 */
 	".globl DAT_00290d14\n.set DAT_00290d14, of_clu_data2 + 0x0\n"  /* 0x00290d14 */
 	".globl DAT_00290d18\n.set DAT_00290d18, of_clu_data2 + 0x4\n"  /* 0x00290d18 */
 	".globl DAT_00290d1c\n.set DAT_00290d1c, of_clu_data2 + 0x8\n"  /* 0x00290d1c */

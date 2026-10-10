@@ -1680,3 +1680,126 @@ void CLHud_InitBarGeometry(int self)
 	half = (double)(int)*(unsigned short *)(texture + 0x30) * (double)0.5f;
 	OV_F(self, 100) = (float)(((double)35.0f - half) / half);
 }
+
+/* 0x002ed0f8  vertices of the score bar fan (up to 8) */
+#define clu_bar_quad CLU_ARR(struct CLQuadVertex, 0x002ed0f8)
+
+static void CLHud_BarVertex(int n, float x, float y, unsigned int colour, float u, float v)
+{
+	clu_bar_quad[n].x = x;
+	clu_bar_quad[n].y = y;
+	clu_bar_quad[n].z = 0.0f;
+	clu_bar_quad[n].colour = colour;
+	clu_bar_quad[n].u = u;
+	clu_bar_quad[n].v = v;
+}
+
+/* 0x0007c080  ClassLib/Hud.cpp (inferred; thiscall, the callee pops its arguments)
+Draws the four round score bars with score4.tga (geometry from CLHud_InitBarGeometry).
+Each score is clamped to [0,1] and fills an arc of score * 1.6 pi around the centre of the
+player's score box; the arc is cut at the corner angles self+0x68/0x6c/0x70. A score at
+or above `threshold` pulses its alpha with self+0x74. Nothing is drawn while the results
+are shown. The x87 code keeps 0.0 on the stack for the vertex z; y0 + H * 0.0 is written
+as y0 and x0 + W * 0.0 as x0. */
+void CLHud_DrawScoreBars(int self, float s0, float s1, float s2, float s3, float threshold)
+{
+	float score[4];
+	int i;
+	int texture;
+	int box;
+	int alpha;
+	const unsigned char *rgb;
+	unsigned int colour;
+	double w, h;
+	double cx, cy, cu, cv;
+	double ad, t;
+	float a, sin_a, cos_a, tf;
+	float x0, y0, f60, f64;
+
+	if (DAT_002baeb8 != 0)
+		return;
+	score[0] = s0;
+	score[1] = s1;
+	score[2] = s2;
+	score[3] = s3;
+	FUN_00043b70(0);
+	FUN_00044b00(3, 0, 0);
+	FUN_00044b00(6, 1, 0);
+	FUN_00044b00(10, 0, 0);
+	FUN_00044b00(4, 0, 0);
+	FUN_00044b00(7, 1, 0);
+	FUN_00043930((undefined4 *)DAT_002855f0);
+	FUN_000416c0(0, OV_I(self, 0x5c));
+	for (i = 0; i < 4; i++) {
+		if (score[i] > 1.0f)
+			score[i] = 1.0f;
+		else if (0.0f > score[i])
+			score[i] = 0.0f;
+		rgb = (const unsigned char *)&clu_characters[DAT_002baed4[i * 10]].colour;
+		if (!(score[i] >= threshold))
+			alpha = 0x7f;
+		else
+			alpha = (int)((sin((double)OV_F(self, 0x74) * (double)0.10471975f) + 1.0) * 63.0);
+		ad = (double)score[i] * (double)5.026548f;
+		a = (float)ad;
+		box = OV_I(clu_hud, 0xf0 + i * 4);
+		texture = OV_I(self, 0x5c);
+		sin_a = (float)sin(ad);
+		cos_a = (float)cos((double)a);
+		x0 = OV_F(box, 0x300);
+		y0 = (float)((double)OV_F(box, 0x304) - (double)(int)*(unsigned short *)(texture + 0x30));
+		w = (double)(int)*(unsigned short *)(texture + 0x2e);
+		h = (double)(int)*(unsigned short *)(texture + 0x30);
+		f60 = OV_F(self, 0x60);
+		f64 = OV_F(self, 100);
+		colour = DAT_002bc898[alpha] | DAT_002bd640[rgb[2]] | DAT_002bc490[rgb[1]] | DAT_002bce18[rgb[0]];
+		cx = w * ((double)f60 + 1.0) * 0.5 + x0;
+		cy = (1.0 - (double)f64) * h * 0.5 + y0;
+		cu = ((double)f60 + 1.0) * 0.5;
+		cv = ((double)f64 + 1.0) * 0.5;
+		if (a <= OV_F(self, 0x68)) {
+			/* top edge, right of the centre */
+			tf = (float)((double)sin_a / (double)cos_a);
+			t = (1.0 - (double)f60) * tf + f60 + 1.0;
+			CLHud_BarVertex(0, (float)cx, (float)cy, colour, (float)cu, (float)cv);
+			CLHud_BarVertex(1, (float)cx, y0, colour, (float)cu, 1.0f);
+			CLHud_BarVertex(2, (float)(t * w * 0.5 + x0), y0, colour, (float)(t * 0.5), 1.0f);
+			FUN_0003f2d0(4, (int)clu_bar_quad, 3);
+		} else if (a <= OV_F(self, 0x6c)) {
+			/* right edge */
+			t = tan((double)a - (double)1.5707963f);
+			t = ((double)f64 - 1.0) * t + f64;
+			CLHud_BarVertex(0, (float)cx, (float)cy, colour, (float)cu, (float)cv);
+			CLHud_BarVertex(1, (float)cx, y0, colour, (float)cu, 1.0f);
+			CLHud_BarVertex(2, (float)(w + x0), (float)((1.0 - t) * h * 0.5 + y0), colour, 1.0f,
+					(float)((t + 1.0) * 0.5));
+			CLHud_BarVertex(3, (float)(w + x0), y0, colour, 1.0f, 1.0f);
+			FUN_0003f2d0(4, (int)clu_bar_quad, 4);
+		} else if (a <= OV_F(self, 0x70)) {
+			/* bottom edge */
+			t = -((double)sin_a / (double)cos_a);
+			t = ((double)f60 + 1.0) * t + f60 + 1.0;
+			CLHud_BarVertex(0, (float)cx, y0, colour, (float)cu, 1.0f);
+			CLHud_BarVertex(1, (float)(w + x0), y0, colour, 1.0f, 1.0f);
+			CLHud_BarVertex(2, (float)cx, (float)cy, colour, (float)cu, (float)cv);
+			CLHud_BarVertex(3, (float)(w + x0), (float)(h + y0), colour, 1.0f, 0.0f);
+			CLHud_BarVertex(4, (float)(t * w * 0.5 + x0), (float)(h + y0), colour, (float)(t * 0.5), 0.0f);
+			FUN_0003f2d0(4, (int)clu_bar_quad, 5);
+		} else {
+			/* left edge */
+			tf = (float)tan((double)a - (double)4.712389f);
+			t = ((double)f64 + 1.0) * tf + f64;
+			CLHud_BarVertex(0, (float)cx, y0, colour, (float)cu, 1.0f);
+			CLHud_BarVertex(1, (float)(w + x0), y0, colour, 1.0f, 1.0f);
+			CLHud_BarVertex(2, (float)cx, (float)cy, colour, (float)cu, (float)cv);
+			CLHud_BarVertex(3, (float)(w + x0), (float)(h + y0), colour, 1.0f, 0.0f);
+			CLHud_BarVertex(4, x0, (float)(h + y0), colour, 0.0f, 0.0f);
+			CLHud_BarVertex(5, x0, (float)(h + y0), colour, 0.0f, 0.0f);
+			CLHud_BarVertex(6, (float)cx, (float)cy, colour, (float)cu, (float)cv);
+			CLHud_BarVertex(7, x0, (float)((1.0 - t) * h * 0.5 + y0), colour, 0.0f, (float)((t + 1.0) * 0.5));
+			FUN_0003f2d0(4, (int)clu_bar_quad, 8);
+		}
+	}
+	FUN_000416c0(0, 0);
+	FUN_00044b00(7, 3, 0);
+}

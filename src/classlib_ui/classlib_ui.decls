@@ -127,6 +127,7 @@
 0007bd80 void CLHud_UpdateBars(int self);
 0007be80 void CLHud_ShowResultBoxes(void);
 0007bfd0 void CLHud_InitBarGeometry(int self);
+0007c080 void CLHud_DrawScoreBars(int self, float s0, float s1, float s2, float s3, float threshold);
 0007cc00 void CLHud_Destroy(void);
 0007cc30 int CLIntroCam_Restart(void);
 0007cc70 float CLIntroCam_GetTime(void);
