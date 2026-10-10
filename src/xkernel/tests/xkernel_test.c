@@ -397,7 +397,7 @@ static void *const every_replacement[] =
 	WaitForSingleObject, Sleep, DbgBreakPoint, KeQuerySystemTime, wsprintfA, XGetLanguage,
 	XGetVideoStandard, XGetVideoFlags, XGetGameRegion, GlobalMemoryStatus, GetDiskFreeSpaceExA,
 	XMountUtilityDrive, lstrcpyA, lstrcpynA, lstrlenA, OutputDebugStringA, CloseHandle, QueueUserAPC,
-	CreateThread, XLoadSection, XFreeSection,
+	CreateThread, XLoadSection, XFreeSection, WaitForSingleObjectEx,
 	/* libc */
 	sprintf, atol, atoi, strtok, strstr, swprintf, qsort, _snwprintf, atexit, pow, sscanf, memmove,
 	fread, fclose, ftell, fseek, fopen, fwrite, strchr, _strlwr, vsprintf, _snprintf, _stricmp, acos,
@@ -406,7 +406,7 @@ static void *const every_replacement[] =
 	GetTickCount, GetLocalTime, QueryPerformanceCounter, QueryPerformanceFrequency, SetEndOfFile,
 	SetFilePointer, GetFileInformationByHandle, ReadFileEx, WriteFileEx, GetFileSize, CreateFileA,
 	FindFirstFileA, FindNextFileA, MoveFileA, DeleteFileA, XFindNextSoundtrack, XFindFirstSoundtrack,
-	XGetSoundtrackSongInfo, XOpenSoundtrackSong, XFindClose, _strnicmp, _itoa,
+	XGetSoundtrackSongInfo, XOpenSoundtrackSong, XFindClose, _strnicmp, _itoa, _isnan,
 	/* kernel exports named in the module scope */
 	MmAllocateContiguousMemory, MmAllocateContiguousMemoryEx, MmFreeContiguousMemory, SetEvent,
 };

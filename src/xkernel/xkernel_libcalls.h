@@ -2,12 +2,14 @@
 XKERNEL_LIBCALLS.H
 
 openfrenzy (xkernel module). The XBE's LIB:xapi and LIB:libc functions that game
-and engine code calls (docs/LIBRARY_CALLS.md: 27 xapi + 75 libc), each with its
+and engine code calls (docs/LIBRARY_CALLS.md: 27 xapi + 75 libc; 2 more below), each with its
 replacement. The 466 functions of these two regions are not decompiled: the
 game calls the replacement by its C or XDK name.
 
 Identified by reading export/funcs/<addr>.c, the x86 code (llvm-mc) and the
-call sites; "(Ghidra)" marks a name Ghidra/FID already gave. Where the
+call sites; two more come from a byte scan of the game code for calls into
+these regions (docs/LIBRARY_CALLS.md misses them: their callers are not
+Ghidra functions). "(Ghidra)" marks a name Ghidra/FID already gave. Where the
 original was a register-argument x87 intrinsic (_CIpow, _CIsin, ...), Ghidra
 shows a call without arguments: the operands are the values Ghidra shows on
 the x87 stack before the call (ST0 is the last one loaded).
@@ -21,6 +23,7 @@ the x87 stack before the call (ST0 is the last one loaded).
 | 0x00030797 | ResetEvent                      | (Ghidra) |
 | 0x000307b5 | CreateMutexA                    | (Ghidra) |
 | 0x0003080d | ReleaseMutex                    | |
+| 0x0003082d | WaitForSingleObjectEx           | not in LIBRARY_CALLS: called (alertable, INFINITE) by the loader thread 0x0004cbe0 |
 | 0x00030943 | WaitForSingleObject             | WaitForSingleObjectEx(h, ms, FALSE) |
 | 0x0003096f | Sleep                           | SleepEx(ms, FALSE) |
 | 0x0003097d | DbgBreakPoint                   | (Ghidra); the port logs and continues |
@@ -92,6 +95,7 @@ the x87 stack before the call (ST0 is the last one loaded).
 | 0x001e105c | sin(x)                          | _CIsin: x = ST0 |
 | 0x001e10f8 | atan2(y, x)                     | cdecl, two doubles (table "atan2" 0x002b7c8c) |
 | 0x001e1120 | cos(x)                          | _CIcos: x = ST0 |
+| 0x001e1276 | _isnan                          | (Ghidra) not in LIBRARY_CALLS: called 3x from 0x00134040 (foxhunt) |
 | 0x001e133e | rand                            | (Ghidra) MSVC generator in xbox_crt.c |
 | 0x001e87e0 | XPhysicalAlloc                  | MmAllocateContiguousMemoryEx wrapper |
 | 0x001e8823 | XPhysicalProtect                | MmSetAddressProtect when size != 0 |
@@ -132,12 +136,14 @@ FID_conflict names are not (write the C expression from the table instead).
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <wchar.h>
 #include <xtl.h>
 #include "xkernel.h"
 
 /* xapi */
 #define FUN_0003080d ReleaseMutex
+#define FUN_0003082d WaitForSingleObjectEx
 #define FUN_00030943 WaitForSingleObject
 #define FUN_0003096f Sleep
 #define FUN_0003099f wsprintfA
@@ -211,5 +217,6 @@ FID_conflict names are not (write the C expression from the table instead).
 #define _malloc malloc
 #define _strrchr strrchr
 #define _rand rand
+#define __isnan _isnan
 
 #endif
