@@ -117,7 +117,7 @@
 000d1a80 void CFire_Smoke_Draw(struct CFire_Smoke *self);
 000d1b10 void CFire_Smoke_Add(struct CFire_Smoke *self, float *pos, float size, float life, float spread);
 000d1dd0 void CFire_Smoke_Free(struct CFire_Smoke *self);
-000d1e10 void CFire_Timer_ctor(struct CFire_Timer *self);
+000d1e10 struct CFire_Timer *CFire_Timer_ctor(struct CFire_Timer *self);
 000d1e50 void CFire_Timer_dtor(struct CFire_Timer *self);
 000d1e60 int CFire_Timer_Init(struct CFire_Timer *self);
 000d1eb0 void CFire_Timer_Frame(struct CFire_Timer *self);

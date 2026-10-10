@@ -33,6 +33,7 @@ Conventions (docs/ARCHITECTURE.md):
 #include <string.h>
 #include <math.h>
 #include "xtl.h"
+#include "d3d8_extra.h"   /* src/d3d8: D3DDevice_InsertFence */
 
 /* ---------- raw field access at original offsets */
 
@@ -84,6 +85,9 @@ static inline int cb_rand(void)
 	return (int)((DAT_00285630 >> 16) & 0x7fff);
 }
 
+/* the kernel debug break (xkernel: the port logs it and continues) */
+void DbgBreakPoint(void);
+
 /* ---------- Babel engine helpers (bkernel) */
 
 #define CB_NEW(size, line) bkHeapAlloc((size), CB_FILE, (line), 0x1001)
@@ -104,11 +108,16 @@ extern unsigned char DAT_00290718[];
 extern unsigned char DAT_00290719[];
 extern unsigned char DAT_0029071a[];
 extern char DAT_002855f0[];         /* the identity matrix (float[16]) */
+extern float DAT_002be330[16];      /* the camera rotation (bdisplay) */
 extern unsigned int DAT_002bc490[]; /* colour channel tables: red, green, blue, alpha */
 extern unsigned int DAT_002bd640[];
 extern unsigned int DAT_002bc898[];
 extern unsigned int DAT_002bce18[];
-extern unsigned int DAT_002bca94;
+/* single entries of those tables used as constants:
+   DAT_002bca94 = DAT_002bc898[127], DAT_002bc590 = DAT_002bc490[64],
+   DAT_002bcf18 = DAT_002bce18[64], DAT_002bcc94 = DAT_002bc898[255],
+   DAT_002bd840 = DAT_002bd640[128], DAT_002bc690 = DAT_002bc490[128],
+   DAT_002bd018 = DAT_002bce18[128] */
 /* the arena bounds of charlib: x0, z0, width, depth */
 extern float DAT_00292c60;
 extern float DAT_00292c64;
@@ -127,6 +136,16 @@ extern int DAT_002f6d60;            /* debug drawing of the launch rack */
 extern int *DAT_002f7960;           /* set to 1 while the rack has rockets to launch */
 extern int DAT_00293b44;            /* rockets in flight (carryon_a) */
 /* launch rack tweakables (0x00294390-0x00294398) */
+extern int DAT_00294108;            /* tweak "V3:Parts/Firework" 3 */
+extern int DAT_0029410c;            /* tweak "V3:Part Types" 3 */
+extern int DAT_00294110;            /* tweak "V3:Non-Random Ponk" 1 */
+extern int DAT_00294114;            /* tweak "Fireworks" 1 (draw them) */
+extern int DAT_00294118;            /* tweak "Detail" 2 */
+extern float DAT_00294120;          /* tweak "V1:Probability" 0.06 */
+extern int DAT_00294124;            /* the most rockets in the arena 10 */
+extern int DAT_00294128[];          /* the most rockets of each type (carryon_a's tweaks
+                                       0x00294128-0x00294138 in one block) */
+extern int DAT_002943b4;            /* tweak "V1:Count" 15: rockets in use */
 extern int DAT_00294390;            /* slots 20 */
 extern float DAT_00294394;          /* fill time 600.0 */
 extern float DAT_00294398;          /* time between launches 7.5 */

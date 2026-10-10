@@ -65,7 +65,7 @@ void CFire_V2Glitter_Draw(struct CFire_V2Glitter *self)
 	for (bit = self->used; bit != NULL; bit = bit->next)
 		CB_CALL(FUN_0007f3d0, void (*)(void *, float *, unsigned int))(self->points, bit->pos,
 			DAT_002bd640[bit->rgb[2]] | DAT_002bc490[bit->rgb[1]] | DAT_002bce18[bit->rgb[0]] |
-			DAT_002bca94);
+			DAT_002bc898[127]);   /* DAT_002bca94 */
 	CFire_PointSprites_Flush(self->points);
 }
 
