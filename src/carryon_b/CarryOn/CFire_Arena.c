@@ -159,8 +159,8 @@ void CFire_Pad_Launch(struct CFire_Pad *self)
 	int j;
 
 	baGetNodePosition(self->actor, self->top, pos);
-	vel[0] = (float)cb_rand() * 0.000305185f - 5.0f;   /* 0x00265808, 0x002536c4 */
-	vel[2] = (float)cb_rand() * 0.000305185f - 5.0f;
+	vel[0] = (float)cb_rand() * 0.000305185094f - 5.0f;   /* 0x00265808, 0x002536c4 */
+	vel[2] = (float)cb_rand() * 0.000305185094f - 5.0f;
 	vel[1] = 34.0f;
 	vel[3] = 0.0f;    /* not set by the original */
 	most = 1;
@@ -387,13 +387,13 @@ void CFire_Spawner_Update(struct CFire_Spawner *self, struct CFire_Rocket *rocke
 	slot = (unsigned int)cb_rand() & 7;
 	if (self->slots[slot] != NULL)
 		return;
-	angle = ((float)slot - 3.5f) * 0.19635f;           /* 0x00268a24, 0x00268a20 */
+	angle = ((float)slot - 3.5f) * 0.196349531f;           /* 0x00268a24, 0x00268a20 */
 	if (self->dir == 0)
-		angle = angle + 2.35619f;                       /* 0x002657fc */
+		angle = angle + 2.3561945f;                       /* 0x002657fc */
 	else if (self->dir == 1)
-		angle = angle - 2.35619f;
+		angle = angle - 2.3561945f;
 	else
-		angle = angle - 3.14159f;                       /* 0x00256750 */
+		angle = angle - 3.1415925f;                       /* 0x00256750 */
 	memset(counts, 0, sizeof counts);
 	for (rocket = rockets; rocket != NULL; rocket = rocket->next)
 		if (1 < rocket->state && rocket->state < 7)

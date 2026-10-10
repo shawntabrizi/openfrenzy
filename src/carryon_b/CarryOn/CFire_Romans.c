@@ -165,9 +165,9 @@ void CFire_Romans_Update(struct CFire_Romans *self, float dt, struct CFire_Glitt
 					roman->fallPos[2] = roman->pos[2];
 					roman->fallPos[3] = roman->pos[3];
 					roman->fallVel = 0.0f;
-					roman->fade = roman->brightness * -0.0333333f;     /* 0x00268d28 */
+					roman->fade = roman->brightness * -0.0333333351f;     /* 0x00268d28 */
 				}
-				n = (int)(sin((double)roman->timer * 0.0698132f) * 3.5f + 0.75f);  /* 0x00268d24, 0x00268a24, 0x00253844 */
+				n = (int)(sin((double)roman->timer * 0.0698131695f) * 3.5f + 0.75f);  /* 0x00268d24, 0x00268a24, 0x00253844 */
 				for (; n > 0; n--)
 					CFire_Glitter_Emit(glitter, roman->pos, 0.2f, 20.0f, 1.5f);
 			}
@@ -186,7 +186,7 @@ void CFire_Romans_Update(struct CFire_Romans *self, float dt, struct CFire_Glitt
 			light = roman->light;
 			if (DAT_00294bd4 < light->angle)
 			{
-				angle = light->angle - dt * 0.00628318f;    /* 0x00268d30 */
+				angle = light->angle - dt * 0.00628318498f;    /* 0x00268d30 */
 				if (angle < DAT_00294bd4)
 					angle = DAT_00294bd4;
 				CFire_Lights_SetAngle(DAT_002f7988, light, angle);

@@ -213,9 +213,9 @@ void CFire_Fireworks_BurstStars(struct CFire_Fireworks *self, float *pos, float 
 
 	for (n = 0x190; n != 0; n--)
 	{
-		dir[0] = (float)cb_rand() * 0.000305185f - 5.0f;    /* 0x00265808 */
-		dir[1] = (float)cb_rand() * 0.000305185f - 5.0f;
-		dir[2] = (float)cb_rand() * 0.000305185f - 5.0f;
+		dir[0] = (float)cb_rand() * 0.000305185094f - 5.0f;    /* 0x00265808 */
+		dir[1] = (float)cb_rand() * 0.000305185094f - 5.0f;
+		dir[2] = (float)cb_rand() * 0.000305185094f - 5.0f;
 		bmVectorSetLength(v, dir, 14.0f);
 		v[0] = v[0] + vel[0];
 		v[1] = v[1] + vel[1];
@@ -235,7 +235,7 @@ void CFire_Fireworks_BurstRing(struct CFire_Fireworks *self, float *pos, float *
 	float half;
 	int n;
 
-	dim = 1.0f / ((float)count * 0.00111111f + 1.0f);  /* 0x00268a94 */
+	dim = 1.0f / ((float)count * 0.00111111114f + 1.0f);  /* 0x00268a94 */
 	if (count <= 0)
 		return;
 	half = speed * 0.5f;
@@ -720,11 +720,11 @@ void CFire_Fireworks_Split(struct CFire_Fireworks *self, struct CFire_Shell *she
 
 	for (n = DAT_00294808[shell->types[2]]; n > 0; n--)
 	{
-		vel[0] = (float)cb_rand() * 0.00061037f - 10.0f;    /* 0x002537d4 */
-		vel[1] = (float)cb_rand() * 0.00061037f - 10.0f;
+		vel[0] = (float)cb_rand() * 0.000610370189f - 10.0f;    /* 0x002537d4 */
+		vel[1] = (float)cb_rand() * 0.000610370189f - 10.0f;
 		if (vel[1] < 0.0f)
 			vel[1] = vel[1] * 0.5f;
-		vel[2] = (float)cb_rand() * 0.00061037f - 10.0f;
+		vel[2] = (float)cb_rand() * 0.000610370189f - 10.0f;
 		vel[3] = 0.0f;    /* not set by the original */
 		t0 = shell->types[0];
 		if (1 < shell->types[0])
@@ -864,9 +864,9 @@ void CFire_Fireworks_UpdateShells(struct CFire_Fireworks *self)
 				CFire_Glitter_Emit(self->glitter, shell->pos, 0.2f, 30.0f, 4.0f);
 			break;
 		case 6:
-			dir[0] = (float)cb_rand() * 0.000152593f - 2.5f;   /* 0x00266454 */
-			dir[1] = (float)cb_rand() * 0.000152593f - 2.5f;
-			dir[2] = (float)cb_rand() * 0.000152593f - 2.5f;
+			dir[0] = (float)cb_rand() * 0.000152592547f - 2.5f;   /* 0x00266454 */
+			dir[1] = (float)cb_rand() * 0.000152592547f - 2.5f;
+			dir[2] = (float)cb_rand() * 0.000152592547f - 2.5f;
 			CFire_FWorkStars_Add(self->stars2, shell->pos, dir, -0.15f, 20.0f, shell->colour[0],
 				shell->colour[1], shell->colour[2], 0.01f);
 			CFire_Glitter_Emit(self->glitter, shell->pos, 0.2f, 30.0f, 1.5f);

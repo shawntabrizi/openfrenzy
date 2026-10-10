@@ -326,7 +326,7 @@ void CFire_Lights_Update(struct CFire_Lights *self, float dt)
 		self->flashTime[i] = t;
 		if (0.0f <= t)
 		{
-			cb_light_set_range(self->flash[i], 0.001f - t * 5e-06f); /* 0x0025767c, 0x00268b1c */
+			cb_light_set_range(self->flash[i], 0.001f - t * 5.00000033e-06f); /* 0x0025767c, 0x00268b1c */
 		}
 		else
 		{

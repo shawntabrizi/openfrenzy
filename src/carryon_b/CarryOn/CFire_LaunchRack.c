@@ -173,9 +173,9 @@ void CFire_LaunchRack_SlotLaunch(struct CFire_LaunchRack *self, int slot, float 
 	if (vel != NULL)
 	{
 		vel[0] = (pos[0] / self->halfWidth) * 15.0f;    /* 0x002553a0 */
-		vel[1] = (float)cb_rand() * 0.000183111f + 20.0f;   /* 0x00266d88, 0x00255530 */
+		vel[1] = (float)cb_rand() * 0.000183111057f + 20.0f;   /* 0x00266d88, 0x00255530 */
 		vel[3] = 1.0f;
-		vel[2] = (float)cb_rand() * 0.00061037f + 4.0f;     /* 0x002537d4, 0x00257c40 */
+		vel[2] = (float)cb_rand() * 0.000610370189f + 4.0f;     /* 0x002537d4, 0x00257c40 */
 		bmTransformVector4InPlace(m, vel);
 	}
 	m[12] = self->pos[0];

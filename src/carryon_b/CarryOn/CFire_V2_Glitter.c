@@ -96,7 +96,7 @@ void CFire_V2Glitter_InitLights(struct CFire_V2Glitter *self)
 
 	for (i = 0; i < 4; i++)
 	{
-		light = CFire_Lights_AddSpotDefault(DAT_002f7988, 2, 0.785398f, 0x7f, 0x7f, 0x7f,
+		light = CFire_Lights_AddSpotDefault(DAT_002f7988, 2, 0.785398126f, 0x7f, 0x7f, 0x7f,
 			0.0005f, 0);
 		self->beamLights[i] = light;
 		CFire_Lights_SetFlags(DAT_002f7988, light, 2, 0);
@@ -178,12 +178,12 @@ void CFire_V2Glitter_UpdateLights(struct CFire_V2Glitter *self, float dt)
 	}
 	f = dt * 0.1f + self->spin;                         /* 0x002536cc */
 	self->spin = f;
-	if (6.28319f < f)                                   /* 0x00262300 */
+	if (6.28318501f < f)                                   /* 0x00262300 */
 	{
 		f = self->spin;
 		do
-			f = f - 6.28319f;
-		while (6.28319f < f);
+			f = f - 6.28318501f;
+		while (6.28318501f < f);
 		self->spin = f;
 	}
 	s = (float)sin(self->spin);
@@ -302,8 +302,8 @@ int CFire_V2Glitter_LaunchRoman(struct CFire_V2Glitter *self)
 		vel[0] = 0.0f;
 		break;
 	}
-	vel[1] = (float)cb_rand() * 9.15555e-05f + 13.0f;  /* 0x002687e4, 0x002668e8 */
-	fuse = (float)cb_rand() * 0.00305185f + 100.0f;     /* 0x00253784, 0x00255544 */
+	vel[1] = (float)cb_rand() * 9.15555283e-05f + 13.0f;  /* 0x002687e4, 0x002668e8 */
+	fuse = (float)cb_rand() * 0.00305185094f + 100.0f;     /* 0x00253784, 0x00255544 */
 	vel[3] = 1.0f;
 	/* the flight steps: the fuse - 45, or the steps to the top of the arc (y speed x 6.67) */
 	steps = fuse - 45.0f;                               /* 0x00257c30 */
@@ -654,8 +654,8 @@ void CFire_V2Glitter_Update(struct CFire_V2Glitter *self, float dt)
 				bit->rgb[2] = DAT_0029071a[character * 0x60];
 				do
 				{
-					bit->pos[0] = (float)cb_rand() * 0.00549333f - 90.0f;   /* 0x00268900, 0x00255180 */
-					bit->pos[2] = (float)cb_rand() * 0.00549333f - 90.0f;
+					bit->pos[0] = (float)cb_rand() * 0.0054933317f - 90.0f;   /* 0x00268900, 0x00255180 */
+					bit->pos[2] = (float)cb_rand() * 0.0054933317f - 90.0f;
 				} while (8100.0f < bit->pos[2] * bit->pos[2] + bit->pos[0] * bit->pos[0]);
 				bit->pos[1] = DAT_002943d0[1];
 				bit->pos[0] = DAT_002943d0[0] + bit->pos[0];
