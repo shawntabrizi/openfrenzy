@@ -2,6 +2,7 @@
 
 This document is the contract for the native port. Every agent and contributor follows it.
 If you must deviate, write the reason here first (and tell the architect).
+Before integration work, read docs/INTEGRATION_NOTES.md (cross-module problems found by module agents).
 
 Companion documents:
 
