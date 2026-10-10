@@ -141,3 +141,34 @@
 00197bd0 void CRollerBallCutter_BuildScorch(void *self, float dt);
 00197f40 void CRollerBallCutter_Start(void *self);
 00197fa0 int CRollerBallCutter_Update(void *self, float dt);
+
+# the race path record (file unknown: RollerBall/unplaced_path.c)
+001980f0 void *CRollerBallPath_Ctor(void *self);
+00198130 void CRollerBallPath_SetPoints(void *self, float *points, int count);
+001981e0 unsigned int CRollerBallPath_Contains(void *self, float *pos);
+00198340 float CRollerBallPath_SideOfLine(float *a, float *line);
+00198370 void *CRollerBallPath_DeletingDtor(void *self, unsigned int flags);
+001983a0 int CRollerBallPath_Collide(void *self, float *pos, float radius, float *out);
+
+# CGameMode_RollerBall (file unknown: RollerBall/unplaced_gamemode.c)
+00198600 void *CGameModeRollerBall_Ctor(void *self);
+00198620 void CGameModeRollerBall_Dtor(void *self);
+00198630 void CGameModeRollerBall_Enter(void *self);
+00198650 void CGameModeRollerBall_Exit(void *self);
+00198660 void CGameModeRollerBall_Initialise(void *self);
+00198670 void CGameModeRollerBall_Start(void *self);
+00198680 void CGameModeRollerBall_Nothing(void *self);
+00198690 void CGameModeRollerBall_Update(void *self, int top);
+001986a0 void CGameModeRollerBall_Process(void *self, int top);
+001986b0 void CGameModeRollerBall_Draw(void *self, int top);
+001986c0 void *CGameModeRollerBall_DeletingDtor(void *self, unsigned int flags);
+
+# RollerBall/CRollerball_ASEImport.cpp (0x001989c0 keeps its table prototype: other modules call it)
+001986e0 void CRollerBallAseShape_Ctor(void *self);
+00198700 void CRollerBallAseShape_Dtor(void *self);
+00198710 void *CRollerBallAseShape_DeletingDtor(void *self, unsigned int flags);
+00198730 void CRollerBallAseShape_Read(void *self, void *reader);
+00198840 void CRollerBallAseShape_ReadNamed(void *self, void *reader, const char *name);
+001989a0 void CRollerBallAseReader_Ctor(void *self);
+001989b0 void CRollerBallAseReader_Dtor(void *self);
+001989e0 void *CRollerBallAseReader_DeletingDtor(void *self, unsigned int flags);

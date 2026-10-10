@@ -21,4 +21,7 @@ int FUN_00195400(int node, void *self);
 int FUN_00195930(int node, void *self);
 int FUN_001965a0(int node, void *self);
 
+/* the race path record's destructor (rollerball_a calls it) */
+void FUN_00198110(void *self);
+
 #endif
