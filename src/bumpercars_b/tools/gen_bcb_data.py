@@ -16,6 +16,9 @@ OUT = os.path.join(ROOT, "src", "bumpercars_b", "BumperCars", "bcb_data.c")
 
 def main():
     names = {START}  # DAT_002ed458: the CBCar_Game object (bumpercars_a), start of the block
+    # objects the code passes in ECX (mov ecx, imm32), which Ghidra's C does not name
+    names |= {0x002ed470, 0x002ed4b4, 0x002efa98, 0x002efba8, 0x002f0768, 0x002f0778, 0x002f0a5c,
+              0x002f1380, 0x002f1fa8}
     rx = re.compile(r"\bDAT_([0-9a-f]{8})\b")
     funcs = os.path.join(ROOT, "export", "funcs")
     for name in os.listdir(funcs):

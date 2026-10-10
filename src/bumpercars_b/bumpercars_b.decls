@@ -17,3 +17,76 @@
 00096620 float BCarTimer_GetAverageFrame(struct BCarTimer *self);
 00096630 void BCarTimer_Restart(struct BCarTimer *self);
 00096670 unsigned long long BCarTimer_GetUpdates(struct BCarTimer *self);
+
+# BumperCars/CBCar_Player.c
+00096680 void BCarPlayers_StartEngineSounds(void);
+000966b0 void BCarPlayer_Clear(struct BCarPlayer *self);
+000967b0 void BCarPlayer_CreateInput(int index);
+00096b00 void BCarPlayer_DeleteInput(int index);
+00096bd0 void BCarPlayers_CreateInputs(void);
+00096c30 float BCarPlayer_GetMaxSpeed(struct BCarPlayer *self);
+00096cb0 void BCarPlayers_ShutdownInput(void);
+00096d00 void BCarPlayers_ResetInput(void);
+00096d90 void BCarPlayers_LoadInformation(struct BCarTextReader *reader);
+00097b20 void BCarPlayer_StopBrake(struct BCarPlayer *self);
+00097c10 void BCarPlayer_Brake(struct BCarPlayer *self);
+00098030 void BCarPlayer_Boost(struct BCarPlayer *self);
+000981c0 void BCarPlayer_DriveToGoal(struct BCarPlayer *self);
+000982f0 void BCarPlayers_Update(float dt, int control);
+000991f0 void BCarPlayers_UpdateLead(int speak);
+000994b0 void BCarPlayers_DrawLead(int shadow);
+00099710 void BCarPlayers_Draw(int shadow);
+00099fc0 void BCarPlayers_CreateOverlays(void);
+0009a170 int BCarPlayers_Init(struct bkPackage *package, const char *name);
+0009abb0 void BCarPlayers_Shutdown(void);
+
+# BumperCars/CBCar_Entity.c
+0009ad60 void BCarEntity_Turn(struct BCarEntity *self, float delta);
+0009adc0 void BCarEntity_SetHeading(struct BCarEntity *self, float heading);
+0009ae30 void BCarEntity_SetType(struct BCarEntity *self, int type);
+0009aee0 void BCarEntity_AddScore(struct BCarEntity *self, int points);
+0009af70 struct BCarEntity *BCarEntity_Create(struct BActor *actor, struct BActor *extraActor, float scale, struct BCarEntityParams *params);
+0009b4c0 void BCarEntity_Thrust(struct BCarEntity *self, float amount, int force);
+0009b930 void BCarEntity_Respawn(struct BCarEntity *self);
+
+# BumperCars/CBCar_World.c
+0009e5a0 float BCarWorld_GetMaxSpeed(void);
+0009e5c0 float BCarWorld_GetBoostValue(void);
+0009e5e0 float BCarWorld_GetEntitySpeed(void);
+0009e600 float BCarWorld_GetRestitution(void);
+0009f6d0 float BCarWorld_GetGroundHeight(float *pos, float radius, float *normal);
+
+# BumperCars/CBCar_Puck.c, CBCar_Powerup.c, CBCar_Keepsake.c
+000a0cc0 int BCarPucks_Init(void);
+000a0db0 void BCarPuck_Load(struct BCarTextReader *reader);
+000a16c0 void BCarPowerup_Load(struct BCarTextReader *reader);
+000a1f40 int BCarPowerups_Init(void);
+000a24f0 void BCarKeepsake_Load(struct BCarTextReader *reader);
+000a2af0 int BCarKeepsakes_Init(void);
+
+# BumperCars/bcb_misc.c (gap)
+000a4e00 int BCarText_GetName(char *line, char *out, int size);
+000a50e0 void BCarRender_BeginReflection(int mode);
+000a5150 void BCarRender_EndReflection(void);
+000a5180 int BCarEntity_SameTeam(struct BCarEntity *a, struct BCarEntity *b, int *indexA, int *indexB);
+000a5230 void BCarGame_Rumble(int player, int type, float strength);
+000a5540 float BCarMath_Atan2(float y, float x);
+000a5be0 void BCarTextReader_Construct(struct BCarTextReader *self);
+000a5bf0 void BCarTextReader_Destruct(struct BCarTextReader *self);
+000a5c00 void BCarTextReader_Init(struct BCarTextReader *self, char *buffer, int size, const char *name);
+000a5af0 void BCarMath_TiltToNormal(float *out, float *quat, float *normal);
+
+# BumperCars/CBCar_Track.c
+000a6260 struct BCarTrack *BCarTrack_Construct(struct BCarTrack *self, int maxPoints, float width, float spacing, struct bdTexture *texture, struct bdTexture *texture2);
+000a6310 void BCarTrack_Destruct(struct BCarTrack *self);
+000a6330 void BCarTrack_Update(struct BCarTrack *self, float dt);
+000a6350 void BCarTrack_End(struct BCarTrack *self);
+000a6360 void BCarTrack_AddPoint(struct BCarTrack *self, float *pos, float *normal, float *dir, float alpha);
+000a64c0 void BCarTrack_Draw(struct BCarTrack *self);
+
+# BumperCars/CBCar_Headlight.c
+000a6930 void BCarHeadlight_Destruct(struct BCarHeadlight *self);
+000a6950 void BCarHeadlight_Draw(struct BCarHeadlight *self, float alpha);
+000a6b50 void BCarHeadlight_SetFade(struct BCarHeadlight *self, float fade);
+000a6bc0 struct BCarHeadlight *BCarHeadlight_Construct(struct BCarHeadlight *self, float *pos, float *rot, struct bdTexture *texture, float range, float width, int segments);
+000a6d60 void BCarHeadlight_Update(struct BCarHeadlight *self);

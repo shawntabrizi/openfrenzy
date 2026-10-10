@@ -430,7 +430,7 @@ OF_ASSERT_SIZE(struct BCarItemInfo, 0xec);
 #define g_GainRadius BCB_VAR(float, 0x002efa10)                 /* GAINRADIUS */
 /* 0x002efa14-0x002efa88  points of the score file (int each) */
 #define g_Score(addr) BCB_VAR(int, addr)
-#define g_WorldDrawFlags BCB_VAR(unsigned int, 0x002efa90)      /* 0x50 */
+#define g_ReflectBrightness BCB_VAR(int, 0x002efa90)           /* 0x50 */
 #define g_WorldLoaded BCB_VAR(int, 0x002efa94)
 #define g_BCarVictoryShown BCB_VAR(int, 0x002efaa0)
 #define g_BCarSkyAngle BCB_VAR(float, 0x002efba0)
@@ -484,6 +484,7 @@ extern int DAT_002baeb8;         /* no AI difficulty (demo) */
 extern int DAT_002baebc;         /* team game */
 extern int DAT_002b9c58[];       /* player order (rank table) */
 extern int DAT_002b9c64;
+extern unsigned char DAT_002b9968[]; /* core_modes_b: the score table object */
 extern int DAT_00283e58;         /* turbo cheat: speeds x1.5 */
 extern int DAT_00283ea4;         /* colour set */
 extern int DAT_00283dc0;         /* steering type */
@@ -497,6 +498,9 @@ extern float DAT_002ea478[4];    /* a zero vector */
 extern int DAT_002ecfac;         /* the HUD */
 extern unsigned char DAT_00290718[]; /* player colours, 0x60 bytes per character */
 extern int DAT_00290e8c;         /* colour index of the next debris */
+
+/* XDK (HLE) */
+void DbgBreakPoint(void);
 
 /* the debris type "RESPAWNCHAR" (bumpercars_a data, 0x00291734) */
 extern unsigned char DAT_00291734[];
