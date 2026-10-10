@@ -168,6 +168,13 @@ integration round 2 (921ec75); see below.
   with no fault, except ScratchMatch 2 and 3: the round ends at once ("Creating WinnerText"),
   then assertions at CScratchmatch_Game.cpp(815) and (384), then a fault in bFixupNodeDefs <-
   baLoadActor <- SMPlayer_InitAll <- SMGame_Restart.
+  Correction (fix-scratchmatch-v2v3): the round does not end at once. It plays its full length
+  (variations 1 and 2: 68 s after PLAYING, 72 s game length less the 4 s end margin; variation 3:
+  63 s or one survivor); the log has no time stamps. All three variations then fault: a direct
+  launch keeps start state 2 (g_StartState, Core_InitGameState), and the outro then calls the
+  debug restart SMGame_Restart ("Don't do this"), which loads the actors and sets a second time
+  from the packages in memory (fixed up twice). The original does the same. The port now ends
+  the mode there (SMGame_UpdateOutro); the stack returns to Root.
 - Rendering seen in frame dumps: glow sprites draw as solid white/coloured squares in TankedUp
   and Special Delivery (Fireworks). Everything else looked right.
 

@@ -320,6 +320,28 @@ static void test_texts(void)
 	sm_GameVariation = 1;
 }
 
+/* the end of the outro. With start state 2 (a game started from the command line) the
+original restarts the round through SMGame_Restart, which reloads the actors from the packages
+in memory and faults (they are fixed up twice). The port ends the mode, as in a party. */
+static void test_outro_end(void)
+{
+	int mode;
+
+	SMTimer_InitAll();
+	for (mode = 0; mode <= 2; mode++) {
+		DAT_002bae98 = mode;
+		sm_State = 3;
+		sm_FadeState = 2;
+		sm_Finished = 0;
+		SMGame_UpdateOutro();
+		CHECK(sm_Finished == 1, "the outro ends the mode after the fade");
+		CHECK(sm_State == 3, "the outro does not restart the round (SMGame_Restart sets state 0)");
+	}
+	sm_FadeState = 0;
+	sm_Finished = 0;
+	DAT_002bae98 = 0;
+}
+
 int main(void)
 {
 	test_tables();
@@ -331,6 +353,7 @@ int main(void)
 	test_bonus_pattern();
 	test_light_colours();
 	test_texts();
+	test_outro_end();
 	fprintf(stderr, "scratchmatch tests: %d checks, %d failed\n", checks, failures);
 	return failures != 0;
 }

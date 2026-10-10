@@ -526,7 +526,14 @@ void SMGame_UpdateOutro(void)
 		CLHud_DeleteWinnerText(SM_HUD);
 		if (DAT_002bae98 == 2) {
 			SM_ASSERT_FAIL("CScratchmatch_Game.cpp", 0x32f, "ASSERTION FAILURE: FALSE");
-			SMGame_Restart();
+			/* port: the original calls SMGame_Restart here (start state 2: a game started
+			from the command line, OPENFRENZY_GAME, loops its round). That debug path is
+			broken in the original too ("Don't do this"): SMPlayer_InitAll and SMRender_Init
+			load the actors and sets a second time from the packages in memory, so
+			bFixupNodeDefs adds the base to pointers that are already fixed up, and
+			bkAddResource links the resources twice (fault in bFixupNodeDefs <- baLoadActor).
+			The port ends the mode instead, as after a board round. */
+			sm_Finished = 1;
 			return;
 		}
 		sm_Finished = 1;
