@@ -362,7 +362,7 @@ struct CBCar_Game *CBCar_Game_Ctor(struct CBCar_Game *self)
 	FUN_000919e0(self->goal);
 	FUN_00091ef0(self->sound);
 	FUN_000924e0(self->light);
-	FUN_00094360(self->unknown3f28);
+	FUN_00094360(self->flames);
 	BCA_FN(FUN_00096320, void, (void *))(self->timer);
 	CLList_Init(self->list);
 	self->mode = NULL;
@@ -611,7 +611,7 @@ void CBCar_Game_EndRound(struct CBCar_Game *self)
 	Timer_Reset(self->timer);
 	BCG(0x4b44, int) = 4; /* DAT_002f1f9c: state = 4 (the round is over) */
 	BCA_I32(self, 0x254c) = 1;
-	FUN_00094950(self->unknown3f28, 0);
+	FUN_00094950(self->flames, 0);
 	for (i = 0; i < 4; i++) {
 		player = self->players[i];
 		car = *(void **)(player + 0x138);

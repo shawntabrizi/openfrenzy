@@ -91,7 +91,7 @@ OF_ASSERT_SIZE(struct CBCarAI, 0x128);
 	BCA_FN(FUN_000a2950, float, (float *, float *, float *, float *))((from), (delta), (hit), (normal))
 /* this module: the goal (game + 0x3310) and the flames (game + 0x3f28) */
 #define GOAL (g_BCarGame->goal)
-#define FLAMES (g_BCarGame->unknown3f28)
+#define FLAMES (g_BCarGame->flames)
 
 static float car_speed(unsigned char *car)
 {

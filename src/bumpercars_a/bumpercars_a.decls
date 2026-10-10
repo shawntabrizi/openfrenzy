@@ -42,27 +42,6 @@
 # code uses: ECX `this` first); each is checked when its function is written
 00082860 struct Settings *Settings_Init(struct Settings *self);
 00082870 char *Settings_Get(struct Settings *self, const char *key);
-000919e0 void *FUN_000919e0(void *self);
-000919f0 void FUN_000919f0(void *self);
-00091b30 void FUN_00091b30(void *self);
-00091d70 void FUN_00091d70(void *self);
-00091db0 void FUN_00091db0(void *self, int playing);
-00091e30 int FUN_00091e30(void *self, struct bkPackage *package, char *file);
-00091ef0 void *FUN_00091ef0(void *self);
-00091fd0 int FUN_00091fd0(void *self);
-000920b0 void FUN_000920b0(void *self);
-00092120 int FUN_00092120(void *self, int sample, int volume, int a4, int a5);
-00092340 void FUN_00092340(void *self, float dt);
-000923d0 void FUN_000923d0(void *self);
-000924e0 void *FUN_000924e0(void *self);
-000924f0 void FUN_000924f0(void *self);
-00092680 void FUN_00092680(void *self, byte view);
-00092740 void FUN_00092740(void *self, float *pos);
-000927f0 void FUN_000927f0(void *self);
-00092a70 void FUN_00092a70(void *self, int playing, float dt);
-00094240 int FUN_00094240(void *self, struct bkPackage *package, char *file);
-00094360 void *FUN_00094360(void *self);
-00094950 void FUN_00094950(void *self, int a2);
 
 # ---- BumperCars/CModule_BumperCars.c
 000828d0 unsigned int *CModule_BumperCars_Ctor(unsigned int *self);
@@ -116,10 +95,6 @@
 0008bdd0 void CBCarAI_Update(struct CBCarAI *self, int param);
 
 # ---- not written yet, called by the AI (this-first shapes)
-00091a00 void *FUN_00091a00(void *self, float *pos);
-00091aa0 float FUN_00091aa0(void *self, float *pos);
-00095150 int FUN_00095150(void *self, float *ray, float radius, float *heading);
-000951f0 int FUN_000951f0(void *self, float *pos, float radius, float *delta);
 
 # ---- BumperCars/CBCar_Debug.c
 0008bf50 void *CBCar_Debug_Ctor(struct CBCar_Debug *self);
@@ -182,4 +157,62 @@
 00091650 void CBCar_Camera_ApplyMirrored(struct CBCar_Camera *self);
 0009175a void CBCar_Camera_CarViewMirrored(struct CBCar_Camera *self, int view, float back, float up);
 0009194d int CBCar_Camera_ViewsOn(struct CBCar_Camera *self, int *view);
-000927a0 void FUN_000927a0(void *self, float *pos);
+
+# ---- BumperCars/CBCar_Goal.c (CBCar_Game + 0x3310)
+000919e0 void *CBCar_Goal_Ctor(struct CBCar_Goal *self);
+000919f0 void CBCar_Goal_Dtor(struct CBCar_Goal *self);
+00091a00 struct BCarGoalArea *CBCar_Goal_Find(struct CBCar_Goal *self, float *pos);
+00091aa0 float CBCar_Goal_Distance(struct CBCar_Goal *self, float *pos);
+00091b30 void CBCar_Goal_Pause(struct CBCar_Goal *self);
+00091b40 struct CBCar_Goal *CBCar_Goal_Destroy(struct CBCar_Goal *self, byte flags);
+00091b60 void CBCar_Goal_LoadGoals(struct CBCar_Goal *self, struct BCarTextReader *reader);
+00091d70 void CBCar_Goal_Shutdown(struct CBCar_Goal *self);
+00091db0 void CBCar_Goal_Update(struct CBCar_Goal *self, int playing);
+00091e30 int CBCar_Goal_Initialise(struct CBCar_Goal *self, struct bkPackage *package, char *file);
+
+# ---- BumperCars/CBCar_Sound.c (CBCar_Game + 0x3320)
+00091ef0 void *CBCar_Sound_Ctor(struct CBCar_Sound *self);
+00091fd0 int CBCar_Sound_Initialise(struct CBCar_Sound *self);
+000920b0 void CBCar_Sound_Shutdown(struct CBCar_Sound *self);
+00092120 int CBCar_Sound_Play(struct CBCar_Sound *self, int index, int volume, int pitch, int channel);
+00092290 int CBCar_Sound_ChannelDone(int channel);
+000922b0 void CBCar_Sound_PauseAll(void);
+000922c0 void CBCar_Sound_ResumeAll(void);
+000922d0 void CBCar_Sound_SetPitch(struct CBCar_Sound *self, int channel, int index, int pitch);
+00092310 void CBCar_Sound_Commentary(int kind, int choice, int volume);
+00092340 void CBCar_Sound_Update(struct CBCar_Sound *self, float dt);
+000923d0 void CBCar_Sound_StopAll(struct CBCar_Sound *self);
+00092450 void CBCar_Sound_QueueVoice(struct CBCar_Sound *self, int player, int kind, int volume, float *pos, float delay);
+
+# ---- BumperCars/CBCar_Light.c (CBCar_Game + 0x3604)
+000924e0 void *CBCar_Light_Ctor(struct CBCar_Light *self);
+000924f0 void CBCar_Light_Dtor(struct CBCar_Light *self);
+00092500 struct BCarLight *CBCar_Light_Follow(struct CBCar_Light *self, const char *name, unsigned char *entity);
+00092560 void CBCar_Light_SetOff(struct CBCar_Light *self, int off);
+00092610 void CBCar_Light_ApplyAmbient(struct CBCar_Light *self);
+00092680 void CBCar_Light_Draw(struct CBCar_Light *self, byte view);
+00092740 void CBCar_Light_CreateSpot(struct CBCar_Light *self, float *target);
+000927a0 void CBCar_Light_AimSpot(struct CBCar_Light *self, float *target);
+000927d0 struct CBCar_Light *CBCar_Light_Destroy(struct CBCar_Light *self, byte flags);
+000927f0 void CBCar_Light_Shutdown(struct CBCar_Light *self);
+00092860 void CBCar_Light_SetD3DLight(struct BCarLight *l, int exact);
+00092a10 void CBCar_Light_SetColour(struct BCarLight *l, int r, int g, int b);
+00092a70 void CBCar_Light_Update(struct CBCar_Light *self, int playing, float dt);
+00092dc0 void CBCar_Light_LoadLights(struct CBCar_Light *self, struct BCarTextReader *reader);
+00094240 int CBCar_Light_Initialise(struct CBCar_Light *self, struct bkPackage *package, char *file);
+
+# ---- BumperCars/CBCar_Flame.c (CBCar_Game + 0x3f28)
+00094360 void *CBCar_Flames_Ctor(struct CBCar_Flames *self);
+00094370 struct BCarFlame *CBCar_Flame_Ctor(struct BCarFlame *self);
+000943c0 void CBCar_Flame_Dtor(struct BCarFlame *self);
+00094420 void CBCar_Flame_UpdateArm(struct BCarFlame *self, float dt);
+000946d0 void CBCar_Flames_Draw(struct CBCar_Flames *self, int view, int reflection);
+00094880 float CBCar_Flames_HitTime(struct CBCar_Flames *self, float *pos, float radius);
+000948f0 void CBCar_Flames_Pause(struct CBCar_Flames *self);
+00094920 void CBCar_Flames_Resume(struct CBCar_Flames *self);
+00094950 void CBCar_Flames_SetActive(struct CBCar_Flames *self, int active);
+00094a00 void CBCar_Flames_Shutdown(struct CBCar_Flames *self);
+00094af0 void CBCar_Flames_Update(struct CBCar_Flames *self, float dt, int playing);
+00095150 int CBCar_Flames_Near(struct CBCar_Flames *self, float *pos, float radius, float *heading);
+000951f0 int CBCar_Flames_Sweep(struct CBCar_Flames *self, float *pos, float radius, float *vel);
+000952e0 void CBCar_Flames_LoadFlameInfo(struct CBCar_Flames *self, struct BCarTextReader *reader);

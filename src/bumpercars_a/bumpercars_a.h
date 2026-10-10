@@ -300,7 +300,7 @@ struct CBCar_Game {
 	unsigned char goal[0x10];       /* 0x3310 CBCar_Goal (0x000919e0) */
 	unsigned char sound[0x2e4];     /* 0x3320 CBCar_Sound (0x00091ef0) */
 	unsigned char light[0x924];     /* 0x3604 CBCar_Light (0x000924e0) */
-	unsigned char unknown3f28[0xc]; /* 0x3f28 (0x00094360) */
+	unsigned char flames[0xc];      /* 0x3f28 CBCar_Flames (0x00094360) */
 	void *floatyScores;             /* 0x3f34 the floating score system (bumpercars_b) */
 	char worldInfo[0x200];          /* 0x3f38 game.cfg WORLDINFO */
 	char playerInfo[0x200];         /* 0x4138 PLAYERINFO */
