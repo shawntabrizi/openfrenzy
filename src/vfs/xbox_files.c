@@ -626,9 +626,19 @@ BOOL WINAPI ReadFileEx(HANDLE handle, LPVOID buffer, DWORD count, LPOVERLAPPED o
 		return FALSE;
 	}
 	result = read_at(file, buffer, count, &done, TRUE, overlapped_offset(overlapped));
-	overlapped->Internal = result ? ERROR_SUCCESS : GetLastError();
+	/* 0x001e9307: an NtReadFile that fails at once (an I/O error, or
+	STATUS_END_OF_FILE for a read that starts at or past the end) makes
+	ReadFileEx return FALSE, and the completion routine is not queued.
+	xbBkgload.c relies on this: its completion routine does not finish a
+	channel on an error, so a queued error would stall the loader. */
 	if (result && done == 0 && count > 0)
-		overlapped->Internal = ERROR_HANDLE_EOF;
+	{
+		SetLastError(ERROR_HANDLE_EOF);
+		result = FALSE;
+	}
+	if (!result)
+		return FALSE;
+	overlapped->Internal = ERROR_SUCCESS;
 	overlapped->InternalHigh = done;
 	platform_queue_apc(file_completion_apc, (void *)completion_routine, overlapped, NULL);
 	SetLastError(ERROR_SUCCESS);
@@ -654,7 +664,11 @@ BOOL WINAPI WriteFileEx(HANDLE handle, LPCVOID buffer, DWORD count, LPOVERLAPPED
 		return FALSE;
 	}
 	result = write_at(file, buffer, count, &done, TRUE, overlapped_offset(overlapped));
-	overlapped->Internal = result ? ERROR_SUCCESS : GetLastError();
+	/* 0x001e9358: as ReadFileEx, a failed write returns FALSE and queues
+	no completion routine */
+	if (!result)
+		return FALSE;
+	overlapped->Internal = ERROR_SUCCESS;
 	overlapped->InternalHigh = done;
 	platform_queue_apc(file_completion_apc, (void *)completion_routine, overlapped, NULL);
 	SetLastError(ERROR_SUCCESS);
@@ -852,7 +866,8 @@ BOOL WINAPI GetFileInformationByHandle(HANDLE handle, struct vfs_by_handle_file_
 	memcpy(result->ftLastWriteTime, &data.ftLastWriteTime, sizeof(result->ftLastWriteTime));
 	result->nFileSizeHigh = data.nFileSizeHigh;
 	result->nFileSizeLow = data.nFileSizeLow;
-	result->nNumberOfLinks = 1;
+	/* 0x001e91ca leaves nNumberOfLinks 0 */
+	result->nNumberOfLinks = 0;
 	/* a disc file's index is its first sector, which is unique */
 	result->nFileIndexLow = is_disc_file(file) ? file->entry.sector : 0;
 	return TRUE;

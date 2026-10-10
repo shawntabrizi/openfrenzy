@@ -87,6 +87,16 @@ static void crc_of_file(const char *path)
 	printf("CRC %s %08x %lu\n", path, crc, total);
 }
 
+static int completions;
+
+static VOID WINAPI vfs_test_completion(DWORD error, DWORD count, LPOVERLAPPED overlapped)
+{
+	(void)error;
+	(void)count;
+	(void)overlapped;
+	completions++;
+}
+
 static void test_disc_read(void)
 {
 	HANDLE file;
@@ -185,6 +195,34 @@ static void test_disc_read_only(void)
 		check(GetDiskFreeSpaceExA("d:\\", &free_bytes, &total_bytes, NULL) && free_bytes.QuadPart == 0 &&
 			total_bytes.QuadPart > 2834432, "read only: GetDiskFreeSpaceExA(d:\\) is full");
 	}
+}
+
+/* bKernel's xbBkgload.c finishes a channel only when ReadFileEx returns
+FALSE; its completion routine ignores an error and leaves the loader
+waiting. As in XAPI (0x001e9307), a read that starts at the end must fail
+at once and queue no completion. */
+static void test_disc_read_ex(void)
+{
+	HANDLE file = CreateFileA("d:\\default.xbe", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+	OVERLAPPED overlapped;
+	unsigned char bytes[8];
+
+	check(file != INVALID_HANDLE_VALUE, "ReadFileEx: open d:\\default.xbe");
+	if (file == INVALID_HANDLE_VALUE)
+		return;
+	memset(&overlapped, 0, sizeof(overlapped));
+	overlapped.Offset = GetFileSize(file, NULL);
+	check(!ReadFileEx(file, bytes, sizeof(bytes), &overlapped, vfs_test_completion) &&
+		GetLastError() == ERROR_HANDLE_EOF,
+		"ReadFileEx: a read at the end returns FALSE with ERROR_HANDLE_EOF");
+	SleepEx(0, TRUE);
+	check(completions == 0, "ReadFileEx: a failed read queues no completion routine");
+	memset(&overlapped, 0, sizeof(overlapped));
+	overlapped.Offset = 1;
+	check(ReadFileEx(file, bytes, 3, &overlapped, vfs_test_completion), "ReadFileEx: a read inside the file starts");
+	SleepEx(0, TRUE);
+	check(completions == 1 && !memcmp(bytes, "BEH", 3), "ReadFileEx: its completion routine runs in an alertable wait");
+	CloseHandle(file);
 }
 
 static void test_disc_fopen(void)
@@ -311,6 +349,8 @@ int main(int argc, char **argv)
 	}
 	test_save_drives();
 	test_utility_drive();
+	if (vfs_disc())
+		test_disc_read_ex();
 	printf("vfs_test: %d failure(s)\n", failures);
 	return failures;
 }
