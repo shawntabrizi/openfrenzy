@@ -252,6 +252,37 @@ integration round 2 (921ec75); see below.
 - Script timing: the "game length" menu shows about 18 s after the first XInputGetState with
   the inputs above; a second window run at the same time slows the menus (presses land
   early).
+- Rendering audit (fix-rendering-audit-floaties-and-glyphs): all three items are original
+  behaviour; no code changed.
+  - Air Raid (Demolition) score floaties are font quads, not point sprites. CDemoInfo_AddText
+    feeds the shared "floatyscore" extra system (bumpercars_b bcb_floaty.c, 0x000a6e50,
+    0x000a6f20, 0x000a6fb0). CDemoInfo_Init (0x000ebf90) sets rise 300, scale 0.1 and life 325
+    (`lea ecx,[esi+0x10]`; stores at +0x90/+0x94/+0x98). The update gets dt = 1/60 at 60 Hz
+    (0x000ec0a0; frame dumps confirm 60 frames a second), so a text lives
+    age <= 1 * 325 * dt * 64 = 346 frames (5.8 s). It rises 5 units a frame (1733 in all) and
+    is drawn at scale 0.1 * (0.5 * age + 2), which reaches 17.5 times the font size. The
+    disassembly of 0x000a6fb0 (x87 stack traced) matches the port: grow, scale, the colour
+    fade `colour - 3 * age / (size * life)`, the T*R*S matrix and bdPrintFontLite.
+  - `particle00.bmp` and `00.bmp`: CGameMode_Meta (0x0014f670) calls Sprite_LoadDefs on
+    0x002b0d30 with count 11 (`push 0xb`). Its records are star, paper, aismoke, reddot, aispk,
+    streak, bstreak, coronab, ai_bubble, particle and an empty 11th name, so the empty probe is
+    original. No package on the disc holds a plain `particle00.bmp` (all 89 .xbp searched; only
+    `texturesl\particle00.bmp` in FoxLevel and `textures\particle00.bmp` in Tag1). These
+    messages come once per Meta stage load, not once per minigame. FoxLevel's
+    `texturesl\shit00.bmp` is also absent from every package.
+  - Babel memory at the title: two 2-stage tournaments in one session (window, diagnostic
+    build that records file/line in each heap block's reserved words, not committed).
+    Title after tournament 1: 40871 Kb free, 282 live blocks, 10242112 bytes; after
+    tournament 2: 40909 Kb free, the same 282 blocks and 10242112 bytes. No leak. The 1.1 MB
+    difference from boot (41365 Kb) is the 4 character voice packages
+    (`packages\english\<name>`, about 1.6 MB) that Core_LoadCharacterVoices (0x00012a60) loads
+    for the chosen characters. They stay loaded until the next character selection releases
+    them, as in the original. The title music's WMA buffers (393 KB) are not allocated at that
+    moment, which offsets part of it.
+  - New fault seen (not fixed): with START pressed on MetaVote (START at 704.5 s and 707.5 s,
+    each followed by A), the next Meta stage load (`military_part_1.lnd`) faulted with
+    `pc=cfb1f0b1d0b1cfb1` (pixel-like data as the return address: a smashed stack). Script:
+    the 2-stage recipe, A every 3 s, plus START 1.5 s after each A from 700 s.
 
 ## Audio levels (integration round 3, 2026-10-10)
 
