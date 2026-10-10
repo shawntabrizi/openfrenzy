@@ -341,7 +341,8 @@ void *CRollerBallGoal_DeletingDtor(void *self, unsigned int flags)
 }
 
 /* 0x001912e0  RollerBall/CRollerball_Goal.cpp
-Initialise of a goal: two actor instances of the game's goal actors (+0x1440, +0x1444) at
+Initialise of a goal: two actor instances of the goal system's models (game +0x1478, +0x147c:
+goalsign.obe, goalsfx.obe; the XBE indexes [goal + 0x38 + 4i + (0x1440 - goal) + game]) at
 the goal's position and direction, their "active" and "flare" sub-objects, the "active"
 animation looping; radius 80, not scored. Returns 1. */
 int CRollerBallGoal_Init(void *self)
@@ -352,7 +353,7 @@ int CRollerBallGoal_Init(void *self)
 	int i;
 
 	for (i = 0; i < 2; i++) {
-		inst = baInitActorInstance(NULL, RB_AT(RB_GAME, 0x1440 + i * 4, struct BActor *), 1,
+		inst = baInitActorInstance(NULL, RB_AT(RB_GAME, RB_GO_GOALS + 0x8 + i * 4, struct BActor *), 1,
 			RB_FILE_GOAL, 0x1ba);
 		RB_PTR(s, 0x38 + i * 4) = inst;
 		baPrepActorInstance(inst, 1);
