@@ -75,6 +75,8 @@ int DAT_002baadc, DAT_002baae8, DAT_002baaec;
 int DAT_002bae6c, DAT_002bae70, DAT_002bae8c, DAT_002bae90, DAT_002bae94, DAT_002bae98;
 int DAT_002bae9c, DAT_002baeac, DAT_002baeb0, DAT_002baeb8, DAT_002baebc;
 int DAT_002baed0[40];                               /* 4 players of 0x28 bytes */
+int DAT_002ba568, DAT_002ba978, DAT_002bae74, DAT_002bae88, DAT_002baea8, DAT_002baeb4;
+char DAT_002ba9d8[0x104];                           /* the title's path */
 void *DAT_002baf78[36];                             /* 4 x 9 player input objects */
 
 /* .data block 0x002839b8-0x0028450c (XBE values) */
@@ -83,6 +85,7 @@ __attribute__((weak)) int DAT_002844d0 = 0;
 __attribute__((weak)) int DAT_002844d4 = 0x14;
 __attribute__((weak)) int DAT_002844d8 = 0xff;
 __attribute__((weak)) int DAT_00284408 = -1;
+__attribute__((weak)) int DAT_002844a0[3] = { 2, 4, 6 };   /* rounds per game size */
 /* 0x002839e0: [game * 4 + variation]; the first four entries are string pointers in the XBE
    (never 0 or +-3), here 1 */
 #define CMA_VARIATION_TABLE \
@@ -160,8 +163,16 @@ int DAT_002b967c;
 struct CMA_Vertex DAT_002b9680[4];
 int DAT_002b9710;
 
+/* ---------- this module: CGameMode_FullGame.cpp (.bss) */
+
+int DAT_002b9718;                                    /* a tournament */
+
 /* ---------- other modules */
 
+int DAT_002b9968[0xc4];                              /* core_modes_b: the score table (0x310 bytes) */
+int DAT_002ed218;                                    /* classlib_ui: an intro camera plays */
+int DAT_002d0750;                                    /* bkernel: launch data type */
+unsigned char DAT_002d08a8[0xc00];                   /* bkernel: LAUNCH_DATA */
 int DAT_002bc40c, DAT_002bc410;                      /* bdisplay: screen width, height */
 int DAT_002ecdec, DAT_002ecde8;                      /* classlib_ui .bss block */
 void *DAT_002ecc74, *DAT_002ecfac;

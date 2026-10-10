@@ -12,6 +12,10 @@ video player call.
 
 #include "core_modes_a_globals.h"
 
+/* platform (XDK) functions (declared here, not through xtl.h) */
+long IDirectSound_GetCaps(void *sound, void *caps);
+void D3DDevice_GetDisplayFieldStatus(void *status);
+
 /* classlib_ui: the intro camera (thiscall on DAT_002ecfac) */
 #define CMA_IntroCam_Reset() ((void (*)(void *))FUN_000796c0)(DAT_002ecfac)
 #define CMA_IntroCam_Set(p) ((void (*)(void *, void *))FUN_0007a200)(DAT_002ecfac, (p))

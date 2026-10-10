@@ -27,10 +27,6 @@ static const char s_CharacterSelect_cpp[] = "C:\\BlitzParty\\Game\\Src\\Core\\CG
 #define CMA_OVERLAY_PARAMS_SIZE 0x3b0
 #define OVP_I32(p, off) CMA_FIELD(int, (p), (off))
 #define OVP_F32(p, off) CMA_FIELD(float, (p), (off))
-/* FUN_00074500: a new overlay (cdecl); FUN_00073ae0: a child overlay of THIS (thiscall) */
-#define CMA_Overlay_Create(params) ((void *(*)(void *))FUN_00074500)(params)
-#define CMA_Overlay_CreateChild(parent, params) \
-	((void *(*)(void *, void *))FUN_00073ae0)((parent), (params))
 /* classlib_ui FUN_00070ed0: move POS towards TARGET (vec4) at SPEED with DAMPING */
 #define CMA_MoveTowards(pos, target, speed, damping) \
 	FUN_00070ed0((float *)(pos), (float *)(target), (speed), (damping))
@@ -404,7 +400,7 @@ void CGameMode_CharacterSelect_Update(struct CGameMode_CharacterSelect *self, in
 		FUN_00038550((undefined4 *)DAT_002b95e8, (undefined4 *)lightDir);
 		FUN_00038440(DAT_00281b0c, DAT_00281b10, DAT_00281b14);
 	}
-	FUN_00030000(active);
+	CMA_MenuMode_Process(self, active);
 	if (active == 0 || self->ready == 0)
 		return;
 	if (self->menu.base.loadState != 0) {

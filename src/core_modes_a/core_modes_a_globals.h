@@ -125,10 +125,6 @@ extern int DAT_002b9710;
 
 /* ---------- functions of other modules, with the prototypes of the x86 code */
 
-/* platform (XDK) */
-long IDirectSound_GetCaps(void *sound, void *caps);
-void D3DDevice_GetDisplayFieldStatus(void *status);
-
 /* classlib_ui FUN_00071f90: start loading a package in the background; returns the handle */
 #define CMA_LoadPackageAsync(name, flags) ((int (*)(const char *, int))FUN_00071f90)((name), (flags))
 /* bdisplay FUN_000463c0: play a Bink video (path, flags) */

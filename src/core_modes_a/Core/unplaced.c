@@ -6,6 +6,7 @@ file is not known (gaps between tagged functions). Most belong to the file
 before or after them; see the comment of each function.
 */
 
+#include <wchar.h>
 #include "core_modes_a.h"
 #include "core_modes_a_modes.h"
 #include "core_modes_a_globals.h"
@@ -410,4 +411,360 @@ struct CGameMode_CharacterSelect *CGameMode_CharacterSelect_Delete(struct CGameM
 	if (flags & 1)
 		CMA_Delete(self);
 	return self;
+}
+
+/* ---------- 0x000199c0-0x0001a7e0: CGameMode_GameStats (vtable 0x0025513c), file unknown */
+
+OF_ASSERT_OFFSET(struct CGameMode_GameStats, standalone, 0x139);
+
+/* the score table of module core_modes_b (CScoreTable at 0x002b9968): round, then 25 ints a
+   round; +0x38 + 4 * player: the round's points */
+extern int DAT_002b9968[0xc4];
+#define CMA_ROUND_POINTS(r, p) DAT_002b9968[14 + (r) * 25 + (p)]
+
+extern int DAT_002bae74;            /* core: the game size chosen */
+extern int DAT_002bae88;            /* core: rounds of the game (0: a single game) */
+extern int DAT_002baeb4;            /* core */
+extern int DAT_002844a0[];          /* core: rounds per game size */
+
+/* the picture of character C (the character table's second name) */
+#define CMA_CHAR_PICTURE(c) (*(const char **)((char *)&DAT_00290754 - 0x54 + (c) * 0x60))
+
+/* the text of an overlay in a parameter block (classlib_ui COverlay): font +0x44, text +0x48 */
+#define OVP_TEXT(p) ((wchar_t *)((char *)(p) + 0x48))
+
+/* 0x0025513c CGameMode_GameStats */
+const void *const vtable_0025513c[] = {
+	(const void *)CGameMode_GameStats_Delete,
+	(const void *)FUN_001d5950,
+	(const void *)FUN_001d5950,
+	(const void *)CGameMode_GameStats_Popped,
+	(const void *)CGameMode_GameStats_Pushed,
+	(const void *)FUN_0002fe60,
+	(const void *)CGameMode_GameStats_Update,
+	(const void *)CGameMode_GameStats_Render,
+	(const void *)FUN_001ec260,
+	(const void *)CGameMode_UpdateLoading,
+	(const void *)CGameMode_FinishedLoading,
+	(const void *)FUN_001d5950,
+	(const void *)FUN_001d5950,
+	(const void *)CGameMode_GameStats_HandleButton,
+};
+
+/* 0x000199c0  Core (unplaced): CGameMode_GameStats constructor (over another mode) */
+struct CGameMode_GameStats *CGameMode_GameStats_ctor(struct CGameMode_GameStats *self)
+{
+	FUN_00030090((undefined4 *)self, (undefined4 *)"GameStats");
+	self->menu.base.vtbl = vtable_0025513c;
+	CMA_List_Init(&self->overlays);
+	self->menu.base.flags |= 2;
+	self->closing = 0;
+	self->standalone = 0;
+	return self;
+}
+
+/* 0x00019a30  Core (unplaced): CGameMode_GameStats constructor; STANDALONE: draws the menu */
+struct CGameMode_GameStats *CGameMode_GameStats_ctorShow(struct CGameMode_GameStats *self,
+	unsigned char standalone)
+{
+	FUN_00030090((undefined4 *)self, (undefined4 *)"GameStats");
+	self->menu.base.vtbl = vtable_0025513c;
+	CMA_List_Init(&self->overlays);
+	self->menu.base.flags |= 2;
+	self->standalone = standalone;
+	self->closing = 0;
+	return self;
+}
+
+/* 0x00019aa0  Core (unplaced): popped */
+void CGameMode_GameStats_Popped(struct CGameMode_GameStats *self)
+{
+	FUN_00072720((undefined4)&self->overlays);
+	FUN_00074ba0();
+}
+
+/* 0x00019ac0  Core (unplaced): render */
+void CGameMode_GameStats_Render(struct CGameMode_GameStats *self, int active)
+{
+	if (self->standalone != 0)
+		FUN_00030310((int)self, active);
+	FUN_00072720((undefined4)&self->overlays);
+	FUN_00073900(1);
+}
+
+/* 0x00019b00  Core (unplaced): A or start closes once the counting is over */
+int CGameMode_GameStats_HandleButton(struct CGameMode_GameStats *self, int button, int player)
+{
+	(void)player;
+	if (self->timer <= 0.0f) {
+		if (button < 4 || button > 5)
+			return 0;
+		if (self->standalone != 0) {
+			CMA_ModeStack_Pop(1);
+			return 1;
+		}
+		self->closing = 1;
+	}
+	return 1;
+}
+
+/* 0x00019b60  Core (unplaced) */
+struct CGameMode_GameStats *CGameMode_GameStats_Delete(struct CGameMode_GameStats *self,
+	unsigned int flags)
+{
+	CGameMode_GameStats_dtor(self);
+	if (flags & 1)
+		CMA_Delete(self);
+	return self;
+}
+
+/* 0x00019b80  Core (unplaced) */
+void CGameMode_GameStats_dtor(struct CGameMode_GameStats *self)
+{
+	FUN_001d5950(); /* ~CMA_List (nothing) */
+	FUN_00030190((undefined4 *)self);
+}
+
+/* set the common fields of a centred text overlay */
+static void GameStats_TextParams(unsigned char *params, int font, short hAlign, short vAlign,
+	float x, float y)
+{
+	CMA_FIELD(int, params, 0x288) = 2;
+	CMA_FIELD(short, params, 0x24c) = hAlign;
+	CMA_FIELD(int, params, 0x28c) = 5;
+	CMA_FIELD(short, params, 0x24e) = vAlign;
+	CMA_FIELD(float, params, 0x250) = 128.0f;
+	CMA_FIELD(float, params, 0x254) = 128.0f;
+	CMA_FIELD(float, params, 0x258) = 128.0f;
+	CMA_FIELD(float, params, 0x25c) = 128.0f;
+	CMA_FIELD(float, params, 0x2a4) = x;
+	CMA_FIELD(float, params, 0x2a8) = y;
+	CMA_FIELD(int, params, 0x2ac) = 0;
+	CMA_FIELD(int, params, 0x44) = font;
+}
+
+/* the glow fields of the last-round and total texts */
+static void GameStats_GlowParams(unsigned char *params)
+{
+	CMA_FIELD(int, params, 0x28c) = 3;
+	CMA_FIELD(float, params, 0x328) = 1.0f;
+	CMA_FIELD(float, params, 0x320) = 1.0f;
+	CMA_FIELD(float, params, 0x318) = 1.0f;
+	CMA_FIELD(float, params, 0x340) = 1.0f;
+	CMA_FIELD(float, params, 0x338) = 1.0f;
+	CMA_FIELD(float, params, 0x330) = 1.0f;
+	CMA_FIELD(float, params, 0x344) = 2.0f;
+	CMA_FIELD(float, params, 0x33c) = 2.0f;
+	CMA_FIELD(float, params, 0x334) = 2.0f;
+	CMA_FIELD(float, params, 0x32c) = -0.05f;
+	CMA_FIELD(float, params, 0x324) = -0.05f;
+	CMA_FIELD(float, params, 0x31c) = -0.05f;
+}
+
+/* 0x00019bd0  Core (unplaced): pushed: the headings, a column per round, a row per player */
+void CGameMode_GameStats_Pushed(struct CGameMode_GameStats *self)
+{
+	unsigned char params[0x3b0];
+	int font1;
+	int font2;
+	int rounds;
+	int slot;
+	int k;
+	int i;
+
+	memset(params, 0, sizeof(params));
+	FUN_00072720((undefined4)&self->overlays);
+	font1 = FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
+	font2 = FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
+
+	memset(params, 0, sizeof(params));
+	GameStats_TextParams(params, font1, 2, 3, 270.0f, 170.0f);
+	swprintf(OVP_TEXT(params), (wchar_t *)(DAT_002bae88 == 0 ? CMA_TEXT(0x181) : CMA_TEXT(0xcb + DAT_002baeb4)));
+	CMA_Overlay_Create(params);
+
+	memset(params, 0, sizeof(params));
+	GameStats_TextParams(params, font2, 0, 1, -270.0f, 140.0f);
+	swprintf(OVP_TEXT(params), (wchar_t *)CMA_TEXT(0x18b));
+	CMA_Overlay_Create(params);
+
+	memset(params, 0, sizeof(params));
+	GameStats_TextParams(params, font2, 2, 1, 270.0f, 140.0f);
+	swprintf(OVP_TEXT(params), (wchar_t *)CMA_TEXT(0x180));
+	CMA_Overlay_Create(params);
+
+	GameStats_TextParams(params, font2, 2, 1, 270.0f, -180.0f);
+	swprintf(OVP_TEXT(params), (wchar_t *)CMA_TEXT(0x10d));
+	CMA_Overlay_Create(params);
+
+	/* the round numbers */
+	rounds = DAT_002844a0[DAT_002bae74];
+	for (k = 0; k < rounds; ) {
+		float x = (float)k;
+
+		k++;
+		memset(params, 0, sizeof(params));
+		GameStats_TextParams(params, font1, 2, 1, x * 60.0f - 160.0f, 140.0f);
+		swprintf(OVP_TEXT(params), L"%d", k);
+		CMA_Overlay_Create(params);
+		rounds = DAT_002844a0[DAT_002bae74];
+	}
+
+	/* the totals before this round, and this round's points */
+	for (i = 0; i < DAT_002bae94; i++) {
+		int r = 0;
+
+		self->total[i] = 0;
+		if (DAT_002b9968[0] != 1 && DAT_002b9968[0] - 1 >= 0) {
+			for (r = 0; r < DAT_002b9968[0] - 1; r++)
+				self->total[i] = self->total[i] + CMA_ROUND_POINTS(r, i);
+		}
+		self->target[i] = CMA_ROUND_POINTS(r, i);
+		self->shown[i] = 0;
+		self->counted[i] = 0;
+	}
+	FUN_0001c200(self->total, self->place, self->order);
+
+	/* a row per player, in place order */
+	for (slot = 0; slot < DAT_002bae94; slot++) {
+		int p = self->order[slot];
+		void *portrait;
+		int r;
+
+		if (DAT_002baed0[p].character == -1)
+			DAT_002baed0[p].character = p;
+		memset(params, 0, sizeof(params));
+		CMA_FIELD(int, params, 0x288) = 0;
+		CMA_FIELD(int, params, 0x4) = FUN_0004bb30(0, (char *)CMA_CHAR_PICTURE(DAT_002baed0[p].character), 0, 0xdefa);
+		CMA_FIELD(float, params, 0x250) = 128.0f;
+		CMA_FIELD(float, params, 0xc) = 90.0f - (float)(slot * 60);
+		CMA_FIELD(float, params, 0x254) = 128.0f;
+		CMA_FIELD(float, params, 0x258) = 128.0f;
+		CMA_FIELD(float, params, 0x25c) = 128.0f;
+		CMA_FIELD(float, params, 0x2a4) = -270.0f;
+		CMA_FIELD(float, params, 0x8) = -270.0f;
+		CMA_FIELD(float, params, 0x308) = 96.0f;
+		CMA_FIELD(float, params, 0x30c) = 96.0f;
+		CMA_FIELD(int, params, 0x260) = 8;
+		CMA_FIELD(int, params, 0x268) = 0;
+		CMA_FIELD(int, params, 0x264) = 0x7f;
+		CMA_FIELD(int, params, 0x28c) = 5;
+		CMA_FIELD(float, params, 0x284) = 8.0f;
+		CMA_FIELD(float, params, 0x2a8) = CMA_FIELD(float, params, 0xc);
+		portrait = CMA_Overlay_Create(params);
+		self->portrait[p] = portrait;
+		for (r = 0; r < DAT_002b9968[0]; r++) {
+			void *text;
+
+			memset(params, 0, sizeof(params));
+			CMA_FIELD(float, params, 0x2b4) = (float)r * 60.0f + 110.0f;
+			CMA_FIELD(int, params, 0x28c) = 1;
+			CMA_FIELD(short, params, 0x24e) = 1;
+			CMA_FIELD(int, params, 0x288) = 2;
+			CMA_FIELD(short, params, 0x24c) = 2;
+			CMA_FIELD(float, params, 0x2b8) = 30.0f;
+			CMA_FIELD(int, params, 0x2bc) = 0;
+			CMA_FIELD(float, params, 0x250) = 127.0f;
+			CMA_FIELD(float, params, 0x254) = 127.0f;
+			CMA_FIELD(float, params, 0x258) = 127.0f;
+			CMA_FIELD(float, params, 0x25c) = 90.0f;
+			if (r < DAT_002b9968[0] - 1) {
+				CMA_FIELD(int, params, 0x44) = font2;
+				swprintf(OVP_TEXT(params), L"%d", CMA_ROUND_POINTS(r, p));
+			} else {
+				GameStats_GlowParams(params);
+				CMA_FIELD(int, params, 0x44) = font2;
+				FUN_0004b130((short *)OVP_TEXT(params), (short *)u"0");
+			}
+			text = CMA_Overlay_CreateChild(self->portrait[p], params);
+			if (r == DAT_002b9968[0] - 1)
+				self->roundText[p] = text;
+		}
+		memset(params, 0, sizeof(params));
+		CMA_FIELD(int, params, 0x288) = 2;
+		CMA_FIELD(short, params, 0x24c) = 2;
+		CMA_FIELD(short, params, 0x24e) = 1;
+		CMA_FIELD(float, params, 0x250) = 128.0f;
+		CMA_FIELD(float, params, 0x254) = 128.0f;
+		CMA_FIELD(float, params, 0x258) = 128.0f;
+		CMA_FIELD(float, params, 0x25c) = 90.0f;
+		CMA_FIELD(float, params, 0x2b4) = 540.0f;
+		CMA_FIELD(float, params, 0x2b8) = 30.0f;
+		CMA_FIELD(int, params, 0x2bc) = 0;
+		GameStats_GlowParams(params);
+		CMA_FIELD(int, params, 0x44) = font1;
+		swprintf(OVP_TEXT(params), L"%d", self->total[p]);
+		self->totalText[p] = CMA_Overlay_CreateChild(self->portrait[p], params);
+	}
+	self->unka8 = 0;
+	self->timer = 20.0f;
+	self->tickSound = FUN_0004bb30(0, "kickimpact2.wav", 2, 0xdefa);
+	self->swipeSound = FUN_0004bb30(0, "punchswipe1.wav", 2, 0xdefa);
+}
+
+/* 0x0001a520  Core (unplaced): count this round's points into the totals; rows move to the new
+   places */
+void CGameMode_GameStats_Update(struct CGameMode_GameStats *self, int active)
+{
+	int counting = 0;
+	int i;
+
+	if (DAT_002ecdec != 0)
+		return;
+	if (self->standalone != 0)
+		CMA_MenuMode_Process(self, active);
+	for (i = 0; i < 4; i++) {
+		int step;
+		int left;
+
+		if (self->counted[i] != 0)
+			continue;
+		left = self->target[i] - self->shown[i];
+		step = (int)((double)DAT_0028fda8 * 2.5f);
+		if (step >= left)
+			step = left;
+		self->shown[i] = self->shown[i] + step;
+		self->total[i] = self->total[i] + step;
+		swprintf((wchar_t *)((char *)self->roundText[i] + 0xa4), L"%d", self->shown[i]);
+		swprintf((wchar_t *)((char *)self->totalText[i] + 0xa4), L"%d", self->total[i]);
+		if (self->shown[i] == self->target[i]) {
+			CMA_FIELD(float, self->roundText[i], 0x37c) = 2.0f;
+			CMA_FIELD(int, self->roundText[i], 0x2f8) = 1;
+			CMA_FIELD(float, self->roundText[i], 0x2b8) = 127.0f;
+			CMA_FIELD(float, self->totalText[i], 0x37c) = 2.0f;
+			CMA_FIELD(int, self->totalText[i], 0x2f8) = 1;
+			CMA_FIELD(float, self->totalText[i], 0x2b8) = 127.0f;
+			if (self->tickSound != 0)
+				FUN_00054ba0(self->tickSound, 0xff, 0, 0, 0);
+			self->counted[i] = 1;
+		}
+		counting++;
+	}
+	if (counting == 0) {
+		self->timer = 0.0f;
+	} else {
+		int old[4];
+		int moved = 0;
+
+		old[0] = self->place[0];
+		old[1] = self->place[1];
+		old[2] = self->place[2];
+		old[3] = self->place[3];
+		FUN_0001c200(self->total, self->place, self->order);
+		for (i = 0; i < 4; i++) {
+			if (old[i] != self->place[i]) {
+				void *portrait = self->portrait[i];
+				float y = 90.0f - (float)(self->place[i] * 60);
+				float d = CMA_FIELD(float, portrait, 0x68) - y;
+
+				moved = 1;
+				CMA_FIELD(float, portrait, 0x2e0) = fabsf(d) * 0.1f;
+				CMA_FIELD(float, portrait, 0x68) = y;
+				CMA_FIELD(int, portrait, 0x2f0) = 1;
+			}
+		}
+		if (moved)
+			CMA_PlaySample(self->swipeSound, 0xff, 0, 0, 0);
+	}
+	FUN_00072720((undefined4)&self->overlays);
+	FUN_00074be0();
 }

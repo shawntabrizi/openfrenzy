@@ -152,6 +152,28 @@ struct CGameMode_CharacterSelect {
 	int ready;                        /* +0x3ac */
 };
 
+/* CGameMode_GameStats (vtable 0x0025513c, name "GameStats"): the table of the round scores */
+struct CGameMode_GameStats {
+	struct CGameModeMenu menu;      /* +0x000 */
+	struct CMA_List overlays;       /* +0x098 */
+	float timer;                    /* +0x0a4 buttons work when it is 0 */
+	int unka8;                      /* +0x0a8 */
+	void *portrait[4];              /* +0x0ac per player */
+	void *totalText[4];             /* +0x0bc */
+	void *roundText[4];             /* +0x0cc */
+	int place[4];                   /* +0x0dc */
+	int order[4];                   /* +0x0ec */
+	int total[4];                   /* +0x0fc counted up */
+	int target[4];                  /* +0x10c this round's score */
+	int shown[4];                   /* +0x11c */
+	unsigned char counted[4];       /* +0x12c */
+	int tickSound;                  /* +0x130 kickimpact2.wav */
+	int swipeSound;                 /* +0x134 punchswipe1.wav */
+	unsigned char closing;          /* +0x138 */
+	unsigned char standalone;       /* +0x139 not over another mode: draws the menu */
+	unsigned char unk13a[2];
+};                                  /* 0x13c */
+
 extern const void *const vtable_002538a4[];
 extern const void *const vtable_00253928[];
 extern const void *const vtable_002539c0[];
@@ -159,6 +181,7 @@ extern const void *const vtable_00253bac[];
 extern const void *const vtable_00253bc4[];
 extern const void *const vtable_00253c04[];
 extern const void *const vtable_00253dc4[];
+extern const void *const vtable_0025513c[];
 
 /* ---------- globals (core_modes_a_data.c) */
 
@@ -179,6 +202,19 @@ extern unsigned char DAT_002ba74c[];
 	((int (*)(void *, void *, int))FUN_0002b640)(CMA_MODE_STACK, (mode), (resume))
 /* FUN_0002b6f0 (thiscall): pop the top mode; RESUME resumes the one below */
 #define CMA_ModeStack_Pop(resume) ((int (*)(void *, int))FUN_0002b6f0)(CMA_MODE_STACK, (resume))
+
+/* classlib_ui COverlay creation from a 0x3b0-byte parameter block: FUN_00074500 a new overlay
+   (cdecl), FUN_00073ae0 a child of PARENT (thiscall) */
+#define CMA_Overlay_Create(params) ((void *(*)(void *))FUN_00074500)(params)
+#define CMA_Overlay_CreateChild(parent, params) \
+	((void *(*)(void *, void *))FUN_00073ae0)((parent), (params))
+
+/* core FUN_00030000: the menu modes' update (thiscall; the generated prototype has no "this"
+   until core declares it) */
+#define CMA_MenuMode_Process(self, active) \
+	__builtin_choose_expr(__builtin_types_compatible_p(__typeof__(&FUN_00030000), void (*)(int)), \
+		((void (*)(int))FUN_00030000)(active), \
+		((void (*)(void *, int))FUN_00030000)((void *)(self), (active)))
 
 /* players: 4 entries of 0x28 bytes at 0x002baed0 (module core's .bss block) */
 struct CMA_Player {

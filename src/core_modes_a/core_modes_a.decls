@@ -138,3 +138,63 @@
 00016e90 void CharSel_StartCelebration(struct CGameMode_CharacterSelect *self);
 00017070 void CGameMode_CharacterSelect_LoadingStarted(struct CGameMode_CharacterSelect *self);
 00017580 int CGameMode_CharacterSelect_HandleButton(struct CGameMode_CharacterSelect *self, int button, int player);
+
+# ---------- Core/CGameMode_Credits.cpp (the unplaced methods are of this class, vtable 0x00254e58)
+00017c70 struct CGameMode_Credits *CGameMode_Credits_ctor(struct CGameMode_Credits *self);
+00017c90 void CGameMode_Credits_Resume(struct CGameMode_Credits *self);
+00017db0 void CGameMode_Credits_Render(struct CGameMode_Credits *self, int active);
+00017dc0 int CGameMode_Credits_HandleButton(struct CGameMode_Credits *self, int button, int player);
+00017e00 void CGameMode_Credits_Suspend(struct CGameMode_Credits *self);
+00017e60 int Credits_UpdateColumn(struct CMA_CreditsColumn *self);
+000182e0 void CGameMode_Credits_Update(struct CGameMode_Credits *self, int active);
+
+# ---------- Core/CGameMode_DemoSplash.cpp (the unplaced constructor is this class's)
+00018350 struct CGameMode_DemoSplash *CGameMode_DemoSplash_ctor(struct CGameMode_DemoSplash *self);
+000183b0 void CGameMode_DemoSplash_Suspend(struct CGameMode_DemoSplash *self);
+000183e0 void CGameMode_DemoSplash_Update(struct CGameMode_DemoSplash *self, int active);
+00018560 void CGameMode_DemoSplash_Render(struct CGameMode_DemoSplash *self, int active);
+000185e0 int CGameMode_DemoSplash_HandleButton(struct CGameMode_DemoSplash *self, int button, int player);
+00018630 struct CGameMode_DemoSplash *CGameMode_DemoSplash_Delete(struct CGameMode_DemoSplash *self, unsigned int flags);
+00018650 void CGameMode_DemoSplash_dtor(struct CGameMode_DemoSplash *self);
+000186a0 void CGameMode_DemoSplash_Resume(struct CGameMode_DemoSplash *self);
+
+# ---------- Core/CGameMode_FullGame.cpp (the unplaced constructor is this class's)
+00018800 struct CGameMode_FullGame *CGameMode_FullGame_ctor(struct CGameMode_FullGame *self);
+00018830 void CGameMode_FullGame_Pushed(struct CGameMode_FullGame *self);
+00018880 int CGameMode_FullGame_HandleButton(struct CGameMode *self, int button, int player);
+00018890 void CGameMode_FullGame_PostDraw(struct CGameMode_FullGame *self, int active);
+000188b0 void CGameMode_FullGame_Resume(struct CGameMode_FullGame *self);
+
+# ---------- Core/CGameMode_GameSizeMenu.cpp
+00018f00 void CGameMode_GameSizeMenu_Suspend(struct CGameMode_GameSizeMenu *self);
+00018f80 int CGameMode_GameSizeMenu_HandleButton(struct CGameMode_GameSizeMenu *self, int button, int player);
+00019110 void CGameMode_GameSizeMenu_Update(struct CGameMode_GameSizeMenu *self, int active);
+00019230 void Core_Vec3Sub(float *out, float *a, float *b);
+00019260 struct CGameMode_GameSizeMenu *CGameMode_GameSizeMenu_ctor(struct CGameMode_GameSizeMenu *self);
+00019300 struct CGameMode_GameSizeMenu *CGameMode_GameSizeMenu_Delete(struct CGameMode_GameSizeMenu *self, unsigned int flags);
+00019320 void CGameMode_GameSizeMenu_dtor(struct CGameMode_GameSizeMenu *self);
+00019380 void CGameMode_GameSizeMenu_Resume(struct CGameMode_GameSizeMenu *self);
+000197b0 void CGameMode_GameSizeMenu_Render(struct CGameMode_GameSizeMenu *self, int active);
+
+# ---------- Core (unplaced): CGameMode_GameStats (vtable 0x0025513c), file unknown
+000199c0 struct CGameMode_GameStats *CGameMode_GameStats_ctor(struct CGameMode_GameStats *self);
+00019a30 struct CGameMode_GameStats *CGameMode_GameStats_ctorShow(struct CGameMode_GameStats *self, unsigned char standalone);
+00019aa0 void CGameMode_GameStats_Popped(struct CGameMode_GameStats *self);
+00019ac0 void CGameMode_GameStats_Render(struct CGameMode_GameStats *self, int active);
+00019b00 int CGameMode_GameStats_HandleButton(struct CGameMode_GameStats *self, int button, int player);
+00019b60 struct CGameMode_GameStats *CGameMode_GameStats_Delete(struct CGameMode_GameStats *self, unsigned int flags);
+00019b80 void CGameMode_GameStats_dtor(struct CGameMode_GameStats *self);
+00019bd0 void CGameMode_GameStats_Pushed(struct CGameMode_GameStats *self);
+0001a520 void CGameMode_GameStats_Update(struct CGameMode_GameStats *self, int active);
+
+# ---------- Core/CGameMode_GameWinner.cpp (the unplaced constructor is this class's)
+0001a7e0 struct CGameMode_GameWinner *CGameMode_GameWinner_ctor(struct CGameMode_GameWinner *self);
+0001a820 void CGameMode_GameWinner_Pushed(struct CGameMode_GameWinner *self);
+0001a910 void CGameMode_GameWinner_Resume(struct CGameMode_GameWinner *self);
+0001a920 void CGameMode_GameWinner_Render(struct CGameMode_GameWinner *self, int active);
+0001ab10 void GameWinner_PlayAnim(struct CGameMode_GameWinner *self, int slot, int anim, int loop, int keep, float speed, float blend);
+0001abe0 void GameWinner_LoadCamera(struct CGameMode_GameWinner *self, int stage);
+0001ac80 void CGameModeMenu_dtor_thunk(void *self);
+0001ac90 void CGameMode_GameWinner_Update(struct CGameMode_GameWinner *self, int active);
+0001b820 void CGameMode_GameWinner_Popped(struct CGameMode_GameWinner *self);
+0001b8e0 void CGameMode_GameWinner_LoadingStarted(struct CGameMode_GameWinner *self);
