@@ -884,3 +884,14 @@ void CLHud_CreateScoreLabels(int self, char *text, int flag)
 		}
 	}
 }
+
+/* 0x0007cc00  ClassLib/Hud.cpp (inferred)
+Frees the HUD. */
+void CLHud_Destroy(void)
+{
+	clu_ai_ring = 0;
+	clu_ai_ring_nogoal = 0;
+	if (clu_hud != 0)
+		FUN_0004c110(clu_hud);
+	clu_hud = 0;
+}

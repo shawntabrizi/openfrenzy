@@ -106,5 +106,13 @@ extern int DAT_0028ffb8;
 int FUN_00072060(int pass, int *info);
 /* 0x00074c10  draw function of the pause menu volume bars (ClassLib/COverlay.c) */
 void FUN_00074c10(int self, int shadow);
+/* 0x0007d6c0 / 0x0007e340  parse map callbacks of the intro camera ("Camera",
+"AnimStream" blocks; ClassLib/CIntroCam.c) */
+int FUN_0007d6c0(int node, undefined4 unused);
+int FUN_0007e340(int node, undefined4 unused);
+/* 0x0007d890 / 0x0007da30 / 0x0007db00  "FrNum" callbacks: position, roll, FOV keys */
+int FUN_0007d890(int property, int *counter);
+int FUN_0007da30(int property, int *counter);
+int FUN_0007db00(int property, int *counter);
 
 #endif
