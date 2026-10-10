@@ -155,14 +155,6 @@
 000f6eb0 void CDemolition_Camera_UpdatePlay(struct CDemolition_Camera *self, float dt);
 000f6f10 void CDemolition_Camera_Update(struct CDemolition_Camera *self, float dt);
 
-# Demolition/unplaced.c: CDemolition_CharLib (vtable 0x0026b2c0)
-000f8a50 struct CDemolition_CharLib *CDemolition_CharLib_Construct(struct CDemolition_CharLib *self);
-000f8ac0 void CDemolition_CharLib_Destruct(struct CDemolition_CharLib *self);
-000f8cc0 void CDemolition_CharLib_SetPosition(struct CDemolition_CharLib *self, float *pos);
-000f8d30 void CDemolition_CharLib_SetRotation(struct CDemolition_CharLib *self, float *euler);
-
-# Demolition/CDemolition_Player.c
-000f99e0 void CDemolition_Player_SetCarry(struct CDemolition_Player *self, void *node, void *object);
 
 # Demolition/CDemolition_World.c: CDemolition_World (game +0x110, vtable 0x0026b0f8)
 000f6fe0 struct CDemolition_World *CDemolition_World_Construct(struct CDemolition_World *self);
@@ -184,3 +176,65 @@
 000f88a0 void CDemolition_World_DrawDecals(struct CDemolition_World *self);
 000f8930 int CDemolition_World_LoadLOM(struct CDemolition_World *self, void *package, const char *name);
 000f89e0 int CDemolition_World_Init(struct CDemolition_World *self, void *package, const char *level);
+
+# Demolition/CDemolition_CharLib.c: CDemolition_CharLib (vtable 0x0026b2c0) and the character manager (game +0x64, vtable 0x0026b3b8)
+000f8a50 struct CDemolition_CharLib *CDemolition_CharLib_Construct(struct CDemolition_CharLib *self);
+000f8ab0 int CDemolition_CharLib_Nothing(void *self, int arg);
+000f8ac0 void CDemolition_CharLib_Destruct(struct CDemolition_CharLib *self);
+000f8b20 void CDemolition_CharLibMgr_Destruct(struct CDemolition_CharLibMgr *self);
+000f8b30 void CDemolition_CharLibMgr_Update(struct CDemolition_CharLibMgr *self, float dt);
+000f8b60 void CDemolition_CharLibMgr_Draw(struct CDemolition_CharLibMgr *self);
+000f8c00 void CDemolition_CharLibMgr_DrawFx(struct CDemolition_CharLibMgr *self);
+000f8c30 void CDemolition_CharLibMgr_UpdateInput(struct CDemolition_CharLibMgr *self);
+000f8c60 void CDemolition_CharLibMgr_SetFrozen(struct CDemolition_CharLibMgr *self, int frozen);
+000f8c90 void *CDemolition_CharLib_Receiver_DeletingDestruct(void *receiver, unsigned int flags);
+000f8ca0 void *CDemolition_CharLib_DeletingDestruct(struct CDemolition_CharLib *self, unsigned int flags);
+000f8cc0 void CDemolition_CharLib_SetPosition(struct CDemolition_CharLib *self, float *pos);
+000f8d30 void CDemolition_CharLib_SetRotation(struct CDemolition_CharLib *self, float *euler);
+000f8d80 struct CDemolition_CharLibMgr *CDemolition_CharLibMgr_Construct(struct CDemolition_CharLibMgr *self);
+000f8da0 void *CDemolition_CharLibMgr_DeletingDestruct(struct CDemolition_CharLibMgr *self, unsigned int flags);
+000f8dc0 int CDemolition_CharLibMgr_Init(struct CDemolition_CharLibMgr *self, void *package);
+000f9210 void CDemolition_CharLibMgr_Shutdown(struct CDemolition_CharLibMgr *self);
+
+# Demolition/CDemolition_Player.c: CDemolition_Player (vtable 0x0026b448, receiver 0x0026b440 at +0x1130)
+000f92b0 struct CDemolition_Player *CDemolition_Player_Construct(struct CDemolition_Player *self);
+000f9310 void CDemolition_Player_Destruct(struct CDemolition_Player *self);
+000f9370 int CDemolition_Player_CreateActor(struct CDemolition_Player *self, int player);
+000f94c0 int CDemolition_Player_CreateInput(struct CDemolition_Player *self, int player);
+000f9740 void CDemolition_Player_Reset(struct CDemolition_Player *self);
+000f97f0 void CDemolition_Player_FindTeamMate(struct CDemolition_Player *self);
+000f9870 void CDemolition_Player_PlayHoldAnims(struct CDemolition_Player *self, float dt);
+000f9920 void CDemolition_Player_PlaceController(struct CDemolition_Player *self, float dt);
+000f99e0 void CDemolition_Player_SetCarry(struct CDemolition_Player *self, void *anim, void *node);
+000f9a00 void CDemolition_Player_DropCarry(struct CDemolition_Player *self);
+000f9a40 void CDemolition_Player_SetController(struct CDemolition_Player *self, void *anim, void *node, void *inst, void *handNode);
+000f9a90 void CDemolition_Player_StopControllerAnim(struct CDemolition_Player *self);
+000f9ad0 void CDemolition_Player_UpdateThrowFrag(struct CDemolition_Player *self, float dt);
+000f9bb0 void CDemolition_Player_DetonateFrag(struct CDemolition_Player *self);
+000f9c10 void CDemolition_Player_UpdateRemote(struct CDemolition_Player *self, float dt);
+000f9c80 void CDemolition_Player_HideControllerAnim(struct CDemolition_Player *self);
+000f9cd0 void CDemolition_Player_CheckFall(struct CDemolition_Player *self, float dt);
+000f9cf0 void CDemolition_Player_UpdateThrowCross(struct CDemolition_Player *self, float dt);
+000f9de0 void CDemolition_Player_DetonateCross(struct CDemolition_Player *self);
+000f9e40 int CDemolition_Player_CondStop(struct CDemolition_Player *self);
+000f9ee0 int CDemolition_Player_CondMove(struct CDemolition_Player *self);
+000f9f70 int CDemolition_Player_CondJump(struct CDemolition_Player *self);
+000f9fb0 int CDemolition_Player_CondGrounded(struct CDemolition_Player *self);
+000f9fe0 int CDemolition_Player_CondAction(struct CDemolition_Player *self);
+000fa010 int CDemolition_Player_CondFalling(struct CDemolition_Player *self);
+000fa070 int CDemolition_Player_StateLand(struct CDemolition_Player *self, int entered);
+000fa0e0 int CDemolition_Player_StateHurt(struct CDemolition_Player *self, int entered);
+000fa160 int CDemolition_Player_StateAttack(struct CDemolition_Player *self, int entered);
+000fa1e0 int CDemolition_Player_StateGetUp(struct CDemolition_Player *self, int entered);
+000fa290 int CDemolition_Player_StateVictory(struct CDemolition_Player *self, int entered);
+000fa330 void CDemolition_Player_Hit(struct CDemolition_Player *self, float *from, float damage, int how);
+000fa500 void *CDemolition_Player_Receiver_DeletingDestruct(void *receiver, unsigned int flags);
+000fa510 void *CDemolition_Player_DeletingDestruct(struct CDemolition_Player *self, unsigned int flags);
+000fa530 int CDemolition_Player_Init(struct CDemolition_Player *self, int index);
+000fa6a0 void CDemolition_Player_Shutdown(struct CDemolition_Player *self);
+000fa720 void CDemolition_Player_Draw(struct CDemolition_Player *self);
+000fa7e0 void CDemolition_Player_SetStart(struct CDemolition_Player *self, float *pos);
+000fa8d0 void CDemolition_Player_UpdateFrag(struct CDemolition_Player *self, float dt);
+000faa40 void CDemolition_Player_UpdateRemoteVariation(struct CDemolition_Player *self, float dt);
+000faa80 void CDemolition_Player_UpdateCross(struct CDemolition_Player *self, float dt);
+000fab10 void CDemolition_Player_ThrowCross(struct CDemolition_Player *self);

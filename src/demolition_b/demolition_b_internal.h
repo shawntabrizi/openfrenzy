@@ -32,6 +32,12 @@ static inline void db_message_send(void *receiver, struct DbMessage *message)
 #define DB_GAME_PLAYERS() ((char *)DB_PTR(DAT_002ff85c, 0x6c))
 #define DB_PLAYER_NEXT(p) ((char *)DB_PTR(p, 0x1140))
 
+/* a CharLib animation table entry ({ name[0x40], speed }; actor +0x324) */
+struct DbAnimName {
+	char name[0x40];
+	float speed;
+};
+
 /* distance between two points (x, y, z); in double, closer to the x87 extended precision
    the original compares in */
 static inline double db_dist3(const float *a, const float *b)

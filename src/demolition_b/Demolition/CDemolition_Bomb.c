@@ -195,10 +195,6 @@ void CDemolition_RemoteBomb_Destruct(struct CDemolition_RemoteBomb *self)
    (+0x324). CDemolition_RemoteBomb_CreateActor looks up 47 animations like every CharLib
    character; the original reads past these two entries into the following .data, where
    no name matches a sub-object. The port pads the table with empty names (no match). */
-struct DbAnimName {
-	char name[0x40];
-	float speed;
-};
 struct DbAnimName DAT_002978d8[47] = {
 	{ "idle", 0.05f },
 	{ "brun", 0.05f },
