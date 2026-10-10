@@ -246,7 +246,23 @@
 00190b60 void *CRollerBallRespawn_Respawn(void *self, unsigned char *player, const float *pos);
 
 # RollerBall/CRollerball_Goal.c
+00190b80 void *CRollerBallFlare_Ctor(void *self);
+00190ba0 void CRollerBallFlare_Dtor(void *self);
+00190bb0 void CRollerBallFlare_Update(void *self, float dt);
+00190c80 void *CRollerBallGoalFx_Ctor(void *self);
+00190ca0 void CRollerBallGoalFx_Dtor(void *self);
+00190cb0 void CRollerBallGoal_Draw(void *self);
 00190e10 void *CRollerBallGoals_Ctor(void *self);
 00190ea0 void CRollerBallGoals_Dtor(void *self);
 00190f20 void CRollerBallGoals_Shutdown(void *self);
 00190fe0 void CRollerBallGoals_Draw(void *self);
+00191040 void *CRollerBallFlare_DeletingDtor(void *self, unsigned int flags);
+00191060 int CRollerBallFlare_Init(void *self);
+00191110 void CRollerBallFlare_Start(void *self, const float *pos, int r, int g, int b);
+001911c0 void *CRollerBallGoalFx_DeletingDtor(void *self, unsigned int flags);
+001911e0 int CRollerBallGoalFx_Init(void *self);
+001912c0 void *CRollerBallGoal_DeletingDtor(void *self, unsigned int flags);
+001912e0 int CRollerBallGoal_Init(void *self);
+00191420 void CRollerBallGoal_Check(void *self);
+00191510 void *CRollerBallGoals_DeletingDtor(void *self, unsigned int flags);
+00191530 void CRollerBallGoals_AddGoal(void *self, int id, const float *pos, const float *dir);
