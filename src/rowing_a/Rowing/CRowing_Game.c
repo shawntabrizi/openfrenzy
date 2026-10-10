@@ -125,9 +125,11 @@ void FUN_0019d8d0(void *self)
 }
 
 /* 0x0019d8e0  Rowing (gap; missing from the table)
-Back to the 2D projection with no texture. */
-void FUN_0019d8e0(void)
+Back to the 2D projection with no texture (the game mode's slot via the thunk at
+0x001b6110; GAME is in ECX and not used). */
+void FUN_0019d8e0(void *game)
 {
+	(void)game;
 	bdSetProjectionMode(1);
 	bdSetTexture(0, NULL);
 }
@@ -136,13 +138,14 @@ void FUN_0019d8e0(void)
 While the game mode loads in the background (+0x14 of the game mode): a message at most
 once a second, and the game mode's UpdateLoading (slot +0x24) while background loading is
 on. */
-void FUN_0019d900(void *self)
+void FUN_0019d900(void *self, int top)
 {
 	void *mode = GAME_PTR(0x78);
 	unsigned long long now;
 	long long ms;
 	float freq, elapsed;
 
+	(void)top;
 	if (RA_I32(mode, 0x14) == 0)
 		return;
 	now = bkTimerRead();
@@ -1300,7 +1303,7 @@ void CRowingGame_Initialise(void *self)
 	rwb_Sound_Init(GAME_PTR(0x14), GAME_PTR(0x1c));
 	RA_U32(self, 0) &= ~3u;
 	bkPrintf("Sound ok\n");
-	FUN_001a57b0(0, 0, 3.0f, 0.3f, 0);
+	FUN_001a57b0(0.0f, 0.0f, 3.0f, 0.30000001f, 0.0f);
 	for (i = 0; i < DAT_002bae94; i++) {
 		DAT_002baee8[i * 10] = 0;
 		order[i] = i;
@@ -1449,4 +1452,1520 @@ variant:
 	GAME_I32(0x04) = 0;
 	GAME_I32(0x08) = 0;
 	GAME_I32(0x0c) = 0;
+}
+
+extern unsigned char DAT_00290f00[]; /* bumpercars_a: the "aisteam1" sprite defs (6) */
+extern int DAT_002ed324[];           /* classlib_ui: the rumble object */
+extern int DAT_002bae98;             /* core: the play mode (2: the board game) */
+extern int DAT_002ba56c;             /* bumpercars_b: the debug free camera is enabled */
+extern void *DAT_002ba97c;           /* core: the current CGame */
+extern int DAT_00283e58;             /* core: the "fast" cheat */
+extern int DAT_00283ef0;             /* core: a single human player gets the camera */
+extern int DAT_002baed8[];           /* core: per player record [i * 10]: human */
+
+#define g_CurrentFrameTime(self) RA_F32(RA_PTRF(self, 0x98), 0x9c)
+
+/* 0x001a1ac0  Rowing/CRowing_Game.cpp
+Begin (called by the game mode, rowing_b 0x001b6180, when the intro is over): sound
+fall-off distances, the engine sounds, the HUD list, the debris, the "aisteam1" sprites,
+the projector and the referee bot, the players' start, the buoys (world +0x1c8, one per
+world +0x268) and the debug free camera with its five points. */
+void CRowingGame_Begin(void *self)
+{
+	void *memory, *buoy, *list;
+	int i;
+
+	baFlushShaderCache();
+	DAT_0028ffa8 = 20000.0f;
+	DAT_0028ffac = 30000.0f;
+	GAME_I32(0x308) = 0;
+	rwb_Sound_Track(g_RowSound, rwb_Sound_Play(0, 0x80));
+	rwb_Sound_Track(g_RowSound, rwb_Sound_Play(3, 0x80));
+	if ((RA_U8(self, 0) & 0xc) == 8)
+		rwb_Sound_Track(g_RowSound, rwb_Sound_Play(0xe, 0x96));
+	if ((RA_U8(self, 0) & 0xc) == 0xc) {
+		GAME_I32(0x318) = rwb_Sound_PlayAt(4, RA_GPTR(float, 0x002b5620), 0x7f);
+		rwb_Sound_Track(g_RowSound, GAME_I32(0x318));
+		GAME_I32(0x31c) = rwb_Sound_PlayAt(5, RA_GPTR(float, 0x002b5620), 0x7f);
+		rwb_Sound_Track(g_RowSound, GAME_I32(0x31c));
+		GAME_F32(0x320) = 1.0f;
+		GAME_F32(0x324) = 1.0f;
+	}
+	memory = RA_NEW(0xc, RA_FILE_GAME, 0x7bd);
+	list = NULL;
+	if (memory != NULL) {
+		CLList_Init((int *)memory);
+		list = memory;
+	}
+	GAME_PTR(0x38) = list;
+	FUN_00072720((undefined4)(uintptr_t)list);
+	FUN_001b0f70(GAME_PTR(0x8c));
+	Debris_Init(NULL, 1000);
+	Sprite_LoadDefs((struct CSpriteDef *)DAT_00290f00, 6, 0);
+	CProjector_Reset();
+	RefBot_Create();
+	for (i = 0; i < GAME_I32(0x24); i++)
+		FUN_001a8940(g_RowPlayer(i), 4);
+	for (i = 0; i < RA_I32(GAME_PTR(0x7c), 0x268); i++) {
+		memory = RA_NEW(0xe0, RA_FILE_GAME, 0x7d2);
+		buoy = memory != NULL
+			? rwb_Buoy_Ctor(memory, RA_FP(GAME_PTR(0x7c), 0x1c8 + i * 0x10), RA_I32(GAME_PTR(0x7c), 0x248 + i * 4))
+			: NULL;
+		RA_PTRF(self, 0x274 + i * 4) = buoy;
+	}
+	if (DAT_002ba56c != 0) {
+		memory = RA_NEW(0x26c, RA_FILE_GAME, 0x7e1);
+		if (memory != NULL)
+			BCarFreeCamera_Construct((struct BCarFreeCamera *)memory, 0, 20.0f, 1);
+		for (i = 0; i < 5; i++)
+			BCarFreeCamera_AddPoint((struct BCarFreeCamera *)DAT_002f26c4, RA_GPTR(float, 0x002b55d0 + i * 0x10));
+	}
+}
+
+/* 0x001a1d60  Rowing/CRowing_Game.cpp
+Variant 3: steam around the whirlpool at the water's centre, more the less time is left
+(1 + 2t puffs, t = the elapsed fraction of the whirlpool time). */
+void CRowingGame_EmitSteam(void *self)
+{
+	float t, n, spread, rise, size, height, pos[4];
+	int i;
+
+	if (RA_U8(self, 8) & 1)
+		return;
+	t = (RW_VAR(float, 0x002b5494) - GAME_F32(0x34) * 0.001f) / RW_VAR(float, 0x002b5494);
+	n = (0.5f + t) + (0.5f + t);
+	if (!(0.0f < n))
+		return;
+	spread = t + t + 1.0f;
+	rise = 200.0f * t + 100.0f;
+	size = (t + 1.0f) * 20.0f;
+	i = 0;
+	do {
+		height = FUN_001a4b10(GAME_PTR(0x80), 0.0f, 0.0f);
+		pos[0] = ((float)rw_rand() * 0.00305185094f - 50.0f) * spread;
+		pos[2] = ((float)rw_rand() * 0.00305185094f - 50.0f) * spread;
+		pos[1] = (height + 150.0f) - (float)rw_rand() * rise * rw_bitsf(0x38000100);
+		pos[3] = 1.0f;
+		RowParticles_AddSteam((struct RowParticles *)GAME_PTR(0x90), pos,
+			(float)rw_rand() * size * rw_bitsf(0x38000100) + 30.0f, 0.0f);
+		i++;
+	} while ((float)i < n);
+}
+
+/* 0x001a1f20  Rowing/CRowing_Game.cpp
+The camera: the intro fly-by (CLIntroCam) until it ends or a player presses a button,
+then the race camera (FUN_001aeb90). In variant 2 the intro starts slowly. */
+void CRowingGame_UpdateCamera(void *self)
+{
+	void *cam;
+	float fov, step, eye[4], target[4];
+	int i, skip, frames, n;
+
+	FUN_001adea0(GAME_PTR(0x84), g_CurrentFrameTime(self));
+	if (DAT_002baeb8 != 0) {
+		if ((RA_U32(self, 0) & 1) == 0) {
+			RA_U32(self, 0) |= 1;
+			GAME_I32(0x04) = 1;
+			GAME_I32(0x08) = 0;
+			GAME_I32(0x0c) = 0;
+		}
+		FUN_001aeb90(GAME_PTR(0x84), g_CurrentFrameTime(self));
+		if (GAME_I32(0x08) != 0)
+			return;
+		cam = GAME_PTR(0x84);
+		RA_F32(cam, 0x0c) = RA_F32(cam, 0x1c);
+		RA_F32(cam, 0x10) = RA_F32(cam, 0x20);
+		RA_F32(cam, 0x14) = RA_F32(cam, 0x24);
+		RA_F32(cam, 0x18) = RA_F32(cam, 0x28);
+		RA_F32(cam, 0x2c) = RA_F32(cam, 0x3c);
+		RA_F32(cam, 0x30) = RA_F32(cam, 0x40);
+		RA_F32(cam, 0x34) = RA_F32(cam, 0x44);
+		RA_F32(cam, 0x38) = RA_F32(cam, 0x48);
+		return;
+	}
+	if ((RA_U8(self, 0) & 1) == 0) {
+		CLIntroCam_GetCurrentFov(&fov);
+		FUN_001ae2e0(GAME_PTR(0x84), fov);
+		skip = 0;
+		for (i = 0; i < GAME_I32(0x24); i++) {
+			if (FUN_001a76e0(g_RowPlayer(i)) != 0)
+				skip = 1;
+		}
+		if (!skip) {
+			if ((RA_U8(self, 0) & 0xc) == 4) {
+				n = GAME_I32(0x08);
+				if (n < 1)
+					step = g_CurrentFrameTime(self);
+				else if (n < 10)
+					step = 0.0f;
+				else if (n > 0x1d)
+					step = g_CurrentFrameTime(self);
+				else
+					step = (float)(n - 10) * g_CurrentFrameTime(self) * 0.050000001f;
+			} else {
+				step = g_CurrentFrameTime(self);
+			}
+			if (CLIntroCam_Update(step, 0) != 1)
+				return;
+		}
+		RA_U32(self, 0) |= 1;
+		GAME_I32(0x04) = 1;
+		GAME_I32(0x08) = 0;
+		GAME_I32(0x0c) = 0;
+		CLIntroCam_Stop();
+		frames = CLIntroCam_GetFrameCount() - 1;
+		CLIntroCam_GetPosition(eye, (float)frames);
+		frames = CLIntroCam_GetFrameCount() - 1;
+		CLIntroCam_GetTarget(target, (float)frames);
+		bdSetFieldOfView(1.22173f, 0.91629785f);
+		FUN_001ae2e0(GAME_PTR(0x84), 1.22173f);
+	}
+	FUN_001aeb90(GAME_PTR(0x84), g_CurrentFrameTime(self));
+}
+
+/* 0x001a2130  Rowing/CRowing_Game.cpp
+Picks the two boats nearest to the camera (in front of it, visible, afloat and with a
+driver) for the detailed models; the others get the simple ones (FUN_001abb70). Only during
+the intro (state 0) and the results (state 6). */
+void CRowingGame_UpdateCloseups(void *self)
+{
+	float best, second, d, eye[4], target[4], diff[3], dir[3];
+	void *p, *cam;
+	int i, count, bestIdx, secondIdx;
+
+	count = 0;
+	bestIdx = -1;
+	secondIdx = -1;
+	best = 2000.0f;
+	second = 2000.0f;
+	if (GAME_I32(0x04) == 6 || GAME_I32(0x04) == 0) {
+		if (GAME_I32(0x04) == 0) {
+			CLIntroCam_GetPosition(eye, CLIntroCam_GetTime());
+			CLIntroCam_GetTarget(target, CLIntroCam_GetTime());
+		} else {
+			cam = GAME_PTR(0x84);
+			eye[0] = RA_F32(cam, 0x2c);
+			eye[1] = RA_F32(cam, 0x30);
+			eye[2] = RA_F32(cam, 0x34);
+			eye[3] = RA_F32(cam, 0x38);
+			target[0] = RA_F32(cam, 0x0c);
+			target[1] = RA_F32(cam, 0x10);
+			target[2] = RA_F32(cam, 0x14);
+			target[3] = RA_F32(cam, 0x18);
+		}
+		diff[0] = target[0] - eye[0];
+		diff[1] = target[1] - eye[1];
+		diff[2] = target[2] - eye[2];
+		bmVectorSetLength(dir, diff, 1.0f);
+		for (i = 0; i < 4; i++) {
+			p = g_RowPlayer(i);
+			d = dir[0] * (RA_F32(p, 0x2b4) - eye[0]) + dir[1] * (RA_F32(p, 0x2b8) - eye[1]) +
+				dir[2] * (RA_F32(p, 0x2bc) - eye[2]);
+			if (d < -100.0f)
+				d = 1e7f;
+			if (bdSphereVisible(RA_FP(p, 0x2b4), 300.0f) == 0)
+				d = 1e7f;
+			if (RA_U8(g_RowPlayer(i), 0x34a) != 0 || RA_U8(g_RowPlayer(i), 0x37c) == 0)
+				d = 1e7f;
+			if (d < best) {
+				second = best;
+				secondIdx = bestIdx;
+				best = d;
+				bestIdx = i;
+				if (count < 2)
+					count++;
+			} else if (d < second) {
+				second = d;
+				secondIdx = i;
+				if (count < 2)
+					count++;
+			}
+		}
+	}
+	for (i = 0; i < 4; i++)
+		FUN_001abb70(g_RowPlayer(i), (i == bestIdx || i == secondIdx) ? 0 : 1, 0);
+}
+
+/* deletes a tweak menu */
+static void ra_DeleteMenu(void *self, int off)
+{
+	void *menu = RA_PTRF(self, off);
+
+	if (menu != NULL) {
+		CTweakMenu_Dtor((struct CTweakMenu *)menu);
+		RA_DELETE(menu);
+		RA_PTRF(self, off) = NULL;
+	}
+}
+
+/* 0x001a2330  Rowing/CRowing_Game.cpp
+The game mode left before loading finished: closes the packages and deletes the tweak
+menus (rowing_b 0x001b6200). */
+void CRowingGame_Abort(void *self)
+{
+	if (GAME_PTR(0x14) != NULL)
+		bkClosePackageThunk((struct bkPackage *)GAME_PTR(0x14));
+	if (GAME_PTR(0x1c) != NULL)
+		bkClosePackageThunk((struct bkPackage *)GAME_PTR(0x1c));
+	ra_DeleteMenu(self, 0x2f8);
+	ra_DeleteMenu(self, 0x2fc);
+	ra_DeleteMenu(self, 0x300);
+	ra_DeleteMenu(self, 0x304);
+}
+
+/* deletes a particle system (Release, then the deleting destructor) */
+static void ra_DeleteSystem(void *ps)
+{
+	RA_VFN(ps, 0x00, void (*)(void *))(ps);
+	if (ps != NULL)
+		RA_VFN(ps, 0x14, void (*)(void *, int))(ps, 1);
+}
+
+/* 0x001a23e0  Rowing/CRowing_Game.cpp
+Shutdown (rowing_b 0x001b6200): restores the sound fall-off distances and deletes
+everything Initialise and Begin created; closes the packages unless the game mode still
+loads in the background. */
+void CRowingGame_Shutdown(void *self)
+{
+	void *p;
+	int i;
+
+	DAT_0028ffa8 = GAME_F32(0x32c);
+	DAT_0028ffac = GAME_F32(0x330);
+	baFlushShaderCache();
+	p = DAT_002f26c4;
+	if (DAT_002f26c4 != NULL) {
+		BCarFreeCamera_Destruct((struct BCarFreeCamera *)DAT_002f26c4);
+		RA_DELETE(p);
+	}
+	RefBot_Delete();
+	CLDebris_Start();
+	Sprite_FreeDefs((struct CSpriteDef *)DAT_00290f00, 6);
+	CTweakMenu_SaveAll();
+	CLRumble_Shutdown(DAT_002ed324);
+	if ((RA_U8(self, 0) & 0xc) == 0xc && GAME_PTR(0xb4) != NULL) {
+		ra_DeleteSystem(GAME_PTR(0xb4));
+		GAME_PTR(0xb4) = NULL;
+		ra_DeleteSystem(GAME_PTR(0xb8));
+		ra_DeleteSystem(GAME_PTR(0xbc));
+	}
+	if (GAME_PTR(0xb0) != NULL) {
+		bkDeleteResource((struct bkResource *)GAME_PTR(0xb0));
+		GAME_PTR(0xb0) = NULL;
+	}
+	p = GAME_PTR(0x8c);
+	if (p != NULL) {
+		FUN_001d5950();
+		RA_DELETE(p);
+		GAME_PTR(0x8c) = NULL;
+	}
+	if (GAME_PTR(0xac) != NULL) {
+		baDeleteExtraSystem(*(struct BExtraSystem **)GAME_PTR(0xac));
+		RA_DELETE(GAME_PTR(0xac));
+		GAME_PTR(0xac) = NULL;
+	}
+	if (GAME_I32(0x308) != 0)
+		CLHud_DeleteWinnerText(DAT_002ecfac);
+	ra_DeleteMenu(self, 0x2f8);
+	ra_DeleteMenu(self, 0x2fc);
+	ra_DeleteMenu(self, 0x300);
+	ra_DeleteMenu(self, 0x304);
+	p = GAME_PTR(0xa4);
+	if (p != NULL) {
+		rwb_Lights_Dtor(p);
+		RA_DELETE(p);
+		GAME_PTR(0xa4) = NULL;
+	}
+	for (i = 0; i < 2; i++) {
+		p = RA_PTRF(self, 0x30c + i * 4);
+		if (p != NULL) {
+			ra_DeleteSystem(p);
+			RA_PTRF(self, 0x30c + i * 4) = NULL;
+		}
+	}
+	if (GAME_PTR(0x9c) != NULL) {
+		FUN_001d5950();
+		if (GAME_PTR(0x9c) != NULL)
+			RA_VFN(GAME_PTR(0x9c), 0x00, void (*)(void *, int))(GAME_PTR(0x9c), 1);
+		GAME_PTR(0x9c) = NULL;
+	}
+	if (GAME_PTR(0x80) != NULL) {
+		RA_VFN(GAME_PTR(0x80), 0x00, void (*)(void *, int))(GAME_PTR(0x80), 1);
+		GAME_PTR(0x80) = NULL;
+	}
+	if (GAME_PTR(0x98) != NULL) {
+		FUN_001af450(GAME_PTR(0x98));
+		if (GAME_PTR(0x98) != NULL)
+			RA_VFN(GAME_PTR(0x98), 0x00, void (*)(void *, int))(GAME_PTR(0x98), 1);
+		GAME_PTR(0x98) = NULL;
+	}
+	if (GAME_PTR(0x270) != NULL) {
+		rwb_Obj270_Dtor(GAME_PTR(0x270));
+		if (GAME_PTR(0x270) != NULL)
+			RA_VFN(GAME_PTR(0x270), 0x00, void (*)(void *, int))(GAME_PTR(0x270), 1);
+		GAME_PTR(0x270) = NULL;
+	}
+	if (GAME_PTR(0x84) != NULL) {
+		FUN_001d5950();
+		p = GAME_PTR(0x84);
+		if (p != NULL) {
+			FUN_001d5950();
+			RA_DELETE(p);
+		}
+		GAME_PTR(0x84) = NULL;
+	}
+	if (GAME_PTR(0x90) != NULL) {
+		RowParticles_Free((struct RowParticles *)GAME_PTR(0x90));
+		RA_DELETE(GAME_PTR(0x90));
+		GAME_PTR(0x90) = NULL;
+	}
+	if (GAME_PTR(0x88) != NULL) {
+		RowSprites_Free();
+		p = GAME_PTR(0x88);
+		if (p != NULL) {
+			FUN_001d5950();
+			RA_DELETE(p);
+		}
+		GAME_PTR(0x88) = NULL;
+	}
+	if (GAME_PTR(0x94) != NULL) {
+		FUN_001af9a0(GAME_PTR(0x94));
+		RA_DELETE(GAME_PTR(0x94));
+		GAME_PTR(0x94) = NULL;
+	}
+	if (GAME_PTR(0xa0) != NULL) {
+		CDemoTokenSystem_Shutdown(GAME_PTR(0xa0));
+		RA_DELETE(GAME_PTR(0xa0));
+		GAME_PTR(0xa0) = NULL;
+	}
+	for (i = 0; i < 4; i++) {
+		p = g_RowPlayer(i);
+		if (p != NULL) {
+			FUN_001adbf0(p);
+			p = g_RowPlayer(i);
+			if (p != NULL) {
+				FUN_0019d8d0(p);
+				RA_DELETE(p);
+			}
+			g_RowPlayer(i) = NULL;
+		}
+	}
+	if (GAME_PTR(0x7c) != NULL) {
+		for (i = 0; i < RA_I32(GAME_PTR(0x7c), 0x268); i++) {
+			p = RA_PTRF(self, 0x274 + i * 4);
+			if (p != NULL) {
+				rwb_Buoy_Dtor(p);
+				RA_DELETE(p);
+				RA_PTRF(self, 0x274 + i * 4) = NULL;
+			}
+		}
+		rwb_World_Shutdown(GAME_PTR(0x7c));
+		p = GAME_PTR(0x7c);
+		if (p != NULL) {
+			FUN_001d5950();
+			RA_DELETE(p);
+		}
+		GAME_PTR(0x7c) = NULL;
+	}
+	FUN_001a5970();
+	if (g_RowSound != NULL)
+		rwb_Sound_Shutdown(g_RowSound);
+	bkDeletePackageResources((uint)GAME_I32(0x18), 1);
+	bkDeletePackageResources((uint)GAME_I32(0x20), 1);
+	DebugCam_Shutdown();
+	CProjector_DeleteAll();
+	if (GAME_PTR(0x38) != NULL) {
+		COverlay_DeleteAll();
+		p = GAME_PTR(0x38);
+		if (p != NULL) {
+			FUN_001d5950();
+			RA_DELETE(p);
+		}
+		GAME_PTR(0x38) = NULL;
+	}
+	p = GAME_PTR(0x40);
+	if (p != NULL) {
+		CSeagulls_Release((struct CSeagulls *)p);
+		RA_DELETE(p);
+		GAME_PTR(0x40) = NULL;
+		bkDeleteResource((struct bkResource *)GAME_PTR(0x44));
+	}
+	if (RA_I32(GAME_PTR(0x78), 0x14) == 0) {
+		if (GAME_PTR(0x14) != NULL)
+			bkClosePackageThunk((struct bkPackage *)GAME_PTR(0x14));
+		if (GAME_PTR(0x1c) != NULL)
+			bkClosePackageThunk((struct bkPackage *)GAME_PTR(0x1c));
+	}
+}
+
+/* steps an animated texture: FRAME (float, game +off) advances by the frame time and wraps
+at the frame count (game +countOff) */
+static void ra_AnimateTexture(void *self, int texOff, int countOff, int frameOff)
+{
+	struct bdTexture *tex = (struct bdTexture *)RA_PTRF(self, texOff);
+	int frames;
+
+	if (tex == NULL)
+		return;
+	frames = RA_I32(self, countOff);
+	if (frames == 0)
+		return;
+	RA_F32(self, frameOff) = g_CurrentFrameTime(self) + RA_F32(self, frameOff);
+	if ((int)RA_F32(self, frameOff) >= frames) {
+		float f = (float)frames;
+
+		do
+			RA_F32(self, frameOff) = RA_F32(self, frameOff) - f;
+		while ((int)RA_F32(self, frameOff) >= RA_I32(self, countOff));
+	}
+	bdTextureSetFrame(tex, (int)RA_F32(self, frameOff));
+}
+
+/* 0x001a2890  Rowing (missing from the table; CRowing_Game.cpp inferred)
+The update (the game mode's Update slot via the thunk at 0x001b6130, TOP != 0): pause,
+the frame clock, the colour set, the single-human camera, the boats, the camera, the
+world, ambient sounds, the variant's animation and effects (water jets, buoys, steam,
+waterfall, mines), the boat lights, the extras, the game state machine (0 intro, 1 start,
+5 race, 6 results) and the water. */
+void FUN_001a2890(void *self, int top)
+{
+	void *p, *obj;
+	float pos[4], t, amount;
+	int i, n, count, human, found, scores[4], drops;
+	unsigned int r;
+
+	if (top == 0)
+		return;
+	FUN_001af460(GAME_PTR(0x98));
+	if (DAT_002ecdec != 0) {
+		if ((RA_U8(self, 0) & 1) == 0) {
+			CLIntroCam_Update(0.0f, 0);
+			CLPause_Update((undefined4 *)DAT_002ecd90);
+			return;
+		}
+		FUN_001aeb90(GAME_PTR(0x84), 0.0f);
+		CLPause_Update((undefined4 *)DAT_002ecd90);
+		return;
+	}
+	FUN_001af540(GAME_PTR(0x98), 0);
+	CFire_Timer_End((struct CFire_Timer *)GAME_PTR(0x98), 0);
+	FUN_001a57f0();
+	FUN_001af680(GAME_PTR(0x98), 0xffffffff);
+	if (DAT_00283e58 != 0)
+		g_CurrentFrameTime(self) = g_CurrentFrameTime(self) * 1.5f;
+	if (DAT_00283ea4 != GAME_I32(0x328)) {
+		GAME_I32(0x328) = DAT_00283ea4;
+		for (i = 0; i < DAT_002bae94; i++)
+			Core_SetCharacterColours(RA_PTRF(g_RowPlayer(i), 0xc4), DAT_00283ea4);
+	}
+	GAME_I32(0xc0) = 0;
+	if (DAT_00283ef0 != 0) {
+		count = 0;
+		human = -1;
+		for (i = 0; i < DAT_002bae94; i++) {
+			if (DAT_002baed8[i * 10] != 0) {
+				count++;
+				human = i;
+			}
+		}
+		if (count == 1) {
+			GAME_I32(0xc0) = count;
+			GAME_I32(0xc4) = human;
+		}
+	}
+	for (i = 0; i < GAME_I32(0x24); i++)
+		FUN_001ac8f0(g_RowPlayer(i), g_CurrentFrameTime(self));
+	FUN_001af680(GAME_PTR(0x98), 0xff0000ff);
+	*(int *)GAME_PTR(0x84) = RW_VAR(int, 0x0030f0a4);
+	CRowingGame_UpdateCamera(self);
+	if (GAME_PTR(0xa0) != NULL)
+		rwb_Tokens_Update(GAME_PTR(0xa0));
+	rwb_World_Tick(GAME_PTR(0x7c), g_CurrentFrameTime(self));
+	for (i = 0; i < 2; i++) {
+		p = RA_PTRF(self, 0x30c + i * 4);
+		if (p != NULL)
+			RA_VFN(p, 0x04, void (*)(void *, float))(p, g_CurrentFrameTime(self));
+	}
+	if (GAME_PTR(0x40) != NULL)
+		CSeagulls_Tick((struct CSeagulls *)GAME_PTR(0x40), g_CurrentFrameTime(self));
+	/* ambient sounds: a random one of 0x16-0x18 about every 3 s, 0x19/0x1a now and then */
+	r = (unsigned int)rw_rand();
+	RW_VAR(int, 0x0030f404)--;
+	if (r % 1000 < 12 || RW_VAR(int, 0x0030f404) < 1) {
+		rwb_Sound_PlayRandom(rw_rand() % 3 + 0x16, 0x40);
+		RW_VAR(int, 0x0030f404) = 0xb4;
+	}
+	r = (unsigned int)rw_rand();
+	RW_VAR(int, 0x0030f400)++;
+	if (r % 1000 < 6 && RW_VAR(int, 0x0030f400) >= 0x1c2) {
+		rwb_Sound_PlayRandom((rw_rand() & 1) + 0x19, 0xff);
+		RW_VAR(int, 0x0030f400) = 0;
+	}
+	switch (GAME_VARIANT) {
+	case 0:
+		ra_AnimateTexture(self, 0x258, 0x260, 0x268);
+		/* the gull obstacle box follows the cargo lifter */
+		if (RA_PTRF(GAME_PTR(0x7c), 0x2f4) != NULL && GAME_PTR(0x74) != NULL) {
+			baGetNodePosition((struct BActorInstance *)RA_PTRF(RA_PTRF(GAME_PTR(0x7c), 0x2f4), 0xc),
+				(struct BActorNode *)GAME_PTR(0x74), pos);
+			GAME_F32(0x48) = pos[0] - 300.0f;
+			GAME_F32(0x4c) = pos[1] - 300.0f;
+			GAME_F32(0x50) = pos[2] - 300.0f;
+			GAME_F32(0x58) = pos[0] + 300.0f;
+			GAME_F32(0x5c) = pos[1] + 300.0f;
+			GAME_F32(0x60) = pos[2] + 300.0f;
+		}
+		break;
+	case 1:
+		for (i = 0; i < RA_I32(GAME_PTR(0x7c), 0x268); i++)
+			rwb_Buoy_Update(RA_PTRF(self, 0x274 + i * 4), g_CurrentFrameTime(self));
+		break;
+	case 2:
+		ra_AnimateTexture(self, 0x258, 0x260, 0x268);
+		CRowingGame_EmitSteam(self);
+		break;
+	case 3:
+		/* the waterfall's two sounds wander in pitch between 0.5 and 2 */
+		GAME_F32(0x320) = (float)rw_rand() * 3.05185097e-07f + GAME_F32(0x320);
+		GAME_F32(0x324) = (float)rw_rand() * 3.05185097e-07f + GAME_F32(0x324);
+		if (GAME_F32(0x320) > 2.0f)
+			GAME_F32(0x320) = 2.0f;
+		if (GAME_F32(0x324) > 2.0f)
+			GAME_F32(0x324) = 2.0f;
+		if (GAME_F32(0x320) < 0.5f)
+			GAME_F32(0x320) = 0.5f;
+		if (GAME_F32(0x324) < 0.5f)
+			GAME_F32(0x324) = 0.5f;
+		rwb_Sound_SetPitch(GAME_I32(0x318), 4, GAME_F32(0x320));
+		rwb_Sound_SetPitch(GAME_I32(0x31c), 5, GAME_F32(0x324));
+		ra_AnimateTexture(self, 0x258, 0x260, 0x268);
+		ra_AnimateTexture(self, 0x25c, 0x264, 0x26c);
+		/* spray at the foot and at the top of the waterfall */
+		{
+			float w = RW_VAR(float, 0x002b5630), c = RW_VAR(float, 0x002b5634);
+			float x, z;
+
+			x = (c - w * 0.5f) + (float)rw_rand() * (w - 40.0f) * rw_bitsf(0x38000100);
+			z = -((float)rw_rand() * 0.00457777642f) - 40.0f;
+			pos[0] = x;
+			pos[1] = -40.0f;
+			pos[2] = z;
+			RowParticles_AddSteam((struct RowParticles *)GAME_PTR(0x90), pos, 40.0f,
+				(float)rw_rand() * 0.00122074038f + 20.0f);
+			x = (c - w * 0.5f) + (float)rw_rand() * (w + 40.0f) * rw_bitsf(0x38000100);
+			pos[1] = (float)rw_rand() * 0.00915555283f - 200.0f;
+			z = (-((float)rw_rand() * 0.00457777642f) - 1800.0f) - 40.0f;
+			pos[0] = x;
+			pos[2] = z;
+			RowParticles_AddSteam((struct RowParticles *)GAME_PTR(0x90), pos, 40.0f,
+				(float)rw_rand() * 0.000610370189f + 20.0f);
+			for (i = 0; i < 2; i++) {
+				w = RW_VAR(float, 0x002b5630);
+				c = RW_VAR(float, 0x002b5634);
+				pos[0] = (c - w * 0.5f) + (float)rw_rand() * (w + 30.0f) * rw_bitsf(0x38000100);
+				pos[2] = (float)rw_rand() * 0.00183111057f - 1830.0f;
+				pos[1] = 0.0f;
+				obj = RowParticles_AddSteam((struct RowParticles *)GAME_PTR(0x90), pos, 30.0f,
+					(float)rw_rand() * 0.000305185094f + 10.0f);
+				if (obj != NULL)
+					RA_F32(obj, 0x18) = RA_F32(obj, 0x18) * rw_bitsf(0x3eaaaaab);
+			}
+		}
+		if (GAME_PTR(0x80) != NULL) {
+			float base = RW_VAR(float, 0x002b5634) - RW_VAR(float, 0x002b5630) * 0.5f;
+
+			r = (unsigned int)rw_rand();
+			RA_VFN(GAME_PTR(0x80), 0x28, int (*)(void *, float, float, float, float, float))(GAME_PTR(0x80),
+				(float)r * RW_VAR(float, 0x002b5630) * rw_bitsf(0x38000100) + base, 0.0f, -5.0f,
+				32.44f, 62.44f);
+		}
+		/* a mine starts drifting over the waterfall every "mine time" */
+		if (GAME_F32(0x314) < 0.0f) {
+			GAME_I32(0x314) = RW_VAR(int, 0x002b549c);
+			found = 0;
+			for (i = 0; i < 10 && !found; i++) {
+				obj = RA_PTRF(self, 0xc8 + (rw_rand() % 100) * 4);
+				if ((RA_U8(obj, 0x18) & 1) == 0) {
+					found = 1;
+					rwb_Mine_Trigger(obj, 0.0f, GAME_F32(0x28), 1);
+				}
+			}
+		} else {
+			GAME_F32(0x314) = GAME_F32(0x314) - g_CurrentFrameTime(self);
+		}
+		RA_VFN(GAME_PTR(0xb4), 0x04, void (*)(void *, float))(GAME_PTR(0xb4), g_CurrentFrameTime(self));
+		RA_VFN(GAME_PTR(0xb8), 0x04, void (*)(void *, float))(GAME_PTR(0xb8), g_CurrentFrameTime(self));
+		RA_VFN(GAME_PTR(0xbc), 0x04, void (*)(void *, float))(GAME_PTR(0xbc), g_CurrentFrameTime(self));
+		break;
+	}
+	CRowingGame_UpdateCloseups(self);
+	FUN_001b10a0(GAME_PTR(0x8c), g_CurrentFrameTime(self));
+	/* each boat's light floats 250 ahead of it and 150 up */
+	if (GAME_PTR(0x2e4) != NULL) {
+		for (i = 0; i < DAT_002bae94; i++) {
+			p = g_RowPlayer(i);
+			pos[0] = RA_F32(p, 0x2b4);
+			pos[1] = RA_F32(p, 0x2b8);
+			pos[2] = RA_F32(p, 0x2bc);
+			pos[3] = RA_F32(p, 0x2c0);
+			pos[0] = sinf(RA_F32(p, 0x2c8)) * 250.0f + pos[0];
+			pos[1] = pos[1] + 150.0f;
+			pos[2] = pos[2] - cosf(RA_F32(p, 0x2c8)) * 250.0f;
+			rwb_Lights_SetPosition(GAME_PTR(0xa4), RA_PTRF(self, 0x2e4 + i * 4), pos);
+			GAME_I32(0x2f4) = rw_rand() & 3;
+		}
+	}
+	{
+		void *cam = GAME_PTR(0x84);
+
+		RA_F32(GAME_PTR(0xac), 4) = 1.57079625f -
+			atan2f(RA_F32(cam, 0x14) - RA_F32(cam, 0x34), RA_F32(cam, 0x0c) - RA_F32(cam, 0x2c));
+	}
+	FUN_001af680(GAME_PTR(0x98), 0xffffffff);
+	CProjector_UpdateAll();
+	baUpdateExtras(NULL, (void *)(uintptr_t)rw_fbits(DAT_0028fda8 * 0.0166666675f));
+	/* debug markers (empty functions in the release build) */
+	p = g_RowPlayer(*(int *)GAME_PTR(0x8c));
+	pos[0] = RA_F32(p, 0x2b4);
+	pos[1] = RA_F32(p, 0x2b8);
+	pos[2] = RA_F32(p, 0x2bc);
+	pos[3] = RA_F32(p, 0x2c0);
+	if (pos[1] < -100.0f)
+		pos[1] = -100.0f;
+	FUN_001d5950();
+	if ((rw_rand() & 0x7fff) > 0x7e90) {
+		p = g_RowPlayer(rw_rand() & 3);
+		pos[0] = RA_F32(p, 0x2b4);
+		pos[1] = RA_F32(p, 0x2b8);
+		pos[2] = RA_F32(p, 0x2bc);
+		pos[3] = RA_F32(p, 0x2c0);
+		if (pos[1] < -100.0f)
+			pos[1] = -100.0f;
+		FUN_001d5950();
+	}
+	FUN_001d5950();
+	RefBot_Update();
+	FUN_001af680(GAME_PTR(0x98), 0xff808000);
+	RowParticles_Update((struct RowParticles *)GAME_PTR(0x90));
+	n = GAME_I32(0x08) + 1;
+	GAME_I32(0x08) = n;
+	GAME_F32(0x0c) = g_CurrentFrameTime(self) + GAME_F32(0x0c);
+	switch (GAME_I32(0x04)) {
+	case 0:
+		if ((RA_U8(self, 0) & 0xc) == 0 && n == 1)
+			rwb_Sound_Play(0x15, 0x80);
+		break;
+	case 1:
+		if (DAT_002baeb8 == 0) {
+			if (n == 1) {
+				CLHud_StartBars((float *)(uintptr_t)DAT_002ecfac, 280.0f);
+				break;
+			}
+			if (CLHud_UpdateCountdown(DAT_002ecfac) == 0)
+				break;
+		}
+		for (i = 0; i < GAME_I32(0x24); i++)
+			FUN_001a8940(g_RowPlayer(i), 0);
+		GAME_I32(0x04) = 5;
+		GAME_I32(0x08) = 0;
+		GAME_I32(0x0c) = 0;
+		break;
+	case 5:
+		switch (GAME_VARIANT) {
+		case 2:
+			GAME_F32(0x30) = RA_F32(GAME_PTR(0x98), 0x98) * 0.0303030312f * RW_VAR(float, 0x002b5648) + GAME_F32(0x30);
+			if (GAME_F32(0x30) > RW_VAR(float, 0x002b564c))
+				GAME_F32(0x30) = RW_VAR(float, 0x002b564c);
+			GAME_F32(0x2c) = RA_F32(GAME_PTR(0x98), 0x98) * 0.0303030312f * RW_VAR(float, 0x002b5654) + GAME_F32(0x2c);
+			if (GAME_F32(0x2c) > RW_VAR(float, 0x002b5658))
+				GAME_F32(0x2c) = RW_VAR(float, 0x002b5658);
+			break;
+		case 3:
+			GAME_F32(0x28) = RA_F32(GAME_PTR(0x98), 0x98) * 0.0303030312f * RW_VAR(float, 0x002b563c) + GAME_F32(0x28);
+			if (GAME_F32(0x28) > RW_VAR(float, 0x002b5640))
+				GAME_F32(0x28) = RW_VAR(float, 0x002b5640);
+			break;
+		}
+		if (DebugCam_IsActive() == 0) {
+			GAME_F32(0x34) = GAME_F32(0x34) - RA_F32(GAME_PTR(0x98), 0x98);
+			if (GAME_F32(0x34) < 0.0f)
+				GAME_I32(0x34) = 0;
+		}
+		GAME_I32(0x10) = FUN_0019dad0(self);
+		if (GAME_I32(0x10) >= 0) {
+			GAME_I32(0x04) = 6;
+			GAME_I32(0x08) = 0;
+			GAME_I32(0x0c) = 0;
+			FUN_001ade80(GAME_PTR(0x84), -1);
+			FUN_001b0e50(GAME_PTR(0x8c));
+			if ((RA_U8(self, 0) & 0xc) == 8)
+				FUN_001a5610(GAME_PTR(0x80), 0.0f);
+			for (i = 0; i < GAME_I32(0x24); i++)
+				FUN_001a8940(g_RowPlayer(i), RA_I32(g_RowPlayer(i), 0x3b8) != 0 ? 2 : 3);
+			scores[0] = DAT_002baee8[0];
+			scores[1] = DAT_002baee8[10];
+			scores[2] = DAT_002baee8[20];
+			scores[3] = DAT_002baee8[30];
+			CLHud_CreateWinnerText(DAT_002ecfac, scores, 0);
+			GAME_I32(0x308) = 1;
+		}
+		break;
+	case 6:
+		r = RA_U32(self, 0);
+		if (r & 2) {
+			if (DAT_002bae98 != 2) {
+				CGameModeStack_Pop((struct CGameModeStack *)DAT_002ba750, 1);
+				return;
+			}
+			CGameModeStack_PopTo((struct CGameModeStack *)DAT_002ba750, "BGeffects", 1);
+			RA_VFN(DAT_002ba97c, 0x0c, int (*)(void *, int))(DAT_002ba97c, (int)((r >> 2) & 3) + 1);
+			return;
+		}
+		break;
+	}
+	if (GAME_PTR(0x80) != NULL) {
+		drops = 0;
+		amount = 0.0f;
+		switch (GAME_VARIANT) {
+		case 0:
+			drops = 100;
+			amount = 0.050000001f;
+			break;
+		case 1:
+			drops = 0x50;
+			amount = 0.050000001f;
+			break;
+		case 2:
+			t = (RW_VAR(float, 0x002b5494) - GAME_F32(0x34) * 0.001f) / RW_VAR(float, 0x002b5494);
+			if (GAME_I32(0x04) == 6)
+				t = 0.0f;
+			drops = 100;
+			amount = 0.1f;
+			CWaterField_ScrollUV((CWaterField *)GAME_PTR(0x80), 0.0f,
+				(t + 1.0f) * g_CurrentFrameTime(self) * 0.00200000009f);
+			FUN_001a5610(GAME_PTR(0x80), t);
+			break;
+		case 3:
+			drops = 0x50;
+			amount = 0.1f;
+			RA_VFN(GAME_PTR(0x80), 0x10, void (*)(void *, float))(GAME_PTR(0x80), g_CurrentFrameTime(self) * 6.0f);
+			CWaterField_ScrollUV((CWaterField *)GAME_PTR(0x80), 0.0f, g_CurrentFrameTime(self) * 0.0099999998f);
+			break;
+		}
+		if (RW_VAR(int, 0x002b54ac) != 0) {
+			RA_VFN(GAME_PTR(0x80), 0x0c, void (*)(void *))(GAME_PTR(0x80));
+			for (; drops > 0; drops--)
+				RA_VFN(GAME_PTR(0x80), 0x24, void (*)(void *, float))(GAME_PTR(0x80), amount);
+		}
+	}
+	FUN_001ec260();
+	if (GAME_PTR(0x270) != NULL)
+		rwb_Obj270_Update(GAME_PTR(0x270), g_CurrentFrameTime(self));
+	rwb_Sound_Update(g_RowSound);
+	if (RW_VAR(int, 0x002b54a8) != 0)
+		COverlay_UpdateAll();
+	DebugCam_Update();
+	FUN_001d5950();
+	FUN_001af680(GAME_PTR(0x98), 0xff808080);
+	if (RW_VAR(int, 0x0030f09c) != RA_I32(GAME_PTR(0x98), 0x234))
+		RA_I32(GAME_PTR(0x98), 0x234) = RW_VAR(int, 0x0030f09c);
+	FUN_001af680(GAME_PTR(0x98), 0xff404040);
+	if (FUN_001ae420(GAME_PTR(0x84)) != 0)
+		CLPause_Update((undefined4 *)DAT_002ecd90);
+}
+
+/* 0x001a289c  Rowing/CRowing_Game.cpp (table entry inside FUN_001a2890)
+Not a function start: 0x001a289c is the "push esi" in the prologue of the update
+0x001a2890 (Ghidra made a function at a branch target). Nothing calls it; it is kept as
+an empty definition so the table entry has a body. */
+void FUN_001a289c(void)
+{
+}
+
+/* ======================================================================
+   The water of variant 3 (the whirlpool) and of variant 4 (the waterfall): CWaterField
+   subclasses (vtables 0x00274f60 and 0x00274f8c above).
+
+   Whirlpool (0x92a8 bytes): +0x9090 the cell positions (x, y, z per cell, 12 bytes),
+   +0x9094 and +0x9098 the cos and sin of each cell's spiral angle, +0x909c 1.0,
+   +0x90a0 the radius R, +0x90a4 the depth D, +0x90a8.. the height of each row
+   (H[k] = *(float *)(self + 0x90a4 + 4k), k = 1..nz).
+   Waterfall (0x90b0 bytes): +0x9090, +0x9094, +0x9098 three texture phases; while drawing,
+   +0x909c/+0x90a0 the left/right edge, +0x90a4 the v step, +0x90a8/+0x90ac the last point.
+   ====================================================================== */
+
+#define WATER_F32(off) RA_F32(self, off)
+#define WATER_H(k) RA_F32(self, 0x90a4 + (k) * 4)
+
+/* a water vertex (FVF 0x152) */
+static void ra_SetNormal(CWaterVertex *v, CWaterField *w, float a, float b)
+{
+	int ix = (int)(a * w->p.normalScale) + 0x10;
+	int iz;
+
+	if (ix < 0)
+		ix = 0;
+	else if (ix > 0x1f)
+		ix = 0x1f;
+	iz = (int)(b * w->p.normalScale) + 0x10;
+	if (iz < 0)
+		iz = 0;
+	else if (iz > 0x1f)
+		iz = 0x1f;
+	ix = iz * 0x20 + ix;
+	v->normal[0] = w->normals[ix][0];
+	v->normal[1] = w->normals[ix][1];
+	v->normal[2] = w->normals[ix][2];
+}
+
+/* the slope of a whirlpool cell turned into the spiral's frame (C, S: the cell's cos, sin) */
+static void ra_SpiralSlope(float dx, float dz, float c, float s, float *a, float *b)
+{
+	*a = dx * s - dz * c;
+	*b = -(dx * c) - dz * s;
+}
+
+/* 0x001a3b00  Rowing/CRowing_Game.cpp (vtable 0x00274f60 slot 6)
+Whirlpool UpdateVertices: every vertex gets its row's height (the outer rows stay
+flat); the inner rows get texture coordinates from the ripple slopes and a normal from the
+slope turned into the spiral's frame (the rows wrap left to right). */
+int FUN_001a3b00(void *self)
+{
+	CWaterField *w = (CWaterField *)self;
+	CWaterVertex *v;
+	float *c, *cosA, *sinA, *hp;
+	float u, vv, rowV, y, dH, dx, dz, a, b;
+	int nx, row, col, i;
+
+	v = (CWaterVertex *)bdVertexBufferLock((struct bdVertexBuffer *)(uintptr_t)w->vb, 0);
+	vv = w->vOffset;
+	c = &w->cells[0][0];
+	nx = w->p.nx;
+	y = WATER_H(w->p.nz);
+	for (i = 0; i < nx; i++, v++)
+		v->pos[1] = y;
+	c += nx * 2;
+	cosA = (float *)RA_PTRF(self, 0x9094) + nx;
+	sinA = (float *)RA_PTRF(self, 0x9098) + nx;
+	hp = &WATER_H(w->p.nz - 2);
+	for (row = w->p.nz - 2; row != 0; row--, hp--) {
+		y = hp[1];
+		dH = hp[0] - hp[2];
+		u = w->uOffset;
+		rowV = vv;
+		vv = vv + w->unknown906c;
+		for (col = 0; col < nx; col++) {
+			if (col == 0)
+				dx = c[2] - c[nx * 2 - 2];
+			else if (col == nx - 1)
+				dx = c[2 - nx * 2] - c[-2];
+			else
+				dx = c[2] - c[-2];
+			v->pos[1] = y;
+			dz = c[nx * 2] - c[-nx * 2];
+			v->uv[0] = dx * w->p.slopeUV + u;
+			v->uv[1] = dz * w->p.slopeUV + rowV;
+			ra_SpiralSlope(dx, dz + dH, *cosA, *sinA, &a, &b);
+			ra_SetNormal(v, w, a, b);
+			u = u + w->uvStep;
+			v++;
+			c += 2;
+			cosA++;
+			sinA++;
+		}
+	}
+	y = WATER_H(1);
+	for (i = 0; i < nx; i++)
+		v[i].pos[1] = y;
+	bdVertexBufferUnlock((struct bdVertexBuffer *)(uintptr_t)w->vb);
+	return 1;
+}
+
+/* 0x001a3ee0  Rowing/CRowing_Game.cpp
+Finds the whirlpool cell nearest to (X, Z) by halving steps through the spiral grid.
+(The fourth candidate uses the same cell as the third, as in the original.) */
+void FUN_001a3ee0(void *self, float x, float z, int *col, int *row)
+{
+	CWaterField *w = (CWaterField *)self;
+	float *pos = (float *)RA_PTRF(self, 0x9090);
+	float d[4], *p;
+	int c, r, nx, base, i;
+
+	*col = w->p.nx / 2;
+	*row = w->p.nz / 2;
+	c = *col / 2;
+	r = *row / 2;
+	while (c > 0 && r > 0) {
+		nx = w->p.nx;
+		base = (*row - r) * nx;
+		p = pos + (base - c + *col) * 3;
+		d[0] = (p[0] - x) * (p[0] - x) + (p[2] - z) * (p[2] - z);
+		p = pos + (base + *col + c) * 3;
+		d[1] = (p[0] - x) * (p[0] - x) + (p[2] - z) * (p[2] - z);
+		i = *col + ((*row + r) * nx - c);
+		p = pos + i * 3;
+		d[2] = (p[0] - x) * (p[0] - x) + (p[2] - z) * (p[2] - z);
+		d[3] = d[2];
+		if (d[0] <= d[1] && d[0] <= d[2] && d[0] <= d[3]) {
+			*col -= c;
+			if (*col < 0)
+				*col = 0;
+			*row -= r;
+			if (*row < 0)
+				*row = 0;
+		} else if (d[1] <= d[0] && d[1] <= d[2] && d[1] <= d[3]) {
+			*col += c;
+			if (*col >= w->p.nx)
+				*col = w->p.nx - 1;
+			*row -= r;
+			if (*row < 0)
+				*row = 0;
+		} else if (d[2] <= d[0] && d[2] <= d[1] && d[2] <= d[3]) {
+			*col -= c;
+			if (*col < 0)
+				*col = 0;
+			*row += r;
+			if (*row >= w->p.nz)
+				*row = w->p.nz - 1;
+		} else {
+			*col += c;
+			if (*col >= w->p.nx)
+				*col = w->p.nx - 1;
+			*row += r;
+			if (*row >= w->p.nz)
+				*row = w->p.nz - 1;
+		}
+		c /= 2;
+		r /= 2;
+	}
+}
+
+/* 0x001a4170  Rowing/CRowing_Game.cpp (vtable 0x00274f8c slot 1)
+Waterfall Init: the surface 5 lower and flat, then CWaterField's Init; the texture phases
+start at 0. */
+int FUN_001a4170(void *self, CWaterParams *params)
+{
+	int result;
+
+	params->y = params->y - 5.0f;
+	params->heightScale = 0.0f;
+	result = CWaterField_Init((CWaterField *)self, params);
+	WATER_F32(0x9098) = 0.0f;
+	WATER_F32(0x9094) = 0.0f;
+	WATER_F32(0x9090) = 0.0f;
+	return result;
+}
+
+/* the waterfall's texture phases wrap at 1 */
+static float ra_WrapPhase(float phase)
+{
+	if (phase > 1.0f) {
+		do
+			phase = phase - 1.0f;
+		while (phase > 1.0f);
+	}
+	return phase;
+}
+
+/* 0x001a41b0  Rowing/CRowing_Game.cpp (vtable 0x00274f8c slot 3)
+Waterfall Ripple: CWaterField's ripple, and the three texture phases move on. */
+void FUN_001a41b0(void *self)
+{
+	float a, b, c;
+
+	CWaterField_Ripple((CWaterField *)self);
+	a = WATER_F32(0x9090) + 0.0099999998f;
+	WATER_F32(0x9090) = a;
+	b = WATER_F32(0x9094) + 0.013f;
+	WATER_F32(0x9094) = b;
+	c = WATER_F32(0x9098) + 0.017f;
+	WATER_F32(0x9098) = c;
+	if (a > 1.0f)
+		WATER_F32(0x9090) = ra_WrapPhase(WATER_F32(0x9090));
+	if (b > 1.0f)
+		WATER_F32(0x9094) = ra_WrapPhase(WATER_F32(0x9094));
+	if (c > 1.0f)
+		WATER_F32(0x9098) = ra_WrapPhase(WATER_F32(0x9098));
+}
+
+/* 0x001a4290  Rowing/CRowing_Game.cpp
+Draws one quad of the waterfall (corners (X0|X1, Y0, Z0) coloured C0 and (X0|X1, Y1, Z1)
+coloured C1) with texture coordinates from the positions (U0 + x / V0 + (y + z) * VSCALE),
+blended unless both colours are opaque. */
+int FUN_001a4290(void *self, CWaterVertex *v, float u0, float v0, float vScale, float x0, float y0, float z0,
+	float x1, float y1, float z1, unsigned int c0, unsigned int c1)
+{
+	float k;
+	int i;
+
+	if ((c0 & c1 & 0xff000000u) == 0xff000000u) {
+		bdSetRenderState(6, 0, 0);
+	} else {
+		bdSetRenderState(10, 0, 0);
+		bdSetRenderState(6, 1, 0);
+	}
+	v[0].pos[0] = x0;
+	v[0].pos[1] = y0;
+	v[0].pos[2] = z0;
+	v[1].pos[0] = x1;
+	v[1].pos[1] = y0;
+	v[1].pos[2] = z0;
+	v[2].pos[0] = x0;
+	v[2].pos[1] = y1;
+	v[2].pos[2] = z1;
+	v[3].pos[0] = x1;
+	v[3].pos[1] = y1;
+	v[3].pos[2] = z1;
+	v[0].colour = c0;
+	v[1].colour = c0;
+	v[3].colour = c1;
+	v[2].colour = c1;
+	for (i = 0; i < 4; i++) {
+		v[i].uv[0] = (v[i].pos[0] - x0) * WATER_F32(0x9070) + u0;
+		k = WATER_F32(0x9070);
+		v[i].normal[0] = 0.0f;
+		v[i].normal[1] = 1.0f;
+		v[i].normal[2] = 0.0f;
+		v[i].uv[1] = (((v[i].pos[2] - z0) + v[i].pos[1]) - y0) * k * vScale + v0;
+	}
+	bdDrawPrimitiveFVF(4, v, 4, 0x152);
+	return 1;
+}
+
+/* 0x001a43b0  Rowing/CRowing_Game.cpp (vtable 0x00274f8c slot 8)
+The waterfall draws no edges. */
+int FUN_001a43b0(void *self, float height, int blend)
+{
+	(void)self;
+	(void)height;
+	(void)blend;
+	return 1;
+}
+
+/* 0x001a43c0  Rowing/CRowing_Game.cpp
+The whirlpool's destructor: its three arrays, then CWaterField's destructor (called twice
+in the original: once by the class, once by the compiler's base destructor call). */
+void FUN_001a43c0(void *self)
+{
+	*(const void *const **)self = vtable_00274f60;
+	if (RA_PTRF(self, 0x9090) != NULL) {
+		RA_DELETE(RA_PTRF(self, 0x9090));
+		RA_PTRF(self, 0x9090) = NULL;
+	}
+	if (RA_PTRF(self, 0x9094) != NULL) {
+		RA_DELETE(RA_PTRF(self, 0x9094));
+		RA_PTRF(self, 0x9094) = NULL;
+	}
+	if (RA_PTRF(self, 0x9098) != NULL) {
+		RA_DELETE(RA_PTRF(self, 0x9098));
+		RA_PTRF(self, 0x9098) = NULL;
+	}
+	CWaterField_Destruct((CWaterField *)self);
+	CWaterField_Destruct((CWaterField *)self);
+}
+
+/* 0x001a4460  Rowing/CRowing_Game.cpp (vtable 0x00274f60 slot 5)
+Whirlpool BuildVertices: every vertex at its spiral position with its row's height; texture
+coordinates and the turned normal like UpdateVertices (fixed cells: an upward normal).
+The flags give the wrap: 2 left edge, 3 right edge. */
+int FUN_001a4460(void *self)
+{
+	CWaterField *w = (CWaterField *)self;
+	CWaterVertex *v;
+	unsigned char *flag = w->flags;
+	float *p = (float *)RA_PTRF(self, 0x9090);
+	float *c, *sinA, *cosA, *hp;
+	float rowU, rowV, u, vv, y, dH, dx, dz, a, b;
+	int rows, col, nx;
+
+	v = (CWaterVertex *)bdVertexBufferLock((struct bdVertexBuffer *)(uintptr_t)w->vb, 0);
+	sinA = (float *)RA_PTRF(self, 0x9098);
+	cosA = (float *)RA_PTRF(self, 0x9094);
+	c = &w->cells[0][0];
+	rowV = w->vOffset;
+	rowU = w->uOffset;
+	hp = (float *)RA_P(self, 0x90a0 + w->p.nz * 4);
+	for (rows = w->p.nz; rows != 0; rows--, hp--) {
+		y = hp[1];
+		if (rows == w->p.nz || rows == 1)
+			dH = 0.0f;
+		else
+			dH = hp[0] - hp[2];
+		u = rowU;
+		vv = rowV;
+		rowU = rowU + RA_F32(self, 0x9064);
+		rowV = rowV + w->unknown906c;
+		nx = w->p.nx;
+		for (col = nx; col != 0; col--) {
+			switch ((signed char)*flag) {
+			case 0:
+				dx = c[2] - c[-2];
+				goto slope;
+			case 2:
+				dx = c[2] - c[w->p.nx * 2 - 2];
+				goto slope;
+			case 3:
+				dx = c[2 - w->p.nx * 2] - c[-2];
+			slope:
+				dz = c[w->p.nx * 2] - c[-w->p.nx * 2];
+				v->colour = w->p.colour;
+				v->pos[0] = p[0];
+				v->pos[1] = w->p.heightScale * c[0] + y;
+				v->pos[2] = p[2];
+				ra_SpiralSlope(dx, dz + dH, *cosA, *sinA, &a, &b);
+				v->uv[0] = dx * w->p.slopeUV + u;
+				v->uv[1] = dz * w->p.slopeUV + vv;
+				ra_SetNormal(v, w, a, b);
+				break;
+			case 1:
+				v->pos[0] = p[0];
+				v->pos[1] = w->p.heightScale * c[0] + y;
+				v->pos[2] = p[2];
+				v->uv[0] = u;
+				v->colour = w->p.colour;
+				v->uv[1] = vv;
+				v->normal[0] = 0.0f;
+				v->normal[1] = 1.0f;
+				v->normal[2] = 0.0f;
+				break;
+			default:
+				break;
+			}
+			u = u + w->uvStep;
+			v++;
+			c += 2;
+			vv = vv + RA_F32(self, 0x9068);
+			flag++;
+			sinA++;
+			p += 3;
+			cosA++;
+		}
+	}
+	bdVertexBufferUnlock((struct bdVertexBuffer *)(uintptr_t)w->vb);
+	return 1;
+}
+
+/* 0x001a4700  Rowing/CRowing_Game.cpp (vtable 0x00274f60 slot 8)
+Whirlpool DrawEdges: a skirt of quads (6-vertex strips, built in the object's edge buffer
+at +0x48) from the outer ring out to radius R + 500 and then to HEIGHT, the texture
+wrapping. BLEND is not used. */
+int FUN_001a4700(void *self, float height, int blend)
+{
+	CWaterField *w = (CWaterField *)self;
+	CWaterVertex *verts = (CWaterVertex *)RA_P(self, 0x48);
+	float X[6], Y[6], Z[6], U[6], V[6];
+	unsigned int C[6];
+	float inv, outer, u, du, v0, ax, bx, az, bz;
+	float *pa, *pb;
+	int nx, i, k, base;
+
+	(void)blend;
+	outer = w->p.sizeX + 500.0f;
+	nx = w->p.nx;
+	D3DDevice_SetTextureState_Deferred(0, (D3DTEXTURESTAGESTATETYPE)0xa, 1);
+	D3DDevice_SetTextureState_Deferred(0, (D3DTEXTURESTAGESTATETYPE)0xb, 1);
+	u = w->uOffset;
+	du = (float)nx * w->uvStep / (float)w->p.nx;
+	v0 = w->vOffset;
+	if (nx <= 0)
+		return 1;
+	inv = 1.0f / w->p.sizeX;
+	V[0] = v0;
+	V[1] = v0;
+	for (i = 0; i < nx; i++) {
+		Y[2] = Y[3] = Y[4] = Y[5] = w->p.y;
+		base = (w->p.nz - 1) * w->p.nx;
+		pa = (float *)RA_PTRF(self, 0x9090) + (base + i) * 3;
+		pb = (float *)RA_PTRF(self, 0x9090) + (base + (i + 1) % w->p.nx) * 3;
+		ax = inv * pa[0];
+		X[0] = pa[0];
+		X[2] = outer * ax;
+		Z[0] = pa[2];
+		Y[0] = pa[1];
+		bx = inv * pb[0];
+		X[1] = pb[0];
+		X[3] = outer * bx;
+		Z[1] = pb[2];
+		Y[1] = pb[1];
+		X[4] = ax * height;
+		X[5] = bx * height;
+		az = inv * pa[2];
+		Z[2] = outer * az;
+		bz = inv * pb[2];
+		Z[3] = outer * bz;
+		Z[4] = az * height;
+		Z[5] = bz * height;
+		U[0] = u;
+		U[1] = u + du;
+		U[2] = u;
+		U[3] = u + du;
+		U[4] = u;
+		U[5] = u + du;
+		V[2] = w->unknown906c * 50.0f + v0;
+		V[3] = V[2];
+		V[4] = w->unknown906c * 200.0f + v0;
+		V[5] = V[4];
+		C[0] = w->p.colour;
+		C[1] = w->p.colour;
+		C[2] = C[3] = C[4] = C[5] = w->p.colour & 0xff000000u;
+		for (k = 0; k < 6; k++) {
+			verts[k].pos[0] = X[k] + w->p.x0;
+			verts[k].pos[1] = Y[k];
+			verts[k].pos[2] = Z[k] + w->p.z0;
+			verts[k].normal[0] = 0.0f;
+			verts[k].normal[1] = 1.0f;
+			verts[k].normal[2] = 0.0f;
+			verts[k].colour = C[k];
+			verts[k].uv[0] = U[k];
+			verts[k].uv[1] = V[k];
+		}
+		bdDrawPrimitiveFVF(4, verts, 6, 0x152);
+		verts += 6;
+		u = u + du;
+	}
+	return 1;
+}
+
+/* 0x001a49b0  Rowing/CRowing_Game.cpp (vtable 0x00274f60 slot 10)
+Whirlpool Splash: pushes the cells near (X, Z) down to DEPTH inside INNER, fading out to
+OUTER (a 20 x 20 window of the grid, wrapping left to right). */
+int FUN_001a49b0(void *self, float x, float z, float depth, float inner, float outer)
+{
+	CWaterField *w = (CWaterField *)self;
+	float *p, d2, h, outer2;
+	int col, row, r, rEnd, c, cc;
+
+	FUN_001a3ee0(self, x, z, &col, &row);
+	r = row - 0x14;
+	if (r < 0)
+		r = 0;
+	for (rEnd = r + 0x14; r < rEnd; r++) {
+		if (r >= w->p.nz)
+			return 1;
+		outer2 = outer * outer;
+		for (c = col - 10; c < col + 10; c++) {
+			cc = c;
+			if (c < 0)
+				cc = w->p.nx + c;
+			if (cc >= w->p.nx)
+				cc -= w->p.nx;
+			p = (float *)RA_PTRF(self, 0x9090) + (w->p.nx * r + cc) * 3;
+			d2 = (p[0] - x) * (p[0] - x) + (p[2] - z) * (p[2] - z);
+			if (!(d2 < outer2))
+				continue;
+			if (inner * inner <= d2)
+				h = (1.0f - (bmFastSqrt(d2) - inner) / (outer - inner)) * depth;
+			else
+				h = depth;
+			if (h < w->cells[w->p.nx * r + cc][0]) {
+				w->cells[w->p.nx * r + cc][0] = h;
+				w->cells[w->p.nx * r + cc][1] = 0.0f;
+			}
+		}
+	}
+	return 1;
+}
+
+/* the whirlpool's surface height at distance D from the centre */
+static float ra_WhirlHeight(void *self, float d)
+{
+	float s;
+
+	if (d < WATER_F32(0x90a0)) {
+		s = sinf(d / WATER_F32(0x90a0) * 1.57079625f) - 1.0f;
+		return s * WATER_F32(0x90a4) * s + WATER_F32(0x8);
+	}
+	return WATER_F32(0x8);
+}
+
+/* 0x001a4b10  Rowing/CRowing_Game.cpp
+The whirlpool's surface height at (X, Z) (the centre is the origin). */
+float FUN_001a4b10(void *self, float x, float z)
+{
+	return ra_WhirlHeight(self, bmFastSqrt(z * z + x * x));
+}
+
+/* 0x001a4b70  Rowing/CRowing_Game.cpp
+The whirlpool's height at (X, Z) and its surface normal (NORMAL). */
+float FUN_001a4b70(void *self, float x, float z, float *normal)
+{
+	float d, height, h1, h2, slope, dir;
+
+	d = bmFastSqrt(z * z + x * x);
+	if (!(d < WATER_F32(0x90a0))) {
+		normal[0] = 0.0f;
+		normal[1] = 1.0f;
+		normal[2] = 0.0f;
+		return WATER_F32(0x8);
+	}
+	height = ra_WhirlHeight(self, d);
+	h1 = FUN_001a4b10(self, d - 0.0099999998f, 0.0f);
+	h2 = FUN_001a4b10(self, d + 0.0099999998f, 0.0f);
+	slope = (float)atan2((double)(h2 - h1), (double)0.02f);
+	dir = atan2f(x, z);
+	normal[1] = cosf(slope);
+	normal[0] = sinf(dir) * sinf(slope);
+	normal[2] = cosf(dir) * sinf(slope);
+	return height;
+}
+
+/* 0x001a4c70  Rowing/CRowing_Game.cpp
+Emits one pair of waterfall vertices at height/depth (H, Z) across the edges
+(+0x909c, +0x90a0) facing ANGLE, and advances *CURSOR; *VPOS (the running v coordinate)
+moves by the distance from the last point times +0x90a4. */
+void FUN_001a4c70(void *self, unsigned char **cursor, float h, float z, float angle, float u, float *vpos,
+	unsigned int colour)
+{
+	CWaterVertex *v = (CWaterVertex *)*cursor;
+	float dx = h - WATER_F32(0x90a8), dz = z - WATER_F32(0x90ac);
+
+	*vpos = *vpos - bmFastSqrt(dz * dz + dx * dx) * WATER_F32(0x90a4);
+	WATER_F32(0x90a8) = h;
+	WATER_F32(0x90ac) = z;
+	v[0].pos[0] = WATER_F32(0x909c);
+	v[1].pos[0] = WATER_F32(0x90a0);
+	v[1].pos[1] = h;
+	v[0].pos[1] = h;
+	v[1].pos[2] = z;
+	v[0].pos[2] = z;
+	v[1].colour = colour;
+	v[0].colour = colour;
+	v[0].uv[0] = u;
+	v[1].uv[0] = (WATER_F32(0x90a0) - WATER_F32(0x909c)) * WATER_F32(0x9070) + u;
+	v[1].uv[1] = *vpos;
+	v[0].uv[1] = v[1].uv[1];
+	v[1].normal[0] = 0.0f;
+	v[0].normal[0] = 0.0f;
+	v[1].normal[1] = cosf(angle);
+	v[0].normal[1] = v[1].normal[1];
+	v[1].normal[2] = -sinf(angle);
+	v[0].normal[2] = v[1].normal[2];
+	*cursor += 0x48;
+}
+
+/* 0x001a4d80  Rowing/CRowing_Game.cpp
+The waterfall's top: (unless CONTINUED) a flat run from z 2000 to the lip at height
+H + 300, the rounded lip (a quarter circle of radius H + 60 around (240, 60)) and the
+drop to (water height, -H). */
+void FUN_001a4d80(void *self, unsigned char **cursor, unsigned int colour, float h, float u, float vpos,
+	int continued)
+{
+	float r = h + 60.0f, top = h + 300.0f, a;
+
+	WATER_F32(0x90a4) = WATER_F32(0x9070);
+	WATER_F32(0x90a8) = top;
+	WATER_F32(0x90ac) = 2000.0f;
+	if (continued == 0) {
+		FUN_001a4c70(self, cursor, top, 2000.0f, 0.0f, u, &vpos, colour);
+		FUN_001a4c70(self, cursor, top, r, 0.0f, u, &vpos, colour);
+	} else {
+		WATER_F32(0x90a8) = top;
+		WATER_F32(0x90ac) = r;
+	}
+	a = 0.0f;
+	do {
+		WATER_F32(0x90a4) = WATER_F32(0x90a4) * 0.89999998f;
+		FUN_001a4c70(self, cursor, cosf(a) * r + 240.0f, 60.0f - sinf(a) * r, -a, u, &vpos, colour);
+		a = a + 0.39269906f;
+	} while (a < 1.57079625f);
+	FUN_001a4c70(self, cursor, WATER_F32(0x8), -h, -1.57079625f, u, &vpos, colour);
+}
+
+/* 0x001a4ed0  Rowing/CRowing_Game.cpp
+The waterfall's foot: a quarter circle of radius H + 60 from the water height down to
+z -1740, its alpha rising by 8 per step, and (unless CONTINUED) the run out to
+(-2000, -1800 - H). */
+void FUN_001a4ed0(void *self, unsigned char **cursor, unsigned int colour, float h, float u, float vpos,
+	int continued)
+{
+	float r = h + 60.0f, x, z, a;
+	unsigned int alpha = colour >> 24;
+
+	WATER_F32(0x90a8) = h + WATER_F32(0x8);
+	WATER_F32(0x90a4) = WATER_F32(0x9070);
+	WATER_F32(0x90ac) = -1740.0f;
+	a = 0.0f;
+	do {
+		x = cosf(a) * r + (WATER_F32(0x8) - 60.0f);
+		z = -1740.0f - sinf(a) * r;
+		WATER_F32(0x90a4) = WATER_F32(0x90a4) * 0.89999998f;
+		if (alpha != 0xff) {
+			alpha += 8;
+			if (alpha > 0xff)
+				alpha = 0xff;
+			colour = (colour & 0xffffffu) | (alpha << 24);
+		}
+		FUN_001a4c70(self, cursor, x, z, -a, u, &vpos, colour);
+		a = a + 0.39269906f;
+	} while (a < 1.57079625f);
+	if (continued == 0)
+		FUN_001a4c70(self, cursor, -2000.0f, -1800.0f - h, -1.57079625f, u, &vpos, colour);
+}
+
+/* the vertex count from the start of a buffer to the cursor */
+#define RA_VERTS_FROM(start, cursor) ((int)((cursor) - (unsigned char *)(start)) / 0x24)
+
+/* 0x001a5010  Rowing/CRowing_Game.cpp (vtable 0x00274f8c slot 7)
+Waterfall Draw: the falling sheet in two layers, the pool (CWaterField's Draw), two foam
+quads and the foot in 20 strips plus a translucent layer. BLEND is not used. */
+int FUN_001a5010(void *self, int blend)
+{
+	CWaterField *w = (CWaterField *)self;
+	unsigned char *cursor;
+	float x0, span, y;
+	int i;
+
+	(void)blend;
+	D3DDevice_SetTextureState_Deferred(0, (D3DTEXTURESTAGESTATETYPE)0xa, 1);
+	D3DDevice_SetTextureState_Deferred(0, (D3DTEXTURESTAGESTATETYPE)0xb, 1);
+	WATER_F32(0x909c) = (RW_VAR(float, 0x002b5634) - RW_VAR(float, 0x002b5630) * 0.5f) - 10.0f;
+	WATER_F32(0x90a0) = RW_VAR(float, 0x002b5630) * 0.5f + RW_VAR(float, 0x002b5634) + 10.0f;
+	bdSetRenderState(5, 1, 0);
+	bdSetTexture(0, (struct bdTexture *)(uintptr_t)w->texture);
+	bdSetRenderState(2, 3, 0);
+	bdSetRenderState(6, 0, 0);
+	bdSetRenderState(3, 0, 0);
+	cursor = (unsigned char *)RA_P(self, 0x48);
+	FUN_001a4d80(self, &cursor, 0xff606060u, 0.0f, 0.0f, WATER_F32(0x9090), 0);
+	bdDrawPrimitiveFVF(4, RA_P(self, 0x48), RA_VERTS_FROM(RA_P(self, 0x48), cursor), 0x152);
+	bdSetRenderState(6, 1, 0);
+	bdSetRenderState(10, 0, 0);
+	cursor = (unsigned char *)RA_P(self, 0x3a8);
+	FUN_001a4d80(self, &cursor, 0x40606060u, 4.0f, 5.0f, WATER_F32(0x9094), 0);
+	bdDrawPrimitiveFVF(4, RA_P(self, 0x3a8), RA_VERTS_FROM(RA_P(self, 0x3a8), cursor), 0x152);
+	bdSetRenderState(3, 1, 0);
+	bdSetRenderState(6, 0, 0);
+	CWaterField_Draw(w, 0);
+	bdSetTexture(0, (struct bdTexture *)(uintptr_t)w->texture);
+	bdSetRenderState(2, 3, 0);
+	bdSetRenderState(3, 0, 0);
+	y = WATER_F32(0x8) + 1.66666663f;
+	FUN_001a4290(self, (CWaterVertex *)RA_P(self, 0x708), 0.5f, WATER_F32(0x9090), 1.0f, WATER_F32(0x909c), y,
+		-900.0f, WATER_F32(0x90a0), y, 100.0f, 0x606060u, 0x60606060u);
+	y = WATER_F32(0x8) + 3.33333325f;
+	FUN_001a4290(self, (CWaterVertex *)RA_P(self, 0x798), 0.25f, WATER_F32(0x9094), 1.0f, WATER_F32(0x909c), y,
+		-650.0f, WATER_F32(0x90a0), y, 100.0f, 0x606060u, 0x60606060u);
+	bdSetRenderState(6, 0, 0);
+	bdSetRenderState(3, 1, 0);
+	x0 = WATER_F32(0x909c);
+	span = WATER_F32(0x90a0) - x0;
+	for (i = 0; i < 0x14; i++) {
+		WATER_F32(0x909c) = (float)i * span * 0.050000001f + x0;
+		WATER_F32(0x90a0) = (float)(i + 1) * span * 0.050000001f + x0;
+		cursor = (unsigned char *)RA_P(self, 0x8b8);
+		/* the original passes no CONTINUED argument here: the callee reads the caller's
+		saved ESI (the object, never 0) */
+		FUN_001a4ed0(self, &cursor, w->p.colour, 0.0f,
+			(WATER_F32(0x909c) - w->p.x0) * WATER_F32(0x9070) + w->uOffset,
+			(-1740.0f - w->p.z0) * WATER_F32(0x9070) + w->vOffset, 1);
+		bdDrawPrimitiveFVF(4, RA_P(self, 0x8b8), RA_VERTS_FROM(RA_P(self, 0x8b8), cursor), 0x152);
+	}
+	bdSetRenderState(3, 0, 0);
+	bdSetRenderState(6, 1, 0);
+	bdSetRenderState(10, 0, 0);
+	cursor = (unsigned char *)RA_P(self, 0xc18);
+	FUN_001a4ed0(self, &cursor, w->p.colour & 0xffffffu, 4.0f, 5.0f, WATER_F32(0x9094), 0);
+	bdDrawPrimitiveFVF(4, RA_P(self, 0xc18), RA_VERTS_FROM(RA_P(self, 0xc18), cursor), 0x152);
+	bdSetRenderState(6, 0, 0);
+	return 1;
 }

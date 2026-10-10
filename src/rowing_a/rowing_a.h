@@ -133,8 +133,8 @@ extern float DAT_0028ffa8, DAT_0028ffac; /* sound fall-off distances (classlib_u
 /* ---------- functions missing from of_functions.tsv (prototypes from the disassembly;
    `self` is ECX) */
 
-void FUN_0019d8e0(void);
-void FUN_0019d900(void *self);
+void FUN_0019d8e0(void *game);
+void FUN_0019d900(void *self, int top);
 void FUN_0019dc80(void *self, int top);
 int FUN_0019e970(void *self, int variant);
 void FUN_001a2890(void *self, int top);

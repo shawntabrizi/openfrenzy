@@ -66,6 +66,33 @@ Owner: rowing_a.
 	RA_CALL(FUN_001b1c60, int (*)(void *, void *, int, int))((vents), (sprites), (steam), (blobs))
 #define rwb_Particles_Draw(vents) RA_CALL(FUN_001b2b10, void (*)(void *))(vents)
 
+
+/* ---------- rowing_b: Rowing_Sound.cpp (the sound object, 0x0030fc80) */
+#define rwb_Sound_Play(id, volume) RA_CALL(FUN_001b6ba0, int (*)(int, int))((id), (volume))
+#define rwb_Sound_PlayAt(id, pos, volume) RA_CALL(FUN_001b6be0, int (*)(int, float *, int))((id), (pos), (volume))
+#define rwb_Sound_PlayRandom(id, volume) RA_CALL(FUN_001b6c30, void (*)(int, int))((id), (volume))
+#define rwb_Sound_SetPitch(handle, channel, pitch) \
+	RA_CALL(FUN_001b6c80, void (*)(int, int, float))((handle), (channel), (pitch))
+#define rwb_Sound_Track(sound, handle) RA_CALL(FUN_001b6d60, void (*)(void *, int))((sound), (handle))
+#define rwb_Sound_Update(sound) RA_CALL(FUN_001b6cc0, void (*)(void *))(sound)
+#define rwb_Sound_Shutdown(sound) RA_CALL(FUN_001b6f50, void (*)(void *))(sound)
+#define g_RowSound RW_VAR(void *, 0x0030fc80)
+
+/* ---------- rowing_b: buoys (variant 2), mines (variant 4), the world's ticks */
+#define rwb_Buoy_Ctor(self, pos, data) RA_CALL(FUN_001b5b30, void *(*)(void *, float *, int))((self), (pos), (data))
+#define rwb_Buoy_Dtor(self) RA_CALL(FUN_001b5b10, void (*)(void *))(self)
+#define rwb_Buoy_Update(self, dt) RA_CALL(FUN_001b5c50, void (*)(void *, float))((self), (dt))
+#define rwb_Mine_Trigger(self, a, b, flag) \
+	RA_CALL(FUN_001b8760, void (*)(void *, float, float, int))((self), (a), (b), (flag))
+#define rwb_Tokens_Update(tokens) RA_CALL(FUN_001b5a00, void (*)(void *))(tokens)
+#define rwb_World_Tick(world, dt) RA_CALL(FUN_001b3170, void (*)(void *, float))((world), (dt))
+#define rwb_World_Shutdown(world) RA_CALL(FUN_001b4530, void (*)(void *))(world)
+#define rwb_Obj270_Update(obj, dt) RA_CALL(FUN_001b4d40, void (*)(void *, float))((obj), (dt))
+#define rwb_Obj270_Dtor(obj) RA_CALL(FUN_001b47c0, void (*)(void *))(obj)
+#define rwb_Lights_Dtor(lights) RA_CALL(FUN_001b4fb0, void (*)(void *))(lights)
+#define rwb_Lights_SetPosition(lights, light, pos) \
+	RA_CALL(FUN_001b55d0, void (*)(void *, void *, float *))((lights), (light), (pos))
+
 /* ---------- other modules */
 
 /* classlib_ui 0x00071f90 returns the package (the table says void) */
