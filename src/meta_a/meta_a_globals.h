@@ -75,7 +75,13 @@ extern unsigned char DAT_002ed324[]; /* CRumble */
 extern unsigned char DAT_003055e8[];
 extern unsigned char DAT_00305630[];
 extern unsigned char DAT_0030563c[]; /* AnimTex list */
-extern unsigned char DAT_00308460[]; /* (meta_b object) */
+extern unsigned char DAT_00308460[]; /* CLightningMgr (meta_b) */
+extern unsigned char DAT_003075b0[];  /* CLList: the puzzles */
+extern unsigned char DAT_003082d4[];  /* CLList: the tile groups */
+extern unsigned char DAT_00308440[];  /* CLList (meta_b objects with a tag at +0x38) */
+extern unsigned char DAT_003090a8[];  /* CLList (meta_b objects with a tag at +0x6c) */
+extern unsigned char DAT_003090d8[];  /* CLList (meta_b objects with a tag at +0x5c) */
+extern int DAT_00309060[16];        /* the big red buttons (meta_b) */
 extern unsigned char DAT_002ea478[];
 extern int DAT_003055e0;            /* demo mode */
 extern unsigned char DAT_00290ea8[]; /* CSpriteVB (classlib_fx; fallback in Meta/meta_a_foreign.c) */
@@ -90,6 +96,8 @@ extern int DAT_00293928;            /* sample volume */
 extern float DAT_00293a28, DAT_00293a2c, DAT_00293a30, DAT_00293a34, DAT_00293a38;
 extern float DAT_00294b54, DAT_00294b58;
 extern float DAT_002f2890, DAT_002f2894;
+extern int DAT_002f2878, DAT_002f287c, DAT_002f2884, DAT_002f2888, DAT_002f288c; /* camera shake */
+extern float DAT_002f2880;
 extern int DAT_002f289c[4];         /* the four character controllers */
 extern int DAT_002f28ac;
 extern int DAT_002f7a30, DAT_002f7a34;
@@ -110,6 +118,8 @@ extern int DAT_002afef4[4];         /* per player: frozen frames */
 extern int DAT_002b0370;
 extern int DAT_002b04e4;            /* draw shadows */
 extern int DAT_002b04e8;            /* high-res characters (applied) */
+extern int DAT_002b04ec;            /* rumble: distance scale (1000) */
+extern int DAT_002b04f4, DAT_002b04f8; /* rumble: strength and length fall-off */
 extern int DAT_003027a0;            /* game phase */
 extern int DAT_003027bc;            /* round over */
 extern int DAT_00302b48[4];         /* the four player controllers */
@@ -149,6 +159,7 @@ extern float DAT_002b07b8;          /* get-up time */
 extern float DAT_002b07bc, DAT_002b07c0; /* knockout: slide time and speed */
 extern int DAT_002b07c4[5];         /* ball scores by type 1-4 ([0] unused) */
 #define DAT_002b07c8 (DAT_002b07c4 + 1) /* 0x002b07c8 */
+extern int DAT_002b084c;            /* camera: steps for a jump cut */
 extern float DAT_002b0850;          /* AI attack delay */
 extern float DAT_002b0874;          /* carry factor */
 extern float DAT_002b0878, DAT_002b087c, DAT_002b0880; /* thickness base, amp, freq */
@@ -180,11 +191,13 @@ extern int DAT_003055d4;            /* the camera (charlib, 0x574 bytes) */
 extern int DAT_003055d8;
 extern float DAT_00305648;
 extern int DAT_0030564c;            /* the level's game object */
-extern int DAT_00305660[1000];      /* the level's object table */
+extern int DAT_00305660[1000];      /* the puzzle variables */
+extern int DAT_00306600[1000];      /* the puzzle sound channels */
 extern int DAT_00305650;
 extern float DAT_00305654;
 extern int DAT_00305658;            /* steal orb on hurt */
-extern unsigned char DAT_003075b0[0xc]; /* CLList of light groups */
+extern int DAT_003075a4;            /* the puzzle being evaluated */
+extern int DAT_003075a8;            /* condition node bump pointer */
 extern int DAT_003075bc[4];         /* the four CMetaPlayer objects */
 extern int DAT_003082bc;
 extern int DAT_003082c0;            /* the tile board */

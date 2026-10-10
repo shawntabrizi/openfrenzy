@@ -10,6 +10,9 @@ __attribute__((weak, aligned(4))) unsigned char DAT_002afef4[0x10] = { 0x00, 0x0
 __attribute__((weak, aligned(4))) unsigned char DAT_002b0370[0x4] = { 0x00, 0x00, 0x00, 0x00 }; /* 0x002b0370 .data */
 __attribute__((weak, aligned(4))) unsigned char DAT_002b04e4[0x4] = { 0x01, 0x00, 0x00, 0x00 }; /* 0x002b04e4 .data */
 __attribute__((weak, aligned(4))) unsigned char DAT_002b04e8[0x4] = { 0x01, 0x00, 0x00, 0x00 }; /* 0x002b04e8 .data */
+__attribute__((weak, aligned(4))) unsigned char DAT_002b04ec[0x4] = { 0xe8, 0x03, 0x00, 0x00 }; /* 0x002b04ec .data */
+__attribute__((weak, aligned(4))) unsigned char DAT_002b04f4[0x4] = { 0xff, 0x7f, 0x00, 0x00 }; /* 0x002b04f4 .data */
+__attribute__((weak, aligned(4))) unsigned char DAT_002b04f8[0x4] = { 0x90, 0x01, 0x00, 0x00 }; /* 0x002b04f8 .data */
 unsigned char DAT_003027a0[0x4] __attribute__((aligned(4))); /* 0x003027a0 .data (bss) */
 unsigned char DAT_003027bc[0x4] __attribute__((aligned(4))); /* 0x003027bc .data (bss) */
 unsigned char DAT_00302b48[0x10] __attribute__((aligned(4))); /* 0x00302b48 .data (bss) */
@@ -56,6 +59,7 @@ __attribute__((weak, aligned(4))) unsigned char DAT_002b07b8[0x4] = { 0x00, 0x00
 __attribute__((weak, aligned(4))) unsigned char DAT_002b07bc[0x4] = { 0x00, 0x00, 0xa0, 0x41 }; /* 0x002b07bc .data */
 __attribute__((weak, aligned(4))) unsigned char DAT_002b07c0[0x4] = { 0x00, 0x00, 0xa0, 0x40 }; /* 0x002b07c0 .data */
 __attribute__((weak, aligned(4))) unsigned char DAT_002b07c4[0x14] = { 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x32, 0x00, 0x00, 0x00, 0x46, 0x00, 0x00, 0x00 }; /* 0x002b07c4 .data */
+__attribute__((weak, aligned(4))) unsigned char DAT_002b084c[0x4] = { 0x64, 0x00, 0x00, 0x00 }; /* 0x002b084c .data */
 __attribute__((weak, aligned(4))) unsigned char DAT_002b0850[0x4] = { 0x00, 0x00, 0xc8, 0x41 }; /* 0x002b0850 .data */
 __attribute__((weak, aligned(4))) unsigned char DAT_002b0874[0x4] = { 0x9a, 0x99, 0x59, 0x3f }; /* 0x002b0874 .data */
 __attribute__((weak, aligned(4))) unsigned char DAT_002b0878[0x4] = { 0x00, 0x00, 0x20, 0x41 }; /* 0x002b0878 .data */
@@ -97,10 +101,12 @@ unsigned char DAT_003055d8[0x4] __attribute__((aligned(4))); /* 0x003055d8 .data
 unsigned char DAT_00305648[0x4] __attribute__((aligned(4))); /* 0x00305648 .data (bss) */
 unsigned char DAT_0030564c[0x4] __attribute__((aligned(4))); /* 0x0030564c .data (bss) */
 unsigned char DAT_00305660[0xfa0] __attribute__((aligned(4))); /* 0x00305660 .data (bss) */
+unsigned char DAT_00306600[0xfa0] __attribute__((aligned(4))); /* 0x00306600 .data (bss) */
 unsigned char DAT_00305650[0x4] __attribute__((aligned(4))); /* 0x00305650 .data (bss) */
 unsigned char DAT_00305654[0x4] __attribute__((aligned(4))); /* 0x00305654 .data (bss) */
 unsigned char DAT_00305658[0x4] __attribute__((aligned(4))); /* 0x00305658 .data (bss) */
-unsigned char DAT_003075b0[0xc] __attribute__((aligned(4))); /* 0x003075b0 .data (bss) */
+unsigned char DAT_003075a4[0x4] __attribute__((aligned(4))); /* 0x003075a4 .data (bss) */
+unsigned char DAT_003075a8[0x4] __attribute__((aligned(4))); /* 0x003075a8 .data (bss) */
 unsigned char DAT_003075bc[0x10] __attribute__((aligned(4))); /* 0x003075bc .data (bss) */
 unsigned char DAT_003082bc[0x4] __attribute__((aligned(4))); /* 0x003082bc .data (bss) */
 unsigned char DAT_003082c0[0x4] __attribute__((aligned(4))); /* 0x003082c0 .data (bss) */
