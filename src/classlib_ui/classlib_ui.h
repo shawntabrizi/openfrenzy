@@ -1,0 +1,78 @@
+/*
+CLASSLIB_UI.H
+
+Shared declarations of the classlib_ui module (ClassLib block 1, original source
+C:\BlitzParty\Game\Src\ClassLib\: GenericSamples, COverlay, Hud, CIntroCam,
+ParseMap, CFireworks, CRumble and the math helpers in front of them).
+
+Other modules may include this header. Only the classlib_ui agent edits it.
+
+Globals keep their Ghidra names (DAT_<addr>) where their purpose is not clear yet.
+Owned globals are defined in the module's .c files; globals of other modules are
+written here as tentative definitions (-fcommon merges them with the owner's
+definition, see docs/ARCHITECTURE.md section 12).
+*/
+
+#ifndef OPENFRENZY_CLASSLIB_UI_H
+#define OPENFRENZY_CLASSLIB_UI_H
+
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wchar.h>
+
+/* ---------- helpers for decompiled code */
+
+/* FPATAN: atan(ST1 / ST0), as Ghidra writes fpatan(st1, st0) */
+#define CLU_FPATAN(y, x) atan2((double)(y), (double)(x))
+
+/* The game's debug print (bkernel 0x0004b230) takes a printf format. The table
+prototype has one parameter; call it through a variadic pointer. */
+#define CLU_DebugPrintf ((void (*)(const char *, ...))FUN_0004b230)
+
+/* MSVC rand(), inlined by the compiler into the game: holdrand is the C library's
+seed at 0x00285630 (initial value 1, owned by the C runtime). */
+extern unsigned int DAT_00285630;
+static inline int CLU_Rand(void)
+{
+	DAT_00285630 = DAT_00285630 * 0x343fdu + 0x269ec3u;
+	return (int)((DAT_00285630 >> 16) & 0x7fff);
+}
+
+/* ---------- globals of other modules used here (tentative definitions) */
+
+/* 0x002ba544  language folder name (char *), e.g. "Packages\English" (core) */
+extern char *DAT_002ba544;
+
+/* ---------- globals owned by classlib_ui that other modules use */
+
+/* 0x002906f8  the six playable characters (Dub, Fly, Geena, Zak, Jade, Jet).
+Other modules read single fields under Ghidra names: DAT_00290700 is
+DAT_002906f8[0].portrait, DAT_00290718 is DAT_002906f8[0].colour, and so on
+(field address = 0x002906f8 + 0x60 * character + offset). */
+struct CLCharacterInfo {
+	const char *name;          /* 0x00 also the voice folder: "Dub" */
+	const char *initial;       /* 0x04 "D" */
+	const char *portrait;      /* 0x08 "char_dub.bmp" */
+	const char *select_image;  /* 0x0c "selchar_dub.bmp" */
+	const char *bone_a;        /* 0x10 "lpalm" / "rpalm" */
+	const char *bone_b;        /* 0x14 */
+	const char *bone_shoulder; /* 0x18 "rshoulder" / "lshoulder" */
+	const char *mallet_model;  /* 0x1c "malletdub.obe" */
+	unsigned int colour;       /* 0x20 bytes r, g, b, 0 */
+	float values[8];           /* 0x24 */
+	int ints[7];               /* 0x44 */
+};
+OF_ASSERT_SIZE(struct CLCharacterInfo, 0x60);
+extern const struct CLCharacterInfo DAT_002906f8[6];
+
+/* 0x0028fda8  frame time scale: 1.0 at the nominal frame rate */
+extern float DAT_0028fda8;
+/* 0x0028ffa8 / 0x0028ffac  3D sample min / max distance */
+extern float DAT_0028ffa8;
+extern float DAT_0028ffac;
+/* 0x0028ffb8  index of the music track that plays now, -1 for none */
+extern int DAT_0028ffb8;
+
+#endif
