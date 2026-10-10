@@ -17,12 +17,7 @@ __attribute__((weak, aligned(4))) unsigned int DAT_00290ea8[15] = {
 __attribute__((weak)) int DAT_00290ed8 = 0;
 
 /* 0x00290cb4 (25.0, debris sprite size scale) and 0x00290cb8 (1, debris sprites on) lie in
-   classlib_ui's block of_clu_data (0x0028fda8-0x00290cc0), which names no alias for them:
-   weak aliases into that block. */
-__asm__(
-	".weak DAT_00290cb4\n.set DAT_00290cb4, of_clu_data + 0xf0c\n"
-	".weak DAT_00290cb8\n.set DAT_00290cb8, of_clu_data + 0xf10\n"
-);
+   classlib_ui's block of_clu_data; classlib_ui_data.c defines both names as aliases (declared in bumpercars_a.h). */
 
 /* ---------- BumperCars globals after the game object (0x002f2048-): bumpercars_b's .bss
    block of_bcb_bss names them; these tentative definitions (-fcommon) only keep the image
