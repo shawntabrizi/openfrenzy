@@ -321,6 +321,38 @@ integration round 2 (921ec75); see below.
   (indust, then military) and no fault. The pc halves read as smooth signed 16-bit values
   (-12367, -12111, -3919), like PCM samples or a height field. The WMA stream of the previous
   screen is stopped and released just before the load.
+  Fixed (fix-meta-load-stack-smash): a short read, not audio. All 6 faulting runs (this one and
+  5 debug runs) played Space Tails (Clusteroids) in the Military Base stage; 6 runs without it
+  never faulted, and 1 run with it did not fault either. The registers are the same each time: the smashed
+  bytes are stale `Cluster.xbp` texture data in the Babel heap (found at odd offsets in the
+  package).
+  - The .lnd buffer (`bkLoadSingleFile`, Babel heap, so in the contiguous window) reused a 16 KB
+    page that the renderer still write-watched from a Clusteroids texture (`memory_watch_protect`;
+    a freed Babel block is not unwatched). The D: drive's `fread` goes through the musl cookie
+    to `xiso_fs_read` -> `pread`. The kernel does not fault on a protected page; it fails the
+    read with EFAULT. So `fread` returned 0x1080 of the 26935 bytes (the text up to the page
+    at 0x869fc000), and `bkLoadSingleFile` (which does not check the count) gave the rest as
+    stale texture bytes. `LevelLoad_Preprocess` (0x00166320) then read a "word" of more than
+    256 bytes into `word[256]` with `sscanf("%s")` and overwrote the frames above it;
+    `LevelLoad_Load` (0x00166db0) returned through the smashed x29/x30.
+  - Found with: a hex dump of the stack at the fault (the data matched Cluster.xbp), an ARM
+    hardware write watchpoint on the smashed slot, armed only while LevelLoad_Load
+    runs (pc in `vfscanf` <- `LevelLoad_Preprocess`), and a dump of the text buffer (it differs
+    from the disc file from byte 4224 on). These debug patches are not committed.
+  - Fix (host, `port/macos/host/host_syscall.c`): `read`, `pread64`, `readv` and `preadv` call
+    `host_memory_watch_prepare_write` on the guest destination first, as
+    `src/runtime/platform.h` asks of every host write ("call before the host itself (read(),
+    the kernel) writes into the range"). `xbox_files.c` ReadFile already bounced through a
+    staging buffer; the FILE path (`vfs_fopen`, used by `bkFopen`) and any other musl read did
+    not. Test: `src/vfs/tests/run_tests.sh` "fopen watched" (fails without the fix: short fread).
+  - Verified (window, same script, 760 s, `audio.enabled` false as in the owner's local config):
+    3 runs, no fault; 2 of them played Space Tails in the Military Base stage (one as the last
+    game, as in 4 of the 6 faulting runs), and the Military Meta level then loads its actors
+    ("mesh name = militarymesh_coll.obe"). ctest 6/6.
+  - The hint candidates were checked and are not the cause: `bsStopAudioStreamWMA`, the dsound
+    mixer (it only reads guest buffers in place), `wma_xmo.c` (the decoder writes at most the
+    packet's frames), guest thread stacks (the main stack is fixed), and
+    `LevelLoad_LoadHeightMaps` (no `.hmp` is in the disc listing, and none is loaded).
 - Board runs (window, 760-900 s): Power Station (Tube Tremors, Bug Bash v2, Hopper, ...), the first
   Meta stage and vote, Military Base minigames, the second Meta stage. Frame dumps look right.
 
