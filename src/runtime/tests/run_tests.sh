@@ -11,6 +11,7 @@
 #   SDL_VIDEO_DRIVER   default dummy (headless). Set it empty (SDL_VIDEO_DRIVER=) to open real
 #                      windows; that needs the window server, so not inside the Claude sandbox.
 #   OPENFRENZY_ISO     disc image (default <root>/orig/game.xiso.iso); disc tests skip without it
+#   OF_TEST_TIMEOUT    seconds before a hung test is killed (default 60)
 set -eu
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 T=$ROOT/src/runtime/tests
@@ -50,7 +51,8 @@ for name in $NAMES; do
 		echo "FAIL $name (link, $log)"; cat "$log"; fail=$((fail + 1)); continue
 	fi
 	set +e
-	"$B/openfrenzy" "$image" >> "$log" 2>&1
+	# a hung guest fails after OF_TEST_TIMEOUT seconds (macOS has no timeout(1): perl's alarm)
+	perl -e 'alarm shift; exec @ARGV or die' "${OF_TEST_TIMEOUT:-60}" "$B/openfrenzy" "$image" >> "$log" 2>&1
 	status=$?
 	set -e
 	known=$(grep -v '^#' "$T/known_failures.txt" 2>/dev/null | awk -v n="$name" '$1 == n { $1 = ""; print; exit }')

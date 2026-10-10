@@ -8,17 +8,20 @@ function that is not decompiled yet. openfrenzy runtime module.
   OPENFRENZY_STUB_ABORT=1   stop the game at the first unimplemented function
 
 The log goes to stderr: "UNIMPLEMENTED 0x0002cd80 FUN_0002cd80 (#12)", where
-#12 counts the distinct stubs reached so far.
+#12 counts the distinct stubs reached so far. Game threads (bKernel's background
+loader, audio) can reach stubs at the same time, so the table is locked.
 */
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define SEEN_SLOTS 8192u   /* power of two, larger than the 4818 original functions */
+#define SEEN_SLOTS 8192u   /* power of two, larger than the 5623 game and engine functions */
 
 static unsigned int seen[SEEN_SLOTS];
 static unsigned int seen_count;
+static pthread_mutex_t seen_lock = PTHREAD_MUTEX_INITIALIZER;
 static int log_all = -1;
 static int abort_first = -1;
 
@@ -49,19 +52,34 @@ static int remember(unsigned int address)
 
 void of_unimplemented(unsigned int address, const char *name)
 {
+	unsigned int count;
 	int first;
 
+	pthread_mutex_lock(&seen_lock);
 	if (log_all < 0)
 	{
 		log_all = flag("OPENFRENZY_STUB_LOG", "all");
 		abort_first = flag("OPENFRENZY_STUB_ABORT", "1");
 	}
 	first = remember(address);
+	count = seen_count;
+	pthread_mutex_unlock(&seen_lock);
 	if (first || log_all)
-		fprintf(stderr, "UNIMPLEMENTED 0x%08x %s (#%u)\n", address, name, seen_count);
+		fprintf(stderr, "UNIMPLEMENTED 0x%08x %s (#%u)\n", address, name, count);
 	if (abort_first)
 	{
 		fprintf(stderr, "OPENFRENZY_STUB_ABORT=1: stopping at the first unimplemented function\n");
 		abort();
 	}
+}
+
+/* how many distinct unimplemented functions were reached (tests, exit summaries) */
+unsigned int of_unimplemented_distinct(void)
+{
+	unsigned int count;
+
+	pthread_mutex_lock(&seen_lock);
+	count = seen_count;
+	pthread_mutex_unlock(&seen_lock);
+	return count;
 }
