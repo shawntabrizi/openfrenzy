@@ -78,9 +78,8 @@ static inline float cmb_bitsf(unsigned int bits)
 /* bkernel FUN_0004ae80: wide sprintf of the Babel engine (destination, format, ...) */
 #define CMB_WSPRINTF ((int (*)(unsigned short *, const unsigned short *, ...))FUN_0004ae80)
 
-/* bkernel FUN_0004bb30: find/load a resource by name (package, name, type, tag[, ...]) */
+/* bkernel FUN_0004bb30: find/load a resource by name (package, name, type, group) */
 #define CMB_RESOURCE4 ((int (*)(int, const char *, int, int))FUN_0004bb30)
-#define CMB_RESOURCE5 ((int (*)(int, const char *, int, int, int))FUN_0004bb30)
 
 /* classlib_ui FUN_00071720: play a generic sample (id, volume, pan, pitch, loop) */
 #define CMB_PLAY_SAMPLE ((int (*)(int, int, int, int, int))FUN_00071720)
@@ -246,7 +245,7 @@ struct CGameMode_MainOptions {
 	struct cmb_CGameMode base;
 	void *group;                /* 0x98: all texts */
 	void *items[6];             /* 0x9c: effects volume, music volume, vibration,
-	                               soundtrack, track, language (CharVoice) */
+	                               soundtrack, track, credits */
 	void *hint;                 /* 0xb4: help line (text buffer at +0x3c) */
 	int effects_level;          /* 0xb8: 0-10 */
 	int music_level;            /* 0xbc: 0-10 */

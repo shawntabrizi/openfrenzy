@@ -176,11 +176,11 @@ void CGameMode_MiniGameIntro_Update(struct CGameMode_MiniGameIntro *self, int ac
 			return;
 		}
 		if (CMB_I32(self->logo, 0x2bc) == 0) {
-			CMB_VFN(self->choice[0], 0x10, void (*)(void *, int))(self->choice[0], 0);
+			CMB_VFN(self->choice[0], 0x10, void (*)(void *, float))(self->choice[0], 0.0f);
 			cmb_text_select(self->choice[0], 0.0f);
 			cmb_add_to_background(self->choice[0]);
 			if (DAT_002baed0 == 0) {
-				CMB_VFN(self->choice[1], 0x10, void (*)(void *, int))(self->choice[1], 0);
+				CMB_VFN(self->choice[1], 0x10, void (*)(void *, float))(self->choice[1], 0.0f);
 				cmb_text_deselect(self->choice[1]);
 				cmb_add_to_background(self->choice[1]);
 			}

@@ -251,7 +251,8 @@ void CGameMode_Root_PollGUI(void)
 		if (port == -1)
 			continue;
 		CMB_I32(root, 0x28 + pad * 4) = 1;
-		((int (*)(void *, int, unsigned int, unsigned int))FUN_00048c40)(CMB_PTR(root, 0x3c), 2,
+		/* bkernel biBindMultiInput(channel, count, inputs...) is variadic */
+		((int (*)(void *, int, ...))FUN_00048c40)(CMB_PTR(root, 0x3c), 2,
 			(unsigned int)port << 16 | 0xc3, (unsigned int)port << 16 | 0xc4);
 	}
 }

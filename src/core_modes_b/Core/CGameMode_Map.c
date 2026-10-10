@@ -67,18 +67,18 @@ static void cmb_set_clip(float znear, float zfar)
 		(cmb_fbits(znear), cmb_fbits(zfar)), (znear, zfar));
 }
 
-/* bdisplay FUN_00040750: draw a sprite at a 3D position */
-static void cmb_draw_sprite(const float *pos, float width, float height, int a4, int texture,
-                            int a6, int a7, int r, int g, int b, int alpha, int a12, int a13)
+/* bdisplay FUN_00040750: draw a sprite at a 3D position (pos, width, height, angle, texture,
+   flip u, flip v, r, g, b, a, vertices, z bias) */
+static void cmb_draw_sprite(const float *pos, float width, float height, int texture, int r, int g,
+                            int b, int alpha)
 {
 	CMB_DUAL(FUN_00040750,
 		undefined4 (*)(undefined4, undefined4, undefined4, undefined4, undefined4, undefined4,
 		               undefined4, undefined4, undefined4, undefined4, undefined4, undefined4,
 		               undefined4),
-		int (*)(const float *, float, float, int, int, int, int, int, int, int, int, int, int),
-		((undefined4)pos, cmb_fbits(width), cmb_fbits(height), a4, texture, a6, a7, r, g, b,
-		 alpha, a12, a13),
-		(pos, width, height, a4, texture, a6, a7, r, g, b, alpha, a12, a13));
+		int (*)(const float *, float, float, float, int, int, int, int, int, int, int, float *, float),
+		((undefined4)pos, cmb_fbits(width), cmb_fbits(height), 0, texture, 0, 0, r, g, b, alpha, 0, 0),
+		(pos, width, height, 0.0f, texture, 0, 0, r, g, b, alpha, NULL, 0.0f));
 }
 
 /* bactor FUN_00039e20: draw a shadow (wire model, shadow object, light direction, length) */
@@ -1045,14 +1045,11 @@ void CGameMode_Map_RenderPath(struct CGameMode_Map *self)
 		for (s = step; s < span; s += step) {
 			((void (*)(float *, float *, float *, float))FUN_00050fa0)(point, from, to, s);
 			if (s <= limit)
-				cmb_draw_sprite(point, 80.0f, 80.0f, 0, self->node_texture, 0, 0, 0x7f, 0x7f,
-					0x7f, self->path_alpha / 2, 0, 0);
+				cmb_draw_sprite(point, 80.0f, 80.0f, self->node_texture, 0x7f, 0x7f, 0x7f, self->path_alpha / 2);
 			else if (phase != 0)
-				cmb_draw_sprite(point, 60.0f, 60.0f, 0, self->node_texture, 0, 0, 0x7f, 0x5a,
-					0, self->path_alpha / 2, 0, 0);
+				cmb_draw_sprite(point, 60.0f, 60.0f, self->node_texture, 0x7f, 0x5a, 0, self->path_alpha / 2);
 			else
-				cmb_draw_sprite(point, 60.0f, 60.0f, 0, self->node_texture, 0, 0, 0, 0, 0,
-					self->path_alpha / 2, 0, 0);
+				cmb_draw_sprite(point, 60.0f, 60.0f, self->node_texture, 0, 0, 0, self->path_alpha / 2);
 			phase--;
 			if (phase < 0)
 				phase = 5;
@@ -1060,8 +1057,7 @@ void CGameMode_Map_RenderPath(struct CGameMode_Map *self)
 	}
 	for (k = 0; k < (int)self->path_done; k++) {
 		if (self->current != k || phase < 3)
-			cmb_draw_sprite(self->pos[self->order[k]], 120.0f, 120.0f, 0, self->node_texture, 0,
-				0, 0x7f, 0x7f, 0x7f, self->path_alpha / 2, 0, 0);
+			cmb_draw_sprite(self->pos[self->order[k]], 120.0f, 120.0f, self->node_texture, 0x7f, 0x7f, 0x7f, self->path_alpha / 2);
 	}
 	((void (*)(int))FUN_00043b70)(0);
 	for (k = 0; k < (int)self->path_done; k++) {

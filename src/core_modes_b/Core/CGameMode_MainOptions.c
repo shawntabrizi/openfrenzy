@@ -2,7 +2,7 @@
 CGAMEMODE_MAINOPTIONS.C  <-  C:\BlitzParty\Game\Src\Core\CGameMode_MainOptions.cpp
 
 The options screen: effects and music volume, vibration, soundtrack, track, and the
-language/voice screen (CGameMode_Credits-like mode of core_modes_a, FUN_00017c70).
+credits (CGameMode_Credits of core_modes_a, FUN_00017c70).
 The constructor, Stop, Update and the text refresh are in CGameMode_MainMenu.c (they were
 emitted into that translation unit).
 */
@@ -250,7 +250,7 @@ int CGameMode_MainOptions_OnButton(struct CGameMode_MainOptions *self, int butto
 		case 4:
 			CGameMode_MainOptions_PlayTrack(1);
 			break;
-		case 5: /* language and voices */
+		case 5: /* credits */
 			memory = CMB_NEW(0x290, cmb_file_mainoptions, 0x16e);
 			mode = memory == NULL ? NULL : ((void *(*)(void *))FUN_00017c70)(memory);
 			CMB_PUSH_MODE(mode, 1);
