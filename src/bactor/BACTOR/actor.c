@@ -519,12 +519,14 @@ void bQueueAnim(struct BActorInstance *inst, struct BActorNode *node, int mode, 
 	int index;
 	int tries;
 	int value;
+	int thisMode;
 
+	/* the motion node only plays (the children still get the mode asked for) */
 	if ((flags & BANIMF_MOTION) == 0 || node != inst->motionNode)
-		mode = mode & 0xff;
+		thisMode = mode & 0xff;
 	else
-		mode = BANIM_PLAY;
-	if (mode == BANIM_PLAY || mode == BANIM_BLEND || mode == BANIM_BLENDIN)
+		thisMode = BANIM_PLAY;
+	if (thisMode == BANIM_PLAY || thisMode == BANIM_BLEND || thisMode == BANIM_BLENDIN)
 	{
 		numSlots = node->numSlots;
 		index = node->curSlot;
@@ -534,25 +536,25 @@ void bQueueAnim(struct BActorInstance *inst, struct BActorNode *node, int mode, 
 			if (slot->active == 0)
 			{
 				slot->active = 1;
-				slot->mode = mode;
+				slot->mode = thisMode;
 				slot->anim = anim;
-				if (mode == BANIM_BLEND)
+				if (thisMode == BANIM_BLEND)
 					slot->anim2 = anim2;
 				slot->time = time == -1 ? anim->startTime : time;
-				if (mode == BANIM_BLEND)
+				if (thisMode == BANIM_BLEND)
 					slot->time2 = time2 == -1 ? anim2->startTime : time2;
 				value = speed;
 				if (value == 0 && (value = anim->speed) == 0)
 					value = 0x400;
 				slot->speed = value;
-				if (mode == BANIM_BLEND)
+				if (thisMode == BANIM_BLEND)
 				{
 					value = speed2;
 					if (value == 0 && (value = anim2->speed) == 0)
 						value = 0x400;
 					slot->speed2 = value;
 				}
-				if (mode != BANIM_PLAY)
+				if (thisMode != BANIM_PLAY)
 				{
 					slot->blend = 0.0f;
 					slot->blendSpeed = blendSpeed;
