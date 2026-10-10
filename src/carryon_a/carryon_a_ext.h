@@ -17,6 +17,7 @@ extern int DAT_002bae70;                /* difficulty of the CPU players */
 extern int DAT_002bae94;                /* number of players */
 extern int DAT_002bae98;                /* game type (2: tournament) */
 extern int DAT_002baeb8;                /* demo mode: CPU players only */
+extern int DAT_002bae7c;                /* rumble on */
 extern int DAT_002baebc;                /* team game */
 extern int DAT_002baed4[4][10];         /* players: [0] character, [1] human, [8] team */
 extern int DAT_002baee8[];              /* = &DAT_002baed4[0][5]: score, stride 10 */
@@ -49,6 +50,10 @@ extern float DAT_00292c64;              /* route grid z */
 extern float DAT_00292c68;              /* route grid width */
 extern float DAT_00292c6c;              /* route grid depth */
 extern int DAT_00292c78;                /* route grid cells (columns x rows) */
+extern unsigned char DAT_00292ca0[];    /* the actor animation names (0x44 bytes each) */
+extern int DAT_00293928;                /* AI voice volume */
+extern float DAT_00293a38;              /* punch reach scale while holding (1.5) */
+extern float DAT_002ea478[4];           /* a zero vector */
 extern void *DAT_002f289c[4];           /* the CharLib AI players */
 extern void *DAT_002f2878[6];
 extern void *DAT_002f27d8;              /* the route tables in use */
@@ -139,15 +144,31 @@ extern unsigned char DAT_00290718[];
 #define co_Spawner_DrawEffects ((void (*)(void *))FUN_000cef40)
 #define co_Paint_Draw ((void (*)(void *))FUN_000ca470)
 #define co_Fireworks_Draw ((void (*)(void *))FUN_000d0450)
+#define co_Spawner_FindPad ((void *(*)(void *, float *, int))FUN_000cece0)
+#define co_Spawner_HasLoad ((int (*)(void *, int))FUN_000cec70)
+#define co_Spawner_FindType ((void *(*)(void *, int))FUN_000cee20)
+#define co_Spawner_FindAny ((void *(*)(void *))FUN_000cedb0)
+#define co_Pad_Use ((int (*)(void *, int))FUN_000cbb80)
+#define co_Station_Deliver ((void (*)(void *))FUN_000cd720)
+#define co_Glitter_FindPickups ((int (*)(void *, float *, void *, void **))FUN_000cc520)
+#define co_Glitter_AtJar ((int (*)(void *, float *))FUN_000cc510)
+#define co_Glitter_Drop ((void (*)(void *, int, float *, int))FUN_000cc090)
+#define co_Rack_NearestPoint ((void (*)(void *, float *, float *))FUN_000cab20)
+#define co_Rack_AddRocket ((int (*)(void *, int))FUN_000cb050)
+#define co_Rack_HasRoom ((int (*)(void *, int))FUN_000cb0c0)
+#define co_Conveyor_FindNearest ((void *(*)(void *, float *, int))FUN_000ca4c0)
+#define co_Sparks_Stream ((void (*)(void *, float *, float *, int, int, int))FUN_000d4600)
 
 /* rowing_a: the frame timer's mark (the timer object is the resource's +0x18) */
 #define co_Timer_Mark ((void (*)(void *, int))FUN_001af540)
 
 /* classlib_ui */
+#define co_Rumble_SetMotors ((int (*)(void *, int, int, int, int))FUN_00080630)
 #define co_Hud_SetCountdown ((void (*)(void *, float))FUN_00078930)
 #define co_Hud_CountdownDone ((int (*)(void *))FUN_0007a900)
 #define co_Hud_ShowWinner ((int (*)(void *, int *, int))FUN_0007ad50)
 #define co_Hud_Draw ((void (*)(void *))FUN_0007bd80)
+#define co_Hud_DrawPlayerMarker ((void (*)(void *, int, float *, float *))FUN_0007b970)
 #define co_Overlays_SetList ((void (*)(void *))FUN_00072720)
 #define co_PauseMenu_Update ((int (*)(void *))FUN_000772e0)
 

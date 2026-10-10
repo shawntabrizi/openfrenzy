@@ -32,13 +32,48 @@
 000be460 void CharLibShadow_DeleteAll(void);
 
 # CarryOn/CCarryOn_Player.cpp
+000bf760 void CCarryOn_Player_PlanRoute(void *route, float *from, float *target, float unused, float *step);
+000bf850 void CCarryOn_Player_SetThinkInterval(struct CCarryOnPlayer *self, float scale);
+000bf920 int CCarryOn_Player_FindRicher(struct CCarryOnPlayer *self);
+000bf9c0 int CCarryOn_Player_CollectPads(struct CCarryOnPlayer *self);
+000bfc00 void CCarryOn_Player_ChooseWanted(struct CCarryOnPlayer *self);
+000bfcd0 int CCarryOn_Player_FindWantedCarrier(struct CCarryOnPlayer *self);
+000bfd70 void CCarryOn_Player_DecideParts(struct CCarryOnPlayer *self);
+000bfe50 int CCarryOn_Player_CollectParts(struct CCarryOnPlayer *self);
+000c00d0 int CCarryOn_Player_DeliverParts(struct CCarryOnPlayer *self);
+000c01b0 int CCarryOn_Player_FindRicherGlitter(struct CCarryOnPlayer *self);
+000c0250 int CCarryOn_Player_CollectGlitter(struct CCarryOnPlayer *self);
+000c0510 int CCarryOn_Player_EmptyGlitter(struct CCarryOnPlayer *self);
+000c0600 int CCarryOn_Player_WorkConveyor(struct CCarryOnPlayer *self);
+000c0810 int CCarryOn_Player_CanHit(struct CCarryOnPlayer *self, int other);
 000c0900 void CCarryOn_Player_CreateControls(void);
+000c0af0 int CCarryOn_Player_GiveFireworks(struct CCarryOnPlayer *self, int how, int type, int count);
+000c0c40 void CCarryOn_Player_AddScore(struct CCarryOnPlayer *self, int points);
+000c0c60 void CCarryOn_Player_ShowScore(struct CCarryOnPlayer *self, int points, int player);
+000c0d30 void CCarryOn_Player_LoseFireworks(struct CCarryOnPlayer *self, int how, int count);
 000c0fd0 void CCarryOn_Player_DrawEffects(struct CCarryOnPlayer *self);
+000c10d0 int CCarryOn_Player_PickRandomOpponent(struct CCarryOnPlayer *self, int awake);
+000c11e0 int CCarryOn_Player_PickWorstEnemy(struct CCarryOnPlayer *self, int awake);
+000c12a0 void CCarryOn_Player_Hit(struct CCarryOnPlayer *self, void *from, float damage, int mode);
+000c1440 void CCarryOn_Player_UpdateBurden(struct CCarryOnPlayer *self);
+000c1650 void CCarryOn_Player_UpdatePost(struct CCarryOnPlayer *self);
 000c1760 void CCarryOn_Player_Update(struct CCarryOnPlayer *self);
 000c1a60 void CCarryOn_Player_DrawAll(void);
 000c1b30 void CCarryOn_Player_UpdateControls(struct CFireResource *res);
+000c1c10 void CCarryOn_Player_SetAltModel(struct CCarryOnPlayer *self, int alt);
+000c1d50 int CCarryOn_Player_IsLeading(struct CCarryOnPlayer *self, int *count);
 000c1ea0 struct CCarryOnPlayer *CCarryOn_Player_Ctor(struct CCarryOnPlayer *self, int player, float *pos);
 000c2180 void CCarryOn_Player_Dtor(struct CCarryOnPlayer *self);
+000c2200 void CCarryOn_Player_DecideLaunch(struct CCarryOnPlayer *self);
+000c2390 int CCarryOn_Player_GoLaunch(struct CCarryOnPlayer *self);
+000c24f0 void CCarryOn_Player_DecideGlitter(struct CCarryOnPlayer *self);
+000c2660 void CCarryOn_Player_Punch(struct CCarryOnPlayer *self, struct CCarryOnPlayer *other);
+000c2880 int CCarryOn_Player_TryPunch(struct CCarryOnPlayer *self);
+000c2a60 void CCarryOn_Player_RespawnFarthest(struct CCarryOnPlayer *self);
+000c2a80 struct CCarryOnPlayer *CCarryOn_Player_GiveToAttacker(struct CCarryOnPlayer *self, int how);
+000c2e00 int CCarryOn_Player_PickTarget(struct CCarryOnPlayer *self, int awake);
+000c2fb0 void CCarryOn_Player_SetMode(struct CCarryOnPlayer *self);
+000c3150 int CCarryOn_Player_RunMode(struct CCarryOnPlayer *self);
 
 # the text reader (vtable 0x00267bb8) and CarryOn/CFire_ASEImport.cpp
 000c3a20 struct CoTextReader *CFire_TextReader_Ctor(struct CoTextReader *self);
@@ -51,6 +86,7 @@
 # CarryOn/CFire_Carry.cpp
 000c4d60 void *CFire_Carry_Ctor(void *self, void *levelPackage, void *genericPackage, int variant);
 000c52b0 void CFire_Carry_Draw(void *self, unsigned int passes);
+000c5310 void CFire_Carry_UpdateHeld(void *self, int player);
 000c5340 void *CFire_Carry_GetHeld(void *self, int player);
 000c5390 void CFire_Carry_Dtor(void *self);
 000c5490 void CFire_Carry_Update(void *self, float step);
@@ -72,7 +108,10 @@
 000c77c0 int CFire_Resource_FindSample(struct CFireResource *self, int kind, int variant, int volume);
 000c7840 void CFire_Resource_SetSample(struct CFireResource *self, int sample);
 000c7950 void CFire_Resource_DrawBackground(struct CFireResource *self);
+000c7880 void CFire_Resource_PlayEvent(struct CFireResource *self, int player, int event);
 000c7a20 void CFire_Resource_DrawLines(float *points, int count, int closed, unsigned int colour);
+000c7ed0 void CFire_Resource_DrawActorFlat(void *instance, unsigned int colour);
+000c8230 void CFire_Resource_DrawCircle(float *pos, float radius, int flags, unsigned int colour);
 000c7f30 void CFire_Resource_Printf(struct CFireResource *self, float x, float y, unsigned int colour, int align, const char *format, ...);
 
 # CarryOn/CFire_Camera.cpp
@@ -92,4 +131,6 @@
 000c9490 void *CFire_Belt_Ctor(void *self);
 000c94b0 void CFire_Belt_Init(void *self, void *fireworks, void *path, float speed, int a, int b, int c);
 000c9520 void CFire_Belt_Update(void *self, float step);
+000c96a0 int CFire_Belt_HasItemAt(void *self, float at, float width, int type);
 000c97a0 void CFire_Belt_Draw(void *self);
+000c9950 float CFire_Belt_GetT(void *self, float x);

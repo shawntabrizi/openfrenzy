@@ -99,6 +99,84 @@ struct CoCharModel
 };
 OF_ASSERT_SIZE(struct CoCharModel, 0x10);
 
+/* ---------- CCarryOn_Player.cpp */
+
+/* a player: a CharLib AI player (0x1130 bytes, src/charlib/charlib_ai.h; the AI_* offsets
+there name its fields) with the Fireworks state. vtable 0x00267b70. One per player slot in
+DAT_002f6d28 (and charlib's AI player table DAT_002f289c). */
+struct CCarryOnPlayer
+{
+	unsigned char ai[0x1130];   /* +0x0000 the CharLib AI player (vtable, +0x04 AI mode,
+	                               +0x30 actor, +0x36 AI state, +0x8c route, ...) */
+	int fireworks;              /* +0x1130 fireworks (variant 1/3/4) carried, 0..5 */
+	int glitter;                /* +0x1134 variant 2: glitter collected, 0..100 */
+	float glitterTimer;         /* +0x1138 variant 2 */
+	float timer113c;            /* +0x113c */
+	float glitterHeld;          /* +0x1140 variant 2: frames since the last glitter */
+	int int1144;                /* +0x1144 */
+	int score;                  /* +0x1148 */
+	int scoreText;              /* +0x114c index of the next score text (0..8) */
+	int pad1150[2];             /* +0x1150 */
+	int partTypes[5];           /* +0x1158 variant 3: the type of each part carried */
+	int hasTarget;              /* +0x116c the AI walks to `target` */
+	float target[4];            /* +0x1170 */
+	int routeAge;               /* +0x1180 frames since the route was planned */
+	void *pickup;               /* +0x1184 variant 2: the glitter pick-up it walks to */
+	void *goal;                 /* +0x1188 the launch pad / spawner item it walks to */
+	int pad118c[2];             /* +0x118c */
+	int hasRoute;               /* +0x1194 */
+	int attacker;               /* +0x1198 the last player who hit it (-1) */
+	int *station;               /* +0x119c variant 3: its launch station (+4 parts asked, +8 types, +0x20 position) */
+	void *belt;                 /* +0x11a0 variant 2/4: the belt item it walks to */
+	int altModel;               /* +0x11a4 1: the alternative model instance is shown */
+	int chase;                  /* +0x11a8 the player it chases (-1) */
+	int chaseFireworks;         /* +0x11ac `fireworks` when the chase started */
+	int chaseGlitter;           /* +0x11b0 `glitter` when the chase started */
+	int chaseTargetGlitter;     /* +0x11b4 the target's glitter then */
+	int wantLaunch;             /* +0x11b8 */
+	int glitterFull;            /* +0x11bc */
+	int collected;              /* +0x11c0 fireworks picked up */
+	int taken;                  /* +0x11c4 fireworks taken from others */
+	int sample;                 /* +0x11c8 variant 2: the jar's looping sound channel */
+	int volume;                 /* +0x11cc its volume 0..255 */
+	int lastGlitter;            /* +0x11d0 */
+	void *jarNode;              /* +0x11d4 the node the jar hangs on */
+	void *jarObject;            /* +0x11d8 the "glitter" sub-object */
+	int jarAnim;                /* +0x11dc */
+	float jarPos[4];            /* +0x11e0 */
+	void *instance[2];          /* +0x11f0 the actor's two model instances (normal,
+	                               alternative); [1] is a 0x170-byte copy */
+	int wantType[2];            /* +0x11f8 variant 3: the part types it still needs */
+	int pad1200;                /* +0x1200 */
+};
+OF_ASSERT_OFFSET(struct CCarryOnPlayer, fireworks, 0x1130);
+OF_ASSERT_OFFSET(struct CCarryOnPlayer, score, 0x1148);
+OF_ASSERT_OFFSET(struct CCarryOnPlayer, partTypes, 0x1158);
+OF_ASSERT_OFFSET(struct CCarryOnPlayer, hasRoute, 0x1194);
+OF_ASSERT_OFFSET(struct CCarryOnPlayer, chase, 0x11a8);
+OF_ASSERT_OFFSET(struct CCarryOnPlayer, sample, 0x11c8);
+OF_ASSERT_OFFSET(struct CCarryOnPlayer, instance, 0x11f0);
+OF_ASSERT_SIZE(struct CCarryOnPlayer, 0x1204);
+
+/* CharLib AI fields (src/charlib/charlib_ai.h) used here */
+#define CP_MODE 0x04            /* int: the AI mode of the derived class (CP_MODE_*) */
+#define CP_THINK_TIME 0x20      /* float: frames since the last plan */
+#define CP_ACTOR 0x30           /* the actor */
+#define CP_STATE 0x36           /* unsigned short: the AI state (7 hurt, 9 knocked out) */
+#define CP_STATE_FRAMES 0x3c    /* int */
+#define CP_ROUTE 0x8c           /* struct CLRoute */
+#define CP_ARRIVED 0x98         /* short: the route ended */
+#define CP_ROUTE_NODE 0x1042    /* short: the route's first node, -1: no route (CLRoute +0xfb6) */
+#define CP_TARGET_PLAYER 0x1086 /* short */
+#define CP_HIT_BY 0x1088        /* short: who hit it last (-1) */
+#define CP_HITS 0x108a          /* short[4]: hits taken from each player */
+
+/* the actor (charlib Actor.c) */
+#define CA_POS 0xd0             /* float[4] */
+#define CA_PLAYER 0x230         /* unsigned short: the player slot */
+#define CA_YAW 0x1e8            /* float */
+#define CA_PLAYER_OF(p) (CO_U16(CO_PTR(p, CP_ACTOR), CA_PLAYER))
+
 /* ---------- the text reader used by the ASE import (vtable 0x00267bb8; other minigames
 use it too: rollerball_b 0x001989c0 sets it up on a file buffer) */
 struct CoTextReader

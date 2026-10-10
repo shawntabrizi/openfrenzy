@@ -51,6 +51,26 @@ extern int DAT_00293e50[4][3];          /* per variant: ambient light of the wor
 
 /* ---------- .data 0x00293f14-0x00294afc */
 
+extern int DAT_00293f14;                /* knocking out clears +0x1144 */
+extern float DAT_00293f1c;              /* variant 2: glitter cool-down after a hit (60) */
+extern float DAT_00293f44;              /* variant 4 burden */
+extern int DAT_00293f48;                /* the bully's chosen victim (-1) */
+extern int DAT_00293f4c;                /* the bully (-1) */
+extern float DAT_00293fc0[4];           /* route retry steps */
+extern int DAT_00293fd0[3][2];          /* variant 3: wanted part type pairs */
+extern float DAT_00293fe8[4];
+extern float DAT_00293ff8[4];
+extern float DAT_00294008[4];
+extern float DAT_00294018[4];
+extern int DAT_00294028[6];             /* variant 1: points for 0..5 fireworks launched */
+extern unsigned int DAT_00294040[];     /* debug colour per AI mode */
+extern float DAT_00294090[3];           /* variant 2 CPU glitter weight by difficulty */
+extern float DAT_0029409c[3];           /* variant 2 CPU basic burden by difficulty */
+extern float DAT_002940a8[4];
+extern unsigned char DAT_00294998[];    /* AI priorities (carryon_b) */
+extern void *DAT_00294a84[];            /* AI conditions (carryon_b) */
+extern void *DAT_00294ac0[];            /* AI state functions (carryon_b) */
+
 extern float DAT_00293f18;              /* tweak "V2:Glitter Loss" */
 extern int DAT_00293f24;                /* tweak "V3:Steal on Hurt" */
 extern int DAT_00293f28;                /* tweak "V3:Steal on KO" */
@@ -110,13 +130,15 @@ extern struct CCarryOnPlayer *DAT_002f6d28[4];  /* the players */
 #define g_coPlayers DAT_002f6d28
 extern int DAT_002f6d38;                /* tweak "V1:Instant KO" */
 extern float DAT_002f6d3c;              /* tweak "Basic Burden" */
-extern int DAT_002f6d40;
+extern float DAT_002f6d40;              /* time the bully's victim has been after it */
 extern void *DAT_002f6d44;              /* route globals saved by FUN_000c39b0 */
 extern void *DAT_002f6d48;
+extern void *DAT_002f6d4c;              /* the carried objects (CFire_Carry) */
 extern struct CFireResource *DAT_002f6d5c;  /* the resources and frame timing */
 #define g_fireRes DAT_002f6d5c
 extern int DAT_002f6d60;                /* tweak "Debug Lines" */
 extern struct CFireCamera *DAT_002f7960;  /* the camera */
 #define g_fireCam DAT_002f7960
+extern void *DAT_002f7968;              /* carryon_b: the sprites (+0xc sparks) */
 
 #endif
