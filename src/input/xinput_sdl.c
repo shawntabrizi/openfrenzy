@@ -34,6 +34,7 @@ pumped (platform_pump_events) only on the event thread; elsewhere the call
 reads what the last pump saw.
 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -335,6 +336,8 @@ static void test_input_apply(XINPUT_GAMEPAD *pad)
 	struct timespec now;
 	long long elapsed;
 	const char *item;
+	static unsigned char logged[256];
+	unsigned int count = 0;
 
 	if (!script || !*script)
 		return;
@@ -356,6 +359,11 @@ static void test_input_apply(XINPUT_GAMEPAD *pad)
 		at = strtoll(item + length + 1, NULL, 10);
 		if (elapsed >= at && elapsed < at + 150)
 		{
+			if (count < sizeof(logged) * 8 && !(logged[count / 8] & (1u << (count % 8))))
+			{
+				logged[count / 8] |= (unsigned char)(1u << (count % 8));
+				fprintf(stderr, "test_input: %s at %lld ms\n", name, elapsed);
+			}
 			for (index = 0; index < sizeof(digital) / sizeof(digital[0]); index++)
 				if (!strcmp(name, digital[index].name))
 					pad->wButtons |= digital[index].bit;
@@ -366,6 +374,7 @@ static void test_input_apply(XINPUT_GAMEPAD *pad)
 		item += strcspn(item, ",");
 		if (*item == ',')
 			item++;
+		count++;
 	}
 }
 
