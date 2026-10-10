@@ -83,7 +83,7 @@
 00056270 int bsInitAudioStreams(void);
 000562d0 void bsAudioStreamFixup(int package, int name);
 00056340 void bsDeleteAudioStream(struct BAudioStream *stream);
-00056370 int bsPlayAudioStream(struct BAudioStream *stream, unsigned int flags, int volume, int pan, int frequency, void *callback, void *file);
+00056370 int bsPlayAudioStream(struct BAudioStream *stream, unsigned int flags, int volume, int pan, int frequency, void *callback, ...);
 000563f0 void bsStopAudioStream(struct BAudioStream *stream);
 00056420 int bsAudioStreamTestFlags(struct BAudioStream *stream, unsigned int mask);
 00056440 void bsGetAudioStreamInfo(struct BAudioStream *stream, int *frequency, int *bits, int *formatFlags, int *blockTime, int *field8c, void **data90);

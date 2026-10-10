@@ -5,6 +5,8 @@ dispatches on the stream's kind. 0x00056270 is tagged; 0x000562d0-0x000565e0 fol
 (the gap before the WMA file) and are placed here because they are kind-independent.
 */
 
+#include <stdarg.h>
+
 #include "engine_misc_sound.h"
 #include "engine_misc_extern.h"
 
@@ -65,11 +67,17 @@ void bsDeleteAudioStream(struct BAudioStream *stream)
 }
 
 /* 0x00056370  BSOUND (xbAudioStream.cpp?)
-flags: 0x20 start paused, 1 toggles looping. file: the open file of a WMA stream that
-is not in a package. */
+flags: 0x20 start paused, 1 toggles looping. A seventh argument, the open file of a WMA
+stream that is not in a package (the play lists'), follows the callback: the original
+hands its whole stack frame on to bPlayAudioStreamWMA, which reads it only for such a
+stream, so callers with package streams pass six arguments. Here it is variadic and read
+only in that case. */
 int bsPlayAudioStream(struct BAudioStream *stream, unsigned int flags, int volume, int pan, int frequency,
-	void *callback, void *file)
+	void *callback, ...)
 {
+	va_list args;
+	void *file;
+
 	stream->flags = stream->formatFlags;
 	if (flags & 0x20)
 		stream->flags |= BSTREAM_STARTPAUSED;
@@ -78,6 +86,12 @@ int bsPlayAudioStream(struct BAudioStream *stream, unsigned int flags, int volum
 	if (stream->kind != 0) {
 		if (stream->kind != 1)
 			return 0;
+		file = NULL;
+		if (stream->package == NULL) {
+			va_start(args, callback);
+			file = va_arg(args, void *);
+			va_end(args);
+		}
 		return bsPlayAudioStreamWMA(stream, flags, volume, pan, frequency, callback, file);
 	}
 	return bsPlayAudioStreamADPCM(stream, flags, volume, pan, frequency, callback);
