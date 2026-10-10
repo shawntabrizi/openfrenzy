@@ -117,14 +117,32 @@
 00146f90 int HopPlayer_Think(void *self);
 00146fd0 int HopPlayer_Attack(void *self);
 
+# ---- Hopper/unplaced_rules.c (the rules object 0x002afe80)
+001472d0 void HopRules_Start(void *self);
+00147380 void HopRules_Update(void *self);
+00147400 void *HopRules_Destroy(void *self, byte flags);
+
+# ---- Hopper/CHopper_Fx.c (the effects object 0x002affa0)
+001480c0 void HopFx_DrawCore(void *self);
+00148980 void HopFx_Start1(void *self);
+001489b0 void HopFx_Start2(void *self);
+001489e0 void HopFx_Start3(void *self);
+00148b50 void HopFx_Start4(void *self);
+00148b80 void HopFx_Steam2(void *self);
+00148c40 void HopFx_Draw(void *self);
+00148c80 void HopFx_Shutdown(void *self);
+00148c90 void HopFx_Rumble(void *self, int player, int kind);
+00148d60 void *HopFx_Destroy(void *self, byte flags);
+00148ff0 int HopFx_TokenInit(struct BExtraSystem *system, float *item, void *args);
+001493f0 int HopFx_TokenUpdate(struct BExtraSystem *system, int count, void **items, void *arg);
+0014a6f0 int HopFx_FoamUpdate(struct BExtraSystem *system, int count, void **items, void *arg);
+0014a940 void HopFx_Start(void *self);
+0014abb0 void HopFx_Update3(void *self);
+0014adb0 void HopFx_Update4(void *self);
+0014b090 void HopFx_Update(void *self);
+
 # ---- provisional shapes (written later in this module)
 0014c970 void HopShader_SetConstant(float r, float g, float b, float a);
-001472d0 void HopBubbles_Start(void *self);
-00147380 void HopBubbles_Update(void *self);
-0014a940 void HopFx_Start(void *self);
-00148c80 void HopFx_Shutdown(void *self);
-0014b090 void HopFx_Update(void *self);
-00148c40 void HopFx_Draw(void *self);
 0014b100 void HopTimers_Start(void *self);
 0014b340 void HopTimers_Begin(void *self, int index, const char *name);
 0014b380 void HopTimers_End(void *self, int index);
@@ -134,4 +152,3 @@
 0014c880 void HopOverlay_Resume(void *self);
 0014c8f0 void *HopShaderColour_Ctor(void *self);
 0014c950 void *HopShaderLit_Ctor(void *self);
-00148c90 void HopFx_PlayerEffect(void *self, int player, int kind);

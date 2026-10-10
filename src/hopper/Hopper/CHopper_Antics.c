@@ -530,7 +530,7 @@ void HopAntics_Update2(void *self)
 				for (k = 0; k < HOP_AI(HOP_AP(hop_PlayerActor(i), 0x18c), 0x1d0); k++) {
 					cd = HOP_AP(hop_PlayerActor(i), 0x18c);
 					if (HOP_AP(cd, 0x1bc + k * 4) == hop_Platforms[HOP_I(0x002aed64)]) {
-						HopFx_PlayerEffect(HOP_ADDR(0x002affa0), i, 4);
+						HopFx_Rumble(HOP_ADDR(0x002affa0), i, 4);
 						HOP_AI(hop_Players[i], 0x116c) = 1;
 					}
 				}
@@ -625,7 +625,7 @@ void HopAntics_Update3(void *self)
 			}
 			hop_HitTimer[i] = 0x3c;
 			AI_SetState(hop_Players[i], 10);
-			HopFx_PlayerEffect(HOP_ADDR(0x002affa0), i, 1);
+			HopFx_Rumble(HOP_ADDR(0x002affa0), i, 1);
 		}
 		t = hop_HitTimer[i];
 		if (t != 0) {

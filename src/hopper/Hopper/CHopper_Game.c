@@ -6,7 +6,7 @@ The game object (0x00302798, vtable 0x0026e448; core's static constructors const
 the game mode CGameMode "Hopper" forwards its virtuals to it, and it drives the sub-objects:
   0x002ae878 antics (CHopper_Antics.c)   0x002ae948 resources (CHopper_Resources.c)
   0x002aebd8 the camera                   0x002aec10 the arena (blades, arm, disc)
-  0x002afe80 the bubbles                 0x002affa0 the effects
+  0x002afe80 the rules (counters)        0x002affa0 the effects
   0x002b0038 the debug timers            0x002b0378 the debug overlay (input map at +4)
 Only 0x0013f3a0 carries the file name; 0x0013eae0-0x0013f380 are placed here by address
 (file inferred).
@@ -77,7 +77,7 @@ void HopGame_Start(void *self)
 	HopTimers_Start(HOP_ADDR(0x002b0038));
 	HopCamera_Start(HOP_ADDR(0x002aebd8));
 	HopArena_Start(HOP_ADDR(0x002aec10));
-	HopBubbles_Start(HOP_ADDR(0x002afe80));
+	HopRules_Start(HOP_ADDR(0x002afe80));
 	HopFx_Start(HOP_ADDR(0x002affa0));
 	FUN_0019d5c0();
 	HOP_I(0x002b011c) = 0;
@@ -115,7 +115,7 @@ void HopGame_Exit(void *self)
 	DAT_0028ffac = HOP_AF(self, 0x3c);
 	FUN_0019d810();
 	HopFx_Shutdown(HOP_ADDR(0x002affa0));
-	FUN_001d5950();    /* the bubbles (empty) */
+	FUN_001d5950();    /* the rules (empty) */
 	HopArena_Shutdown(HOP_ADDR(0x002aec10));
 	FUN_001d5950();    /* the camera (empty) */
 	FUN_001d5950();    /* the debug timers (empty) */
@@ -189,7 +189,7 @@ void HopGame_CheckPlayers(void *self)
 /* 0x0013ee80  (gap; not in the function table): process: one frame of the game. The pause
 menu may end the game (the scores go to core: variation 3 hands over the finishing order);
 otherwise the camera, the rules of the variation (or the idle players before the play), the
-arena, the bubbles, the effects and the tokens update. */
+arena, the rules, the effects and the tokens update. */
 void HopGame_Process(void *self, int top)
 {
 	unsigned char *pause = (unsigned char *)self + 0x18;
@@ -256,7 +256,7 @@ play:
 			Actor_UpdateAnimations();
 		}
 		HopArena_Update(HOP_ADDR(0x002aec10), 0);
-		HopBubbles_Update(HOP_ADDR(0x002afe80));
+		HopRules_Update(HOP_ADDR(0x002afe80));
 		HopFx_Update(HOP_ADDR(0x002affa0));
 		CToken_UpdateAll();
 	}
@@ -297,7 +297,7 @@ void HopGame_Draw(void *self, int top)
 	HopTimers_Begin(HOP_ADDR(0x002b0038), 2, "arena");
 	HopArena_Draw(HOP_ADDR(0x002aec10), 0);
 	HopTimers_End(HOP_ADDR(0x002b0038), 2);
-	FUN_001d5950();    /* the bubbles' draw (empty) */
+	FUN_001d5950();    /* the rules. draw (empty) */
 	HopTimers_Begin(HOP_ADDR(0x002b0038), 3, "antics");
 	HopAntics_Draw(hop_Antics);
 	HopTimers_End(HOP_ADDR(0x002b0038), 3);
@@ -333,7 +333,7 @@ void HopGame_Restart(void *self)
 	HopTimers_Start(HOP_ADDR(0x002b0038));
 	HopCamera_Start(HOP_ADDR(0x002aebd8));
 	HopArena_Start(HOP_ADDR(0x002aec10));
-	HopBubbles_Start(HOP_ADDR(0x002afe80));
+	HopRules_Start(HOP_ADDR(0x002afe80));
 	for (token = CToken_Next(NULL); token != NULL; token = CToken_Next(NULL))
 		CToken_Delete((struct CToken *)token);
 	HopFx_Shutdown(HOP_ADDR(0x002affa0));

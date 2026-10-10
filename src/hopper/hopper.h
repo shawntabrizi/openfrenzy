@@ -153,6 +153,7 @@ static inline float hop_RayCastNormal(float *start, float *delta, float *hit, fl
 
 extern unsigned char DAT_002ba750[];   /* core: the game mode stack */
 extern int DAT_002bae94;               /* core: number of players */
+extern int DAT_002bae70;               /* core: the CPU players' difficulty (0..2) */
 extern int DAT_002baed4[4][10];        /* core: players: [0] character, [1] human, [5] score */
 extern int DAT_002b9c58[4];            /* core_modes_b: the players in finishing order */
 extern int DAT_002ecdec;               /* classlib_ui: the game is paused */
@@ -226,6 +227,36 @@ void FUN_0013eda0(void *self);                 /* HopGame_Suspend */
 void FUN_0013edb0(void *self, int top);        /* HopGame_Update */
 void FUN_0013ee80(void *self, int top);        /* HopGame_Process */
 void FUN_0013f0a0(void *self, int top);        /* HopGame_Draw */
+int FUN_00147420(struct BExtraSystem *system, int deleted);   /* the effects' extra system callbacks */
+int FUN_001474a0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00147660(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00147790(struct BExtraSystem *system, float *item, void *args);
+int FUN_00147820(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001479c0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00147a40(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00147b60(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00147c80(struct BExtraSystem *system, float *item, void *args);
+int FUN_00147ca0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00147cf0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00147e70(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00147fb0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001485d0(struct BExtraSystem *system, float *item, void *args);
+int FUN_00148650(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00148790(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00148820(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001488a0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00148d80(struct BExtraSystem *system, float *item, void *args);
+int FUN_00148eb0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00149650(struct BExtraSystem *system, float *item, void *args);
+int FUN_00149740(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00149850(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00149c10(struct BExtraSystem *system, float *item, void *args);
+int FUN_00149cd0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_0014a360(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_0014a5e0(struct BExtraSystem *system, float *item, void *args);
+int FUN_0014a670(struct BExtraSystem *system, float *item, void *args);
+int FUN_0014a740(struct BExtraSystem *system, float *item, void *args);
+int FUN_0014a870(struct BExtraSystem *system, float *item, void *args);
 #define HopGame_Resume FUN_0013ed80
 #define HopGame_Suspend FUN_0013eda0
 #define HopGame_Update FUN_0013edb0

@@ -30,7 +30,6 @@ Fields added to the AI player:
 
 extern int DAT_00283ea4;               /* core: the character colour set */
 extern void *DAT_002f26c4;             /* bumpercars_b: the debug free camera */
-extern int DAT_002bae70;               /* core: the CPU players' difficulty (0..2) */
 extern int DAT_002baebc;               /* core: team game */
 extern unsigned char DAT_00292ca0[];   /* charlib: the character animation names (0x44 bytes each) */
 
@@ -603,7 +602,7 @@ int HopPlayer_Attack(void *self)
 		hits = &HOP_AS(hop_Players[k], 0x108a + HOP_AUS(PL_ACTOR(self), 0x230) * 2);
 		*hits = (short)(*hits + 1);
 		CLSamples_PlayGeneric((int)(Core_Rand() % 4u) + 0xb, 0x7f, 0, 0, NULL);
-		HopFx_PlayerEffect(HOP_ADDR(0x002affa0), (int)k, 2);
+		HopFx_Rumble(HOP_ADDR(0x002affa0), (int)k, 2);
 		if (hop_Variation != 3 &&
 			(hop_Variation != 2 || 2 < HOP_AS(hop_Players[k], 0x108a + HOP_AUS(PL_ACTOR(self), 0x230) * 2))) {
 			AI_SetState(hop_Players[k], 0xd);
