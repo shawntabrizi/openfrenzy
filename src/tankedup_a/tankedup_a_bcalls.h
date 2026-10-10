@@ -42,6 +42,8 @@ Owner: tankedup_a.
 #define TUB_Sound_Ctor ((void (*)(void *))FUN_001d5880)
 #define TUB_Sound_Initialise ((int (*)(void *))FUN_001d5960)
 #define TUB_Sound_Free ((void (*)(void *))FUN_001d5a10)
+/* 0x001d5a50  plays sound `kind` at `pos`; returns the channel */
+#define TUB_Sound_Play ((int (*)(void *, int, float *, int, int, int))FUN_001d5a50)
 
 /* ---------- tankedup_b: the entity system (CTank_Game +0xb20) */
 
@@ -53,6 +55,21 @@ Owner: tankedup_a.
 #define TUB_Entities_StateChange ((void (*)(void *, int, int))FUN_001d3e90)
 #define TUB_Entities_Draw ((void (*)(void *))FUN_001d0920)
 #define TUB_Entities_DrawLate ((void (*)(void *))FUN_001d14e0)
+/* 0x001d1d10  the position of entity `id` */
+#define TUB_Entities_GetPosition ((void (*)(void *, int, float *))FUN_001d1d10)
+/* 0x001d1c30  entity `id`: position (raised by 60 over its clearance), velocity, rotation,
+   its clearance and another word; returns 0 when there is no such entity */
+#define TUB_Entities_GetInfo \
+	((int (*)(void *, int, float *, float *, float *, void *, void *))FUN_001d1c30)
+/* 0x001d1e80 / 0x001d20e0 / 0x001d2340  drive tank `id` (three control schemes) */
+#define TUB_Entities_DriveTracks ((void (*)(void *, int, float, float))FUN_001d1e80)
+#define TUB_Entities_DriveStick ((void (*)(void *, int, float, float))FUN_001d20e0)
+#define TUB_Entities_DriveCamera ((void (*)(void *, int, float, float))FUN_001d2340)
+/* 0x001d4cc0 / 0x001d2c80  tank `id` fires its primary / secondary weapon */
+#define TUB_Entities_FirePrimary ((int (*)(void *, int))FUN_001d4cc0)
+#define TUB_Entities_FireSecondary ((void (*)(void *, int))FUN_001d2c80)
+/* 0x001d62d0  (no `this`) ranks four scores: out[i] = the place (1-4) of in[i] */
+#define TUB_RankScores ((void (*)(int *, int *))FUN_001d62d0)
 /* 0x001d1770  the centre of the active tanks (and two more points the camera ignores) */
 #define TUB_Entities_GetCentre ((void (*)(void *, float *, float *, float *))FUN_001d1770)
 

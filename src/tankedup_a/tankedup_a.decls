@@ -107,24 +107,50 @@
 001c70d0 void CTankCamera_Free(void *self);
 001c71c0 void CTankCamera_StateChange(void *self, int from, int to);
 
-# TankedUp/CTank_Route.cpp
+# TankedUp/CTank_Route.cpp (0x001c74c0, 0x001c75f0, 0x001c7a70, 0x001c7ac0 tagged; the rest inferred)
 001c7280 void *CTankRoute_Ctor(void *self);
 001c7290 int CTankSystem_KeepState(void *self, float step, int state);
 001c72a0 void CTankRoute_Draw(void *self);
+001c74c0 void CTankRoute_NewNode(void *self, struct TuRouteNode **out, float x, float z, float radius);
+001c7580 void CTankRoute_AddNode(void *self, float x, float z, float radius);
+001c75f0 void CTankRoute_LinkNodes(void *self);
 001c76f0 int CTankRoute_Initialise(void *self, void *package, char *file, void *world);
 001c79f0 void CTankRoute_Free(void *self);
+001c7a50 void CTankRoute_FreeList(struct TuRouteLink **self);
+001c7a70 void CTankRoute_Push(struct TuRouteLink **self, struct TuRouteNode *node);
+001c7ac0 void CTankRoute_SetTarget(void *self, float *pos, int index);
+001c7cd0 float CTankRoute_GetWaypoint(void *self, float *pos, float *out, int index);
 001c7e20 void CTankRoute_LinkEntities(void *self, void *entities);
 
-# TankedUp/CTank_Players.cpp
+# TankedUp/CTank_Players.cpp (0x001c7f40 tagged; the rest inferred)
 001c7f20 void *CTankPlayers_Ctor(void *self);
 001c7f30 void CTankPlayers_Dtor(void *self);
 001c7f40 int CTankPlayers_Initialise(void *self, void *entities, struct TuTimer *timer, void *world, void *camera, void *sound, void *lights);
+001c81b0 void CTankPlayers_Rumble(void *self, int player, int kind);
+001c82e0 int CTankPlayers_SameTeam(void *self, int a, int b);
+001c8370 void CTankPlayers_GetTankPose(void *self, int player, float *pos, float *rot);
+001c83b0 int CTankPlayers_IsAlive(void *self, int player);
+001c83d0 int CTankPlayers_IsFirst(void *self, int player);
+001c83f0 int CTankPlayers_IsWinner(void *self, int id);
+001c8460 int CTankPlayers_IsHuman(void *self, int id);
+001c8490 int CTankPlayers_CanAct(void *self, int player);
+001c84b0 void CTankPlayers_SetEngineVolume(void *self, float value, int id);
 001c8510 void CTankPlayers_Input(void *self);
 001c8650 void CTankPlayers_Draw(void *self);
+001c86d0 void CTankPlayers_CreatePlayerInput(void *self, int player);
+001c8a20 void CTankPlayers_ReleasePlayerInput(void *self, int player);
+001c8af0 void CTankPlayers_CreateInput(void *self);
 001c8b30 void CTankPlayers_ReleaseInput(void *self);
 001c8b70 void CTankPlayers_BeginFrame(void *self);
+001c8ca0 int CTankPlayers_GetRank(void *self, int id);
+001c8d70 void CTankPlayers_PlayVoice(int player, int kind, int unused, int volume);
+001c8db0 void *CTankPlayers_DeletingDtor(void *self, unsigned int flags);
 001c8dd0 void CTankPlayers_Free(void *self);
+001c8e80 void CTankPlayers_RumbleId(void *self, int id, int kind);
 001c8ec0 void CTankPlayers_StateChange(void *self, int from, int to);
+001c9120 void CTankPlayers_CreateHud(void *self);
+001c9600 void CTankPlayers_UpdateHud(void *self, int *state);
+001c9c90 void CTankPlayers_Start(void *self);
 001c9d30 int CTankPlayers_Update(void *self, float step, int state);
 
 # TankedUp/CTank_World.cpp
@@ -133,8 +159,11 @@
 001ca470 void CTankWorld_Draw(void *self);
 001ca9a0 void CTankWorld_Pause(void *self);
 001ca9d0 void CTankWorld_Resume(void *self);
+001caa80 int CTankWorld_GetMode(void *self);
 001cad70 int CTankWorld_Update(void *self, float step, int state);
+001cb1a0 float CTankWorld_GroundDistance(void *self, float *pos, float radius, float *normal);
 001cb560 float CTankWorld_SweepGround(void *self, float *pos, float *delta, float *hit, float *normal);
+001cb7f0 int CTankWorld_CanSee(void *self, float *from, float *to);
 001cd320 void CTankWorld_Free(void *self);
 001cd920 int CTankWorld_Initialise(void *self, void *package, char *file, void *sound, void *lights);
 
@@ -145,3 +174,12 @@
 001cdcf0 void CTankEntities_Resume(void *self);
 001cde00 int CTankEntities_FindId(void *self, const char *name);
 001ce100 void *CTankEntities_Get(void *self, int id);
+001ce350 int CTankEntities_IsAlive(void *self, int id);
+001ce390 void CTankEntities_GetStats(void *self, int id, int *kills, int *b, int *c, int *laps, int *finished);
+001ce410 int CTankEntities_CanAct(void *self, int id);
+001ce460 void CTankEntities_SetLead(void *self, int id, float lead);
+001ce4d0 int CTankEntities_GetProgress(void *self, int id);
+001ce520 int CTankEntities_HasShell(void *self, int id);
+001ce630 float CTankEntities_GetScoreBar(void *self, int id);
+001ce700 float CTankEntities_GetSpeedTime(void *self, int id);
+001ce990 int CTankEntities_CountNear(void *self, float *pos, float radius);
