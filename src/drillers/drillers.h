@@ -438,6 +438,10 @@ void FUN_00119cd0(void *self, unsigned int player);
 void FUN_00120870(void *self, int player, int behind);
 void FUN_00120d00(void *self);
 /* the AI object (0x002aadf8) */
+int FUN_00121590(float heading, int player);
+void FUN_00121880(int player);
+float FUN_00122960(void *self, int player, float x0, float z0, float x1, float z1);
+float FUN_00122ac0(void *self, int player, float x0, float z0, float x1, float z1);
 void FUN_00121c80(void *self, int player);
 void FUN_00122530(void *self, int player);
 void FUN_00122c10(void *self, int player);
