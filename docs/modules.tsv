@@ -1,0 +1,39 @@
+order	id	kind	functions	bytes	lo	hi	title
+1	runtime	platform	0	0	-	-	Boot (of_boot.c), stub runtime, sdl_platform, shared XDK headers, msvc_crt, XDK entry-point table; links the game image
+2	vfs	platform	0	0	-	-	D: drive on the disc image (xiso_fs), xbox_files (CreateFile/ReadFile...), save drive, utility drive
+3	xkernel	platform	466	62741	0003055a	001ecbc0	Kernel + XAPI HLE (threads, events, timing, memory, MmAllocateContiguousMemory); replaces XBE xapi + libc regions (not decompiled)
+4	d3d8	platform	0	0	-	-	D3D8 + XGRAPHICS HLE on GLES 3 (ANGLE/Metal), NV2A shaders, swizzle
+5	dsound	platform	222	91383	00057980	00070090	DirectSound HLE on SDL3 audio, WMA decoder (music), Bink null; replaces XBE bink region (not decompiled)
+6	input	platform	0	0	-	-	XInput (XPP) on SDL3 gamepad + keyboard
+7	core	game	278	45213	00027540	001f5320	Game Core: core.cpp main loop, CGameMode_Root/Scores, tweak menu, static init ($E)
+8	bkernel	engine	221	36112	00048970	00052040	Babel bKernel: memory, files, packages (.xbp), cache, events, bkg load, debug
+9	bdisplay	engine	113	31277	0003ecc0	00047300	Babel BDISPLAY: display, render, textures, fonts, drawprim
+10	engine_misc	engine	152	35266	00047370	001ec540	Babel BINPUT, BGUI, BMATHS, BSOUND (streams, playlists) + late engine tail
+11	bactor	engine	155	40139	00034730	0003e250	Babel BACTOR: actors, animation, lights, camera, shader selection
+12	core_modes_a	game	178	42308	00011000	0001b8e0	Game Core: front-end CGameMode_* screens (menus, select, intro, map) (part 1 of 2, 0x00011000-0x0001b8e0)
+13	core_modes_b	game	125	42925	0001bd30	00026ce0	Game Core: front-end CGameMode_* screens (menus, select, intro, map) (part 2 of 2, 0x0001bd30-0x00026ce0)
+14	classlib_ui	game	222	63066	000703a0	00080cc0	ClassLib block 1: samples, overlay, HUD, intro cam, ParseMap, fireworks, rumble
+15	classlib_fx	game	196	44574	00082be0	0016cc80	ClassLib rest: sprites, particles, projector, debris, ray, token, water, seagulls
+16	charlib	game	213	73412	000ab4c0	000d7420	CharLib: character actors, AI, routes, collision, platforms, shadows
+17	meta_a	game	186	63963	0014c9a0	0015cc80	Meta: the board game between minigames (puzzles, tiles, level load, effects) (part 1 of 2, 0x0014c9a0-0x0015cc80)
+18	meta_b	game	179	58567	0015cef0	0016be60	Meta: the board game between minigames (puzzles, tiles, level load, effects) (part 2 of 2, 0x0015cef0-0x0016be60)
+19	bumpercars_a	game	185	65263	00080d00	000952e0	Minigame BumperCars (part 1 of 2, 0x00080d00-0x000952e0)
+20	bumpercars_b	game	168	67906	00096240	000a8250	Minigame BumperCars (part 2 of 2, 0x00096240-0x000a8250)
+21	carryon_a	game	153	53876	000ba6d0	000ca060	Minigame CarryOn (fireworks) (part 1 of 2, 0x000ba6d0-0x000ca060)
+22	carryon_b	game	171	48275	000ca230	000d9360	Minigame CarryOn (fireworks) (part 2 of 2, 0x000ca230-0x000d9360)
+23	clusteroids	game	142	57339	000d9390	000e7a40	Minigame Clusteroids
+24	mousewhack	game	158	93958	0016cce0	001872f0	Minigame MouseWhack (BugBash)
+25	demolition_a	game	238	31827	000e7af0	000f0b20	Minigame Demolition (part 1 of 4, 0x000e7af0-0x000f0b20)
+26	demolition_b	game	242	47864	000f0bf0	000fca70	Minigame Demolition (part 2 of 4, 0x000f0bf0-0x000fca70)
+27	demolition_c	game	178	34253	000fcb70	00105970	Minigame Demolition (part 3 of 4, 0x000fcb70-0x00105970)
+28	demolition_d	game	174	35179	001059e0	0010f5e0	Minigame Demolition (part 4 of 4, 0x001059e0-0x0010f5e0)
+29	drillers	game	114	41890	0010f830	00124c00	Minigame Drillers
+30	foxhunt	game	134	76129	00125070	00138790	Minigame FoxHunt (Tag)
+31	hopper	game	137	58735	0013b140	0014c970	Minigame Hopper
+32	scratchmatch	game	137	27939	001ba560	001c16f0	Minigame ScratchMatch
+33	rollerball_a	game	247	37324	00187570	00191530	Minigame RollerBall (part 1 of 2, 0x00187570-0x00191530)
+34	rollerball_b	game	204	42404	001915c0	0019d150	Minigame RollerBall (part 2 of 2, 0x001915c0-0x0019d150)
+35	rowing_a	game	162	76362	0019d200	001b12a0	Minigame Rowing (jet boats) (part 1 of 2, 0x0019d200-0x001b12a0)
+36	rowing_b	game	158	36089	001b12c0	001ba160	Minigame Rowing (jet boats) (part 2 of 2, 0x001b12c0-0x001ba160)
+37	tankedup_a	game	189	52597	001c1760	001cebd0	Minigame TankedUp (part 1 of 2, 0x001c1760-0x001cebd0)
+38	tankedup_b	game	114	63710	001cee60	001de950	Minigame TankedUp (part 2 of 2, 0x001cee60-0x001de950)

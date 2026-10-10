@@ -43,6 +43,16 @@ tools/ghidra_12.1.4_PUBLIC/support/analyzeHeadless ghidra openfrenzy \
 - `scripts/DecompileSample.java [needle]` — decompiles the first function that references a string
   containing `needle`.
 
+## Native port
+
+See `docs/ARCHITECTURE.md` (design and rules), `docs/BUILD.md` (setup, build, run),
+`docs/MODULES.md` (work modules), `docs/LIBRARY_CALLS.md` and `docs/STATUS.md`.
+
+```sh
+brew install python cmake ninja llvm@22 lld@22 sdl3
+cmake -S . -B build -G Ninja && cmake --build build && ctest --test-dir build
+```
+
 ## Status
 
 Initial analysis (Ghidra auto-analysis + XbSymbolDatabase):
@@ -55,6 +65,10 @@ Initial analysis (Ghidra auto-analysis + XbSymbolDatabase):
 | `XGRPH` | 278 | 2 | 56,038 |
 | `WMADEC` + `WMADECXM` | 131 | 0 | 47,805 |
 | `XPP` | 191 | 12 | 24,693 |
+
+A second pass (`scripts/ExportAt.java`) found about 1280 more `.text` functions that are reached
+only through tables (virtual methods, static constructors): 6636 in all, of which 5623 are game and
+engine code (`src/include/of_functions.tsv`).
 
 The XBE keeps 241 original source paths (Blitz "Babel" engine under `C:\Babel\Xbox\Src\`, game under
 `C:\BlitzParty\Game\Src\`), which are used to name and group functions.

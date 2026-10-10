@@ -25,16 +25,42 @@ public class ExportAt extends GhidraScript {
 		di.openProgram(currentProgram);
 		Listing listing = currentProgram.getListing();
 		List<Function> done = new ArrayList<>();
+		Deque<Address> work = new ArrayDeque<>();
+		Set<Address> queued = new HashSet<>();
+		List<String> addrArgs = new ArrayList<>();
 		for (int i = 1; i < args.length; i++) {
-			Address a = toAddr(Long.parseLong(args[i].replaceFirst("^0x", ""), 16));
+			if (args[i].startsWith("@")) {   // @file: whitespace-separated addresses
+				for (String s : Files.readString(Paths.get(args[i].substring(1))).trim().split("\\s+"))
+					addrArgs.add(s);
+			} else {
+				addrArgs.add(args[i]);
+			}
+		}
+		for (String s : addrArgs) {
+			Address a = toAddr(Long.parseLong(s.replaceFirst("^0x", ""), 16));
+			if (queued.add(a)) work.add(a);
+		}
+		// Each new function's direct call targets that have no function become functions too.
+		while (!work.isEmpty()) {
+			Address a = work.poll();
 			Function f = getFunctionAt(a);
+			boolean created = false;
 			if (f == null) {
 				disassemble(a);
 				new CreateFunctionCmd(a).applyTo(currentProgram);
 				f = getFunctionAt(a);
+				created = true;
 			}
-			if (f == null) { println("no function at " + args[i]); continue; }
+			if (f == null) { println("no function at " + a); continue; }
+			if (!created && !queued.contains(a)) continue;
 			done.add(f);
+			for (Address ia : f.getBody().getAddresses(true)) {
+				Instruction ins = listing.getInstructionAt(ia);
+				if (ins == null || !ins.getFlowType().isCall()) continue;
+				for (Address t : ins.getFlows()) {
+					if (getFunctionAt(t) == null && queued.add(t)) work.add(t);
+				}
+			}
 		}
 		try (PrintWriter meta = new PrintWriter(new FileWriter(out.resolve("functions_extra.jsonl").toFile(), true))) {
 			for (Function f : done) {

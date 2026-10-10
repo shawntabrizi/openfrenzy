@@ -1,81 +1,37 @@
 # Status
 
-Written 2026-10-10 05:50 BST by the report agent, at commit `d1d2035`.
-All counts below come from scripts or from commands that ran on this Mac. Nothing is estimated.
+Written 2026-10-10 by the lead architect (second foundation run). Every "works" below was run on
+this Mac (Apple Silicon, macOS 26.6.2, Homebrew LLVM 22.1.8, SDL 3.4.18). Nothing is estimated.
 
 ## Summary
 
-- The game is **not decompiled yet**. `src/` does not exist. 0 of 5358 `.text` functions have code.
-- The **toolchain works**: the `of-rebase` LLVM pass, the Darwin host and two test guests build, and both tests pass.
-- The **XDK replacement layer** (from OpenCE) compiles for the guest ABI, but it is not linked into a guest yet.
-- The **game does not run**. No guest image of the game exists. It does not open a window or read the ISO.
-- The module phase of the overnight workflow left no code in the tree. The reason is not known to this agent.
+- The **foundation is complete**: host, compiler pass, guest musl, guest runtime, the whole XDK
+  replacement layer and the game image build and link, and the tests pass.
+- The **game is not decompiled yet**: 0 of 5623 game/engine functions have code. Every one runs
+  as a generated weak stub that logs `UNIMPLEMENTED`.
+- The game image boots: it runs the 81 static constructors and the game's `main` (0x0002d540)
+  as stubs, and exits 0. It does not open a window or load packages yet.
+- A smoke guest opens a real SDL3 window, draws with GLES 3 on ANGLE/Metal, and reads files from
+  `orig/game.xiso.iso` through the new XDVDFS reader.
 
-## What exists (committed)
+## Verified
 
-| Path | What | Verified |
+| Item | Result | Command |
 |---|---|---|
-| `docs/ARCHITECTURE.md` | Guest/host design (OpenCE Mac model), source layout, rules | read |
-| `CMakeLists.txt`, `cmake/` | Host build, guest toolchain, pinned ANGLE + Khronos download, guest tests | built, tests pass |
-| `port/macos/compiler/guest_rebase.cpp` | `of-rebase` pass (from OpenCE-mac-zimm3rmann) | built with LLVM 22 |
-| `port/macos/host/` | Darwin host: loader, 4 GB arena, threads, syscalls, files, SDL3, GLES via ANGLE | built, runs test guests |
-| `port/macos/tools/` | `guest_cc.py`, `asm_convert.py`, `host_imports.py` | used by the build |
-| `port/macos/tests/skeleton/` | `skeleton.c` (exit 0), `probe.c` (rebased memory, exit 42) | both pass |
-| `port/xdk/src/` | OpenCE platform layer: D3D8 on GL, NV2A shaders, textures, DirectSound on SDL, XInput, kernel, XAPI, memory, files, `xiso.c` | compiles (objects only) |
-| `port/xdk/entry/` | XDK entry-point table: XBE library address -> HLE function | compiles |
-| `port/guest/libc/arch/arm64_32/` | musl arch headers for the ILP32 guest | used by the compile check |
-| `scripts/` | Ghidra scripts, `gen_xdk_entry_points.py`, `linux_msvc_semantics.py`, `coverage.py` | `coverage.py` tested |
-
-Untracked (written by the architect, but not committed): `scripts/map_sources.py`, `scripts/modules.py`,
-`scripts/DecompileAt.java`, `scripts/ExportAll.java`. `ARCHITECTURE.md` depends on the first two.
-They produce `export/source_map.json` and `export/modules.json`. The owner must commit them.
+| Clean configure + build | 17 s, no errors | `cmake -S . -B build-verify -G Ninja && cmake --build build-verify` |
+| Tests | 5/5 pass | `ctest --test-dir build-verify` |
+| Platform layer link | every object links (`openfrenzy_platform_check.elf`) | part of the build |
+| Smoke guest, window | 1280x960 window, 480 frames in 4000 ms (vsync 120 Hz), outside the sandbox | `OPENFRENZY_WINDOWED=1 OPENFRENZY_SMOKE_SECONDS=4 build/openfrenzy build/openfrenzy_smoke.elf` |
+| Smoke guest, disc | `default.xbe` (2834432 bytes, magic XBEH), `Packages\BootSeq.xbp` read from the ISO | same |
+| Game image | constructors + main reach their stubs, exit 0 | `build/openfrenzy build/openfrenzy_guest.elf` |
+| Stub replacement | a strong definition in `src/<module>/` replaced the weak stub; an XDK call (`GetTickCount`) ran through the HLE layer | temporary test module, removed |
+| `.decls` ownership check | an override for another module's function fails with a clear error | `gen_game_decls.py --check` |
 
 ## Decompilation coverage
 
-Command: `python3 -I scripts/coverage.py --markdown`.
-The script finds `// 0x<addr>` comments with a function body under `src/`. A body that calls
-`platform_unimplemented` or has `STUB`/`UNIMPLEMENTED` counts as a stub. Modules come from `export/modules.json`.
+`python3 -I scripts/coverage.py --markdown`: 0 / 5623. Per module: `docs/MODULES.md`.
 
-| Module | Kind | Functions | Real code | Stubs | Not started |
-|---|---|---:|---:|---:|---:|
-| `runtime` | platform | 0 | 0 | 0 | 0 |
-| `vfs` | platform | 0 | 0 | 0 | 0 |
-| `xapi` | platform | 461 | 0 | 0 | 461 |
-| `d3d8` | platform | 0 | 0 | 0 | 0 |
-| `dsound` | platform | 0 | 0 | 0 | 0 |
-| `xinput` | platform | 160 | 0 | 0 | 160 |
-| `bkernel` | engine | 166 | 0 | 0 | 166 |
-| `bdisplay` | engine | 108 | 0 | 0 | 108 |
-| `core` | game | 181 | 0 | 0 | 181 |
-| `binput_bgui` | engine | 22 | 0 | 0 | 22 |
-| `bactor` | engine | 116 | 0 | 0 | 116 |
-| `bmaths_bsound` | engine | 172 | 0 | 0 | 172 |
-| `core_modes` | game | 199 | 0 | 0 | 199 |
-| `classlib_ui` | game | 216 | 0 | 0 | 216 |
-| `classlib_fx` | game | 114 | 0 | 0 | 114 |
-| `charlib` | game | 167 | 0 | 0 | 167 |
-| `meta` | game | 306 | 0 | 0 | 306 |
-| `bumpercars` | game | 372 | 0 | 0 | 372 |
-| `carryon` | game | 330 | 0 | 0 | 330 |
-| `clusteroids_mousewhack` | game | 268 | 0 | 0 | 268 |
-| `demolition` | game | 617 | 0 | 0 | 617 |
-| `drillers_foxhunt` | game | 203 | 0 | 0 | 203 |
-| `hopper_scratchmatch` | game | 251 | 0 | 0 | 251 |
-| `rollerball` | game | 351 | 0 | 0 | 351 |
-| `rowing` | game | 289 | 0 | 0 | 289 |
-| `tankedup` | game | 289 | 0 | 0 | 289 |
-| **total** | | **5358** | **0** | **0** | **5358** |
-
-Notes on the table:
-
-- `xapi` (461) is XBE `libc` (364) + `xapi` (97) code (from `export/source_map.json`). The plan replaces it with
-  guest musl + the OpenCE layer. It is not meant to be decompiled.
-- `xinput` (160) is RAD **Bink** code. The plan replaces it with `bink_null.c`. That file is not in the tree yet.
-- So 4737 game and engine functions remain to decompile.
-
-### XDK library sections (HLE, not decompiled)
-
-From the header of `port/xdk/entry/xdk_entry_points.inc` (regenerated by `port/xdk/build_check.sh`, no change):
+## XDK entry points (`src/runtime/entry/xdk_entry_points.inc`)
 
 | Section | HLE | Missing (game calls it) | Unknown | Internal only |
 |---|---:|---:|---:|---:|
@@ -84,80 +40,32 @@ From the header of `port/xdk/entry/xdk_entry_points.inc` (regenerated by `port/x
 | `XGRPH` | 0 | 1 | 3 | 1 |
 | `XPP` | 7 | 1 | 0 | 3 |
 
-Missing entry points with the most game callers: `IDirectSoundBuffer_SetFrequency` (7),
-`D3DDevice_InsertFence` (4), `D3D_KickOffAndWaitForIdle` (4), `D3DDevice_SetMaterial` (3),
-`D3DDevice_SetLight` (3), `D3DDevice_DrawVerticesUP` (3). `WMADEC`/`WMADECXM` (131 functions) have no table rows yet.
+The table was generated by the first run and is not regenerated by the CMake build
+(`src/runtime/build_check.sh` does it). `docs/LIBRARY_CALLS.md` lists all 192 library functions
+the game calls; 54 are unidentified.
 
-## What builds and runs
+## Not done / not verified
 
-| Item | Result | Command that ran |
-|---|---|---|
-| Host + rebase pass + test guests | builds | `cmake -S . -B build-report -G Ninja && cmake --build build-report` |
-| Guest tests | 2/2 pass | `ctest --test-dir build-report --output-on-failure` |
-| Probe guest by hand | prints `Loaded ARM image 88000000-88014000`, `Game exited (42)` | see below |
-| XDK layer compile check | 15/15 files compile | `port/xdk/build_check.sh build-report-xdk` |
-| XDK layer link | not done | no guest musl, no `sdl_platform.c`, `gl_functions.c`, `port_config.c` |
-| Game guest | does not exist | - |
+- No game or engine function is decompiled.
+- The game image never opened a window: the D3D device path (`platform_video_initialize`) is
+  linked but untested with game calls. Only the smoke guest proved the window and GLES path.
+- `sdl_platform.c` is new and small: keyboard/mouse events are handled but untested with input.
+- Audio (`dsound_sdl.c`) is linked but untested. No WMA decoder (music in `Music.xbp` is WMA).
+- `host_sdl_destroy_audio_stream` only pauses the stream (small leak per output-device change).
+- FXAA/SMAA are disabled (`xgpu_post_null.c`).
+- Settings come from defaults and `OPENFRENZY_*` variables only (no config file).
+- No `.app` bundle; run the host with the image.
+- The `.xbp` package format is not decoded.
+- The source map leaves 3711 functions in gaps (directory known, file not); 21 table-referenced
+  addresses did not decompile as functions (`ExportAt.java` "no function").
+- 0x00015270 and similar newly found functions use registers on entry (`unaff_*`); some may be
+  mid-function targets rather than real functions. Agents check each one.
 
-How far the game gets: **nowhere**. There is no game guest to run.
+## Next steps
 
-Disc image: `orig/game.xiso.iso` has the `MICROSOFT*XBOX*MEDIA` header at 0x10000. It was still being copied at
-05:50 (1.69 GB and growing). Nothing reads it yet.
-
-## Build and run on this Mac
-
-```sh
-brew install python cmake ninja llvm@22 lld@22 sdl3
-cd /Users/shawntabrizi/Documents/GitHub/openfrenzy
-cmake -S . -B build -G Ninja          # first run downloads ANGLE + Khronos headers to deps/
-cmake --build build
-ctest --test-dir build --output-on-failure
-
-# run a test guest by hand (the host needs a data and a save folder)
-mkdir -p build/run/data build/run/saves
-OPENFRENZY_DATA_ROOT=$PWD/build/run/data OPENFRENZY_SAVE_ROOT=$PWD/build/run/saves \
-  SDL_VIDEO_DRIVER=dummy build/openfrenzy build/openfrenzy_probe.elf   # exits 42
-
-# compile check of the XDK layer (needs network on first run for musl + GLES headers)
-OPENFRENZY_LLVM_BIN=/opt/homebrew/opt/llvm@22/bin port/xdk/build_check.sh build-xdk
-
-# coverage
-python3 -I scripts/coverage.py --markdown
-```
-
-## Known bugs and problems
-
-1. `docs/ARCHITECTURE.md` section 10 says `build-<name>/openfrenzy build-<name>/openfrenzy_skeleton.elf` runs a guest.
-   It does not. Without `OPENFRENZY_DATA_ROOT`, the host stops with `Game data folder is missing: assets` (exit 1).
-2. Two locations for the XDK layer: `ARCHITECTURE.md` says `src/platform/`, the code is in `port/xdk/`. See `port/xdk/README.md`.
-3. `port/xdk/build_check.sh` uses `/opt/homebrew/opt/llvm` by default. That is LLVM 23 on this Mac, not the pinned LLVM 22.
-4. The XDK layer still has Halo names (`HALO_*`, `halo_hooks.c`, `halo_cache_file_formats.h`) and Halo-only hooks.
-5. `scripts/modules.py` titles are out of date: `d3d8` says "OpenGL 4.1" (the renderer is GLES 3); `xinput` holds Bink code.
-6. Four architect scripts are untracked (see above). A fresh clone cannot regenerate the source map or the modules.
-
-## Next steps (in priority order)
-
-1. Commit `scripts/map_sources.py` and `scripts/modules.py`, so the module plan can be rebuilt.
-2. Build guest musl (`libguestc.a`), `libclang_rt.builtins`, and the GL/posix import stubs (OpenCE `android_gl_stubs.py`,
-   `android_posix_stubs.py`). Without them, no real guest can link.
-3. Copy the rest of the OpenCE layer: `sdl_platform.c`, `gl_functions.c`, `port_config.c`, `bink_null.c`, the musl math files.
-   Link the XDK layer into a guest that opens an SDL3 window and reads one file from the ISO with `xiso.c`.
-4. Add the game guest project with a stub generator: one `UNIMPLEMENTED 0x...` stub for each function not yet in `src/`,
-   so the build always links.
-5. Decompile in boot order: `core` (main loop), `bkernel` (memory, files, packages), `bdisplay`, `binput_bgui`,
-   `bmaths_bsound`, `bactor`, then `core_modes`, `classlib_*`, `charlib`, `meta`, then the minigames.
-6. Implement the 20 missing XDK entry points (start with the six listed above) and identify the 4 unknown ones.
-7. Decide on WMA: find which game paths call `WMADEC`, then stub or decode.
-8. Fix the known problems 1-5.
-
-## Note: a browser (WebAssembly) build
-
-A browser build is possible later, but it is not the same as a native build.
-
-- Layout fits: `wasm32` uses 32-bit pointers, as the Xbox did. The decompiled code can keep its layouts without the rebase pass.
-- Graphics fits: WebGL 2 is OpenGL ES 3.0, the API this renderer uses. SDL3 and Emscripten support it.
-- Speed: WebAssembly CPU code is usually slower than native code. A 2001 Xbox game (733 MHz CPU) still needs little CPU.
-  The usual browser limits are shader-compile stutter, threads (they need special server headers), audio latency and memory.
-- The game files must reach the browser. The player must supply them, so the page must load a local ISO.
-
-This note is general knowledge. No browser build was tried in this project.
+1. Platform agents: `runtime`, `vfs` (D: drive on `xiso_fs`), `xkernel`, `d3d8` (missing entry
+   points), `dsound` (WMA), `input`.
+2. Game/engine agents in boot order: `core`, `bkernel`, `bdisplay`, `engine_misc`, `bactor`,
+   then the front end, `meta_*`, minigames (`docs/MODULES.md`).
+3. Watch the `UNIMPLEMENTED` log of `openfrenzy_guest.elf`: it lists the next functions the
+   boot needs, in order.

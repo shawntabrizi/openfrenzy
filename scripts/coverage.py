@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Decompilation coverage per work module (export/modules.json).
+"""Decompilation coverage per work module (src/include/of_functions.tsv).
 
 A function counts as decompiled when a source file under src/ has a comment
-`// 0x<addr>` (docs/ARCHITECTURE.md section 9) followed by a function body.
+`// 0x<addr>` or `/* 0x<addr>` (docs/ARCHITECTURE.md) followed by a function body.
+Functions not decompiled run as generated weak stubs (they are not counted here).
 It counts as a stub when that body calls platform_unimplemented /
 PLATFORM_UNIMPLEMENTED or contains the word STUB or UNIMPLEMENTED.
 
 Usage: python3 -I scripts/coverage.py [--markdown]
 """
-import json
 import pathlib
 import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-ADDR = re.compile(r"//\s*0x([0-9a-fA-F]{8})\b")
+ADDR = re.compile(r"(?://|/\*)\s*0x([0-9a-fA-F]{8})\b")
 STUB = re.compile(r"platform_unimplemented|PLATFORM_UNIMPLEMENTED|\bSTUB\b|\bUNIMPLEMENTED\b")
 EXTS = {".c", ".cc", ".cpp", ".h", ".hpp", ".inc"}
 
@@ -55,14 +55,22 @@ def scan(src):
 
 
 def main():
-    modules = json.loads((ROOT / "export/modules.json").read_text())
+    modules = {}
+    for line in (ROOT / "src/include/of_functions.tsv").read_text().splitlines():
+        if line.startswith("#"):
+            continue
+        cols = line.split("\t")
+        modules.setdefault(cols[1], []).append(cols[0])
+    kinds = {}
+    for line in (ROOT / "docs/modules.tsv").read_text().splitlines()[1:]:
+        cols = line.split("\t")
+        kinds[cols[1]] = cols[2]
     found = scan(ROOT / "src")
     rows, tot = [], [0, 0, 0]
-    for mid, m in modules.items():
-        funcs = [f.lower() for f in m["functions"]]
+    for mid, funcs in modules.items():
         real = sum(found.get(f) == "real" for f in funcs)
         stub = sum(found.get(f) == "stub" for f in funcs)
-        rows.append((mid, m["kind"], len(funcs), real, stub))
+        rows.append((mid, kinds.get(mid, "?"), len(funcs), real, stub))
         tot[0] += len(funcs)
         tot[1] += real
         tot[2] += stub
