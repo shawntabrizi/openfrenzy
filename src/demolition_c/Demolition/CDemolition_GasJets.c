@@ -306,6 +306,14 @@ void CDemolition_GasJets_Shutdown(struct CDemolition_GasJets *self)
 	}
 }
 
+/* 0x000fe610  Demolition (file inferred: CDemolition_GasJets.cpp; added to the table in
+integration round 2)
+Lets the waves start (clears "stopped"). Variation 2 slot 3 (Start) calls it. */
+void CDemolition_GasJets_Start(struct CDemolition_GasJets *self)
+{
+	self->stopped = 0;
+}
+
 /* 0x000fe620  Demolition (file inferred: CDemolition_GasJets.cpp)
 Starts a wave from the outside (state 1): a sound, and each row's light at its first jet. */
 void CDemolition_GasJets_StartOutside(struct CDemolition_GasJets *self)

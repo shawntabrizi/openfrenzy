@@ -4,10 +4,12 @@
 
 # Demolition/CDemolition_Lift.c
 000fcb70 void CDemolition_Lift_Destruct(struct CDemolition_Lift *self);
+000fcb90 void CDemolition_Lift_Start(struct CDemolition_Lift *self);
 000fcbc0 void CDemolition_Lift_Stop(struct CDemolition_Lift *self);
 000fcbd0 void CDemolition_Lift_ReleaseParts(struct CDemolition_Lift *self);
 000fcc20 void CDemolition_Lift_SpeedUp(struct CDemolition_Lift *self, float dt);
 000fcc80 void CDemolition_Lift_SlowDown(struct CDemolition_Lift *self, float dt);
+000fcce0 void CDemolition_Lift_DrawParts(struct CDemolition_Lift *self);
 000fcd30 void CDemolition_Lift_ReleaseShaft(struct CDemolition_Lift *self);
 000fcd60 void CDemolition_Lift_UpdateShaft(struct CDemolition_Lift *self, float dt);
 000fce70 void CDemolition_Lift_DrawShaft(struct CDemolition_Lift *self);
@@ -15,11 +17,13 @@
 000fcfa0 void CDemolition_Lift_PlaceGirders(struct CDemolition_Lift *self, float dt);
 000fd040 void CDemolition_Lift_DrawGirders(struct CDemolition_Lift *self);
 000fd100 void CDemolition_Lift_MoveWorld(struct CDemolition_Lift *self, float dt);
+000fd180 void CDemolition_Lift_Blast(struct CDemolition_Lift *self, float *pos, float radius);
 000fd1d0 struct CDemolition_Lift *CDemolition_Lift_Construct(struct CDemolition_Lift *self);
 000fd200 struct CDemolition_Lift *CDemolition_Lift_DeletingDestructor(struct CDemolition_Lift *self, unsigned char flags);
 000fd220 void CDemolition_Lift_ResetParts(struct CDemolition_Lift *self);
 000fd300 void CDemolition_Lift_Shutdown(struct CDemolition_Lift *self);
 000fd320 void CDemolition_Lift_UpdateParts(struct CDemolition_Lift *self, float dt);
+000fd540 void CDemolition_Lift_Draw(struct CDemolition_Lift *self);
 000fd570 void CDemolition_Lift_ResetShaft(struct CDemolition_Lift *self);
 000fd660 void CDemolition_Lift_ResetGirderRing(struct CDemolition_Lift *self);
 000fd710 void CDemolition_Lift_ScrollGirders(struct CDemolition_Lift *self, float dt);
@@ -143,6 +147,7 @@
 000fe4d0 struct CDemolition_GasJets *CDemolition_GasJets_Construct(struct CDemolition_GasJets *self);
 000fe540 void CDemolition_GasJets_Destruct(struct CDemolition_GasJets *self);
 000fe5b0 void CDemolition_GasJets_Shutdown(struct CDemolition_GasJets *self);
+000fe610 void CDemolition_GasJets_Start(struct CDemolition_GasJets *self);
 000fe620 void CDemolition_GasJets_StartOutside(struct CDemolition_GasJets *self);
 000fe700 void CDemolition_GasJets_WaitOutside(struct CDemolition_GasJets *self, float dt);
 000fe770 void CDemolition_GasJets_StartCentre(struct CDemolition_GasJets *self);

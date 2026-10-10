@@ -31,7 +31,7 @@ directory `src/<id>/`. Order = boot priority. See docs/ARCHITECTURE.md for the r
 | 24 | `mousewhack` | game | 158 | 93958 | 0x0016cce0-0x001872f0 |
 | 25 | `demolition_a` | game | 238 | 31827 | 0x000e7af0-0x000f0b20 |
 | 26 | `demolition_b` | game | 242 | 47864 | 0x000f0bf0-0x000fca70 |
-| 27 | `demolition_c` | game | 178 | 34253 | 0x000fcb70-0x00105970 |
+| 27 | `demolition_c` | game | 183 | 34482 | 0x000fcb70-0x00105970 |
 | 28 | `demolition_d` | game | 174 | 35179 | 0x001059e0-0x0010f5e0 |
 | 29 | `drillers` | game | 114 | 41890 | 0x0010f830-0x00124c00 |
 | 30 | `foxhunt` | game | 134 | 76129 | 0x00125070-0x00138790 |

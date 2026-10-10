@@ -17,6 +17,12 @@ Variation 1 of Demolition: the arena is a lift going down a shaft. CDemolition_L
 
 #define DC_WALL_SIZE 0x1c4
 
+/* 0x00297520  demolition_a's per variation settings (struct DA_VariationSettings, 0x3c bytes
+   each; demolition_a.h cannot be included here, its DAT_002ff85c type differs). Only the
+   "light" int at +0x00 is read. */
+extern char DAT_00297520[];
+#define DC_VARIATION_LIGHT(v) (*(int *)(DAT_00297520 + (v) * 0x3c))
+
 /* ---------- data (.data, owned here) */
 
 /* 0x002988d8  the part models */
@@ -138,6 +144,16 @@ void CDemolition_Lift_Destruct(struct CDemolition_Lift *self)
 		FUN_000fcb50(self->girders[i]);
 }
 
+/* 0x000fcb90  Demolition (file inferred: CDemolition_Lift.cpp; added to the table in
+integration round 2)
+Starts the lift (state 1, speeding up) with sound 0xf at full volume. Variation 1 slot 3
+(Start) calls it. */
+void CDemolition_Lift_Start(struct CDemolition_Lift *self)
+{
+	self->state = 1;
+	FUN_0018e450((int)(DC_GAME + 0x79d0), 0xf, 0xff, 0, 0, 0);
+}
+
 /* 0x000fcbc0  Demolition (file inferred: CDemolition_Lift.cpp)
 Starts stopping the lift. */
 void CDemolition_Lift_Stop(struct CDemolition_Lift *self)
@@ -196,6 +212,20 @@ void CDemolition_Lift_SlowDown(struct CDemolition_Lift *self, float dt)
 		FUN_000ebc20(self->sound);
 		self->soundOn = 0;
 	}
+}
+
+/* 0x000fcce0  Demolition (file inferred: CDemolition_Lift.cpp; added to the table in
+integration round 2)
+Draws the actor instances of the 6 cogs and the 4 worm shafts (7 = every pass). Only
+0x000fd540 reaches it (a tail jump). */
+void CDemolition_Lift_DrawParts(struct CDemolition_Lift *self)
+{
+	int i;
+
+	for (i = 0; i < 6; i++)
+		baDrawActorInstance((struct BActorInstance *)self->cogs[i].actor, 7);
+	for (i = 0; i < 4; i++)
+		baDrawActorInstance((struct BActorInstance *)self->shafts[i].actor, 7);
 }
 
 /* 0x000fcd30  Demolition (file inferred: CDemolition_Lift.cpp)
@@ -347,6 +377,20 @@ void CDemolition_Lift_MoveWorld(struct CDemolition_Lift *self, float dt)
 		memcpy(DC_ADDR(DC_GAME, 0x9f8 + i * 0x74), m, sizeof m);
 }
 
+/* 0x000fd180  Demolition (file inferred: CDemolition_Lift.cpp; added to the table in
+integration round 2)
+An explosion at POS with RADIUS damages each of the 10 girder walls (DemoWall_Blast,
+demolition_d). Variation 1 slot 11 (Damage) calls it. */
+void CDemolition_Lift_Blast(struct CDemolition_Lift *self, float *pos, float radius)
+{
+	int i;
+	int j;
+
+	for (i = 0; i < 5; i++)
+		for (j = 0; j < 2; j++)
+			DemoWall_Blast((int)dc_wall(self, i, j), pos, radius);
+}
+
 /* 0x000fd1d0  Demolition (file inferred: CDemolition_Lift.cpp)
 Constructor: the 5 girder pairs. */
 struct CDemolition_Lift *CDemolition_Lift_Construct(struct CDemolition_Lift *self)
@@ -452,6 +496,20 @@ void CDemolition_Lift_UpdateParts(struct CDemolition_Lift *self, float dt)
 	for (i = 0; i < 4; i++)
 		dc_spin_part(&self->shafts[i], dt * self->speed, 0.00999999978f /* 0x0025372c */,
 			0.0f, 0.0f, 1.0f, (i < 2) ? yAxis : xAxis);
+}
+
+/* 0x000fd540  Demolition (file inferred: CDemolition_Lift.cpp; added to the table in
+integration round 2)
+Draws the lift world: the shaft, the girder walls and the cogs and worm shafts. Nothing is
+drawn when the variation's "light" setting (demolition_a table 0x00297520, +0x00) is 0.
+Variation 1 slot 7 (Draw) calls it. */
+void CDemolition_Lift_Draw(struct CDemolition_Lift *self)
+{
+	if (DC_VARIATION_LIGHT(DC_I32(DC_GAME, 0x28)) == 0)
+		return;
+	CDemolition_Lift_DrawShaft(self);
+	CDemolition_Lift_DrawGirders(self);
+	CDemolition_Lift_DrawParts(self);
 }
 
 /* 0x000fd570  Demolition (file inferred: CDemolition_Lift.cpp)

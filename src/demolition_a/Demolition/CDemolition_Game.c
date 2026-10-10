@@ -26,31 +26,8 @@ static const char CDemolition_Game_cpp[] = "C:\\BlitzParty\\Game\\Src\\Demolitio
 /* ---------- missed functions of demolition_c that this file calls (tail calls Ghidra merged
    into the callers). Weak stand-ins until demolition_c defines them. */
 
-__attribute__((weak)) void FUN_000fcb90(void *self)
-{
-	(void)self;
-	of_unimplemented(0x000fcb90, "FUN_000fcb90 (demolition_c, missing from the table)");
-}
-
-__attribute__((weak)) void FUN_000fd180(void *self, float *pos, float radius)
-{
-	(void)self;
-	(void)pos;
-	(void)radius;
-	of_unimplemented(0x000fd180, "FUN_000fd180 (demolition_c, missing from the table)");
-}
-
-__attribute__((weak)) void FUN_000fd540(void *self)
-{
-	(void)self;
-	of_unimplemented(0x000fd540, "FUN_000fd540 (demolition_c, missing from the table)");
-}
-
-__attribute__((weak)) void FUN_000fe610(void *self)
-{
-	(void)self;
-	of_unimplemented(0x000fe610, "FUN_000fe610 (demolition_c, missing from the table)");
-}
+/* 0x000fcb90, 0x000fd180, 0x000fd540 and 0x000fe610 are in the function table now
+   (demolition_c defines them; integration round 2). */
 
 __attribute__((weak)) void FUN_00100ef0(void *self)
 {

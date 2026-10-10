@@ -25,7 +25,7 @@ order	id	kind	functions	bytes	lo	hi	title
 24	mousewhack	game	158	93958	0016cce0	001872f0	Minigame MouseWhack (BugBash)
 25	demolition_a	game	238	31827	000e7af0	000f0b20	Minigame Demolition (part 1 of 4, 0x000e7af0-0x000f0b20)
 26	demolition_b	game	242	47864	000f0bf0	000fca70	Minigame Demolition (part 2 of 4, 0x000f0bf0-0x000fca70)
-27	demolition_c	game	178	34253	000fcb70	00105970	Minigame Demolition (part 3 of 4, 0x000fcb70-0x00105970)
+27	demolition_c	game	183	34482	000fcb70	00105970	Minigame Demolition (part 3 of 4, 0x000fcb70-0x00105970)
 28	demolition_d	game	174	35179	001059e0	0010f5e0	Minigame Demolition (part 4 of 4, 0x001059e0-0x0010f5e0)
 29	drillers	game	114	41890	0010f830	00124c00	Minigame Drillers
 30	foxhunt	game	134	76129	00125070	00138790	Minigame FoxHunt (Tag)
