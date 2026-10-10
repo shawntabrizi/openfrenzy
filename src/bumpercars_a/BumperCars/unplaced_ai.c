@@ -15,8 +15,6 @@ values come from the difficulty (core DAT_002bae70) and the variation.
 
 /* core: the difficulty (0 easy, 1 medium, 2 hard) */
 extern int DAT_002bae70;
-/* engine_misc: the ray tests' epsilon */
-extern float DAT_00285644;
 
 /* the AI object (0x128 bytes, at player slot + 0x10) */
 struct CBCarAI {

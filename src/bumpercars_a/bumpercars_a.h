@@ -98,6 +98,8 @@ extern float DAT_00290cb4;
 extern int DAT_00290cb8;
 /* 0x00290ed8  debris drawing on (classlib_fx data) */
 extern int DAT_00290ed8;
+/* 0x00285644  the ray tests' epsilon (engine_misc data) */
+extern float DAT_00285644;
 /* 0x002ed44c  the "actordebris" system (classlib_fx 0x00086160) */
 extern int DAT_002ed44c;
 
@@ -339,6 +341,9 @@ extern struct CBCar_Game DAT_002ed458;
 #define g_BCarGame (&DAT_002ed458)
 /* a field of the game by its offset (other code reaches it by absolute address) */
 #define BCG(off, type) BCA_AT(&DAT_002ed458, off, type)
+/* the debris ground test of BumperCars (0x0008cc10, missing from the table) */
+float FUN_0008cc10(float *pos, float *delta, float *point, float *normal);
+
 /* CBCar_Game methods missing from the function table (reached by jumps) */
 void FUN_00086b90(void *slot);                               /* player slot destructor */
 int FUN_00086c80(struct CBCar_Game *self);                   /* one-time init */

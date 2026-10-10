@@ -282,7 +282,7 @@ void CBCar_Game_DrawScene(struct CBCar_Game *self, int view, int pass)
 	}
 	BCA_FN(FUN_000a0ba0, void, (void *))(self->floatyScores);
 done:
-	bdSetRenderState(8, FUN_0008c060(self->debug, 0), 0);
+	bdSetRenderState(8, FUN_0008c060(self->debug), 0);
 }
 
 /* ======================================================================== settings */
@@ -436,7 +436,7 @@ void FUN_000874c0(struct CBCar_Game *self, int top)
 	bdSetFieldOfView(0x1.38c354p+0f, 0x1.d524fep-1f);
 	baSetBrightness(0x100);
 	bdSetFogColour((unsigned int)DAT_00290ee4[0], (unsigned int)DAT_00290ee4[1], (unsigned int)DAT_00290ee4[2]);
-	bdSetRenderState(8, FUN_0008c060(self->debug, 0), 0);
+	bdSetRenderState(8, FUN_0008c060(self->debug), 0);
 	switch (self->variation) {
 	case 1:
 		fogFar = 22000.0f;

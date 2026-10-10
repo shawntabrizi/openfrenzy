@@ -23,3 +23,14 @@ __asm__(
 	".weak DAT_00290cb4\n.set DAT_00290cb4, of_clu_data + 0xf0c\n"
 	".weak DAT_00290cb8\n.set DAT_00290cb8, of_clu_data + 0xf10\n"
 );
+
+/* ---------- BumperCars globals after the game object (0x002f2048-): bumpercars_b's .bss
+   block of_bcb_bss names them; these tentative definitions (-fcommon) only keep the image
+   linking without it. Same types as the users here. */
+int DAT_002f2048;           /* engine minimum frequency change (CBCar_Debug) */
+int DAT_002f204c;           /* engine maximum volume */
+int DAT_002f2050;           /* engine minimum volume */
+int DAT_002f2054;           /* engine frequency change */
+int DAT_002f2058;           /* engine turning volume */
+float DAT_002f2068[4][5];   /* start positions: x, y, z, w, heading */
+float DAT_002f2170[4];      /* computer drivers' speed per player */

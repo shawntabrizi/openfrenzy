@@ -42,19 +42,6 @@
 # code uses: ECX `this` first); each is checked when its function is written
 00082860 struct Settings *Settings_Init(struct Settings *self);
 00082870 char *Settings_Get(struct Settings *self, const char *key);
-0008bf50 void *FUN_0008bf50(void *self);
-0008bf90 void FUN_0008bf90(void *self);
-0008bfa0 void FUN_0008bfa0(void *self, int playing);
-0008c000 int FUN_0008c000(void *self);
-0008c050 int FUN_0008c050(void *self);
-0008c060 unsigned int FUN_0008c060(void *self, int which);
-0008c0c0 int FUN_0008c0c0(void *self);
-0008c9f0 void FUN_0008c9f0(void *self);
-0008cae0 void FUN_0008cae0(void *self);
-0008cb60 void FUN_0008cb60(void *self);
-0008cb80 void FUN_0008cb80(void *self, float dt);
-0008cb90 void FUN_0008cb90(void *self, int view);
-0008cdc0 int FUN_0008cdc0(void *self);
 0008d1e0 void *FUN_0008d1e0(void *self);
 0008d1ee void FUN_0008d1ee(void *self);
 0008d1f9 int FUN_0008d1f9(void *self, struct bkPackage *package, char *file);
@@ -147,3 +134,31 @@
 00091aa0 float FUN_00091aa0(void *self, float *pos);
 00095150 int FUN_00095150(void *self, float *ray, float radius, float *heading);
 000951f0 int FUN_000951f0(void *self, float *pos, float radius, float *delta);
+
+# ---- BumperCars/CBCar_Debug.c
+0008bf50 void *CBCar_Debug_Ctor(struct CBCar_Debug *self);
+0008bf90 void CBCar_Debug_Dtor(struct CBCar_Debug *self);
+0008bfa0 void CBCar_Debug_Update(struct CBCar_Debug *self, int playing);
+0008c000 int CBCar_Debug_NoLighting(struct CBCar_Debug *self);
+0008c020 int CBCar_Debug_Get40(struct CBCar_Debug *self);
+0008c030 int CBCar_Debug_EnvMap(struct CBCar_Debug *self);
+0008c040 int CBCar_Debug_Reflections(struct CBCar_Debug *self);
+0008c050 int CBCar_Debug_Overlays(struct CBCar_Debug *self);
+0008c060 int CBCar_Debug_Fog(struct CBCar_Debug *self);
+0008c070 int CBCar_Debug_CollisionMesh(struct CBCar_Debug *self);
+0008c080 int CBCar_Debug_Characters(struct CBCar_Debug *self);
+0008c090 int CBCar_Debug_Headlights(struct CBCar_Debug *self);
+0008c0a0 struct CBCar_Debug *CBCar_Debug_Destroy(struct CBCar_Debug *self, byte flags);
+0008c0c0 int CBCar_Debug_Initialise(struct CBCar_Debug *self);
+0008c9f0 void CBCar_Debug_CreateOverlay(struct CBCar_Debug *self);
+0008cae0 void CBCar_Debug_Shutdown(struct CBCar_Debug *self);
+
+# ---- BumperCars/unplaced_fx.c (the debris effects, CBCar_Game + 0x5c)
+0008cb60 void CBCar_Effects_Shutdown(void *self);
+0008cb80 void CBCar_Effects_Update(void *self, float dt);
+0008cb90 void CBCar_Effects_Draw(void *self, int view);
+0008cba0 void CBCar_Effects_Add(void *self, int type, float *pos, float *vel, int lifeFrames, unsigned int colour);
+0008cbd0 void CBCar_Effects_AddRing(void *self, int type, float *pos, float outSpeed, float upSpeed, float jitter, int count);
+0008cdc0 int CBCar_Effects_Init(void *self);
+0008ce30 void CBCar_Effects_Burst(void *self, float *pos, float outSpeed, float upSpeed, float jitter, int count, int ntypes, ...);
+0008d030 void CBCar_Effects_Circle(int type, float *pos, float speedUp, float heightRandom, float angleRandom, float radius, int count, int lifeFrames);
