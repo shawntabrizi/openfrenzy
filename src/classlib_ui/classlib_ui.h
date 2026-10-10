@@ -104,5 +104,7 @@ extern int DAT_0028ffb8;
 
 /* 0x00072060  draw callback of CLSprite_DrawBlurred (ClassLib/unplaced.c) */
 int FUN_00072060(int pass, int *info);
+/* 0x00074c10  draw function of the pause menu volume bars (ClassLib/COverlay.c) */
+void FUN_00074c10(int self, int shadow);
 
 #endif

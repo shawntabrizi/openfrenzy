@@ -74,6 +74,8 @@ order): 0 colour fade (0x00072870), 1 scale (0x00072ab0), 2 move (0x00073e00), 3
 #define clu_image_quad CLU_ARR(struct CLQuadVertex, 0x002eca48)
 /* 0x002ecad8  shadow quad of the model drawer */
 #define clu_shadow_quad CLU_ARR(struct CLQuadVertex, 0x002ecad8)
+/* 0x002ece70  quad of the volume bar drawer (FUN_00074c10) */
+#define clu_bar_quad CLU_ARR(struct CLQuadVertex, 0x002ece70)
 /* 0x002ecfac  HUD object (Hud.cpp) */
 #define clu_hud CLU_VAR(int, 0x002ecfac)
 
@@ -935,4 +937,211 @@ int COverlay_Create(int *desc)
 	CLList_Insert((int *)clu_overlay_root, (int *)(self + 0x10), desc[0xa2] == 1);
 	OV_I(self, 0xc) = clu_overlay_root;
 	return self;
+}
+
+/* ---------- update and deletion (0x000748c0-0x00074be0, inferred COverlay.cpp) */
+
+/* 0x002ecfc0  per-player HUD overlays cleared with the HUD's (Hud.cpp) */
+#define clu_hud_player_overlays CLU_ARR(int, 0x002ecfc0)
+
+/* 0x000748c0  ClassLib/COverlay.cpp (inferred; thiscall)
+Deletes an overlay and its children; clears the HUD's references to it. Returns the
+previous node of its parent list (so a caller's loop can go on). */
+int COverlay_Delete(int self)
+{
+	int previous;
+	int i;
+	int hud;
+
+	previous = CLList_Remove((int *)OV_I(self, 0xc), (int *)(self + 0x10));
+	hud = clu_hud;
+	for (i = 0x170; i < 0x180; i += 4) {
+		if (hud == 0)
+			continue;
+		if (self == *(int *)(hud + i + 0x10)) {
+			*(int *)(hud + i + 0x10) = 0;
+			hud = clu_hud;
+		} else if (self == *(int *)(hud + i)) {
+			*(int *)(hud + i) = 0;
+			clu_hud_player_overlays[(i - 0x170) / 4] = 0;
+			hud = clu_hud;
+		}
+	}
+	COverlay_Destroy(self);
+	FUN_0004c110(self);
+	return previous;
+}
+
+/* 0x00074930  ClassLib/COverlay.cpp (inferred; thiscall)
+Per-frame update of an overlay and its children: model animation, life time (0x3dc;
+deleted at 0), sound delay (0x3e4; plays sample 0x408), width easing (towards 0x36c at
+0x370), glow object, update handlers. Returns the node to go on from. */
+int COverlay_Update(int self)
+{
+	int node;
+	int i;
+
+	if (OV_I(self, 0x2e4) == 1)
+		((void (*)(int, int, float, int))FUN_000380f0)(OV_I(self, 0x74), OV_I(OV_I(self, 0x74), 0x134),
+							      clu_time_scale, 0);
+	if (OV_F(self, 0x3dc) > 0.0f) {
+		OV_F(self, 0x3dc) = OV_F(self, 0x3dc) - clu_time_scale;
+		if (OV_F(self, 0x3dc) <= 0.0f)
+			return COverlay_Delete(self);
+	}
+	if (OV_F(self, 0x3e4) >= 0.0f) {
+		OV_F(self, 0x3e4) = OV_F(self, 0x3e4) - clu_time_scale;
+		if (OV_F(self, 0x3e4) < 0.0f && OV_I(self, 0x408) != 0) {
+			CLSamples_Play(OV_I(self, 0x408), 0xff, 0, 0, NULL);
+			return self + 0x10;
+		}
+		return self + 0x10;
+	}
+	if (OV_F(self, 0x364) != OV_F(self, 0x36c)) {
+		double s = (double)clu_time_scale * (double)OV_F(self, 0x370);
+		double w;
+
+		if (OV_F(self, 0x36c) <= OV_F(self, 0x364)) {
+			w = (double)OV_F(self, 0x364) - s;
+			if (w < (double)OV_F(self, 0x36c))
+				w = (double)OV_F(self, 0x36c);
+		} else {
+			w = s + (double)OV_F(self, 0x364);
+			if (w > (double)OV_F(self, 0x36c))
+				w = (double)OV_F(self, 0x36c);
+		}
+		OV_F(self, 0x364) = (float)w;
+	}
+	if (OV_I(self, 0x5c) != 0) {
+		FUN_00082be0(OV_I(self, 0x5c), 1.0f, 1);
+		OV_I(self, 0x60) = OV_I(OV_I(self, 0x5c), 8);
+	}
+	for (i = 0; i < OV_I(self, 0x18); i++)
+		((void (*)(int))((uint32_t *)OV_I(self, 0x1c))[i])(self);
+	for (node = (int)CLList_Next((unsigned int *)self, NULL); node != 0;
+	     node = (int)CLList_Next((unsigned int *)self, (unsigned int *)COverlay_Update(node - 0x10)))
+		;
+	return self + 0x10;
+}
+
+/* 0x00074ac0  ClassLib/COverlay.cpp (inferred; thiscall)
+Destructor body: deletes the children and frees the overlay's resources. */
+void COverlay_Destroy(int self)
+{
+	int node;
+	int glow;
+
+	for (node = (int)CLList_Next((unsigned int *)self, NULL); node != 0;
+	     node = (int)CLList_Next((unsigned int *)self, (unsigned int *)COverlay_Delete(node - 0x10)))
+		;
+	if (OV_I(self, 0x74) != 0 && *(char *)(self + 800) != '\0')
+		FUN_00034930(OV_I(self, 0x74));
+	if (OV_I(self, 0xa0) != 0)
+		OV_I(self, 0xa0) = 0;
+	if (OV_I(self, 0x1c) != 0) {
+		FUN_0004c110(OV_I(self, 0x1c));
+		OV_I(self, 0x1c) = 0;
+	}
+	if (OV_I(self, 0x3d0) != 0) {
+		FUN_000458a0(OV_I(self, 0x3d0));
+		OV_I(self, 0x3d0) = 0;
+	}
+	glow = OV_I(self, 0x5c);
+	if (glow != 0) {
+		FUN_001d5950(); /* the glow object's destructor (empty) */
+		FUN_0004c110(glow);
+		OV_I(self, 0x5c) = 0;
+	}
+	FUN_001d5950(); /* the list member's destructor (empty) */
+}
+
+/* 0x00074ba0  ClassLib/COverlay.cpp (inferred)
+Deletes every root overlay that is not kept (0x58 == 0). */
+void COverlay_DeleteAll(void)
+{
+	int node;
+
+	if (clu_overlay_root == 0)
+		return;
+	for (node = (int)CLList_Next((unsigned int *)clu_overlay_root, NULL); node != 0;
+	     node = (int)CLList_Next((unsigned int *)clu_overlay_root, (unsigned int *)node)) {
+		if (*(int *)(node + 0x48) == 0)
+			node = COverlay_Delete(node - 0x10);
+	}
+}
+
+/* 0x00074be0  ClassLib/COverlay.cpp (inferred)
+Updates every root overlay (and so the whole tree). */
+void COverlay_UpdateAll(void)
+{
+	int node;
+
+	if (clu_overlay_root == 0)
+		return;
+	for (node = (int)CLList_Next((unsigned int *)clu_overlay_root, NULL); node != 0;
+	     node = (int)CLList_Next((unsigned int *)clu_overlay_root, (unsigned int *)COverlay_Update(node - 0x10)))
+		;
+}
+
+/* 0x00074c10  ClassLib/COverlay.cpp (inferred); missing from of_functions.tsv
+Draw function of the pause menu's volume bars: ten segments of growing height; the
+segment 0x3d4 is drawn with 0.4 of the alpha. */
+void FUN_00074c10(int self, int shadow)
+{
+	int r, g, b, a;
+	unsigned int colour;
+	double x;
+	float base, seg_width, inc, height, next_x;
+	int i;
+
+	(void)shadow;
+	CL_SetRenderState3(3, 0, 0);
+	FUN_000438b0();
+	FUN_00043b70(0);
+	FUN_00044b00(1, 2, 0);
+	FUN_00044b00(6, 1, 0);
+	FUN_00044b00(10, 0, 0);
+	FUN_00044b00(5, 0, 0);
+	r = (int)OV_F(self, 0x2ac);
+	g = (int)OV_F(self, 0x2b0);
+	b = (int)OV_F(self, 0x2b4);
+	a = (int)OV_F(self, 0x2b8);
+	colour = DAT_002bc898[a] | DAT_002bd640[b] | DAT_002bce18[r] | DAT_002bc490[g];
+	clu_bar_quad[0].colour = colour;
+	clu_bar_quad[1].colour = colour;
+	clu_bar_quad[2].colour = colour;
+	clu_bar_quad[3].colour = colour;
+	x = (double)OV_F(self, 0x300);
+	base = (float)((double)OV_F(self, 0x304) - (double)OV_F(self, 0x368));
+	seg_width = (float)((double)OV_F(self, 0x364) * (double)0.1f);
+	inc = (float)((double)OV_F(self, 0x368) * (double)0.1f);
+	height = inc;
+	for (i = 0; i < 10; i++) {
+		if (i == OV_I(self, 0x3d4)) {
+			a = (int)((double)a * (double)0.4f);
+			colour = DAT_002bc898[a] | DAT_002bd640[b] | DAT_002bce18[r] | DAT_002bc490[g];
+			clu_bar_quad[0].colour = colour;
+			clu_bar_quad[1].colour = colour;
+			clu_bar_quad[2].colour = colour;
+			clu_bar_quad[3].colour = colour;
+		}
+		clu_bar_quad[0].x = (float)x;
+		clu_bar_quad[0].z = 0.0f;
+		clu_bar_quad[0].y = (float)((double)height + (double)base);
+		clu_bar_quad[1].z = 0.0f;
+		clu_bar_quad[2].y = base;
+		clu_bar_quad[2].z = 0.0f;
+		clu_bar_quad[3].y = base;
+		clu_bar_quad[3].z = 0.0f;
+		next_x = (float)((double)seg_width + x);
+		clu_bar_quad[1].x = (float)((double)seg_width + x - (double)1.0f);
+		clu_bar_quad[1].y = (float)((double)height + (double)base);
+		clu_bar_quad[2].x = (float)((double)seg_width + x - (double)1.0f);
+		clu_bar_quad[3].x = (float)x;
+		FUN_000416c0(0, 0);
+		FUN_0003f2d0(5, (int)clu_bar_quad, 4);
+		x = (double)next_x;
+		height = height + inc;
+	}
+	FUN_00046d00(3);
 }

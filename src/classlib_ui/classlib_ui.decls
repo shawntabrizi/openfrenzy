@@ -74,3 +74,8 @@
 00073eb0 void COverlay_DrawModel(int self);
 00074000 void FUN_00074000(undefined4 unused1, undefined4 *unused2);
 00074500 int COverlay_Create(int *desc);
+000748c0 int COverlay_Delete(int self);
+00074930 int COverlay_Update(int self);
+00074ac0 void COverlay_Destroy(int self);
+00074ba0 void COverlay_DeleteAll(void);
+00074be0 void COverlay_UpdateAll(void);
