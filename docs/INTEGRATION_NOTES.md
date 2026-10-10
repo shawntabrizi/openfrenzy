@@ -391,6 +391,39 @@ No new fault was found, so no code changed. `OPENFRENZY_BKLOG=1` is needed for t
   used copies of the host and guest under other names in the scratchpad. For long runs while
   other agents work, do the same, or check the log for `quit requested` before you report.
 
+## Integration round 5 (2026-10-10)
+
+- Clean build in `build/` (rm -rf, configure, build: 24 s) links with no errors; ctest 6/6. No
+  stubs had to be regenerated. The final link has 5 weak symbols, all hand-written: the
+  TankedUp fallbacks FUN_001c1a90/001c1c10/001c2080, meta_a FUN_000ad830, and core
+  FUN_00026d40 (the debug menu callback; the only one that logs as unimplemented; only the
+  debug menu reaches it).
+- Board run (window, round-2 recipe, videos skipped, 150 s): title, menus, character select,
+  Power Station, two minigames reach PLAYING (Bug Bash arena and a Clusteroids-style arena in
+  the frame dumps); about 52 fps with frame dumps on. Headless 90 s with
+  `OPENFRENZY_DSOUND_CAPTURE`: RMS -24.7 dBFS, peak -1.7 dBFS, 0 % clipped, 0 silent seconds.
+- Fixed: CDemolition_Player_CreateActor (0x000f9370) looked up 47 anim segment names; the XBE
+  loop ends at actor +0x310 (43 names). The extra 4 were empty names past the 0x00297b20
+  table, and the port wrote 4 NULL slots at actor +0x310..+0x31c. The 36 misses that remain
+  per launch (attack_1, attack_kick, hurt, idle, camera_pose, ...) are names the Demolition
+  model does not have (original).
+- Checked, original: the `Could not find '' in memory` lines come from COverlay_InitImage
+  (0x00073510) for overlay descriptors with no texture and an empty name; the port matches
+  the XBE.
+- Direct launch Demolition with `OPENFRENZY_VARIATION=4` faults (NULL + 0xc in
+  bLoadPackageResources): Demolition reads the setting 0-based, so 4 asks for `demo-v5.xbp`,
+  which is not on the disc. Bad input, not a port bug; docs/BUILD.md now says which games read
+  it 0-based. Variations 0-3 reach PLAYING.
+- Test scripts: a job started with `&` from a non-interactive bash ignores SIGINT, so
+  `kill -INT` does not stop the game; use `kill -TERM` (SDL turns it into a quit, then
+  `Game exited (0)`).
+- With `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` and no input, the attract cycle did start the
+  RollerBall demo in this run ("Top of stack now: AttractMode" at about 80 s), unlike the
+  round-4 note.
+- Not verified: keyboard input with real key events. Key events posted to the process with
+  `CGEventPostToPid` (window not focused) did not move the title screen; the computer-use
+  daemon was not available. The scripted pad path works.
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and

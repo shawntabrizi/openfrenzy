@@ -88,7 +88,7 @@ Environment:
 | `OPENFRENZY_STUB_LOG=all` | log every call of a stub, not only the first |
 | `OPENFRENZY_<SECTION>_<KEY>` | a setting of `src/runtime/of_config.c`, e.g. `OPENFRENZY_DISPLAY_VSYNC=false` |
 | `OPENFRENZY_GAME=<name>` | start that minigame directly (BumperCars, Fireworks, Clusteroids, Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp); `src/runtime/of_launch.c` |
-| `OPENFRENZY_VARIATION=<n>` | its variation (default 1) |
+| `OPENFRENZY_VARIATION=<n>` | its variation. Unset, each game starts its first variation. Each game reads the value itself (original code): Demolition and RollerBall take it 0-based (Demolition 0-3 = `demo-v1`..`v4`; 4 loads the missing `demo-v5` and faults), TankedUp, Drillers and BumperCars 1-based |
 | `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
 | `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` | skip the Bink videos (boot logos, attract video), as builds without FFmpeg do. Boot reaches the title in a few seconds instead of about 75 s; use it for scripted runs whose presses assume the title at once (`START@6000`) |
 | `OPENFRENZY_DSOUND_CAPTURE=<path>` | write the final audio output (after the limiter) to a WAV file: 48 kHz, stereo, 16-bit. It works without an audio device too (sandbox). See "Audio capture" below |
