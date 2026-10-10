@@ -81,3 +81,27 @@
 00160400 struct CScorchMark *CScorchMark_Construct(struct CScorchMark *self, float *pos, float *normal, void *parent, int type);
 00160560 void CScorchMarks_UpdateAll(void);
 001605e0 struct CScorchMark *CScorchMark_Create(float *pos, float *normal, void *parent, int type);
+
+# Meta/CBomb.cpp
+00160680 void CBomb_SetupPhysics(void *actor);
+00160720 void CBomb_Init(void);
+00160760 void CBomb_LightFuses(int tag);
+001607e0 struct CBomb *CBomb_Find(int tag);
+00160810 struct CAirRaid *CAirRaid_Construct(struct CAirRaid *self, float life, float interval, float *from, float *to, float margin, float *vel);
+001608b0 struct MbBombGroup *MbBombGroup_Construct(struct MbBombGroup *self);
+001608d0 void Meta_Nothing(void);
+001608e0 struct CBomb *CBomb_Construct(struct CBomb *self, int kind, float *pos, int tag);
+00160bd0 void CBomb_DebugAll(void);
+00160bf0 void MbBombGroup_AddPosition(float *pos, short tag, uint groupId);
+00160cb0 struct CBomb *MbBombPos_Drop(struct MbBombPos *self, int kind);
+00160d50 int MbBombGroup_Start(int kind, uint groupId, int count, float interval);
+00160db0 struct CBomb *MbBombGroup_DropOne(struct MbBombGroup *self);
+00160e70 void *CBomb_Delete(struct CBomb *self);
+00160ee0 void CBomb_DeleteAll(void);
+00160f10 void *CBomb_Explode(struct CBomb *self);
+00161250 struct CAirRaid *CAirRaid_Update(struct CAirRaid *self);
+00161460 void MbBombGroups_DeleteAll(void);
+001614c0 void MbBombGroup_Update(struct MbBombGroup *self);
+00161510 void CAirRaid_DeleteAll(void);
+00161560 void *CBomb_Update(struct CBomb *self);
+00161b80 void CBomb_UpdateAll(void);

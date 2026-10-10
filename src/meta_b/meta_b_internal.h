@@ -258,4 +258,92 @@ extern struct MbScorchType DAT_002b0a64[2];
 extern int DAT_00308f28;
 extern struct MbList DAT_00308f2c;
 
+/* ---------- CBomb.cpp */
+
+/* a bomb model (8 bytes; table at 0x002b0a90) */
+struct MbBombModel
+{
+	const char *name;
+	void *resource;
+};
+
+/* a bomb position of the level script (0x20 bytes) */
+struct MbBombPos
+{
+	void *next;                 /* +0x00 node of its group's list */
+	void *prev;                 /* +0x04 */
+	float pos[4];               /* +0x08 */
+	short used;                 /* +0x18 a bomb is there */
+	short tag;                  /* +0x1a */
+	short *blocker;             /* +0x1c no bomb while *blocker != 0 */
+};
+OF_ASSERT_SIZE(struct MbBombPos, 0x20);
+
+/* a bomb group (0x20 bytes; 8 at 0x00308f58) */
+struct MbBombGroup
+{
+	struct MbList positions;    /* +0x00 */
+	unsigned short id;          /* +0x0c */
+	unsigned short pad0e;
+	int count;                  /* +0x10 bombs left to drop */
+	int type;                   /* +0x14 kind of bomb */
+	float interval;             /* +0x18 frames between bombs */
+	float accum;                /* +0x1c */
+};
+OF_ASSERT_SIZE(struct MbBombGroup, 0x20);
+
+/* a bomb (0x5c bytes) */
+struct CBomb
+{
+	void *next;                 /* +0x00 node of the list 0x00308f48 */
+	void *prev;                 /* +0x04 */
+	void *actor;                /* +0x08 charlib actor (position +0xd0, velocity +0x194) */
+	int type;                   /* +0x0c 0 bomb, 1 fused bomb, 2 mine, 3 missile, 4 dynamite */
+	float timer;                /* +0x10 fuse time left; -1: not lit */
+	float fuse;                 /* +0x14 */
+	float radius;               /* +0x18 of the blast */
+	float pushScale;            /* +0x1c */
+	float maxPush;              /* +0x20 */
+	float triggerDist;          /* +0x24 the mine's trigger distance */
+	float unk28;                /* +0x28 */
+	float height;               /* +0x2c above the ground at the start */
+	void *trails[4];            /* +0x30 CProjTrail (missile) */
+	int numTrails;              /* +0x40 */
+	float dropInterval;         /* +0x44 frames between dropped particles */
+	float dropAccum;            /* +0x48 */
+	void *dropType;             /* +0x4c particle type */
+	int tag;                    /* +0x50 */
+	struct MbBombPos *bombPos;  /* +0x54 */
+	struct CMetaExplosion *explosion; /* +0x58 */
+};
+OF_ASSERT_OFFSET(struct CBomb, numTrails, 0x40);
+OF_ASSERT_SIZE(struct CBomb, 0x5c);
+
+/* an air raid (0x3c bytes, allocated by meta_a) */
+struct CAirRaid
+{
+	void *next;                 /* +0x00 node of the list 0x00308f3c */
+	void *prev;                 /* +0x04 */
+	float life;                 /* +0x08 */
+	float x;                    /* +0x0c inner area */
+	float z;                    /* +0x10 */
+	float width;                /* +0x14 */
+	float depth;                /* +0x18 */
+	float outerX;               /* +0x1c inner area grown by the margin */
+	float outerZ;               /* +0x20 */
+	float outerWidth;           /* +0x24 */
+	float outerDepth;           /* +0x28 */
+	float velX;                 /* +0x2c of the missiles */
+	float velZ;                 /* +0x30 */
+	float interval;             /* +0x34 */
+	float accum;                /* +0x38 */
+};
+OF_ASSERT_SIZE(struct CAirRaid, 0x3c);
+
+extern struct MbBombModel DAT_002b0a90[5];
+extern int DAT_00308f38;
+extern struct MbList DAT_00308f3c;
+extern struct MbList DAT_00308f48;
+extern struct MbBombGroup DAT_00308f58[8];
+
 #endif

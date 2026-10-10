@@ -120,6 +120,14 @@ extern unsigned int DAT_002bce18[];
 extern char DAT_00290dc8[];         /* CProjSpiralType table, whitebeam.bmp (classlib_fx) */
 extern long long DAT_002cd7a0;      /* timer ticks per second (bkernel) */
 extern int DAT_002ecdec;            /* the game is paused (classlib_ui) */
+extern float DAT_0028fdc8[3];       /* (0, 1, 0) (classlib_ui) */
+extern float DAT_0028fdd8[3];       /* (0, 0, 1) (classlib_ui) */
+extern float DAT_00292c84;          /* gravity (charlib) */
+extern float DAT_002ea478[4];       /* a zero vector (classlib_fx) */
+extern unsigned char DAT_002ed324[]; /* the rumble manager (core, CRumble) */
+extern int DAT_00290da4;            /* CProjTrail texture (classlib_fx) */
+extern int DAT_00290d80[4];         /* CProjTrail head colour (classlib_fx) */
+extern int DAT_00290d90[4];         /* CProjTrail tail colour (classlib_fx) */
 
 /* ---------- Meta tweakables in .data (0x002b0a4c-0x002b0a60), used by this module */
 extern float DAT_002b0a4c;          /* lightning spiral radius 24.0 */

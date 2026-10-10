@@ -33,6 +33,15 @@ __attribute__((weak)) char DAT_00290dc8[0x18];
 /* 0x002b1ef4  the "SONIC_RING" particle type (the particle system's data) */
 __attribute__((weak)) char DAT_002b1ef4[4];
 
+__attribute__((weak)) float DAT_0028fdc8[3] = { 0.0f, 1.0f, 0.0f };
+__attribute__((weak)) float DAT_0028fdd8[3] = { 0.0f, 0.0f, 1.0f };
+__attribute__((weak)) float DAT_00292c84 = 4.0f;       /* gravity */
+__attribute__((weak)) int DAT_00290d80[4] = { 0x7f, 0x6e, 0x28, 0x7f };  /* trail colours */
+__attribute__((weak)) int DAT_00290d90[4] = { 0x3c, 0, 0, 0x28 };
+/* 0x002b1ec8 "REDDOT", 0x002b215c "STREAK3": particle types */
+__attribute__((weak)) char DAT_002b1ec8[4];
+__attribute__((weak)) char DAT_002b215c[4];
+
 /* ---------- .bss (weak) */
 
 __attribute__((weak)) int DAT_002bae94;                 /* number of players */
@@ -45,3 +54,6 @@ __attribute__((weak)) unsigned int DAT_002bc898[256];
 __attribute__((weak)) unsigned int DAT_002bce18[256];
 __attribute__((weak)) long long DAT_002cd7a0;           /* timer ticks per second */
 __attribute__((weak)) int DAT_002ecdec;                 /* the game is paused */
+__attribute__((weak)) float DAT_002ea478[4];            /* a zero vector */
+__attribute__((weak)) unsigned char DAT_002ed324[0x14]; /* the rumble manager */
+__attribute__((weak)) int DAT_00290da4;                 /* CProjTrail texture */
