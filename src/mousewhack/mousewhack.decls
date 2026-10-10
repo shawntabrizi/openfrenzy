@@ -99,12 +99,28 @@
 0017d0b0 void MW_Player_PlayVoice(void *player, int kind, int volume, float cooldown, unsigned int flags, int choice, int allowRepeat);
 0017d100 void MW_Player_KillHittingBullet(void *player);
 
+# ---- MouseWhack/CBbash_Player.c
+0017d180 void CBbash_Player_UpdateAction(void *self);
+0017d200 void CBbash_Player_CheckChasedBug(void *self);
+0017d2f0 void CBbash_Player_UpdateKnockCount(void *self);
+0017d330 void CBbash_Player_CreateInputMaps(void);
+0017d510 float MW_RandSigned(void);
+0017d550 void CBbash_Player_SetModel(void *self, int lowDetail);
+0017d6d0 void *CBbash_Player_Ctor(void *self, int player, float *pos);
+0017df00 void CBbash_Player_UpdatePlatform(void *self);
+0017e050 void CBbash_Player_ChooseEnemy(void *self);
+0017e1d0 void CBbash_Player_ChooseThreat(void *self);
+0017e2d0 void CBbash_Player_ChooseBug(void *self);
+0017e640 int CBbash_Player_Tag(void *self);
+0017eb80 void CBbash_Player_LookAround(void *self);
+0017ed40 void CBbash_Player_Hit(void *self, float *from, int knockedDown);
+0017f000 int CBbash_Player_Steer(void *self);
+0017f8a0 void CBbash_Player_Strike(void *self);
+
 # ---- provisional shapes (functions not written yet)
 001839b0 void FUN_001839b0(void);
 00181770 void FUN_00181770(void);
-0017d6d0 void *FUN_0017d6d0(void *self, int index, float *pos);
 00181730 void *FUN_00181730(void *self);
-0017d330 void FUN_0017d330(void);
 00180720 void *FUN_00180720(void *self);
 00180c50 void FUN_00180c50(void *self);
 00182c10 void FUN_00182c10(void);
@@ -127,8 +143,6 @@
 00180f60 void FUN_00180f60(void *self);
 00181740 void FUN_00181740(void *self);
 00183a70 void FUN_00183a70(float *pos, short player);
-0017d2f0 void FUN_0017d2f0(void *self);
-0017df00 void FUN_0017df00(void *self);
 00186280 void FUN_00186280(void);
 00180f00 void FUN_00180f00(void *self);
 00184760 void Splat_AddCrumbs(float *pos, int unused);
