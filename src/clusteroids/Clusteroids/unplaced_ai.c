@@ -176,7 +176,7 @@ void ClustAI_PickRoamTarget(int player, int avoid)
 	pos[3] = 0.0f;
 	for (;;) {
 		bad = 0;
-		angle = (float)cl_rand() * 0.000191753f;
+		angle = (float)cl_rand() * 1.9175344e-4f;
 		pos[0] = (float)((double)cosf(angle) * (double)radius + (double)CL_F32(pl, PL_X));
 		pos[2] = (float)((double)sinf(angle) * (double)radius + (double)CL_F32(pl, PL_Z));
 		distance = fabsf(sqrtf(pos[0] * pos[0] + pos[2] * pos[2]));

@@ -262,7 +262,7 @@ static void cl_place_pod(char *pod)
 
 	do {
 		r = cl_rand();
-		angle = (float)r * 0.000191753f;
+		angle = (float)r * 1.9175345e-4f;
 		r = cl_rand();
 		radius = (CL_ARENA_INNER - 290.0f) * (float)r * 3.0518509e-05f + 290.0f;
 		CL_F32(pod, 0x10) = sinf(angle) * radius;
@@ -360,7 +360,7 @@ int ClustPods_SpawnTailsPods(void)
 		do {
 			do {
 				r = cl_rand();
-				angle = (float)r * 0.000191753f;
+				angle = (float)r * 1.9175345e-4f;
 				r = cl_rand();
 				radius = CL_ARENA_INNER * (float)r * 3.0518509e-05f;
 				CL_F32(pod, 0x10) = sinf(angle) * radius;
@@ -730,7 +730,7 @@ void ClustPods_Respawn(char *pod)
 	do {
 		do {
 			r = cl_rand();
-			angle = (float)r * 0.000191753f;
+			angle = (float)r * 1.9175345e-4f;
 			r = cl_rand();
 			if (g_ClVariant == 4)
 				radius = (float)(((double)CL_VAR(float, 0x002f7f68) - 160.0) * (double)r *

@@ -444,7 +444,7 @@ void ClustWalkers_Init(void)
 	int dir;
 
 	for (walker = CL_WALKERS; walker < CL_WALKERS + 2; walker++) {
-		angle = (float)cl_rand() * 0.000191753f;
+		angle = (float)cl_rand() * 1.9175345e-4f;
 		radius = (float)cl_rand() * 0.00915555283f;
 		x = CL_FTOL(sinf(angle) * radius);
 		z = CL_FTOL(cosf(angle) * radius);
@@ -653,7 +653,7 @@ void ClustGame_Init(void)
 	CL_VAR(float, 0x002f7d0c) = 1.6f;         /* playerAccel */
 	CL_VAR(float, 0x002f7d08) = 0.09f;        /* playerDrag */
 	CL_VAR(float, 0x002f7d10) = 1.0f;
-	CL_VAR(float, 0x002f7d14) = 0.10472f;     /* playerTurnRate */
+	CL_VAR(float, 0x002f7d14) = 0.10471976f;     /* playerTurnRate */
 	CL_VAR(float, 0x002f7d18) = 35.0f;        /* playerFireDelay */
 	CL_VAR(float, 0x002f7d1c) = 200.0f;       /* playerBoostDelay */
 	CL_VAR(float, 0x002f7d64) = 525.0f;       /* tailsPodAttachTime */
@@ -740,7 +740,7 @@ void ClustGame_Init(void)
 		break;
 	}
 	CL_VAR(float, 0x002f7d8c) = 15.0f;        /* aiShootAheadRate */
-	CL_VAR(float, 0x002f7d80) = 0.15472f;     /* aiTurnRate (0x00269574) */
+	CL_VAR(float, 0x002f7d80) = 0.15471976f; /* aiTurnRate (0x00269574) */
 
 	ClustArena_LoadModels();
 	for (i = 0; i < 4; i++)
@@ -890,7 +890,7 @@ keep_rules:
 	CL_VAR(float, 0x002f7d0c) = 1.6f;
 	CL_VAR(float, 0x002f7d08) = 0.04f;
 	CL_VAR(float, 0x002f7d10) = 1.0f;
-	CL_VAR(float, 0x002f7d14) = 0.10472f;
+	CL_VAR(float, 0x002f7d14) = 0.10471976f;
 	CL_VAR(float, 0x002f7f40) = 0.0f;
 	CL_VAR(float, 0x002f7f44) = 150.0f;
 	CL_VAR(float, 0x002f7f48) = 150.0f;

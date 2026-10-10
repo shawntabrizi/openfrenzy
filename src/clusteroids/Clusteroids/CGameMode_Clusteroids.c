@@ -220,7 +220,7 @@ void CGameModeClusteroids_Start(void *self)
 	menu = g_ClTweaks;
 	CTweakMenu_AddFloat(menu, "playerAccel", &CL_VAR(float, 0x002f7d0c), 0.01f, 0.5f, 2.0f);
 	CTweakMenu_AddFloat(menu, "playerDrag", &CL_VAR(float, 0x002f7d08), 0.01f, 0.01f, 1.0f);
-	CTweakMenu_AddFloat(menu, "playerTurnRate", &CL_VAR(float, 0x002f7d14), 0.05f, 0.10472f, 0.628319f);
+	CTweakMenu_AddFloat(menu, "playerTurnRate", &CL_VAR(float, 0x002f7d14), 0.05f, 0.10471976f, 0.62831855f);
 	CTweakMenu_AddFloat(menu, "playerFireDelay", &CL_VAR(float, 0x002f7d18), 1.0f, 1.0f, 50.0f);
 	CTweakMenu_AddFloat(menu, "playerBoostDelay", &CL_VAR(float, 0x002f7d1c), 1.0f, 1.0f, 500.0f);
 	CTweakMenu_AddFloat(menu, "tailsPodAttachTime", &CL_VAR(float, 0x002f7d64), 1.0f, 100.0f, 1000.0f);
@@ -228,7 +228,7 @@ void CGameModeClusteroids_Start(void *self)
 	CTweakMenu_AddFloat(menu, "collectorTargetScore", &CL_VAR(float, 0x002f7d6c), 1.0f, 10.0f, 100.0f);
 	CTweakMenu_AddFloat(menu, "aiMaxSpeed", &CL_VAR(float, 0x002f7d78), 0.05f, 0.05f, 1.0f);
 	CTweakMenu_AddFloat(menu, "aiAccuracy", &CL_VAR(float, 0x002f7d7c), 0.1f, 0.5f, 10.0f);
-	CTweakMenu_AddFloat(menu, "aiTurnRate", &CL_VAR(float, 0x002f7d80), 0.05f, 0.10472f, 0.628319f);
+	CTweakMenu_AddFloat(menu, "aiTurnRate", &CL_VAR(float, 0x002f7d80), 0.05f, 0.10471976f, 0.62831855f);
 	CTweakMenu_AddFloat(menu, "aiFireRate", &CL_VAR(float, 0x002f7d84), 0.01f, 0.1f, 1.0f);
 	CTweakMenu_AddFloat(menu, "aiBoostRate", &CL_VAR(float, 0x002f7d88), 0.01f, 0.1f, 1.0f);
 	CTweakMenu_AddFloat(menu, "aiShootAheadRate", &CL_VAR(float, 0x002f7d8c), 1.0f, 1.0f, 1000.0f);

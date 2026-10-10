@@ -127,7 +127,7 @@ void ClustTokens_Update(void)
 		CL_F32(CL_PLAYER(0), 0x14) + CL_F32(CL_PLAYER(1), 0x14) + CL_F32(CL_PLAYER(2), 0x14) +
 		CL_F32(CL_PLAYER(3), 0x14) <= 0.0f) {
 		r = cl_rand();
-		angle = (float)r * 0.000191753f;
+		angle = (float)r * 1.9175345e-4f;
 		r = cl_rand();
 		radius = ((CL_VAR(float, 0x002f7f68) - 35.0f) - 290.0f) * (float)r * 3.0518509e-05f + 290.0f;
 		ClustTokens_Add(sinf(angle) * radius, cosf(angle) * radius, 0);

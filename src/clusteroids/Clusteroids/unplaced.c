@@ -1179,7 +1179,7 @@ void ClustTimer_UpdateFrame(void)
 	g_FtLast = g_FtNow;
 	milliseconds = (double)delta * 1000.0 / (double)g_FtTicksPerSecond;
 	g_FtMilliseconds = (float)milliseconds;
-	g_ClFrameTime = (float)(milliseconds * (double)0.06f);
+	g_ClFrameTime = (float)(milliseconds * (double)0.060000002f);
 	CL_VAR(float, 0x002f7f80) = bkTimerRate(delta);
 }
 
