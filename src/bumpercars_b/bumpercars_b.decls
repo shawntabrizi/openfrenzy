@@ -131,6 +131,10 @@
 000a6d60 void BCarHeadlight_Update(struct BCarHeadlight *self);
 
 # ---- agent A (from B's range, 0x000a6260-0x000a8250)
+# BumperCars/bcb_floaty.c (gap; 0x000a6e50 and 0x000a6fb0 are not in the table)
+000a6f20 int BCarFloaty_UpdateItems(struct BExtraSystem *system, int numItems, struct BCarFloatyItem **items, void *arg);
+000a6fa0 int BCarFloaty_DeleteItem(void);
+000a74d0 void BCarFloatyScore_Init(struct BCarFloatyScore *self, int maxItems);
 # BumperCars/CBCar_GenericGoal.c
 000a8020 void BCarGoal_SetTexture(struct CParticleEmitter *goal, int texture);
 000a8030 struct CParticleEffect *BCarGenericGoal_Construct(struct CParticleEffect *self, int count);
@@ -170,3 +174,30 @@
 000a41e0 void BCarWaypoints_Update(int playing, float dt);
 000a48d0 int BCarWaypoint_LoadFile(struct bkPackage *package, char *file);
 000a4c20 void BCarWaypoints_Delete(void);
+# BumperCars/bcb_misc.c (gap functions)
+000a4cb0 struct CGameMode *CGameMode_BumperCars_Ctor(struct CGameMode *self);
+000a4cd0 void CGameMode_BumperCars_Dtor(struct CGameMode *self);
+000a4ce0 void CGameMode_BumperCars_Enter(struct CGameMode *self);
+000a4cf0 void CGameMode_BumperCars_Resume(struct CGameMode *self);
+000a4d00 void CGameMode_BumperCars_Suspend(struct CGameMode *self);
+000a4d10 void CGameMode_BumperCars_Update(struct CGameMode *self, int top);
+000a4d20 void CGameMode_BumperCars_Process(struct CGameMode *self, int top);
+000a4d60 void CGameMode_BumperCars_Draw(struct CGameMode *self, int top);
+000a4d70 void CGameMode_BumperCars_Init(struct CGameMode *self);
+000a4d80 void CGameMode_BumperCars_Start(struct CGameMode *self);
+000a4da0 struct CGameMode *CGameMode_BumperCars_Destroy(struct CGameMode *self, unsigned char flags);
+000a4dc0 void CGameMode_BumperCars_Exit(struct CGameMode *self);
+000a4e50 void BCarTexture_SetFrameAtTime(struct bdTexture *texture, int time, int first);
+000a4ed0 void BCarCollMesh_DrawCell(struct BCollMesh *mesh, int cell, unsigned int colour, int solid);
+000a5050 void BCarCollMesh_Draw(struct BCollMesh *mesh, unsigned int colour, int solid);
+000a5390 void BCarRender_ScreenTint(int r, int g, int b, int alpha);
+000a5580 void BCarDraw_WireSphere(float *pos, float radius, int rings, int segments, int r, int g, int b);
+000a57a0 void BCarMath_Centre4(float *out, float x1, float z1, float x2, float z2, float x3, float z3, float x4, float z4);
+000a57f0 void BCarRender_SetFadeStage(int alpha);
+000a5870 void BCarRender_SetWaterStates(void);
+000a58e0 void BCarDraw_LightCone(float *from, float *to, float angle, int r, int g, int b, struct bdTexture *texture);
+000a5c60 struct BCarTextReader *BCarTextReader_Destroy(struct BCarTextReader *self, unsigned char flags);
+000a5c80 void BCarFreeCamera_Destruct(struct BCarFreeCamera *self);
+000a5ca0 struct BCarFreeCamera *BCarFreeCamera_Construct(struct BCarFreeCamera *self, int target, float height, int clearPlayers);
+000a5f60 void BCarFreeCamera_AddPoint(struct BCarFreeCamera *self, float *point);
+000a5fa0 void BCarFreeCamera_Update(struct BCarFreeCamera *self, float dt);
