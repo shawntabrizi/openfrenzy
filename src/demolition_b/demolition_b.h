@@ -111,4 +111,11 @@ extern const void *const vtable_0026b3b8[];
 extern const void *const vtable_0026b440[];   /* CDemolition_Player, receiver at +0x1130 */
 extern const void *const vtable_0026b448[];   /* CDemolition_Player */
 
+/* ---------- functions of this module missing from the function table (report to the architect) */
+
+/* 0x000f77c0  CDemolition_World.cpp: ParseMap callback of a "World" block */
+int FUN_000f77c0(int node, char *world);
+/* 0x000f8850  CDemolition_World.cpp: ParseMap callback of an "Object" block */
+int FUN_000f8850(int node, char *world);
+
 #endif

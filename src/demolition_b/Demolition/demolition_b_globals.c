@@ -13,6 +13,8 @@ The globals that demolition_b owns are defined next to their code.
 __attribute__((weak)) unsigned int DAT_00285630 = 1;    /* rand() seed */
 __attribute__((weak)) float DAT_0028fda8 = 1.0f;        /* frame time factor */
 __attribute__((weak)) int DAT_00290750;                 /* the characters' table (classlib_ui) */
+__attribute__((weak)) int DAT_00297520[60];             /* variation settings (demolition_a; zeros
+                                                           here, the owner's values replace them) */
 
 /* ---------- .bss (weak) */
 

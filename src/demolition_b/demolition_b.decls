@@ -163,3 +163,24 @@
 
 # Demolition/CDemolition_Player.c
 000f99e0 void CDemolition_Player_SetCarry(struct CDemolition_Player *self, void *node, void *object);
+
+# Demolition/CDemolition_World.c: CDemolition_World (game +0x110, vtable 0x0026b0f8)
+000f6fe0 struct CDemolition_World *CDemolition_World_Construct(struct CDemolition_World *self);
+000f6ff0 void CDemolition_World_Destruct(struct CDemolition_World *self);
+000f7000 void CDemolition_World_Shutdown(struct CDemolition_World *self);
+000f71b0 void CDemolition_World_Update(struct CDemolition_World *self, float dt);
+000f7270 void CDemolition_World_DrawFrag(struct CDemolition_World *self);
+000f7380 void CDemolition_World_DrawShadowObjects(struct CDemolition_World *self);
+000f73c0 void CDemolition_World_DrawRemote(struct CDemolition_World *self);
+000f74c0 void CDemolition_World_DrawAlphaRemote(struct CDemolition_World *self);
+000f7540 void CDemolition_World_DrawTimed(struct CDemolition_World *self);
+000f76b0 void CDemolition_World_DrawArena(struct CDemolition_World *self);
+000f77a0 void *CDemolition_World_DeletingDestruct(struct CDemolition_World *self, unsigned int flags);
+000f7b90 int CDemolition_World_ParseInstance(int node, char *world);
+000f86d0 void CDemolition_World_DrawSolid(struct CDemolition_World *self);
+000f8730 void CDemolition_World_DrawAlpha(struct CDemolition_World *self);
+000f8750 void CDemolition_World_DrawShadow(struct CDemolition_World *self);
+000f8790 void CDemolition_World_DrawDecalObjects(struct CDemolition_World *self);
+000f88a0 void CDemolition_World_DrawDecals(struct CDemolition_World *self);
+000f8930 int CDemolition_World_LoadLOM(struct CDemolition_World *self, void *package, const char *name);
+000f89e0 int CDemolition_World_Init(struct CDemolition_World *self, void *package, const char *level);
