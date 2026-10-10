@@ -1815,3 +1815,28 @@ void CRColl_MoveActor(void *actor)
 	CHL_F32(actor, ACT_VEL + 0x8) = sum[2];
 	CHL_F32(actor, ACT_VEL + 0xc) = 1.0f;
 }
+
+/* 0x000b1d20  CharLib (CRCollision.cpp, inferred)
+A knock-back or ledge climb in progress: the time left (character data 0x1ac) runs down by
+25 per frame, and the actor moves towards the target (0x19c) by the part of the time that
+passed (plus a tenth of the rest). */
+void Actor_UpdateKnockback(void *actor)
+{
+	unsigned char *cd = ACT_CD(actor);
+	float before = CHL_F32(cd, CD_STUN_TIME);
+	float f;
+	float ty;
+	float tz;
+
+	CHL_F32(cd, CD_STUN_TIME) = CHL_F32(cd, CD_STUN_TIME) - CHL_VAR(float, 0x0029396c) * chl_time_scale;
+	if (CHL_F32(ACT_CD(actor), CD_STUN_TIME) < 0.0f)
+		CHL_F32(ACT_CD(actor), CD_STUN_TIME) = 0.0f;
+	cd = ACT_CD(actor);
+	ty = CHL_F32(cd, CD_STUN_TARGET + 0x4);
+	tz = CHL_F32(cd, CD_STUN_TARGET + 0x8);
+	f = (CHL_VAR(float, 0x00293968) * CHL_F32(cd, CD_STUN_TIME) + (before - CHL_F32(cd, CD_STUN_TIME))) / before;
+	CHL_F32(actor, ACT_POS + 0x0) = f * (CHL_F32(cd, CD_STUN_TARGET + 0x0) - CHL_F32(actor, ACT_POS + 0x0)) +
+		CHL_F32(actor, ACT_POS + 0x0);
+	CHL_F32(actor, ACT_POS + 0x4) = f * (ty - CHL_F32(actor, ACT_POS + 0x4)) + CHL_F32(actor, ACT_POS + 0x4);
+	CHL_F32(actor, ACT_POS + 0x8) = f * (tz - CHL_F32(actor, ACT_POS + 0x8)) + CHL_F32(actor, ACT_POS + 0x8);
+}

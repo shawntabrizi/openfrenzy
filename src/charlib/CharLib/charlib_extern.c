@@ -45,3 +45,17 @@ __attribute__((weak)) unsigned char DAT_00291760[0x2c];      /* 0x00291760 BLEND
 __attribute__((weak)) unsigned char DAT_002917b8[0x2c];      /* 0x002917b8 BLEND_SMOKE_NOGRAV effect */
 float DAT_002be588;               /* 0x002be588 bdisplay: field of view x */
 float DAT_002be58c;               /* 0x002be58c bdisplay: field of view y */
+int DAT_002baebc;                 /* 0x002baebc core: team game */
+int DAT_002baef4[4 * 10];         /* 0x002baef4 core: player table, team at +0x00 */
+/* CarryOn .data and .bss (weak / tentative until carryon defines them; XBE values) */
+__attribute__((weak)) int DAT_00293b44 = 0;
+void *DAT_002f6d28[4];            /* 0x002f6d28 carryon: the CarryOn players */
+void *DAT_002f6d5c;               /* 0x002f6d5c carryon: the CarryOn game */
+__attribute__((weak)) void *DAT_00293afc = 0;
+__attribute__((weak)) float DAT_00293f20 = 6.0f;
+__attribute__((weak)) int DAT_00293f24 = 1;
+__attribute__((weak)) int DAT_00293f28 = 1;
+__attribute__((weak)) int DAT_00293f30 = 1;
+__attribute__((weak)) int DAT_00293f34 = 1;
+__attribute__((weak)) float DAT_00294a7c = 5.0f;
+__attribute__((weak)) float DAT_00294a80 = 1.5f;

@@ -181,3 +181,30 @@
 # lights.cpp (end)
 000b7b80 void Lights_DeleteAll(void);
 000b7c20 void Lights_UpdateAll(void);
+# unplaced
+000ab4c0 void Obj_SetVector48(void *self, float *v);
+# CarryOn (Fireworks) AI conditions and states (in the CharLib block)
+000d4890 int FireAI_GameRunning(void *ai);
+000d48a0 int FireAI_StateIdle(void *ai, int entered);
+000d4990 int FireAI_GameOver(void *ai);
+000d49a0 int FireAI_StateGameOver(void *ai, int entered);
+000d4ae0 int FireAI_ActionOver(void *ai);
+000d4b50 int FireAI_WantsWalk(void *ai);
+000d4bb0 int FireAI_WantsJump(void *ai);
+000d4bf0 int FireAI_WantsAttack(void *ai);
+000d4d70 int FireAI_Falling(void *ai);
+000d4da0 int FireAI_WantsTakeFromConveyor(void *ai);
+000d4df0 int FireAI_WantsLoad(void *ai);
+000d4e20 int FireAI_Never(void *ai);
+000d4e30 int FireAI_StateStand(void *ai, int entered);
+000d4e80 int FireAI_StateWalk(void *ai, int entered);
+000d5060 int FireAI_StateJump(void *ai, int entered);
+000d5190 int FireAI_StateFall(void *ai, int entered);
+000d5200 int FireAI_StateAttack(void *ai, int entered);
+000d53d0 int FireAI_StateAttack2(void *ai, int entered);
+000d5460 int FireAI_StateThrow(void *ai, int entered);
+000d5540 int FireAI_StateCatch(void *ai, int entered);
+000d5720 int FireAI_StateHit(void *ai, int entered);
+000d5770 int FireAI_StateTake(void *ai, int entered);
+000d57f0 int FireAI_StateLoad(void *ai, int entered);
+000d5870 int FireAI_StateDrop(void *ai, int entered);
