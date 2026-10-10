@@ -135,6 +135,7 @@ extern void *DAT_002f6d5c;
 extern int DAT_002f6d60;            /* debug drawing of the launch rack */
 extern int *DAT_002f7960;           /* set to 1 while the rack has rockets to launch */
 extern int DAT_00293b44;            /* rockets in flight (carryon_a) */
+extern int DAT_00293928;            /* AI voice volume (charlib) */
 /* launch rack tweakables (0x00294390-0x00294398) */
 extern int DAT_00294108;            /* tweak "V3:Parts/Firework" 3 */
 extern int DAT_0029410c;            /* tweak "V3:Part Types" 3 */
