@@ -398,12 +398,16 @@ void CBbash_Game_Outro(void *self)
 			MW_F(0x0030cde8) = 5000.0f;
 			MW_S(0x0030ce00) = 0;
 			CLHud_DeleteWinnerText((int)(uintptr_t)DAT_002ecfac);
-			if (DAT_002bae98 != 2) {
-				CGameModeStack_Pop((struct CGameModeStack *)DAT_002ba750, 1);
-				mw_Quit = 1;
-				return;
-			}
-			FUN_00172730(mw_Arena);
+			/* port: the original resets the arena for a new round here (FUN_00172730,
+			inlined in the XBE) when start state is 2 (a game started from the command
+			line, OPENFRENZY_GAME, loops its round). That debug path is broken in the
+			original too: it calls Actor_Delete(bug + 0) for every bug, but the train
+			(bug type 8, only in Tube Tremors, OPENFRENZY_VARIATION=2) has no actor at +0
+			(NULL; its platform is at +4), so CLList_Remove reads address 0. The reset
+			also does not clear the train flag 0x0030ce6a. The port ends the mode instead,
+			as after a board round (as ScratchMatch does in SMGame_UpdateOutro). */
+			CGameModeStack_Pop((struct CGameModeStack *)DAT_002ba750, 1);
+			mw_Quit = 1;
 			return;
 		}
 		break;

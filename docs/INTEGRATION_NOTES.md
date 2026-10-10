@@ -224,6 +224,12 @@ integration round 2 (921ec75); see below.
   only): CLList_Remove <- Actor_Delete <- FUN_00172730 (CBbash_Arena reset) <-
   CBbash_Game_Update. ScratchMatch 1-3 print the (original) assertion
   CScratchmatch_Game.cpp(815) at the outro, as in round 2.
+  Fixed (fix-mousewhack-v2-restart-fault): the original does the same. Variation 2 is Tube
+  Tremors (mw_Variation 1), the only one with the train: a bug of type 8 whose actor (+0) is
+  NULL (its platform is at +4). The round reset (FUN_00172730; the XBE inlines it in
+  CBbash_Game_Outro 0x00173470) calls Actor_Delete(bug + 0) for every bug with no type check,
+  so CLList_Remove reads address 0. The port ends the mode there instead, as ScratchMatch
+  does; the stack returns to Root. MouseWhack 1-3, 120 s each: no fault.
 - Open fault (real menu path): main menu -> Options faults at once, `pc = "\models\"`
   (0x5c736c65646f6d5c, string bytes as the return address: a stack buffer overflow). The
   stack scan shows CGameMode_MainMenu_OnButton -> CMB_PUSH_MODE -> MainOptions. Trace
