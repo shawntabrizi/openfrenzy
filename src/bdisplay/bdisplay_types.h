@@ -283,35 +283,12 @@ typedef struct bdPrintCallbackInfo
 OF_ASSERT_SIZE(bdPrintCallbackInfo, 0x20);
 typedef int (*bdPrintCallback)(int reason, bdPrintCallbackInfo *info);
 
-/* ---------- library functions the shared XDK headers do not declare yet.
-The d3d8 module owns them (its untracked src/d3d8/d3d8_extra.h has the same
-declarations; game code cannot include it yet). Weak fallbacks for the link
-are in bdisplay_xdk_fallback.c. */
+/* ---------- library functions the shared XDK headers do not declare: the
+d3d8 module's header (D3DDevice_SetMaterial, D3DDevice_DrawVerticesUP,
+Direct3D_GetDeviceCaps, XGSetTextureHeader, D3DMATERIAL8) */
 
-#ifndef OPENFRENZY_D3D8_EXTRA_H
-typedef struct _D3DCOLORVALUE
-{
-	float r, g, b, a;
-} D3DCOLORVALUE;
+#include "d3d8_extra.h"
 
-typedef struct _D3DMATERIAL8
-{
-	D3DCOLORVALUE Diffuse;
-	D3DCOLORVALUE Ambient;
-	D3DCOLORVALUE Specular;
-	D3DCOLORVALUE Emissive;
-	float Power;
-} D3DMATERIAL8;
-
-/* 0x001f54a0 */ void WINAPI D3DDevice_SetMaterial(CONST D3DMATERIAL8 *material);
-/* 0x00201390 */ void WINAPI D3DDevice_DrawVerticesUP(D3DPRIMITIVETYPE primitive_type, UINT vertex_count,
-	CONST void *vertex_data, UINT vertex_stride);
-/* 0x002022f0 (the XBE's symbol: D3D_GetDeviceCaps) */
-HRESULT WINAPI Direct3D_GetDeviceCaps(UINT adapter, D3DDEVTYPE device_type, D3DCAPS8 *caps);
-/* 0x002285c1 */
-VOID WINAPI XGSetTextureHeader(UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format,
-	D3DPOOL pool, D3DTexture *texture, UINT data, UINT pitch);
-#endif
 OF_ASSERT_SIZE(D3DMATERIAL8, 0x44);
 
 /* XPhysicalProtect is the XBE's 0x001e8823; xdk_pdb.h declares it */
