@@ -34,3 +34,8 @@ int DAT_002f2054;           /* engine frequency change */
 int DAT_002f2058;           /* engine turning volume */
 float DAT_002f2068[4][5];   /* start positions: x, y, z, w, heading */
 float DAT_002f2170[4];      /* computer drivers' speed per player */
+void *DAT_002f26c4;         /* the camera path editor (bumpercars_b 0x000a5ca0) */
+float DAT_002f2028;         /* frames to the crowd cheer */
+int DAT_002f202c;           /* winners shown */
+float DAT_002f205c;         /* the winner view's last time */
+int DAT_002f2060;           /* the player the winner view shows */
