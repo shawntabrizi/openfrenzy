@@ -38,3 +38,40 @@
 
 # Core/unplaced.c
 0001ddb0 void *FUN_0001ddb0(void *self);
+
+# Core/CGameMode_Map.c
+0001ddd0 void CGameMode_Map_Stop(struct CGameMode_Map *self);
+0001de90 void CGameMode_Map_StartZoomOut(struct CGameMode_Map *self);
+0001df10 void CGameMode_Map_StartDraw(struct CGameMode_Map *self);
+0001dfb0 void CGameMode_Map_SkipDraw(struct CGameMode_Map *self);
+0001e060 void CGameMode_Map_Turn(struct CGameMode_Map *self);
+0001e0a0 void CGameMode_Map_Choose(struct CGameMode_Map *self);
+0001e290 void CGameMode_Map_StartFadeIn(struct CGameMode_Map *self);
+0001e300 void CGameMode_Map_FadeIn(struct CGameMode_Map *self);
+0001e490 void CGameMode_Map_FadeOut(struct CGameMode_Map *self);
+0001e560 void CGameMode_Map_RenderFade(struct CGameMode_Map *self);
+0001e940 void CGameMode_Map_Fly(struct CGameMode_Map *self, float t);
+0001e9d0 void cmb_vec3_add(float *out, float *a, float *b);
+0001ea00 void cmb_vec3_scale(float *out, float *v, float s);
+0001ea30 float cmb_vec3_length(float *v);
+0001ea60 struct CGameMode_Map *CGameMode_Map_ctor(struct CGameMode_Map *self, int kind);
+0001eb10 void *CGameMode_Map_DeletingDtor(struct CGameMode_Map *self, unsigned char flags);
+0001eb30 void CGameMode_Map_dtor(struct CGameMode_Map *self);
+0001eba0 void CGameMode_Map_CreateOverlays(struct CGameMode_Map *self);
+0001f180 void CGameMode_Map_CreatePrompt(struct CGameMode_Map *self);
+0001f2e0 void CGameMode_Map_StartFlight(struct CGameMode_Map *self);
+0001f460 void CGameMode_Map_StartRound(struct CGameMode_Map *self);
+0001f8c0 void CGameMode_Map_DrawOrder(struct CGameMode_Map *self);
+0001fac0 void CGameMode_Map_DimOthers(struct CGameMode_Map *self);
+0001fcc0 void CGameMode_Map_View(struct CGameMode_Map *self);
+0001fd80 void CGameMode_Map_Render3D(struct CGameMode_Map *self);
+00020100 void CGameMode_Map_RenderPath(struct CGameMode_Map *self);
+000204f0 void CGameMode_Map_StartRoundFade(struct CGameMode_Map *self);
+000205d0 void CGameMode_Map_RoundFade(struct CGameMode_Map *self);
+000206a0 void CGameMode_Map_Leave(struct CGameMode_Map *self);
+000208a0 void CGameMode_Map_Load(struct CGameMode_Map *self);
+00020b50 void CGameMode_Map_Loaded(struct CGameMode_Map *self);
+00021080 void CGameMode_Map_PromptCountdown(struct CGameMode_Map *self);
+00021100 void CGameMode_Map_Update(struct CGameMode_Map *self, int active);
+00021630 void CGameMode_Map_Render(struct CGameMode_Map *self, int active);
+000216a0 int CGameMode_Map_OnButton(struct CGameMode_Map *self, int button, int pad);

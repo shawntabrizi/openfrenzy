@@ -25,6 +25,7 @@ Conventions used in this module (see docs/ARCHITECTURE.md):
 #ifndef CORE_MODES_B_H
 #define CORE_MODES_B_H
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,6 +84,15 @@ static inline float cmb_bitsf(unsigned int bits)
 
 /* classlib_ui FUN_00071720: play a generic sample (id, volume, pan, pitch, loop) */
 #define CMB_PLAY_SAMPLE ((int (*)(int, int, int, int, int))FUN_00071720)
+
+/* core_modes_a BG_Effects text: select (FUN_000114b0, real prototype (this, float phase))
+   and deselect (FUN_00011500) */
+static inline void cmb_text_select(void *text, float phase)
+{
+	CMB_DUAL(FUN_000114b0, void (*)(int, undefined4), void (*)(void *, float),
+		((int)text, cmb_fbits(phase)), (text, phase));
+}
+#define cmb_text_deselect(text) (((void (*)(void *))FUN_00011500)(text))
 
 /* the text database: DAT_002ecc74 points at the language table, +0x20 holds 16-byte
    entries whose first word is the (wide) string */
@@ -146,13 +156,31 @@ extern int DAT_002bae94, DAT_002bae98, DAT_002bae9c;
 extern int DAT_002baad8, DAT_002baae8;
 extern float _DAT_002ba9c8;
 extern int DAT_002ecc74, DAT_002ecdec, DAT_002ecfac;
+extern int DAT_002bb020;                  /* core: map/menu model shown */
+extern int DAT_002ba560;                  /* core: the game mode after the map (meta game) */
+extern int DAT_002ba63c[7];               /* core: per round, fixed game */
+extern int DAT_002ba658[21];              /* core: fixed games [round][kind] */
+extern int DAT_00283ab8[21];              /* core: fixed variants [round][kind] */
+extern int DAT_002baeac, DAT_002baeb0;    /* chosen game and variant */
+extern int DAT_002baeb4;                  /* site of the round */
+extern int DAT_002baebc;
+extern int DAT_002bae8c;
+extern unsigned char DAT_002be370[];      /* bdisplay: view matrix */
+extern int DAT_00283d74;
+extern int DAT_002844ac[6];               /* fixed site order */
+extern unsigned int DAT_002bc40c, DAT_002bc410;
+extern float DAT_00283874[4];
+extern int DAT_00283884;
 extern unsigned char DAT_002ed324[]; /* CRumble (classlib_ui) */
 extern float DAT_0028fda8;
 extern int DAT_0028ffb8;
-extern int DAT_002844a0;
+extern int DAT_002844a0[3];
 extern int DAT_00284408;
 extern int DAT_002ba570[0x31];
 extern unsigned int DAT_002bc490[], DAT_002bc898[], DAT_002bce18[], DAT_002bd640[];
+
+/* xkernel (HLE): logs and continues */
+void DbgBreakPoint(void);
 
 /* ---------- D3D_KickOffAndWaitForIdle has no HLE yet (docs/LIBRARY_CALLS.md): call it when
    the d3d8 module provides it */
@@ -241,6 +269,97 @@ extern int DAT_00283768[8];
 extern float DAT_00283760;
 extern int DAT_002844dc[3];
 extern int DAT_002baf78[4][9];
+
+/* ---------- CGameMode_Map (0x5e8 bytes): the city map between rounds */
+
+/* one site of the map (100 bytes); built by FUN_0001ddb0, destroyed by 0x0001ddc0 */
+struct CMapSite {
+	void *actor;                /* 0x00: site model */
+	void *wire;                 /* 0x04: wireframe model (also the shadow caster) */
+	int colour[4];              /* 0x08: wire sprite (core object at +8) colour */
+	int sprite_10[4];
+	int sprite_20;
+	int sprite_24;
+	int sprite_size;            /* 0x30 */
+	unsigned char shadow[0x30]; /* 0x34: shadow object (bactor) */
+};
+OF_ASSERT_SIZE(struct CMapSite, 100);
+
+struct CGameMode_Map {
+	struct cmb_CGameMode base;
+	float exit_timer;           /* 0x098: counts down, then pops the mode */
+	int font_bold;              /* 0x09c */
+	int font_light;             /* 0x0a0 */
+	struct CMapSite sites[6];   /* 0x0a4 */
+	float pos[6][4];            /* 0x2fc: site positions */
+	float far_pos[6][4];        /* 0x35c */
+	int alpha[6];               /* 0x3bc: site brightness, 0x100 = full */
+	int alpha_min[6];           /* 0x3d4 */
+	float shadow_alpha;         /* 0x3ec */
+	int city_model;             /* 0x3f0 */
+	void *city;                 /* 0x3f4 */
+	float light_dir[4];         /* 0x3f8 */
+	unsigned char light[0x70];  /* 0x408: BLight */
+	float cam_pos[4];           /* 0x478 */
+	float cam_target[4];        /* 0x488 */
+	float pos_from[4];          /* 0x498 */
+	float pos_to[4];            /* 0x4a8 */
+	float target_from[4];       /* 0x4b8 */
+	float target_to[4];         /* 0x4c8 */
+	float zoom[4];              /* 0x4d8 */
+	float zoom_from[4];         /* 0x4e8 */
+	float zoom_to[4];           /* 0x4f8 */
+	float blend;                /* 0x508 */
+	int node_texture;           /* 0x50c */
+	int line_texture;           /* 0x510 */
+	int order[6];               /* 0x514: site of each round */
+	int round_of[6];            /* 0x52c: round of each site, -1 = none */
+	int rounds;                 /* 0x544 */
+	int first_label;            /* 0x548 */
+	int current;                /* 0x54c: current round */
+	int path_alpha;             /* 0x550 */
+	float path_done;            /* 0x554 */
+	float path_current;         /* 0x558 */
+	float pulse;                /* 0x55c: 0..6 */
+	int kind;                   /* 0x560: why the map is shown */
+	int state;                  /* 0x564 */
+	int game_name;              /* 0x568 */
+	int game;                   /* 0x56c: chosen game */
+	int variant;                /* 0x570 */
+	float timer;                /* 0x574 */
+	float timer2;               /* 0x578 */
+	float angle;                /* 0x57c */
+	int package;                /* 0x580 */
+	float fade;                 /* 0x584 */
+	float zfar;                 /* 0x588 */
+	void *selector;             /* 0x58c: game selector (core FUN_0002e1b0) */
+	unsigned char list[0xc];    /* 0x590: overlay list (classlib_ui) */
+	void *title;                /* 0x59c: overlays */
+	void *subtitle;             /* 0x5a0 */
+	void *label_left;           /* 0x5a4 */
+	void *label_right;          /* 0x5a8 */
+	void *vs;                   /* 0x5ac */
+	void *vs_text;              /* 0x5b0 */
+	void *prompt;               /* 0x5b4 */
+	int grid;                   /* 0x5b8: vertex buffer of the grid */
+	int logo;                   /* 0x5bc: logo animation 1-7 */
+	int samples[8];             /* 0x5c0 */
+	int sample_playing;         /* 0x5e0 */
+	int hum;                    /* 0x5e4 */
+};
+OF_ASSERT_OFFSET(struct CGameMode_Map, pos, 0x2fc);
+OF_ASSERT_OFFSET(struct CGameMode_Map, light, 0x408);
+OF_ASSERT_OFFSET(struct CGameMode_Map, order, 0x514);
+OF_ASSERT_OFFSET(struct CGameMode_Map, list, 0x590);
+OF_ASSERT_SIZE(struct CGameMode_Map, 0x5e8);
+
+/* the engine's rand() (MSVC's, inlined by the game; seed DAT_00285630) */
+extern unsigned int DAT_00285630;
+static inline int cmb_rand(void)
+{
+	DAT_00285630 = DAT_00285630 * 0x343fdu + 0x269ec3u;
+	return (int)((DAT_00285630 >> 16) & 0x7fff);
+}
 
 void CGameMode_MainMenu_CreateBoxes(struct CGameMode_MainMenu *self);
 

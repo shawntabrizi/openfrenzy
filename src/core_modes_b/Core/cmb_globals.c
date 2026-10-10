@@ -24,7 +24,7 @@ __attribute__((weak)) int DAT_00283768[8] = {         /* level meter colour chan
 	0xff, 0xff, 0xff, 0xe6, 0xff, 0xff, 0xff, 0x5a,
 };
 __attribute__((weak)) int DAT_00284408 = -1;
-__attribute__((weak)) int DAT_002844a0 = 2;
+__attribute__((weak)) int DAT_002844a0[3] = { 2, 4, 6 }; /* rounds per game length */
 __attribute__((weak)) int DAT_002844dc[3] = { 0x60, 0x60, 0x60 }; /* menu box colour */
 __attribute__((weak)) float DAT_0028fda8 = 1.0f;      /* frame time factor */
 __attribute__((weak)) int DAT_0028ffb8 = -1;          /* current soundtrack */
@@ -66,3 +66,23 @@ __attribute__((weak, aligned(16))) unsigned char of_core_bss[0xc48];
 
 int DAT_002ecfac;                 /* (classlib_ui) +0x90: rumble strength */
 unsigned char DAT_002ed324[4];    /* CRumble object (classlib_ui) */
+
+/* used by CGameMode_Map */
+__attribute__((weak)) int DAT_00283ab8[21] = {
+	0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2,
+};
+__attribute__((weak)) int DAT_00283d74 = 0;
+__attribute__((weak)) int DAT_002844ac[6] = { 5, 4, 3, 2, 1, 0 };
+int DAT_002bb020;
+int DAT_002ba560;
+int DAT_002ba63c[7];
+int DAT_002ba658[21];
+int DAT_002baeac;
+int DAT_002baeb0;
+int DAT_002baeb4;
+int DAT_002baebc;
+int DAT_002bae8c;
+unsigned char DAT_002be370[0x40];
+unsigned int DAT_002bc40c;
+unsigned int DAT_002bc410;
+__attribute__((weak)) unsigned int DAT_00285630 = 1;   /* rand() seed */

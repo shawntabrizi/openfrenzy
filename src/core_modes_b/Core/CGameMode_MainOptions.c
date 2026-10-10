@@ -85,9 +85,9 @@ void CGameMode_MainOptions_Start(struct CGameMode_MainOptions *self)
 		CMB_F32(self->items[i], 0x34) = 0.75f;
 		CMB_F32(self->items[i], 0x14) = 100.0f - (float)i * 40.0f;
 		if (i == self->option)
-			((void (*)(void *, int))FUN_000114b0)(self->items[i], 0);
+			cmb_text_select(self->items[i], 0.0f);
 		else
-			((void (*)(void *))FUN_00011500)(self->items[i]);
+			cmb_text_deselect(self->items[i]);
 		cmb_group_add(self->group, self->items[i]);
 	}
 
@@ -170,11 +170,11 @@ int CGameMode_MainOptions_OnButton(struct CGameMode_MainOptions *self, int butto
 	case 0: /* up */
 		deflection = cmb_axis(pad, 0);
 		if (deflection > cmb_axis(pad, 3) * 2 && deflection > cmb_axis(pad, 1) * 2) {
-			((void (*)(void *))FUN_00011500)(self->items[self->option]);
+			cmb_text_deselect(self->items[self->option]);
 			self->option--;
 			if (self->option < 0)
 				self->option = 5;
-			((void (*)(void *, int))FUN_000114b0)(self->items[self->option], 0);
+			cmb_text_select(self->items[self->option], 0.0f);
 			CMB_PLAY_SAMPLE(7, 0x7f, 0, 0, 0);
 		}
 		break;
@@ -205,11 +205,11 @@ int CGameMode_MainOptions_OnButton(struct CGameMode_MainOptions *self, int butto
 	case 2: /* down */
 		deflection = cmb_axis(pad, 2);
 		if (deflection > cmb_axis(pad, 3) * 2 && deflection > cmb_axis(pad, 1) * 2) {
-			((void (*)(void *))FUN_00011500)(self->items[self->option]);
+			cmb_text_deselect(self->items[self->option]);
 			self->option++;
 			if (self->option > 5)
 				self->option = 0;
-			((void (*)(void *, int))FUN_000114b0)(self->items[self->option], 0);
+			cmb_text_select(self->items[self->option], 0.0f);
 			CMB_PLAY_SAMPLE(7, 0x7f, 0, 0, 0);
 		}
 		break;

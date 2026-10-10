@@ -112,7 +112,7 @@ void CGameMode_MainMenu_StartParty(struct CGameMode_MainMenu *self)
 	CScoreTable_Clear(&g_score_table);
 	DAT_002bae98 = 0;
 	DAT_002bae74 = 0;
-	DAT_002bae88 = DAT_002844a0;
+	DAT_002bae88 = DAT_002844a0[0];
 	CMB_PUSH_MODE(DAT_002ba550, 1);
 }
 
@@ -314,9 +314,9 @@ void CGameMode_MainMenu_Start(struct CGameMode_MainMenu *self)
 		self->items[index] = item;
 		CMB_AT(item, 0x34, float) = 0.75f;
 		if (index == self->selection)
-			((void (*)(void *, int))FUN_000114b0)(self->items[index], 0);
+			cmb_text_select(self->items[index], 0.0f);
 		else
-			((void (*)(void *))FUN_00011500)(self->items[index]);
+			cmb_text_deselect(self->items[index]);
 		item = self->items[index];
 		((void (*)(void *, void *, int))FUN_00071070)((char *)self->group_ac + 0x10,
 			item == NULL ? NULL : (char *)item + 4, 1);
@@ -343,19 +343,19 @@ int CGameMode_MainMenu_OnButton(struct CGameMode_MainMenu *self, int button, int
 	self->idle_time = 0.0f;
 	switch (button) {
 	case 0: /* up */
-		((void (*)(void *))FUN_00011500)(self->items[self->selection]);
+		cmb_text_deselect(self->items[self->selection]);
 		self->selection--;
 		if (self->selection < 0)
 			self->selection = 3;
-		((void (*)(void *, int))FUN_000114b0)(self->items[self->selection], 0);
+		cmb_text_select(self->items[self->selection], 0.0f);
 		CMB_PLAY_SAMPLE(7, 0x7f, 0, 0, 0);
 		return 0;
 	case 2: /* down */
-		((void (*)(void *))FUN_00011500)(self->items[self->selection]);
+		cmb_text_deselect(self->items[self->selection]);
 		self->selection++;
 		if (self->selection == 4)
 			self->selection = 0;
-		((void (*)(void *, int))FUN_000114b0)(self->items[self->selection], 0);
+		cmb_text_select(self->items[self->selection], 0.0f);
 		CMB_PLAY_SAMPLE(7, 0x7f, 0, 0, 0);
 		return 0;
 	case 4:
