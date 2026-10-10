@@ -13,4 +13,8 @@ core.decls through of_decls.h.
 /* 0x001f4e10: destructor (atexit) of the object at 0x002ba4f0; not in the table */
 void FUN_001f4e10(void);
 
+/* 0x00026d40: debug menu handler (core_modes_b range, not in the table); weak stub in
+Core/CGameMode_Root.c */
+void FUN_00026d40(void *event);
+
 #endif

@@ -27,6 +27,10 @@ float DAT_002be588;               /* 0x002be588 */
 float DAT_002be58c;               /* 0x002be58c */
 float DAT_002ecde8;               /* 0x002ecde8 */
 unsigned char DAT_002ecd90[0x5c]; /* 0x002ecd90 (object; up to 0x002ecdec) */
+int DAT_002b9718;                 /* 0x002b9718 core_modes_a: test map */
+int DAT_002ed340;                 /* 0x002ed340 classlib_fx: debris off */
+void *DAT_002b95cc, *DAT_002b95d0, *DAT_002b9c78;  /* core_modes_a/b mode objects */
+uint32_t DAT_002bc898[256], DAT_002bd640[256], DAT_002bc490[256], DAT_002bce18[256];  /* bdisplay */
 
 /* .data of other modules (XBE values) */
 __attribute__((weak)) float DAT_0028fda8 = 1.0f;     /* 0x0028fda8 */
@@ -36,4 +40,5 @@ __attribute__((weak)) int DAT_0028198c = -1;         /* 0x0028198c */
 __attribute__((weak)) uint32_t DAT_002855f0[16] = {
 	0x3f800000, 0, 0, 0, 0, 0x3f800000, 0, 0, 0, 0, 0x3f800000, 0, 0, 0, 0, 0x3f800000,
 };
+__attribute__((weak)) uint32_t DAT_00285630 = 1;    /* 0x00285630 libc rand seed */
 __attribute__((weak)) float DAT_00292c84 = 4.0f;     /* 0x00292c84 (used by the tweak constructor) */

@@ -49,3 +49,50 @@
 0002bf60 void CGame_Dtor(unsigned int *self);
 0002bf70 unsigned int *CGame_Destroy(unsigned int *self, int flags);
 0002bf90 float Core_Gain(float gain, float t);
+
+# Core/CTweakMenu.c
+0002e290 void CTweakMenu_SkipWords(char **cursor, int count);
+0002e2f0 void CTweakMenu_SaveAll(void);
+0002e510 struct CTweakMenu *CTweakMenu_Ctor(struct CTweakMenu *self, const char *name);
+0002e610 struct CTweakMenu *CTweakMenu_CtorSub(struct CTweakMenu *self, struct CTweakMenu *parent, const char *name);
+0002e710 void CTweakMenu_LoadValue(struct CTweakMenu *self, const char *name, int *size, float *fvar, int *ivar, int *bvar);
+0002e910 struct CTweakItem *CTweakItem_CtorFloat(struct CTweakItem *self, struct CTweakMenu *menu, const char *name, float *var, float step, float min, float max);
+0002eaa0 struct CTweakItem *CTweakItem_CtorInt(struct CTweakItem *self, struct CTweakMenu *menu, const char *name, int *var, int step, int min, int max, int nlabels, const char **labels);
+0002ece0 struct CTweakItem *CTweakItem_CtorBool(struct CTweakItem *self, struct CTweakMenu *menu, const char *name, int *var);
+0002ed90 int CTweakMenu_HandleSelect(int id, int selected);
+0002f1a0 struct CTweakItem *CTweakMenu_AddFloat(struct CTweakMenu *self, const char *name, float *var, float step, float min, float max);
+0002f250 void CTweakMenu_AddInt(struct CTweakMenu *self, const char *name, int *var, int step, int min, int max, int nlabels, ...);
+0002f340 struct CTweakItem *CTweakMenu_AddBool(struct CTweakMenu *self, const char *name, int *var);
+0002f3e0 void CTweakMenu_Dtor(struct CTweakMenu *self);
+
+# Core/CGameMode_Root.c (vtable 0x00256010 is built by core_modes_b with the constructor)
+00027540 void CGameMode_Root_CreateDebugMenu(void);
+00027db0 struct CGameMode_Root *CGameMode_Root_Destroy(struct CGameMode_Root *self, int flags);
+00027dd0 void CGameMode_Root_Update(struct CGameMode_Root *self, int top);
+00027f10 void CGameMode_Root_Pushed(struct CGameMode_Root *self);
+000283a0 void CGameMode_Root_Popped(struct CGameMode_Root *self);
+
+# Core/CGameMode_Scores.c (vtable 0x002565d0)
+000284e0 struct CGameMode_Scores *CGameMode_Scores_Ctor(struct CGameMode_Scores *self, int screen);
+00028580 void CGameMode_Scores_Dtor(struct CGameMode_Scores *self);
+000285f0 void CGameMode_Scores_Update(struct CGameMode_Scores *self, int top);
+00028650 int CGameMode_Scores_Button(struct CGameMode_Scores *self, int button, int player);
+000286b0 void CGameMode_Scores_DrawBackground(struct CGameMode_Scores *self);
+00028950 struct CGameMode_Scores *CGameMode_Scores_Destroy(struct CGameMode_Scores *self, int flags);
+00028970 void CGameMode_Scores_Popped(struct CGameMode_Scores *self);
+00028ab0 void CGameMode_Scores_ComputePoints(int *winner, int *points, int final);
+00028df0 void CGameMode_Scores_CreateTexts(struct CGameMode_Scores *self);
+00029190 void CGameMode_Scores_CreateWinners(struct CGameMode_Scores *self);
+00029440 void CGameMode_Scores_Draw(struct CGameMode_Scores *self, int top);
+00029640 void CGameMode_Scores_Loaded(struct CGameMode_Scores *self);
+00029800 struct ScoreOrb *CGameMode_Scores_AddOrb(struct CGameMode_Scores *self, int player, float x, float y);
+00029900 void CGameMode_Scores_Pushed(struct CGameMode_Scores *self);
+00029c10 void CGameMode_Scores_Process(struct CGameMode_Scores *self, int top);
+
+# Core/menus_common.c (CMenuMode, vtable 0x002577d0)
+0002fe60 void CMenuMode_Update(struct CMenuMode *self, int top);
+00030090 struct CMenuMode *CMenuMode_Ctor(struct CMenuMode *self, const char *name);
+00030190 void CMenuMode_Dtor(struct CMenuMode *self);
+
+# Core/CGameMode_Team.c (vtable 0x0025667c)
+0002a5c0 struct CGameMode_Team *CGameMode_Team_Ctor(struct CGameMode_Team *self);

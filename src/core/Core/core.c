@@ -144,7 +144,7 @@ void Core_Init(void)
 		if (Core_CreateGames())
 		{
 			ext_DebugPrintf("Module setup done\n");
-			FUN_00027540();
+			CGameMode_Root_CreateDebugMenu();
 			ext_DebugPrintf("Gui setup done\n");
 			Core_CreateDebugInput();
 			ext_FUN_00082a00();

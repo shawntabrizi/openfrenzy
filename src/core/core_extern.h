@@ -123,6 +123,21 @@ struct CGameMode;
 #define ext_FUN_00047de0 ((void (*)(void))FUN_00047de0)
 #define ext_FUN_00054730 ((void (*)(void))FUN_00054730)
 
+/* ---------- engine_misc debug menus */
+#define ext_MenuCreate ((void *(*)(int))FUN_00047370)
+#define ext_MenuAdd ((char *(*)(void *, const char *, int, void *, int))FUN_00047480)
+#define ext_MenuFree ((void (*)(void *))FUN_000473f0)
+#define ext_MenuFind ((int (*)(void *, int))FUN_00047da0)
+#define ext_MenuRemove ((void (*)(void *, int))FUN_00047d20)
+#define ext_MenuItemText ((char *(*)(void *, int))FUN_00047d80)
+#define ext_SetSoundVolume ((void (*)(int))FUN_00054690)
+/* classlib_ui lists (thiscall on the list) */
+#define ext_ListAdd ((void (*)(void *, void *, int))FUN_00071070)
+#define ext_ListRemove ((int (*)(void *, void *))FUN_000710b0)
+#define ext_ListNext ((void *(*)(void *, void *))FUN_00071110)
+#define ext_MenuSetRoot ((void (*)(void *))FUN_00047460)
+#define ext_MenuSetCallback ((void (*)(void (*)(void)))FUN_00047300)
+
 /* ---------- classlib_ui */
 
 #define ext_FUN_00071b10 ((void (*)(void))FUN_00071b10)
@@ -170,6 +185,73 @@ struct CGameMode;
 #define ext_Game10_Ctor ((void *(*)(void *))FUN_0019d530)
 #define ext_Game11_Ctor ((void *(*)(void *))FUN_001ba560)
 #define ext_Game12_Ctor ((void *(*)(void *))FUN_001c1760)
+
+/* ---------- bactor: actors (0x170 bytes) and lights (0x70 bytes) */
+
+#define ext_ActorFree ((void (*)(void *))FUN_00034930)
+#define ext_ActorSetVisible ((void (*)(void *, int))FUN_00034bf0)
+#define ext_ActorDraw ((void (*)(void *, int))FUN_00034d50)
+#define ext_ActorSetMatrixMode ((void (*)(void *, void *, int, int))FUN_00034e70)
+#define ext_ActorPlay ((void (*)(void *, void *, void *, int, int, int, int, int))FUN_00035770)
+#define ext_ActorPlayBlend ((void (*)(void *, void *, void *, int, int, float, int, int, int))FUN_000358d0)
+#define ext_ActorFindAnim ((void *(*)(void *, const char *))FUN_00035c70)
+#define ext_ActorSetMaterial ((void (*)(void *, int, int, void *))FUN_00035cc0)
+#define ext_ActorAnimPlaying ((int (*)(void *, void *, int, int))FUN_00036870)
+#define ext_ActorCreate ((void *(*)(void *, void *, int, const char *, int))FUN_00036b20)
+#define ext_ActorUpdate ((void (*)(void *, void *, float, int))FUN_000380f0)
+#define ext_ActorSetFlags ((void (*)(void *, void *, int, int))FUN_00038190)
+#define ext_LightInit ((void (*)(void *, int))FUN_000382f0)
+#define ext_LightEnable ((void (*)(void *, int))FUN_00038370)
+#define ext_SetAmbient ((void (*)(int, int, int))FUN_00038440)
+#define ext_LightColour ((void (*)(void *, int, int, int))FUN_00038470)
+#define ext_LightFree ((void (*)(void *))FUN_000384d0)
+#define ext_LightDirection ((void (*)(void *, const float *))FUN_00038550)
+#define ext_LightSpot ((void (*)(void *, const float *, const float *, float, float))FUN_000385e0)
+
+/* ---------- bdisplay: render state */
+
+#define ext_SetRenderState ((void (*)(int, int, int))FUN_00044b00)
+#define ext_SetFov ((void (*)(float, int))FUN_00044a00)
+#define ext_SetCamera ((void (*)(const float *, const float *, int))FUN_000435f0)
+#define ext_ApplyCamera ((void (*)(void))FUN_00043790)
+#define ext_DrawPrimitives ((void (*)(int, void *, int))FUN_0003f2d0)
+#define ext_SetTexture ((void (*)(int, int))FUN_000416c0)
+#define ext_SaveState ((void (*)(void *))FUN_00046d40)
+#define ext_RestoreState ((void (*)(void *))FUN_00046d60)
+/* colour conversion tables (bdisplay .bss): alpha, red, green, blue of 0-255 */
+extern uint32_t DAT_002bc898[256], DAT_002bd640[256], DAT_002bc490[256], DAT_002bce18[256];
+
+/* ---------- classlib_ui: text boxes, voices, packages */
+
+#define ext_TextCreate ((void *(*)(void *))FUN_00074500)
+#define ext_TextUpdateAll ((void (*)(void))FUN_00074be0)
+#define ext_TextFreeAll ((void (*)(void))FUN_00074ba0)
+#define ext_PlayVoice ((int (*)(int, int, int, int, int, int))FUN_000719a0)
+#define ext_PlayCharacterVoice ((int (*)(unsigned char, int, int, int, int, int, int))FUN_00071770)
+#define ext_SoundPlaying ((int (*)(int))FUN_000548d0)
+#define ext_FUN_000724b0 ((void (*)(int, int, int, int, int, int))FUN_000724b0)
+#define ext_LoadPackageAsync ((void *(*)(const char *, int))FUN_00071f90)
+#define ext_FUN_00072720 ((void (*)(void *))FUN_00072720)
+#define ext_FUN_00073900 ((void (*)(int))FUN_00073900)
+#define ext_FadeTo ((void (*)(int, int))FUN_00071c20)
+
+/* ---------- bkernel packages */
+
+#define ext_LoadPackage ((void *(*)(int, const char *, int))FUN_0004db30)
+#define ext_OpenStreamPackage ((void *(*)(const char *))FUN_0004db20)
+#define ext_FreePackage ((void (*)(void *))FUN_0004db40)
+#define ext_PackagePrepare ((int (*)(void *, int, int, int))FUN_0004b870)
+
+/* ---------- other */
+
+/* 0x0004c4b0 allocate (size, 0, file, line, 0x2001) */
+#define ext_Alloc ((void *(*)(unsigned int, int, const char *, int, int))FUN_0004c4b0)
+/* 0x00051e60 rotation about Y into a matrix */
+#define ext_MatrixRotateY ((void (*)(float *, float))FUN_00051e60)
+/* 16-bit swprintf, MSVC form (src/runtime/msvc_wide.c; the XBE's 0x001df180) */
+int msvc_swprintf(unsigned short *buffer, const unsigned short *format, ...);
+/* the libc rand state (0x00285630), used inline: seed = seed * 214013 + 2531011 */
+extern uint32_t DAT_00285630;
 
 /* ---------- platform (XDK) */
 
