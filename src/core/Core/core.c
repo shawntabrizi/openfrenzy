@@ -131,6 +131,7 @@ void Core_Init(void)
 		void *memory = ext_New(0x5804, core_cpp, 0x2ab, 0x1001);
 
 		g_Settings = memory ? ext_SettingsCtor(memory) : NULL;
+		of_settings_from_environment(g_Settings);   /* port: OPENFRENZY_GAME/_VARIATION */
 	}
 	Core_ReadLaunchInfo();
 	Core_ReadVideoSettings();

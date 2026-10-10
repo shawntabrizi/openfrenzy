@@ -13,7 +13,13 @@ too, when Ghidra only wrote PTR_... or s_... there).
 
 Blocks:
   of_clu_data   [0x0028fda8, 0x00290cc0)  .data of ClassLib block 1 (XBE values)
-  of_clu_data2  [0x00290d14, 0x00290d54)  .data of CRumble.cpp (XBE values)
+  of_clu_data2  [0x00290d14, 0x00290d54)  not a block of its own: classlib_ui_data.h defines
+                it as classlib_fx's of_clf_data + 0x54 (no storage and no aliases here).
+                0x00290d14 is entry 1 of the CProjector ray type table (0x00290cc8,
+                3 x 0x4c bytes, owned by classlib_fx). Hud.c passes it to 0x000846c0,
+                which reads its texture at +0x44 (0x00290d58, past this range). A
+                separate copy gave a garbage texture and a crash at the Hopper countdown
+                (minigame launcher triage, 2026-10-10).
   of_clu_bss    [0x002ea490, 0x002ed33c)  .bss of ClassLib block 1 (zero)
 
 A word of .data becomes a pointer only when it points at a text string in .rdata (ASCII
@@ -32,7 +38,7 @@ import xbe_data  # noqa: E402
 
 BLOCKS = [
     ("of_clu_data", 0x0028FDA8, 0x00290CC0, True),
-    ("of_clu_data2", 0x00290D14, 0x00290D54, True),
+    ("of_clu_data2", 0x00290D14, 0x00290D54, "of_clf_data + 0x54"),
     ("of_clu_bss", 0x002EA490, 0x002ED33C, False),
 ]
 
@@ -140,6 +146,11 @@ def main():
     for name, start, end, init in BLOCKS:
         size = end - start
         body.append("/* 0x%08x-0x%08x */" % (start, end))
+        if isinstance(init, str):
+            # storage of another module (see the docstring): the header maps the range
+            body.append("/* not defined here: %s (classlib_ui_data.h) */" % init)
+            body.append("")
+            continue
         if not init:
             body.append("__attribute__((nocommon, aligned(16))) unsigned char %s[0x%x];" % (name, size))
         else:

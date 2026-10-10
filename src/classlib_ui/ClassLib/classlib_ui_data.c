@@ -427,12 +427,7 @@ __attribute__((aligned(16))) uint32_t of_clu_data[0x3c6] = {
 };
 
 /* 0x00290d14-0x00290d54 */
-__attribute__((aligned(16))) uint32_t of_clu_data2[0x10] = {
-	/* 0x00290d14 */ 0x00000000, 0x00000000, 0x00000046, 0x00000014,
-	/* 0x00290d24 */ 0x00000000, 0x00000032, 0x00000064, 0x0000003c,
-	/* 0x00290d34 */ 0x0000000a, 0x0000003c, 0x00000064, 0x00000078,
-	/* 0x00290d44 */ 0x00000000, 0x00000000, 0x00000032, 0x00000000,
-};
+/* not defined here: of_clf_data + 0x54 (classlib_ui_data.h) */
 
 /* 0x002ea490-0x002ed33c */
 __attribute__((nocommon, aligned(16))) unsigned char of_clu_bss[0x2eac];
@@ -576,22 +571,6 @@ __asm__(
 	".globl __DAT_00290cb0\n.set __DAT_00290cb0, of_clu_data + 0xf08\n"  /* 0x00290cb0 */
 	".globl DAT_00290cb4\n.set DAT_00290cb4, of_clu_data + 0xf0c\n"  /* 0x00290cb4 */
 	".globl DAT_00290cb8\n.set DAT_00290cb8, of_clu_data + 0xf10\n"  /* 0x00290cb8 */
-	".globl DAT_00290d14\n.set DAT_00290d14, of_clu_data2 + 0x0\n"  /* 0x00290d14 */
-	".globl DAT_00290d18\n.set DAT_00290d18, of_clu_data2 + 0x4\n"  /* 0x00290d18 */
-	".globl DAT_00290d1c\n.set DAT_00290d1c, of_clu_data2 + 0x8\n"  /* 0x00290d1c */
-	".globl DAT_00290d20\n.set DAT_00290d20, of_clu_data2 + 0xc\n"  /* 0x00290d20 */
-	".globl DAT_00290d24\n.set DAT_00290d24, of_clu_data2 + 0x10\n"  /* 0x00290d24 */
-	".globl DAT_00290d28\n.set DAT_00290d28, of_clu_data2 + 0x14\n"  /* 0x00290d28 */
-	".globl DAT_00290d2c\n.set DAT_00290d2c, of_clu_data2 + 0x18\n"  /* 0x00290d2c */
-	".globl DAT_00290d30\n.set DAT_00290d30, of_clu_data2 + 0x1c\n"  /* 0x00290d30 */
-	".globl DAT_00290d34\n.set DAT_00290d34, of_clu_data2 + 0x20\n"  /* 0x00290d34 */
-	".globl DAT_00290d38\n.set DAT_00290d38, of_clu_data2 + 0x24\n"  /* 0x00290d38 */
-	".globl DAT_00290d3c\n.set DAT_00290d3c, of_clu_data2 + 0x28\n"  /* 0x00290d3c */
-	".globl DAT_00290d40\n.set DAT_00290d40, of_clu_data2 + 0x2c\n"  /* 0x00290d40 */
-	".globl DAT_00290d44\n.set DAT_00290d44, of_clu_data2 + 0x30\n"  /* 0x00290d44 */
-	".globl DAT_00290d48\n.set DAT_00290d48, of_clu_data2 + 0x34\n"  /* 0x00290d48 */
-	".globl DAT_00290d4c\n.set DAT_00290d4c, of_clu_data2 + 0x38\n"  /* 0x00290d4c */
-	".globl DAT_00290d50\n.set DAT_00290d50, of_clu_data2 + 0x3c\n"  /* 0x00290d50 */
 	".globl DAT_002ea490\n.set DAT_002ea490, of_clu_bss + 0x0\n"  /* 0x002ea490 */
 	".globl DAT_002ea4f4\n.set DAT_002ea4f4, of_clu_bss + 0x64\n"  /* 0x002ea4f4 */
 	".globl DAT_002ea4f8\n.set DAT_002ea4f8, of_clu_bss + 0x68\n"  /* 0x002ea4f8 */

@@ -17,4 +17,8 @@ void FUN_001f4e10(void);
 Core/CGameMode_Root.c */
 void FUN_00026d40(void *event);
 
+/* port (src/runtime/of_launch.c): fills the settings table from OPENFRENZY_GAME and
+OPENFRENZY_VARIATION; the retail game leaves it empty */
+void of_settings_from_environment(void *table);
+
 #endif

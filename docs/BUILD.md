@@ -81,6 +81,8 @@ Environment:
 | `OPENFRENZY_STUB_ABORT=1` | stop at the first unimplemented function |
 | `OPENFRENZY_STUB_LOG=all` | log every call of a stub, not only the first |
 | `OPENFRENZY_<SECTION>_<KEY>` | a setting of `src/runtime/of_config.c`, e.g. `OPENFRENZY_DISPLAY_VSYNC=false` |
+| `OPENFRENZY_GAME=<name>` | start that minigame directly (BumperCars, Fireworks, Clusteroids, Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp); `src/runtime/of_launch.c` |
+| `OPENFRENZY_VARIATION=<n>` | its variation (default 1) |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
 
 Sandbox note (Claude Code): a window needs the window server, which the sandbox blocks
