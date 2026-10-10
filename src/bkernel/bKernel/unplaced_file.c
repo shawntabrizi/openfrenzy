@@ -103,14 +103,16 @@ void bkInitCRC(void)
 }
 
 /* 0x0004dbf0
-bkDelayLoop: an empty counting loop. */
-void bkDelayLoop(int unused, int count)
+bkCRCBuffer: continues `crc` over `length` bytes of `data` (the table of bkCRCString).
+Ghidra's output (an empty loop) dropped the loop body; the machine code (0x0004dc02..0x0004dc21)
+and the callers (Meta/LevelLoad.cpp: push 0, push length, push name) show the crc. */
+uint bkCRCBuffer(const void *data, int length, uint crc)
 {
-	volatile int remaining = count;
+	const byte *p = (const byte *)data;
 
-	(void)unused;
-	for (; remaining != 0; remaining--)
-		;
+	for (; length != 0; length--, p++)
+		crc = (crc << 8) ^ DAT_002d0330[((crc >> 24) ^ *p) & 0xff];
+	return crc;
 }
 
 /* 0x0004dc30

@@ -297,9 +297,9 @@ void CDemolition_World_DrawTimed(struct CDemolition_World *self)
 
 	if (DB_VARIATION_HAS_OBJECTS())
 	{
-		helper = DAT_002ff85c + 0x79c8;
-		DB_DUAL(FUN_0018e540, void (*)(int), void (*)(void *, int), ((int)(uintptr_t)helper),
-			(helper, 0x20));
+		/* 0x0018e540 is a thiscall (ECX = helper) that never reads ECX; its only argument is
+		   the alpha (original 0x000f7562: push 0x20). */
+		FUN_0018e540(0x20);
 		db_world_draw_universe(w, 0);
 	}
 	db_world_draw_layers(w);

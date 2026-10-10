@@ -817,9 +817,11 @@ void bmVectorRotateZXY(float *out, const float *v, float a, float b, float c)
 	out[2] = (float)((double)rz * cc - sc * (double)rx);
 }
 
-/* 0x00051470 (empty) */
-void bmNothing1(void)
+/* 0x00051470
+bmVectorLengthSq: |v|^2. Ghidra's output was empty: the result is on the x87 stack (ST0). */
+float bmVectorLengthSq(const float *v)
 {
+	return (v[0] * v[0] + v[1] * v[1]) + v[2] * v[2];
 }
 
 /* 0x000514a0
@@ -847,9 +849,16 @@ float bmVectorDistance(const float *a, const float *b)
 	return (float)sqrt(dy * dy + dx * dx + dz * dz);
 }
 
-/* 0x00051540 (empty) */
-void bmNothing2(void)
+/* 0x00051540
+bmVectorDistanceSq: |a - b|^2. Ghidra's output was empty: the result is on the x87 stack (ST0).
+Other modules call it through casts to float (*)(const float *, const float *). */
+float bmVectorDistanceSq(const float *a, const float *b)
 {
+	float x = a[0] - b[0];
+	float y = a[1] - b[1];
+	float z = a[2] - b[2];
+
+	return (z * z + x * x) + y * y;
 }
 
 /* 0x00051570

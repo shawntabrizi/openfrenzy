@@ -110,7 +110,7 @@
 00078c20 void CLHud_SetScoresInt(int self, int *scores);
 00078c50 void CLHud_ShowPositionMarker(int player);
 00078c70 void CLHud_AddSeconds(int self, float seconds);
-00078cb0 void CLHud_Create(undefined4 context);
+00078cb0 void CLHud_Create(void);
 00078e00 void CLHud_UpdatePrompts(int self);
 00078fb0 void CLHud_UpdateMarkers(int self);
 000792f0 void CLHud_SetClock(int self, float seconds, int sound);

@@ -53,7 +53,7 @@
 0004c7a0 int bkCloseFile(struct _IO_FILE *file);
 0004c7b0 int bkFileLength(struct _IO_FILE *file);
 0004db50 void bkInitCRC(void);
-0004dbf0 void bkDelayLoop(int unused, int count);
+0004dbf0 uint bkCRCBuffer(const void *data, int length, uint crc);
 0004dc30 uint bkCRCString(const char *string);
 0004dc70 uint bkCRCStringNoCase(const char *string);
 0004dcc0 struct bkPackageEntry *bkGetPackageEntry(struct bkPackage *package, int index);
@@ -234,10 +234,10 @@
 000512a0 void bmVectorRotateZY(float *out, const float *v, float a, float b);
 00051310 void bmVectorRotateXYZ(float *out, const float *v, float a, float b, float c);
 000513b0 void bmVectorRotateZXY(float *out, const float *v, float a, float b, float c);
-00051470 void bmNothing1(void);
+00051470 float bmVectorLengthSq(const float *v);
 000514a0 void bmVectorNormalise(float *out, const float *v);
 00051500 float bmVectorDistance(const float *a, const float *b);
-00051540 void bmNothing2(void);
+00051540 float bmVectorDistanceSq(const float *a, const float *b);
 00051570 void bmVectorSetLength(float *out, const float *v, float length);
 000515c0 void bmQuaternionToMatrix(float *m, const float *q);
 00051700 void bmMatrixToQuaternion(float *q, const float *m);

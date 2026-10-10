@@ -718,7 +718,8 @@ static inline void DA_UpdateExtras(void *sys, float dt)
 #define DA_InputShutdown(i) ((void (*)(void *))FUN_0018eb70)(i)
 #define DA_PlaySfx(sfx, sample, vol, pan, pos, flags) \
 	((void (*)(void *, int, int, int, void *, int))FUN_0018e450)((sfx), (sample), (vol), (pan), (pos), (flags))
-#define DA_SfxPlayCrowd(sfx, sample) ((void (*)(void *, int))FUN_0018e540)((sfx), (sample))
+/* 0x0018e540 is a thiscall whose ECX (the Direct3D helper) is unused: only the alpha is passed */
+#define DA_SetFactorAlphaStage(alpha) FUN_0018e540(alpha)
 #define DA_LightSetColour(l, r, g, b) ((void (*)(void *, int, int, int))FUN_0018fa10)((l), (r), (g), (b))
 #define DA_LightSetRange(l, range) ((void (*)(void *, float))FUN_0018fa30)((l), (range))
 
@@ -728,10 +729,10 @@ static inline void DA_UpdateExtras(void *sys, float dt)
 #define DA_Nop(self) ((void (*)(void *))FUN_001d5950)(self)
 
 /* demolition_b (CDemolition_CharLib, _World, _Player, _Bomb, camera, entities) */
-#define DA_BombFrag(bomb, player) ((void (*)(void *, void *))FUN_000f2570)((bomb), (player))
-#define DA_BombRemote(bomb, player) ((void (*)(void *, void *))FUN_000f2c20)((bomb), (player))
+#define DA_BombFrag(bomb, source, owner) ((void (*)(void *, void *, void *))FUN_000f2570)((bomb), (source), (owner))
+#define DA_BombRemote(bomb, source, owner) ((void (*)(void *, void *, void *))FUN_000f2c20)((bomb), (source), (owner))
 #define DA_BombMine(bomb) ((void (*)(void *))FUN_000f31b0)(bomb)
-#define DA_BombKnock(bomb, player) ((void (*)(void *, void *))FUN_000f39a0)((bomb), (player))
+#define DA_BombKnock(bomb, source, owner) ((void (*)(void *, void *, void *))FUN_000f39a0)((bomb), (source), (owner))
 #define DA_BodyPreStep(body, dt) ((void (*)(void *, float))FUN_000f54c0)((body), (dt))
 #define DA_BodyStep(body, dt) ((void (*)(void *, float))FUN_000f5370)((body), (dt))
 #define DA_BodyPostStep(body) ((void (*)(void *))FUN_000f53c0)(body)
@@ -769,7 +770,7 @@ static inline void DA_UpdateExtras(void *sys, float dt)
 #define DA_TokensUpdate() ((void (*)(void))FUN_0010ce90)()
 #define DA_HitCtor(h) ((void (*)(void *))FUN_0010cec0)(h)
 #define DA_HitDtor(h) ((void (*)(void *))FUN_0010ced0)(h)
-#define DA_HitSend(h) ((void (*)(void *))FUN_0010d050)(h)
+#define DA_HitSend(system, h) ((void (*)(int, int))FUN_0010d050)((int)(system), (int)(h))
 
 
 /* ---------- functions of this module missing from the function table (docs/ARCHITECTURE.md

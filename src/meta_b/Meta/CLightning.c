@@ -253,10 +253,7 @@ void CLightningMgr_Draw(struct CLightningMgr *self)
 			bolt = MB_LIST_NEXT(&self->groups[group], bolt))
 		{
 			if (bolt->life > 0.0f)
-				MB_DUAL(FUN_0015cc80, void (*)(float *, float *, int),
-					void (*)(float *, float *, int, float),
-					(bolt->start, bolt->end, 0xc),
-					(bolt->start, bolt->end, 0xc, bolt->brightness));
+				FUN_0015cc80(bolt->start, bolt->end, 0xc, bolt->brightness);
 		}
 	}
 	MB_SET_RS(3, MB_U32(DAT_003055d0, 0x48));

@@ -269,14 +269,16 @@ void CLHud_AddSeconds(int self, float seconds)
 }
 
 /* 0x00078cb0  ClassLib/Hud.cpp
-Creates the HUD and loads its marker textures. */
-void CLHud_Create(undefined4 context)
+Creates the HUD and loads its marker textures. No parameters: the original's only caller
+(core 0x000282d4) pushes nothing, and its "push ecx" before bkHeapAlloc reserves a stack
+slot (the call pops 0x10 bytes: 4 arguments). */
+void CLHud_Create(void)
 {
 	int memory;
 	int i;
 
-	memory = (int)((void *(*)(unsigned int, const char *, int, unsigned int, undefined4))FUN_0004c480)(
-		400, "C:\\BlitzParty\\Game\\Src\\ClassLib\\Hud.cpp", 0x3f, 0x1001, context);
+	memory = (int)((void *(*)(unsigned int, const char *, int, unsigned int))FUN_0004c480)(
+		400, "C:\\BlitzParty\\Game\\Src\\ClassLib\\Hud.cpp", 0x3f, 0x1001);
 	if (memory == 0)
 		clu_hud = 0;
 	else

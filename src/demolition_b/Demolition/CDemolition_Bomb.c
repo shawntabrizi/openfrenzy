@@ -47,9 +47,7 @@ static void db_sound(int id, int volume)
 /* 0x000ebac0 (demolition_a)  rumbles pad `player` with `strength` (0..1) (game +0x7a38) */
 static void db_rumble(int player, float strength)
 {
-	DB_DUAL(FUN_000ebac0, void (*)(int, int), void (*)(void *, int, float),
-		((int)(DAT_002ff85c + 0x7a38), player),
-		(DAT_002ff85c + 0x7a38, player, strength));
+	FUN_000ebac0(DAT_002ff85c + 0x7a38, player, strength);
 }
 
 /* 0x00102120 (demolition_c)  the world's free spot test: moves `pos` to free ground within
@@ -61,12 +59,11 @@ static int db_world_find_spot(void *world, float *pos, float radius)
 		((int)world, (undefined4 *)pos, db_fbits(radius), NULL), (world, pos, radius, NULL));
 }
 
-/* 0x000ed620 (demolition_a)  update of the object at game +0x77d4 (its table prototype has no
-   parameters; the original passes `this` and dt) */
+/* 0x000ed620 (demolition_a)  update of the object at game +0x77d4 (the original passes
+   `this` in ECX and dt) */
 static void db_game_77d4_update(float dt)
 {
-	DB_DUAL(FUN_000ed620, void (*)(void), void (*)(void *, float), (),
-		(DAT_002ff85c + 0x77d4, dt));
+	FUN_000ed620(DAT_002ff85c + 0x77d4, dt);
 }
 
 /* the explosion manager (game +0x13f0) starts an explosion: 0.3 s, power 500 */
