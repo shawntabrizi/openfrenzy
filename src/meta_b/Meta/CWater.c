@@ -18,16 +18,14 @@ int DAT_003090b4;
 /* 0x003090b8  the water areas */
 struct CMetaWater *DAT_003090b8[6];
 
-/* 0x002b0c90-0x002b0ca4  water tweakables */
-float DAT_002b0c90 = -0.5f;          /* splash depth per unit of speed */
-float DAT_002b0c94 = 0.8f;           /* splash inner radius per unit of speed */
-float DAT_002b0c98 = 2.4f;           /* splash outer radius per unit of speed */
-unsigned int DAT_002b0c9c = 0x50060606; /* the surface colour */
-unsigned int DAT_002b0ca0 = 0xffffffffu; /* material diffuse */
-unsigned int DAT_002b0ca4 = 0xff333333u; /* material specular */
+/* 0x002b0c90-0x002b0ca4  water tweakables (meta_a's copy of the Meta .data block) */
+#define DAT_002b0c90 MB_META(0x002b0c90, float)          /* -0.5: splash depth per speed */
+#define DAT_002b0c94 MB_META(0x002b0c94, float)          /* 0.8: inner radius per speed */
+#define DAT_002b0c98 MB_META(0x002b0c98, float)          /* 2.4: outer radius per speed */
+#define DAT_002b0c9c MB_META(0x002b0c9c, unsigned int)   /* 0x50060606: the surface colour */
+#define DAT_002b0ca0 MB_META(0x002b0ca0, unsigned int)   /* 0xffffffff: material diffuse */
+#define DAT_002b0ca4 MB_META(0x002b0ca4, unsigned int)   /* 0xff333333: material specular */
 
-/* 0x002b0580-0x002b058c  the water fog colour channels: red, green, blue, alpha (core) */
-extern int DAT_002b0580, DAT_002b0584, DAT_002b0588, DAT_002b058c;
 /* 0x003055dc  the display blends the water (bdisplay) */
 extern int DAT_003055dc;
 /* 0x002f6b74  the water level other code reads (charlib) */

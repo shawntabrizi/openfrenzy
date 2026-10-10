@@ -127,10 +127,20 @@ extern float DAT_00292c84;          /* gravity (charlib) */
 extern float DAT_002ea478[4];       /* a zero vector (classlib_fx) */
 extern unsigned char DAT_002ed324[]; /* the rumble manager (core, CRumble) */
 extern int DAT_00290da4;            /* CProjTrail texture (classlib_fx) */
+extern int *DAT_002ea488;           /* charlib's actor list object (lists at +0, +0x18) */
+extern int DAT_002b0580, DAT_002b0584, DAT_002b0588, DAT_002b058c; /* water fog colour (meta_a) */
 extern int DAT_00290d80[4];         /* CProjTrail head colour (classlib_fx) */
 extern int DAT_00290d90[4];         /* CProjTrail tail colour (classlib_fx) */
 
-/* ---------- Meta tweakables in .data (0x002b0a4c-0x002b0a60), used by this module */
+/* ---------- the Meta .data block 0x002b04e4-0x002b2670 (tweakables, tables): meta_a keeps
+   one copy with the original layout (src/meta_a/Meta/meta_a_data.c, `of_meta_data`) and
+   aliases for the addresses Ghidra names. Addresses it has no alias for are reached with
+   MB_META / MB_META_PTR. */
+extern unsigned int of_meta_data[];
+#define MB_META_PTR(addr, type) ((type *)((char *)of_meta_data + ((addr) - 0x002b04e4)))
+#define MB_META(addr, type) (*MB_META_PTR(addr, type))
+
+/* aliased by meta_a */
 extern float DAT_002b0a4c;          /* lightning spiral radius 24.0 */
 extern int DAT_002b0a50;            /* lightning spiral turns 10 */
 extern float DAT_002b0a54;          /* lightning spiral rise 120.0 */

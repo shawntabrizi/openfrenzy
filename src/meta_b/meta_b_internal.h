@@ -27,7 +27,7 @@ struct CLightningBolt
 	void *next;                 /* +0x00 */
 	void *prev;                 /* +0x04 */
 	float pos[4];               /* +0x08 where it strikes */
-	int arg;                    /* +0x18 from the level script */
+	float arg;                  /* +0x18 from the level script (LIGHTNING) */
 	float start[4];             /* +0x1c set by meta_a 0x0015ca40/0x0015cb80 */
 	float end[4];               /* +0x2c */
 	float brightness;           /* +0x3c */
@@ -254,7 +254,7 @@ struct CScorchMark
 };
 OF_ASSERT_SIZE(struct CScorchMark, 0xcc);
 
-extern struct MbScorchType DAT_002b0a64[2];
+#define DAT_002b0a64 MB_META_PTR(0x002b0a64, struct MbScorchType)  /* [2] */
 extern int DAT_00308f28;
 extern struct MbList DAT_00308f2c;
 
@@ -340,7 +340,7 @@ struct CAirRaid
 };
 OF_ASSERT_SIZE(struct CAirRaid, 0x3c);
 
-extern struct MbBombModel DAT_002b0a90[5];
+#define DAT_002b0a90 MB_META_PTR(0x002b0a90, struct MbBombModel)    /* [5] */
 extern int DAT_00308f38;
 extern struct MbList DAT_00308f3c;
 extern struct MbList DAT_00308f48;
@@ -375,7 +375,7 @@ struct CBigRedButton
 };
 OF_ASSERT_OFFSET(struct CBigRedButton, model, 0x44);
 
-extern struct MbAnimName DAT_002b0be8[2];
+#define DAT_002b0be8 MB_META_PTR(0x002b0be8, struct MbAnimName)     /* [2] */
 extern int DAT_00309058;
 extern int DAT_0030905c;
 extern struct CBigRedButton *DAT_00309060[16];
@@ -482,9 +482,9 @@ OF_ASSERT_SIZE(struct CBigGun, 0x28);
 /* the key-framed path of a searchlight (a BKeyTrack3) */
 struct MbPath
 {
-	short count;                /* +0x00 */
-	short hasKeys;              /* +0x02 */
-	void *keys;                 /* +0x04 */
+	short unk00;                /* +0x00 1 */
+	unsigned short numKeys;     /* +0x02 MOVEKEY lines */
+	void *keys;                 /* +0x04 quantised keys (LevelLoad 0x00166870) */
 };
 
 /* a searchlight (allocated by the level loader) */
@@ -496,7 +496,8 @@ struct CSearchlight
 	void *actor;                /* +0x0c the light model */
 	struct MbPath path;         /* +0x10 */
 	int unk18[6];               /* +0x18 */
-	float pathTime[5];          /* +0x30 charlib timer (FUN_000b8240) */
+	float pathTime[5];          /* +0x30 charlib path timer (FUN_000b8240): time, speed,
+	                               int last key time, int behaviour */
 	int unk44;                  /* +0x44 */
 	float target[4];            /* +0x48 */
 	int targetValid;            /* +0x58 */
@@ -636,5 +637,28 @@ int FUN_00164460(struct BExtraSystem *system, int count, void **items, void *arg
 #define MetaRain_DrawDrops FUN_00163df0     /* 0x00163df0 */
 #define MetaRain_InitDrop FUN_001642f0      /* 0x001642f0 */
 #define MetaRain_UpdateDrops FUN_00164460   /* 0x00164460 */
+
+/* ---------- LevelLoad.cpp */
+
+/* a packed key track (MOVEKEY / ROTATEKEY; 0x20 bytes): keys of 4 shorts (time / 1024,
+   x, y, z relative to min in steps of scale) */
+struct MbKeyTrack
+{
+	short unk00;                /* +0x00 */
+	unsigned short numKeys;     /* +0x02 */
+	short *keys;                /* +0x04 */
+	float min[3];               /* +0x08 */
+	float scale[3];             /* +0x14 */
+};
+OF_ASSERT_SIZE(struct MbKeyTrack, 0x20);
+
+extern float DAT_00309278[100][4];
+extern float DAT_003098b8[100][4];
+extern unsigned int DAT_0030a090;
+extern float DAT_00309200[0x11];
+extern int DAT_00309244;
+extern int DAT_00309248;
+extern void *DAT_0030924c;
+extern void *DAT_00309250;
 
 #endif

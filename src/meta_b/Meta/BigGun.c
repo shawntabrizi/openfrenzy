@@ -24,14 +24,14 @@ void *DAT_00309260;
 /* 0x00309268  the big guns */
 struct MbList DAT_00309268;
 
-/* 0x002b0cb8-0x002b0cd0  laser colours (scaled by the fading alpha / 128) */
-int DAT_002b0cb8 = 0xd2;            /* inner beam red */
-int DAT_002b0cbc = 0;               /* inner beam green */
-int DAT_002b0cc0 = 0x32;            /* inner beam blue */
-int DAT_002b0cc4 = 0x7f;
-int DAT_002b0cc8 = 0;               /* outer beam red */
-int DAT_002b0ccc = 10;              /* outer beam green */
-int DAT_002b0cd0 = 10;              /* outer beam blue */
+/* 0x002b0cb8-0x002b0cd0  laser colours, scaled by the fading alpha / 128 (meta_a's copy
+   of the Meta .data block) */
+#define DAT_002b0cb8 MB_META(0x002b0cb8, int)   /* 0xd2: inner beam red */
+#define DAT_002b0cbc MB_META(0x002b0cbc, int)   /* 0: inner beam green */
+#define DAT_002b0cc0 MB_META(0x002b0cc0, int)   /* 0x32: inner beam blue */
+#define DAT_002b0cc8 MB_META(0x002b0cc8, int)   /* 0: outer beam red */
+#define DAT_002b0ccc MB_META(0x002b0ccc, int)   /* 10: outer beam green */
+#define DAT_002b0cd0 MB_META(0x002b0cd0, int)   /* 10: outer beam blue */
 
 #define ALIGNED16(a, b, c) \
 	(((((uintptr_t)(a)) | ((uintptr_t)(b)) | ((uintptr_t)(c))) & 0xf) == 0)

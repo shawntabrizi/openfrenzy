@@ -624,8 +624,8 @@ float DAT_003090d0;
 float DAT_003090d4;
 /* 0x003090d8  the emitters (count at 0x003090e0) */
 struct MbList DAT_003090d8;
-/* 0x002b0ca8  the phase's speed */
-float DAT_002b0ca8 = 0.15f;
+/* 0x002b0ca8  the phase's speed (0.15; meta_a's copy of the Meta .data block) */
+#define DAT_002b0ca8 MB_META(0x002b0ca8, float)
 
 /* 0x001635e0  Meta (file unknown)
 Sets the emit rate: a line eases towards it, a water line takes it at once, a circle
@@ -981,5 +981,74 @@ void CSeagulls_Draw(void *flock)
 		gulls = (char *)MB_PTR(flock, 0x18);
 		baPrepActorInstance((struct BActorInstance *)MB_PTR(gulls + i * 0x68, 0x58), 1);
 		baDrawActorInstance((struct BActorInstance *)MB_PTR(gulls + i * 0x68, 0x58), 7);
+	}
+}
+
+/* ---------- platform dust (0x00165f10, between BigGun.cpp and LevelLoad.cpp) */
+
+/* 0x00291600  the debris types of the respawn table (bumpercars_a); BLEND_SMOKE is entry 8
+   (0x00291760), BLEND_SMOKE_NOGRAV entry 10 (0x002917b8) */
+extern char DAT_00291600[];
+
+/* 0x00165f10  Meta (file unknown)
+A platform that MAKES_DUST throws smoke from its box (platform +0x1a0: min at +8, max at
++0x18): one puff per 500 square units, alternately falling smoke that spreads flat and
+weightless smoke, coloured brown-grey, flying out from below the box centre. */
+void MetaPlatform_MakeDust(void *platform)
+{
+	char *box = (char *)MB_PTR(platform, 0x1a0);
+	float minX = MB_F32(box, 8);
+	float minY = MB_F32(box, 0xc);
+	float minZ = MB_F32(box, 0x10);
+	float dX = MB_F32(box, 0x18) - minX;
+	float dZ = MB_F32(box, 0x20) - minZ;
+	float cx = (MB_F32(box, 0x18) + minX) * 0.5f;
+	float cz = (MB_F32(box, 0x20) + minZ) * 0.5f;
+	float cy = minY - 1.0f;
+	float hY = (MB_F32(box, 0x1c) - minY) * 0.6f;          /* 0x00265738 */
+	float pos[4];
+	float vel[4];
+	float k;
+	unsigned int colour;
+	int count;
+	int r;
+	int g;
+	int b;
+	int flip = 0;
+
+	count = (int)(dZ * dX * 0.002f);                         /* 0x002672b0 */
+	pos[3] = 1.0f;
+	for (; count > 0; count--)
+	{
+		pos[0] = ((float)mb_rand() * 1.8311106e-05f + 0.2f) * dX + minX; /* 0x00270544, 0x00257c7c */
+		pos[1] = ((float)mb_rand() * 1.8311106e-05f + 0.2f) * hY + minY;
+		pos[2] = ((float)mb_rand() * 1.8311106e-05f + 0.2f) * dZ + minZ;
+		r = mb_rand() % 32;
+		g = mb_rand() % 32;
+		b = mb_rand() % 32;
+		colour = ((unsigned int)((r + 0x5a) & 0xff) * 0x100 + (unsigned int)((g + 0x46) & 0xff)) *
+			0x100 + (unsigned int)((b + 0x32) & 0xff);
+		vel[0] = pos[0] - cx;
+		vel[1] = pos[1] - cy;
+		vel[2] = pos[2] - cz;
+		FUN_000514a0(vel, vel);
+		if (flip == 0)
+		{
+			k = (float)mb_rand() * 1.8311106e-04f;             /* 0x00266d88 */
+			vel[0] = vel[0] * k;
+			vel[2] = vel[2] * k;
+			vel[1] = vel[1] * k * 0.5f;
+			FUN_00080d60((int)(DAT_00291600 + 0x160), (undefined4)pos, (undefined4)vel, 0, colour);
+			flip = 1;
+		}
+		else
+		{
+			k = (float)mb_rand() * 9.765923e-05f;              /* 0x00270540 */
+			vel[0] = vel[0] * k;
+			vel[1] = vel[1] * k;
+			vel[2] = vel[2] * k;
+			FUN_00080d60((int)(DAT_00291600 + 0x1b8), (undefined4)pos, (undefined4)vel, 0, colour);
+			flip = 0;
+		}
 	}
 }

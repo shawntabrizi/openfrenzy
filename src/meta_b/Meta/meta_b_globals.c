@@ -42,8 +42,10 @@ __attribute__((weak)) int DAT_00290d90[4] = { 0x3c, 0, 0, 0x28 };
 /* 0x002b1ec8 "REDDOT", 0x002b215c "STREAK3": particle types */
 __attribute__((weak)) char DAT_002b1ec8[4];
 __attribute__((weak)) char DAT_002b215c[4];
-/* 0x002b236c "SPLISH" particle type */
-__attribute__((weak)) char DAT_002b236c[4];
+/* 0x002b1e18  the Meta's 32 debris types (0x2c bytes each; owner not known yet) */
+__attribute__((weak)) char DAT_002b1e18[0x580];
+/* 0x00291600  the respawn debris types (bumpercars_a) */
+__attribute__((weak)) char DAT_00291600[12 * 0x2c];
 
 /* 0x002b0580-0x002b058c  the water fog colour channels (owner not known) */
 __attribute__((weak)) int DAT_002b0580 = 0x8c;
@@ -59,6 +61,27 @@ __attribute__((weak)) unsigned int DAT_002ae578[16] = {
 
 /* ---------- .bss (weak) */
 
+/* level loader targets (owners: charlib, meta_a, core) */
+__attribute__((weak)) float DAT_00294b64;               /* camera height (charlib) */
+__attribute__((weak)) float DAT_00294ba8, DAT_00294bac, DAT_00294bb0, DAT_00294bb4; /* camera origin */
+__attribute__((weak)) float DAT_00294bb8;               /* camera rotation */
+__attribute__((weak)) int DAT_002f2878;                 /* fog on (charlib) */
+__attribute__((weak)) float DAT_002f287c, DAT_002f2880;  /* fog near, far */
+__attribute__((weak)) int DAT_002f2884, DAT_002f2888, DAT_002f288c; /* fog colour */
+__attribute__((weak)) int DAT_002f289c[4];              /* the characters' AI objects */
+__attribute__((weak)) char DAT_002900c8[4 * 0x108];     /* character model names */
+__attribute__((weak)) char DAT_00292ca0[0x44 * 0x40];   /* animation segment names, speeds */
+__attribute__((weak)) int DAT_003045c8[1000];           /* samples (meta_a) */
+__attribute__((weak)) char DAT_0030455c[4], DAT_00304570[4], DAT_003045b4[4], DAT_003045c4[4];
+__attribute__((weak)) char DAT_00305568[4], DAT_0030556c[4]; /* rain settings (meta_a) */
+__attribute__((weak)) int DAT_003055cc, DAT_003055d4, DAT_003055d8; /* meta_a */
+__attribute__((weak)) int DAT_003082c0;                 /* the tile board (meta_a) */
+__attribute__((weak)) float DAT_00309ef8;               /* start heading (meta_a) */
+__attribute__((weak)) int DAT_00309f00[100];            /* route heights (meta_a) */
+__attribute__((weak)) int DAT_0030a098;                 /* high-detail characters (meta_a) */
+__attribute__((weak)) char DAT_002b057c[4];             /* round time (meta_a data block) */
+__attribute__((weak)) char DAT_0030a09c[0xc];           /* the #define list (core) */
+
 __attribute__((weak)) int DAT_002bae94;                 /* number of players */
 __attribute__((weak)) int DAT_002bae70;                 /* handicap (core_modes_a) */
 __attribute__((weak)) int DAT_003055d0;                 /* display settings object */
@@ -73,7 +96,6 @@ __attribute__((weak)) int DAT_002ecdec;                 /* the game is paused */
 __attribute__((weak)) float DAT_002ea478[4];            /* a zero vector */
 __attribute__((weak)) unsigned char DAT_002ed324[0x14]; /* the rumble manager */
 __attribute__((weak)) int DAT_00290da4;                 /* CProjTrail texture */
-__attribute__((weak)) unsigned int DAT_0030a090;        /* the board's ambient light (meta_a) */
 __attribute__((weak)) int *DAT_002ea488;                /* charlib's actor list */
 __attribute__((weak)) int DAT_003055dc;                 /* the display blends the water */
 __attribute__((weak)) float DAT_002f6b74;               /* the water level (charlib) */

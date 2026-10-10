@@ -4,7 +4,7 @@
 # Meta/CLightning.cpp
 0015cef0 void CLightning_Strike(float *from, float *to);
 0015d010 void CLightningMgr_Reset(struct CLightningMgr *self);
-0015d090 void CLightningMgr_AddBolt(struct CLightningMgr *self, float *pos, int arg, short tag, unsigned short groupId);
+0015d090 void CLightningMgr_AddBolt(struct CLightningMgr *self, float *pos, float arg, short tag, unsigned short groupId);
 0015d160 void CLightningMgr_StrikeGroup(struct CLightningMgr *self, short tag, unsigned short groupId);
 0015d260 struct CLightningBolt *CLightningBolt_Update(struct CLightningBolt *self);
 0015d300 void CLightningMgr_UpdateTimer(struct CLightningMgr *self);
@@ -200,3 +200,20 @@
 # Meta/unplaced.c: CSeagulls helpers
 0016bc70 int MbGull_Avoid(float *gull, float *box, void *params, float *steer, float *weight);
 0016be60 void CSeagulls_Draw(void *flock);
+
+# Meta/LevelLoad.cpp
+00166290 int LevelLoad_FindDefine(const char *name, const char **value);
+00166320 char *LevelLoad_Preprocess(char *text, int *size);
+001666e0 uint LevelLoad_ParseFlags(char *list, const char **names);
+001667e0 int LevelLoad_Lookup(const char *name, const char **names);
+00166870 void LevelLoad_PackTrack(struct MbKeyTrack *track, float *keys);
+00166a60 void *LevelLoad_NearestGoal(float *pos);
+00166ad0 void *LevelLoad_BestGoalFor(int player);
+00166ba0 void CMetaVent_SetHazard(struct CMetaVent *self, float radius, float strength, uint flags);
+00166bd0 void CMetaVent_SetHazardDirection(struct CMetaVent *self, float x, float y, float z);
+00166c00 void LevelLoad_LoadHeightMaps(int zone, int part);
+00166d40 void LevelLoad_FinishTracks(void *platform, struct CSearchlight *searchlight);
+00166db0 int LevelLoad_Load(int zone, int part);
+
+# Meta/unplaced.c: platform dust
+00165f10 void MetaPlatform_MakeDust(void *platform);

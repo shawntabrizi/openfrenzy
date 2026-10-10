@@ -12,11 +12,8 @@ same marks and list (file inferred).
 #include "meta_b.h"
 #include "meta_b_internal.h"
 
-/* 0x002b0a64  the two scorch mark types */
-struct MbScorchType DAT_002b0a64[2] = {
-	{ "scorch.bmp", NULL, 90.0f, 100.0f, 0.1f },
-	{ "scorch2.bmp", NULL, 60.0f, 90.0f, 0.1f },
-};
+/* 0x002b0a64  the two scorch mark types (in meta_a's copy of the Meta .data block):
+   { "scorch.bmp", texture, 90, 100, 0.1 }, { "scorch2.bmp", texture, 60, 90, 0.1 } */
 
 /* 0x00308f28  number of marks */
 int DAT_00308f28;

@@ -15,11 +15,8 @@ Modes (+0x34): 0 stays down until released, 1 pops up again, 2 once only.
 #include "meta_b.h"
 #include "meta_b_internal.h"
 
-/* 0x002b0be8  the button's animations */
-struct MbAnimName DAT_002b0be8[2] = {
-	{ "on", 1.0f },
-	{ "off", 1.0f },
-};
+/* 0x002b0be8  the button's animations { "on", 1.0 }, { "off", 1.0 } (meta_a's copy of the
+   Meta .data block; DAT_002b0be8 in meta_b_internal.h) */
 
 /* 0x00309058  number of buttons */
 int DAT_00309058;

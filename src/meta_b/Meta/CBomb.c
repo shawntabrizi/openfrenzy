@@ -14,25 +14,18 @@ functions between them are bracketed. 0x00161460-0x00161b80 (gap) work on the sa
 #include "meta_b.h"
 #include "meta_b_internal.h"
 
-/* 0x002b0a90  the bomb models, by kind */
-struct MbBombModel DAT_002b0a90[5] = {
-	{ "bomb.obe", NULL },
-	{ "bomb2.obe", NULL },
-	{ "mine3.obe", NULL },
-	{ "missile.obe", NULL },
-	{ "dynamite.obe", NULL },
-};
-/* 0x002b0ab8  the mine's flashing sub-object */
-char DAT_002b0ab8[8] = "pulse";
-
-/* 0x002b0bc8-0x002b0be0  bomb tweakables */
-int DAT_002b0bc8 = 5;               /* dynamite: streaks per frame */
-float DAT_002b0bcc = 5.0f;          /* dynamite: streak speed base */
-int DAT_002b0bd0 = 2;               /* dynamite: streak speed random range */
-float DAT_002b0bd4 = 100.0f;        /* dynamite: streak height */
-float DAT_002b0bd8 = 0.7f;          /* dynamite: streak height per fuse frame */
-float DAT_002b0bdc = 300.0f;        /* explosion: damage at the centre */
-float DAT_002b0be0 = 50.0f;         /* explosion: player height offset */
+/* the Meta .data block (meta_a's copy): 0x002b0a90 the bomb models by kind ("bomb.obe",
+   "bomb2.obe", "mine3.obe", "missile.obe", "dynamite.obe"; DAT_002b0a90 in meta_b_internal.h),
+   0x002b0ab8 "pulse" (the mine's flashing sub-object), and the bomb tweakables: */
+extern char s_pulse_002b0ab8[];
+#define DAT_002b0ab8 s_pulse_002b0ab8
+#define DAT_002b0bc8 MB_META(0x002b0bc8, int)    /* 5: dynamite streaks per frame */
+#define DAT_002b0bcc MB_META(0x002b0bcc, float)  /* 5.0: dynamite streak speed base */
+#define DAT_002b0bd0 MB_META(0x002b0bd0, int)    /* 2: dynamite streak speed range */
+#define DAT_002b0bd4 MB_META(0x002b0bd4, float)  /* 100.0: dynamite streak height */
+#define DAT_002b0bd8 MB_META(0x002b0bd8, float)  /* 0.7: streak height per fuse frame */
+#define DAT_002b0bdc MB_META(0x002b0bdc, float)  /* 300.0: explosion damage at the centre */
+#define DAT_002b0be0 MB_META(0x002b0be0, float)  /* 50.0: explosion player height offset */
 
 /* 0x00308f38  number of bomb groups */
 int DAT_00308f38;

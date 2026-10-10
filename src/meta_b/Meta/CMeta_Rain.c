@@ -13,10 +13,10 @@ splashes and drops (file inferred).
 #include "meta_b.h"
 #include "meta_b_internal.h"
 
-/* 0x002b0cac  splash sprites in the block */
-int DAT_002b0cac = 1000;
-/* 0x002b0cb0  the lightning's blue */
-int DAT_002b0cb0 = 0x7f;
+/* 0x002b0cac  splash sprites in the block (1000); 0x002b0cb0 the lightning's blue (0x7f)
+   (meta_a's copy of the Meta .data block) */
+#define DAT_002b0cac MB_META(0x002b0cac, int)
+#define DAT_002b0cb0 MB_META(0x002b0cb0, int)
 
 /* 0x003090e4  splash2.bmp; 0x003090e8 lightening.bmp */
 void *DAT_003090e4;
@@ -45,8 +45,8 @@ int DAT_003091f4;
 float DAT_003091f8;
 unsigned int DAT_003091fc;
 
-/* 0x002b236c  the "SPLISH" particle type (the particle system's data) */
-extern char DAT_002b236c[];
+/* 0x002b236c  the "SPLISH" debris type (entry 31 of the Meta's debris types) */
+#define DAT_002b236c MB_META_PTR(0x002b236c, char)
 
 #define SPLASH_FROM_NODE(node) ((struct MbSplash *)((char *)(node) - 0x38))
 

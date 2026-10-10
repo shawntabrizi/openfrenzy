@@ -90,8 +90,9 @@ void CLightningMgr_Reset(struct CLightningMgr *self)
 
 /* 0x0015d090  Meta/CLightning.cpp
 Adds a bolt (0x48 bytes) to the group with id `groupId` (a new group when it is not
-there yet). `pos` is float[4]; `tag` names the bolt for the level script. */
-void CLightningMgr_AddBolt(struct CLightningMgr *self, float *pos, int arg, short tag,
+there yet). `pos` is float[4]; `arg` is the LIGHTNING line's 4th number; `tag` names
+the bolt for the level script. */
+void CLightningMgr_AddBolt(struct CLightningMgr *self, float *pos, float arg, short tag,
 	unsigned short groupId)
 {
 	unsigned short count = self->numGroups;

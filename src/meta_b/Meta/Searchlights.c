@@ -16,14 +16,11 @@ list functions after it work on the same objects (file inferred).
 /* 0x003090a8  the searchlights */
 struct MbList DAT_003090a8;
 
-/* 0x002b0c88, 0x002b0c8c  the light's target is smoothed (1) with this factor */
-int DAT_002b0c88 = 1;
-float DAT_002b0c8c = 0.82f;
+/* 0x002b0c88, 0x002b0c8c  the light's target is smoothed (1) with this factor (0.82)
+   (meta_a's copy of the Meta .data block) */
+#define DAT_002b0c88 MB_META(0x002b0c88, int)
+#define DAT_002b0c8c MB_META(0x002b0c8c, float)
 
-/* 0x0030a090  the board's ambient light, 0x00BBGGRR (meta_a) */
-extern unsigned int DAT_0030a090;
-/* 0x002ea488  charlib's actor list */
-extern int *DAT_002ea488;
 
 /* the highest detection of any player, as the game rounds it */
 static int searchlight_max_detection(struct CSearchlight *self)
@@ -128,8 +125,8 @@ struct CSearchlight *CSearchlight_Construct(struct CSearchlight *self, const cha
 	self->detection[2] = 0.0f;
 	self->detection[1] = 0.0f;
 	self->detection[0] = 0.0f;
-	self->path.hasKeys = 0;
-	self->path.count = 1;
+	self->path.numKeys = 0;
+	self->path.unk00 = 1;
 	self->cone = (float)atan2((double)(scale * 250.0f), 3300.0); /* 0x00262d34, 0x00270198 */
 	self->pathTime[0] = 0.0f;
 	self->pathTime[1] = 0.0f;
@@ -176,7 +173,7 @@ void CSearchlight_Update(struct CSearchlight *self)
 	dir[2] = 0.0f;
 	dir[3] = 0.0f;
 	FUN_000b8240(self->pathTime);
-	if (self->path.hasKeys != 0)
+	if (self->path.numKeys != 0)
 	{
 		bGetKey3(key, (struct BKeyTrack3 *)&self->path, (int)self->pathTime[0]);
 		if (DAT_002b0c88 == 0 || self->targetValid == 0)
@@ -296,7 +293,7 @@ void *CSearchlight_Delete(struct CSearchlight *self)
 
 	prev = MB_LIST_REMOVE(&DAT_003090a8, self);
 	Actor_Delete(self->actor);
-	if (self->path.hasKeys != 0)
+	if (self->path.numKeys != 0)
 	{
 		MB_DELETE(self->path.keys);
 		self->path.keys = NULL;
