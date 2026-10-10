@@ -33,6 +33,8 @@ The player (fields at original offsets):
   drawn, +0x3b8 finished, +0x3c0 the control-change counter
 */
 
+/* "Variant N" in the comments is the game's variant N (1-4); the code tests RA_VARIANT = N - 1. */
+
 #include "rowing_a.h"
 #include "rowing_a_ext.h"
 
@@ -509,7 +511,7 @@ void FUN_001a8940(void *self, int mode)
 The computer driver. Picks ConcernAng / ReverseAng / Speed / DeltaSpd by difficulty and
 adjusts them by variant; aims at the point (+0x140) from the boat's position 10 frames ahead
 and turns the angle to it into the two stick values (+0x138 right, +0x13c left; a turn
-behind the boat on medium/hard reverses). Eases off near the target, halves in variant 3
+behind the boat on medium/hard reverses). Eases off near the target, halves in variant 4
 when no human is still in the game (x1.2 on hard when +0x3dc), and moves each stick at
 most DeltaSpd * DT. Output: the sticks as -32768 * value (*LEFTY, *RIGHTY), *LEFTX and
 *RIGHTX 0. */
@@ -678,7 +680,7 @@ void FUN_001a8d30(void *self, float dt, int *leftX, int *leftY, int *rightX, int
 Picks the computer driver's target on PATH ({int count; float (*pts)[2] (x, z); char closed}).
 Finds the path point nearest the boat (+0x140/+0x148 = that point minus the boat), then walks
 forward from the next point to a look-ahead end (closed paths: table 0x002b5760 by character
-and difficulty in variant 0, else 8; open paths in variant 1: table 0x002b57a8 when the end is
+and difficulty in variant 1, else 8; open paths in variant 2: table 0x002b57a8 when the end is
 far, else the path's end) and takes as target (+0x140/+0x148) the last point that the boat
 sees without crossing a world outline (world +0x134 outlines {count, pts, closed}). Returns
 that point's index, -1 if none. */
@@ -803,7 +805,7 @@ int FUN_001a9480(void *self, void *path)
 }
 
 /* 0x001a99f0  Rowing/CRowing_Player.cpp (bracketed)
-The computer driver's target in variant 0: the course path (world +0x150) when there is one,
+The computer driver's target in variant 1: the course path (world +0x150) when there is one,
 else player 0's boat. */
 void FUN_001a99f0(void *self)
 {
@@ -967,7 +969,7 @@ aim:
 	PL_F32(0x148) = sinf(target) * radius;
 }
 
-/* the course of variant 1: its centre x (0x002b5634) and width (0x002b5630) */
+/* the course of variant 4: its centre x (0x002b5634) and width (0x002b5630) */
 #define RA_LANE_WIDTH RW_VAR(float, 0x002b5630)
 #define RA_LANE_CENTRE RW_VAR(float, 0x002b5634)
 
@@ -992,7 +994,7 @@ static int ra_RamCandidate(void *self, void *other, float *score)
 }
 
 /* 0x001aa000  Rowing/CRowing_Player.cpp (bracketed)
-The computer driver's target in variant 1 (the straight course; z is forward). A mood
+The computer driver's target in variant 4 (the straight course; z is forward). A mood
 (+0x3dc: 0 weave, 1 race, 2 overtake the leader, 3 follow the leader) changes when its
 timer +0x3e0 (run down by DT / 60 once the race is on) ends. Racing, it keeps to a lane
 pushed by the floaties (RowFloaty_SumPull / AddPull) and, every 240 units (+0x16c), picks a
@@ -1304,7 +1306,7 @@ static void ra_BoneMatrix(float *out, void *inst, void *node)
 
 /* 0x001ab0c0  Rowing/CRowing_Player.cpp (bracketed)
 Drives the boat from the two sticks (LX, LY, RX, RY; -32768..32767). Both Y sticks push it
-forward (Speed .data 0x002b5758; x(1 + 0.1 handicap) in variant 2; in variant 0 a human
+forward (Speed .data 0x002b5758; x(1 + 0.1 handicap) in variant 3; in variant 1 a human
 behind the leader gets up to x2), their difference spins it (+0x300, limited by 0x002b5750 /
 0x002b5754), the X sticks push it sideways (x0.3) unless airborne. The two oars (+0x38c
 left, +0x390 right; +0x394/+0x398 their strength) follow the sticks at a limited rate and

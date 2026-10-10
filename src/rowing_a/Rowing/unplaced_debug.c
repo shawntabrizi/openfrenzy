@@ -182,3 +182,13 @@ void FUN_001afdc0(float x, float y, float w, float h, unsigned int colour)
 	bdSetProjectionMode(1);
 	bdSetRenderState(5, 1, 0);
 }
+
+/* 0x001aff20  Rowing (gap) (vtable 0x00275bc4 slot 0)
+The debug object's deleting destructor. */
+void *FUN_001aff20(void *self, unsigned int flags)
+{
+	RA_AT(self, 0, const void *) = vtable_00275bc4;
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}

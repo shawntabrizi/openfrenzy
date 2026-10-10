@@ -170,3 +170,12 @@
 001afdc0 void FUN_001afdc0(float x, float y, float w, float h, unsigned int colour);
 001af660 void *FUN_001af660(void *self, unsigned int flags);
 001aff20 void *FUN_001aff20(void *self, unsigned int flags);
+001aff60 void FUN_001aff60(void *self);
+001b03c0 void FUN_001b03c0(void *self);
+001b04e0 void FUN_001b04e0(void *self);
+001b0790 void FUN_001b0790(void *self);
+001b0880 void FUN_001b0880(void *self);
+001b09f0 void FUN_001b09f0(void *self);
+001b0c40 void FUN_001b0c40(void *self);
+001b0e00 void FUN_001b0e00(void *self);
+001b10f0 void FUN_001b10f0(void *self, float *pos, float size, unsigned int colour);
