@@ -18,8 +18,9 @@ Conventions (docs/ARCHITECTURE.md):
   go through a cast to the real shape (CB_CALL), read from the x86 code. A float that the
   table still declares as undefined4 goes through CB_DUAL (the float's bit pattern while the
   table type is in force, a real float once the owner fixes the type).
-- Globals keep their Ghidra names (DAT_<address>). CarryOn/carryon_b_globals.c defines weak
-  fallbacks (original size and XBE value) for globals that other modules may also define.
+- Globals keep their Ghidra names (DAT_<address>). carryon_b defines only its own globals;
+  the globals of other modules are declared extern here (their owners define them;
+  tests/carryon_b_test.c gives test copies).
   Read-only .rdata constants are written as literals with their address in a comment.
 - x87 compares: Ghidra's "(a < b) == (a == b)" means a > b, and "(a < b) != (a == b)"
   means a <= b. They are written as plain compares.
@@ -93,7 +94,7 @@ void DbgBreakPoint(void);
 #define CB_NEW(size, line) bkHeapAlloc((size), CB_FILE, (line), 0x1001)
 #define CB_DELETE(p) bkHeapFree((void *)(p))
 
-/* ---------- globals of other modules (fallbacks in CarryOn/carryon_b_globals.c) */
+/* ---------- globals of other modules */
 
 extern int DAT_002bae94;            /* number of players (core) */
 /* per-player records of the core game state, 10 ints (0x28 bytes) each; [0] is the
@@ -133,7 +134,8 @@ extern void *DAT_002f6d28[4];
    +0x2b4 rocket animation, +0x374 catch radius */
 extern void *DAT_002f6d5c;
 extern int DAT_002f6d60;            /* debug drawing of the launch rack */
-extern int *DAT_002f7960;           /* set to 1 while the rack has rockets to launch */
+extern int *DAT_002f7960;           /* carryon_a's camera (struct CFireCamera *); its +0x00 is
+                                       set to 1 when rockets are launched */
 extern int DAT_00293b44;            /* rockets in flight (carryon_a) */
 extern int DAT_00293928;            /* AI voice volume (charlib) */
 extern unsigned int DAT_002943b8[];  /* the colour of each rocket type (carryon_a .data) */

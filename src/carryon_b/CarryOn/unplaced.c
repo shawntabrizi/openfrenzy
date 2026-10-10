@@ -291,8 +291,7 @@ void CFire_Rocket_Draw(struct CFire_Rocket *self, unsigned int passes)
 	}
 	if ((passes & 1) == 0)
 		return;
-	/* carryon_a declares the third parameter `int flags`; the x86 code passes a float
-	   (see the module report) */
+	/* the third parameter is a float (the x86 code pushes 40.0f or 80.0f) */
 	CB_DUAL(FUN_000c8230, void (*)(undefined4, undefined4, undefined4, undefined4),
 		void (*)(float *, float, float, unsigned int),
 		((undefined4)(uintptr_t)self->pos, cb_fbits(30.0f), cb_fbits(circle),
