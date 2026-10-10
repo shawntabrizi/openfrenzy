@@ -204,6 +204,8 @@ taller window gets black bars.
 | `OPENFRENZY_DISPLAY_ANTI_ALIASING` | `off` (default), `fxaa`, `smaa`, `msaa2x`, `msaa4x`, `msaa8x`, `ssaa2x` | `fxaa`: one pass over the 3D scene before the HUD (`COverlay_DrawAll`), or over the full frame at present when the frame has no HUD (menus). `smaa` gives `fxaa` (no SMAA in this build). `msaaNx`: N samples a pixel. `ssaa2x`: draws at 2 times the size each way, then scales down (with `native` only). |
 | `OPENFRENZY_DISPLAY_VSYNC` | `true` (default), `false` | wait for the display's refresh |
 
+Every 10 s the host logs `frame pacing: N frames in 10.0 s, F fps, worst W ms, K over 20 ms,
+swap S ms avg` (frame time = swap to swap; docs/INTEGRATION_NOTES.md "Frame pacing").
 The log line `screen: 640x480 drawn at WxH` gives the size the game draws at. It changes when
 the window size changes. `OPENFRENZY_DEBUG_SCREENSHOT_EVERY=<frames>` with
 `OPENFRENZY_DEBUG_SCREENSHOT_DIRECTORY=<abs dir>` writes BMP frames at that size.

@@ -531,6 +531,58 @@ No new fault was found, so no code changed. `OPENFRENZY_BKLOG=1` is needed for t
   available. The real path differs only in where the focus event comes from:
   `platform_handle_event` handles both the same way.
 
+## Frame pacing (integration round 5, fix-frame-pacing)
+
+- New: the host logs one line every 10 s from the swap path (`host_sdl_gl_swap_window`,
+  port/macos/host/host_sdl.c): `frame pacing: N frames in 10.0 s, F fps, worst W ms, K over
+  20 ms, swap S ms avg`. Frame time = swap to swap. Always on.
+- Test: board path (`input_mv.txt` recipe of round 2, videos skipped, window, outside the
+  sandbox, 300 s, no frame dumps, no other game process running), MacBook Pro M3 Max, built-in
+  display (1728x1117 points), drawn at 2560x1920. Script: `build-fix-frame-pacing/run/run.sh`.
+  The slow windows (about 50-120 s and 210-280 s) are MouseWhack (Bug Bash): the samples at 70,
+  95 and 240 s are all in CGameMode_MouseWhack_Draw, with about 8600 GL draws a frame
+  (`OPENFRENZY_PERF_LOG`).
+
+  | Run (290 s after the first window) | Frames | Average fps | Lowest 10 s window | Frames over 20 ms | Worst frame (not the first window) |
+  |---|---|---|---|---|---|
+  | before, vsync on | 15289 | 52.7 | 41.0 fps | 6762 | 303 ms |
+  | before, vsync off | 15761 | 54.3 | 41.1 fps | 4391 | 221 ms |
+  | memcmp fix, vsync on | 17259 | 59.5 | 57.3 fps | 1588 | 120 ms |
+  | memcmp fix, vsync off | 17223 | 59.4 | 56.1 fps | 972 | 109 ms |
+  | memcmp + QoS fix, vsync on | 17256 | 59.5 | 55.9 fps | 31 | 66 ms |
+  | memcmp + QoS fix, vsync off | 17301 | 59.7 | 56.9 fps | 24 | 60 ms |
+
+  The first window (title load, one 512 ms frame) is the same in every run. The worst frames
+  after it (45-120 ms, one or two a minute) are scene loads.
+- Vsync makes no difference: `eglSwapBuffers` takes 0.02 ms with vsync on or off (ANGLE on
+  Metal does not block in the swap). Present is paced by the 60 Hz vertical blank emulation of
+  d3d8_gl.c (at most 2 frames queued), not by the display.
+- Cause 1, slow frames (41-49 fps in MouseWhack): `sample <pid> 10` of the main thread (guest
+  frames symbolized with llvm-symbolizer, `build-fix-frame-pacing/run/symsample.py`): memcmp was
+  35 % of the main thread (2575 of 7357 samples), called from prepare_draw: d3d8_ff_uniforms
+  compares 1440 bytes of fixed-function uniforms on each draw, and the program cache compares
+  keys. musl's memcmp is a byte loop. Fix: `port/guest/libc/string/memcmp.c`, 8 bytes at a time,
+  same sign of result (checked against the host memcmp with 2 million random cases, aligned
+  and unaligned). Not the cause: shader compiles (at most 0.3 ms in a frame, perf log), disc
+  reads (none on the main thread in the 3 samples), write-watch faults (the signal handler is
+  9-15 of about 7400 main-thread samples, 0.2 %), texture uploads (not in the top of the samples).
+- Cause 2, jitter at 60 fps (60 fps average but about 100 frames over 20 ms each 10 s, also on
+  the title and menus): timing each part of D3DDevice_Present showed constant work (2.4-2.9 ms)
+  but a wait for the vertical blank of 8-24 ms. The vertical blank thread (and the DirectSound
+  clock thread) sleep to an absolute time (clock_nanosleep TIMER_ABSTIME, host_syscall.c); at the
+  default QoS macOS woke them up to about 7 ms late. Fix: the host gives a thread that sleeps
+  to an absolute time user-interactive QoS (once per thread). mach_wait_until instead of
+  nanosleep did not help (75 vs 2 frames over 20 ms in the first 10 s window).
+- Left (not fixed, not port-layer only): in MouseWhack the main thread is still busy all the
+  time (lowest 10 s window 56-57 fps): ANGLE draw calls about 32 %, render pass ends at
+  glClear after render-target changes (bdSetRenderTarget, the player shadow projectors) about
+  12 %, memcmp still 9 % (now 8 bytes a step), xgpu_texture_get 9 %. A next step could be fewer
+  GL state changes per draw in d3d8_gl.c or skipping d3d8_ff_uniforms when no transform,
+  material or light changed.
+- Not verified: the game window was not frontmost in these runs (started by an agent); a
+  ProMotion display at 120 Hz was not set to 60 Hz; frame dumps were off, so the 52 fps of the
+  earlier run with dumps every 600 frames was not run again; nobody looked at the motion.
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and
