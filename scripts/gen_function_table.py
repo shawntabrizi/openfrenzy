@@ -77,6 +77,18 @@ def parse_signature(path):
     return norm_type(ret) if ret else "void", out
 
 
+# Ghidra split these off the middle of another function (branch targets, a fall-through tail).
+# Nothing calls them and no table points to them; the owning function's C covers their code.
+# Left in the table they would only be weak stubs that no path reaches.
+NOT_FUNCTIONS = {
+    "00015270": "tail of 0x00015160 CGameMode_CharacterSelect_Update (mid-instruction stream)",
+    "000175c0": "inside 0x00017580 CGameMode_CharacterSelect_HandleButton (a case of it)",
+    "00018d90": "inside 0x000188b0 CGameMode_FullGame_Resume (call 0x0001ea60; jmp back)",
+    "00055c69": "inside 0x00055c40: the jne target after its early return",
+    "000bccbf": "inside 0x000bccb0 CFire_Game_Draw: the push esi after cmp ebx,eax",
+}
+
+
 # _cinit (0x340f8) runs the .CRT$XC* table [0x281750, 0x2818a0) in order, after the
 # .CRT$XI table (LIBC only). Entries in other sections (D3D, XPP) are library constructors.
 CRT_XC_TABLE = (0x281750, 0x2818a0)
@@ -119,6 +131,8 @@ def main():
         if rec["kind"] == "platform":
             continue
         for a in rec["functions"]:
+            if a in NOT_FUNCTIONS:
+                continue
             e = smap[a]
             sig = parse_signature(os.path.join(EXPORT, "funcs", a + ".c"))
             if sig is None:
