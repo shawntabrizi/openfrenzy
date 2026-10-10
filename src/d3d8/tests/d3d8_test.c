@@ -784,6 +784,141 @@ static void test_texture_header(void)
 		"swizzled header: %lux%lu levels %lu", description.width, description.height, description.levels);
 }
 
+/* ---------- GLSL dumps (OPENFRENZY_D3D8_TEST_GLSL: a directory)
+
+run_tests.sh compiles each with glslangValidator: the generated shaders are
+otherwise only compiled by a GL driver, which the headless run has not */
+
+static unsigned long glsl_dumps;
+
+static void dump_glsl(const char *directory, const char *name, const char *suffix, char *source)
+{
+	char path[1024];
+	FILE *file;
+
+	snprintf(path, sizeof(path), "%s/%s.%s", directory, name, suffix);
+	file = fopen(path, "w");
+	CHECK(file != NULL, "cannot write %s", path);
+	if (file)
+	{
+		fputs(source, file);
+		fclose(file);
+		glsl_dumps++;
+	}
+	free(source);
+}
+
+static void dump_vertex(const char *directory, const char *name, DWORD fvf)
+{
+	struct d3d8_ff_vertex_key key;
+
+	d3d8_ff_vertex_key_build(fvf, &key);
+	dump_glsl(directory, name, "vert", d3d8_ff_vertex_glsl(&key));
+}
+
+static void dump_pixel(const char *directory, const char *name, const unsigned char *kinds)
+{
+	struct nv2a_pixel_shader_key key;
+	int stage;
+
+	memset(&key, 0, sizeof(key));
+	d3d8_ff_combiners(kinds, key.combiner_state, &key.texture_modes);
+	for (stage = 0; stage < 4; stage++)
+		key.sampler_type[stage] = kinds[stage] == _d3d8_ff_texture_cube ? _xgpu_sampler_cube :
+			kinds[stage] == _d3d8_ff_texture_3d ? _xgpu_sampler_3d : kinds[stage] ? _xgpu_sampler_2d : 0;
+	key.fog_enable = D3D__RenderState[D3DRS_FOGENABLE] != 0;
+	key.fog_table_mode = (unsigned char)D3D__RenderState[D3DRS_FOGTABLEMODE];
+	key.alpha_test_function = D3D__RenderState[D3DRS_ALPHATESTENABLE] ? D3DCMP_GREATER : 0;
+	dump_glsl(directory, name, "frag", nv2a_pixel_shader_to_glsl(&key));
+}
+
+static void test_glsl_dumps(void)
+{
+	const char *directory = getenv("OPENFRENZY_D3D8_TEST_GLSL");
+	static const unsigned char one_2d[4] = { 1, 0, 0, 0 };
+	static const unsigned char two[4] = { 1, 3, 0, 0 };
+	static const unsigned char none[4] = { 0, 0, 0, 0 };
+	D3DLIGHT8 light;
+	int index;
+
+	if (!directory || !*directory)
+	{
+		printf("d3d8_test: GLSL dumps skipped (OPENFRENZY_D3D8_TEST_GLSL not set)\n");
+		return;
+	}
+	xgpu_capabilities.shading_language = "300 es";
+	memset(D3D__RenderState, 0, sizeof(D3D__RenderState));
+	stages_reset();
+	/* unlit vertices of each position kind */
+	dump_vertex(directory, "ff_rhw_diffuse_tex1", D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+	dump_vertex(directory, "ff_xyz", D3DFVF_XYZ);
+	dump_vertex(directory, "ff_xyz_diffuse_tex1", D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+	/* lit, with every light type, specular, a local viewer, normalizing,
+	material sources, range fog, texture generation and projected
+	transforms */
+	D3D__RenderState[D3DRS_LIGHTING] = TRUE;
+	D3D__RenderState[D3DRS_SPECULARENABLE] = TRUE;
+	D3D__RenderState[D3DRS_LOCALVIEWER] = TRUE;
+	D3D__RenderState[D3DRS_NORMALIZENORMALS] = TRUE;
+	D3D__RenderState[D3DRS_COLORVERTEX] = TRUE;
+	D3D__RenderState[D3DRS_DIFFUSEMATERIALSOURCE] = D3DMCS_COLOR1;
+	D3D__RenderState[D3DRS_SPECULARMATERIALSOURCE] = D3DMCS_COLOR2;
+	D3D__RenderState[D3DRS_FOGENABLE] = TRUE;
+	D3D__RenderState[D3DRS_FOGTABLEMODE] = D3DFOG_LINEAR;
+	D3D__RenderState[D3DRS_RANGEFOGENABLE] = TRUE;
+	for (index = 0; index < 3; index++)
+	{
+		memset(&light, 0, sizeof(light));
+		light.Type = (D3DLIGHTTYPE)(index + 1);
+		light.Range = 100.0f;
+		light.Attenuation0 = 1.0f;
+		D3DDevice_SetLight(10 + index, &light);
+		D3DDevice_LightEnable(10 + index, TRUE);
+	}
+	D3D__TextureState[0][D3DTSS_TEXCOORDINDEX] = D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR;
+	D3D__TextureState[0][D3DTSS_TEXTURETRANSFORMFLAGS] = D3DTTFF_COUNT3 | D3DTTFF_PROJECTED;
+	D3D__TextureState[1][D3DTSS_TEXCOORDINDEX] = 0;
+	D3D__TextureState[1][D3DTSS_TEXTURETRANSFORMFLAGS] = D3DTTFF_COUNT2;
+	D3D__TextureState[2][D3DTSS_TEXCOORDINDEX] = D3DTSS_TCI_CAMERASPACENORMAL;
+	D3D__TextureState[3][D3DTSS_TEXCOORDINDEX] = D3DTSS_TCI_CAMERASPACEPOSITION;
+	D3D__TextureState[3][D3DTSS_TEXTURETRANSFORMFLAGS] = D3DTTFF_COUNT4 | D3DTTFF_PROJECTED;
+	dump_vertex(directory, "ff_lit_all", 0x152 | D3DFVF_SPECULAR);
+	D3D__RenderState[D3DRS_FOGTABLEMODE] = D3DFOG_NONE;
+	D3D__RenderState[D3DRS_LOCALVIEWER] = FALSE;
+	dump_vertex(directory, "ff_lit_vertex_fog", D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX2 | D3DFVF_TEXCOORDSIZE3(1));
+	dump_vertex(directory, "ff_lit_no_normal", D3DFVF_XYZ | D3DFVF_DIFFUSE);
+	for (index = 0; index < 3; index++)
+		D3DDevice_LightEnable(10 + index, FALSE);
+
+	/* pixel shaders from stage states: each operation once, fog, alpha
+	test, a cube map stage, and the default stage without a texture */
+	stages_reset();
+	D3D__RenderState[D3DRS_FOGENABLE] = FALSE;
+	for (index = D3DTOP_SELECTARG1; index <= D3DTOP_BUMPENVMAPLUMINANCE; index++)
+	{
+		char name[32];
+
+		stage_state(0, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_DIFFUSE, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_DIFFUSE);
+		stage_state(1, (DWORD)index, D3DTA_TEXTURE | D3DTA_COMPLEMENT, D3DTA_CURRENT | D3DTA_ALPHAREPLICATE,
+			(DWORD)(index == D3DTOP_DOTPRODUCT3 ? D3DTOP_SELECTARG1 : index), D3DTA_TFACTOR, D3DTA_SPECULAR);
+		D3D__TextureState[1][D3DTSS_COLORARG0] = D3DTA_TEMP;
+		D3D__TextureState[1][D3DTSS_ALPHAARG0] = D3DTA_DIFFUSE;
+		snprintf(name, sizeof(name), "ps_op%02d", index);
+		dump_pixel(directory, name, two);
+	}
+	stages_reset();
+	stage_state(0, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_CURRENT, D3DTOP_SELECTARG1, D3DTA_TEXTURE, D3DTA_CURRENT);
+	dump_pixel(directory, "ps_default_no_texture", none);
+	D3D__RenderState[D3DRS_FOGENABLE] = TRUE;
+	D3D__RenderState[D3DRS_FOGTABLEMODE] = D3DFOG_EXP2;
+	D3D__RenderState[D3DRS_SPECULARENABLE] = TRUE;
+	D3D__RenderState[D3DRS_ALPHATESTENABLE] = TRUE;
+	dump_pixel(directory, "ps_fog_specular_alphatest", one_2d);
+	stages_reset();
+	memset(D3D__RenderState, 0, sizeof(D3D__RenderState));
+	printf("d3d8_test: %lu GLSL files written to %s\n", glsl_dumps, directory);
+}
+
 /* ---------- 5. drawing (needs a window) */
 
 struct test_vertex
@@ -946,6 +1081,7 @@ int main(void)
 	test_combiners();
 	test_assembler();
 	test_texture_header();
+	test_glsl_dumps();
 	test_drawing();
 	printf("d3d8_test: %d checks, %d failed\n", checks, failures);
 	return failures > 255 ? 255 : failures;

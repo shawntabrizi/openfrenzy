@@ -737,8 +737,8 @@ char *nv2a_pixel_shader_to_glsl(const struct nv2a_pixel_shader_key *key)
 	}
 	if (*config_string("debug.gpu_debug_expression"))
 		xgpu_text_append(&text, "\tresult = vec4(vec3(%s), 1.0);\n", config_string("debug.gpu_debug_expression"));
-	if (config_boolean("debug.gpu_debug_texture0"))
-		xgpu_text_append(&text, "\tresult = vec4(t0.rgb, 1.0);\n");
+	/* (openfrenzy: OpenCE's debug.gpu_debug_texture0 is not a setting here;
+	debug.gpu_debug_expression=t0.rgb shows the same) */
 	if (config_boolean("debug.gpu_debug_flat"))
 		xgpu_text_append(&text, "\tresult = xD0.a > 0.0 ? vec4(xD0.rgb, 1.0) : vec4(1.0, 0.0, 1.0, 1.0);\n");
 #ifdef HALO_GLES
