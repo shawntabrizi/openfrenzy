@@ -124,29 +124,9 @@ before you fix the build, and remove an item when it is fixed.
 | TankedUp | PLAYING, then fault (below) |
 | Fireworks, Drillers, Tag, ScratchMatch | fault before the countdown (below) |
 
-Open faults, all in minigame modules (not fixed here):
+The five faults found here (Fireworks, Drillers, ScratchMatch, Tag, TankedUp) are fixed in
+integration round 2 (921ec75); see below.
 
-- Fireworks (carryon_a): read of 0 in CLHud_DrawAIRing (0x0007b970) <- CCarryOn_Player_DrawEffects
-  <- CFire_Game_Draw. `co_Hud_DrawPlayerMarker` (carryon_a_ext.h) casts 0x0007b970 to
-  `(void *, int, float *, float *)` and passes DAT_002ecfac first. The original is
-  `(int player, float *pos, float *target)` (see 0x000c0fd0), so pos arrives as NULL.
-- Drillers: fault at 0x4 in CLList_Insert <- COverlay_Create <- CLHud_CreateScoreBoxes <-
-  CDrillersGame_Start. The root overlay list is g_DrGame + 0x90 (0x002ffa80), never initialised:
-  CDrillersGame_Ctor (0x0010f9c0) calls CLList_Init on self + 4, the original on self + 0x90
-  (`lea ecx,[esi+0x90]`).
-- ScratchMatch: same backtrace through CGameMode_ScratchMatch_Start. Its root list 0x0030fea4
-  is initialised by core's static constructor 0x001f4db0 on the symbol DAT_0030fea4, but
-  ScratchMatch reads SM_A(0x0030fea4) inside sm_bss, which exports no DAT_ aliases: two storages.
-  Fix: sm_bss.c aliases DAT_0030fea4 (and the other static-ctor objects in its range) into sm_bss.
-- Tag (foxhunt): fault at 0x1 in CLList_Insert <- FoxHunt_Shark_Ctor <-
-  CGameMode_FoxHunt_InitCooperation. The shark list DAT_00302300 is corrupt. Likely cause:
-  FoxHunt_Effects_Init calls 0x0013b910 on the 4-byte object DAT_003022cc, which writes
-  `param_1[1]` (the "lightening" system); in the image the next symbol is DAT_00302300.
-  On the Xbox that word is 0x003022d0 (fh_bss3). Fix in foxhunt: make 0x003022cc-0x00302300 one
-  block. Not proved with a watchpoint.
-- TankedUp (tankedup_a): read of 0x8 in CTankEntities_Revive <- TankAI_Think <-
-  CTankEntities_RouteMessage <- TankEnts_Update, a few seconds into play: the entity's template
-  (+0x91c) is NULL.
 - Class of bug to check in every module: objects that core's crt/static_init.c constructs on
   DAT_<addr> commons but that a module maps into its own block without DAT_ aliases
   (ScratchMatch above). check_split_globals.py does not catch it.
@@ -159,6 +139,37 @@ Open faults, all in minigame modules (not fixed here):
   make it again. A token pickup in round 2 can then fault in baAddExtraItem (seen once:
   read of 0 <- HopFx_TokenUpdate). The original does the same; on the board (Meta on the
   stack) the round does not restart.
+
+## Integration round 2 (2026-10-10)
+
+- Clean build in `build/` links with no errors; ctest 6/6. No UNIMPLEMENTED stub is reached on
+  the board path; Demolition (direct launch) reaches 0x000fcb90, 0x000fd180, 0x000fd540 and
+  0x000fe610 (demolition_c, not in the function table).
+- Board run (window, `OPENFRENZY_DEBUG_TEST_INPUT="START@6000,A@9000,A@11000,A@13000,START@16000,
+  START@20000,START@24000,START@28000,A@32000,START@36000,A@40000,A@43000,..."` = A every 3 s):
+  title, menus, character select, Stage 1 (Tube Tremors/MouseWhack, Hopper, MouseWhack), the
+  first Meta stage and its vote, Stage 2 (TankedUp, Team Clusteroids, TankedUp), into the second
+  Meta stage (about 640 s, 60 fps). There it faults: read of 0xd0 in CLRoute_Start <-
+  FUN_001586d0 (meta_a AI plan) <- AI_ThinkTail. Not fixed.
+- The character select needs START about 7 s after the character is picked; earlier presses
+  are lost (not a bug: the selection animation).
+- Fixed: Drillers ctor list (+0x90), ScratchMatch root list alias, foxhunt 0x003022cc block and
+  gate list 0x00302330 (both core static-ctor objects), Fireworks AI ring arguments, TankedUp
+  revive arguments, meta_a NearestGoal arguments, meta_a transition-table call (one deref too
+  many), and the Meta hang: CMetaEmitter_SetRate got MA_U32 bits converted to 1.06e9, so the
+  emit loop never ended.
+- New bug class: float parameters given raw dword bits (MA_U32, OV_U, desc[i], dr_fbits) are
+  value-converted by C. `clang -Wimplicit-int-float-conversion` over all game sources found 16;
+  all fixed. It does not see constants or 16-bit values.
+- New check: `python3 -I scripts/check_call_arity.py` lists FUN_<addr> casts whose parameter
+  count differs from the owner's .decls (49 hits; "FEWER" ones and a leading `this` the owner
+  lacks are bugs). Two of the round-2 faults were of this kind.
+- Direct launch, 75-90 s each, after the fixes: every minigame, variations 1-3, reaches PLAYING
+  with no fault, except ScratchMatch 2 and 3: the round ends at once ("Creating WinnerText"),
+  then assertions at CScratchmatch_Game.cpp(815) and (384), then a fault in bFixupNodeDefs <-
+  baLoadActor <- SMPlayer_InitAll <- SMGame_Restart.
+- Rendering seen in frame dumps: glow sprites draw as solid white/coloured squares in TankedUp
+  and Special Delivery (Fireworks). Everything else looked right.
 
 ## Library identifications
 
