@@ -28,7 +28,7 @@ Objects (thiscall `this`) inside the BumperCars block:
 #define BCB_FLAME BCB_ADDR(0x002f1380)
 
 /* 0x002f138c  the floaty score texts (CBCar_FloatyScore) */
-#define g_FloatyScore BCB_VAR(struct BCarFloatyScore *, 0x002f138c)
+#define g_FloatyScore BCB_VAR(struct BCarFloaty *, 0x002f138c)
 
 /* the engine sound range (set by bumpercars_a from its configuration) */
 #define g_EnginePitchMin BCB_VAR(int, 0x002f2048)

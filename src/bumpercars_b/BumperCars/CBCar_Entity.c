@@ -146,7 +146,7 @@ void BCarEntity_AddScore(struct BCarEntity *self, int points)
 	else if (index == -1)
 		return;
 	colour = &DAT_00290718[DAT_002baed4[index * 10] * 0x60];
-	BCarFloatyScore_Add(g_FloatyScore, self->pos, points, colour[0], colour[1], colour[2]);
+	BCarFloaty_Add(g_FloatyScore, self->pos, points, colour[0], colour[1], colour[2]);
 }
 
 /* the length of an animation in seconds ((end - start) / 1024 frames at 60 Hz) */

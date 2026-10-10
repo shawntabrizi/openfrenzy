@@ -89,11 +89,11 @@
 000a0620 int BCarWorld_Init(struct bkPackage *package, const char *name);
 
 # BumperCars/CBCar_FloatyScore.c
-000a0b70 void BCarFloatyScore_Update(struct BCarFloatyScore *self, float dt, float arg);
-000a0ba0 void BCarFloatyScore_Draw(struct BCarFloatyScore *self);
-000a0bc0 void BCarFloatyScore_Add(struct BCarFloatyScore *self, float *pos, int points, int r, int g, int b);
-000a0c30 struct BCarFloatyScore *BCarFloatyScore_Construct(struct BCarFloatyScore *self, int maxItems, float scale);
-000a0c90 void BCarFloatyScore_Destruct(struct BCarFloatyScore *self);
+000a0b70 void BCarFloaty_Update(struct BCarFloaty *self, float dt, float angle);
+000a0ba0 void BCarFloaty_Draw(struct BCarFloaty *self);
+000a0bc0 void BCarFloaty_Add(struct BCarFloaty *self, float *pos, int points, int r, int g, int b);
+000a0c30 struct BCarFloaty *BCarFloaty_Construct(struct BCarFloaty *self, int maxItems, float scale);
+000a0c90 void BCarFloaty_Destruct(struct BCarFloaty *self);
 
 # BumperCars/CBCar_Puck.c, CBCar_Powerup.c, CBCar_Keepsake.c
 000a0cc0 int BCarPucks_Init(void);

@@ -358,6 +358,15 @@ struct BCarItemInfo {
 };
 OF_ASSERT_SIZE(struct BCarItemInfo, 0xec);
 
+/* the floaty score owner (CBCar_FloatyScore.cpp, 8 bytes; its pointer is at 0x002f138c):
+the floaty text system (struct BCarFloatyScore of bcb_items.h, 0x90 bytes, set up by ClassLib
+code 0x000a74d0, which also keeps it in 0x002f27c4) and the font of the texts */
+struct BCarFloatyScore;
+struct BCarFloaty {
+	struct BCarFloatyScore *system; /* 0x00 */
+	void *font;                     /* 0x04 "handgotl.ttf" */
+};
+
 /* ======================================================================== globals (block) */
 
 /* 0x002ed458 is the CBCar_Game object (bumpercars_a, extern struct CBCar_Game DAT_002ed458,
@@ -433,7 +442,7 @@ OF_ASSERT_SIZE(struct BCarItemInfo, 0xec);
 #define g_ReflectBrightness BCB_VAR(int, 0x002efa90)           /* 0x50 */
 #define g_WorldLoaded BCB_VAR(int, 0x002efa94)
 #define g_BCarVictoryShown BCB_VAR(int, 0x002efaa0)
-#define g_BCarSkyAngle BCB_VAR(float, 0x002efba0)
+#define g_BCarFrameCount BCB_VAR(long long, 0x002efba0)       /* frames since the start (bumpercars_a) */
 
 /* 0x002efba8  the 4 players */
 #define g_BCarPlayers ((struct BCarPlayer *)BCB_ADDR(0x002efba8))
