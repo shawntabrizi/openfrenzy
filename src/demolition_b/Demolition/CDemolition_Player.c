@@ -250,7 +250,9 @@ int CDemolition_Player_CreateActor(struct CDemolition_Player *self, int player)
 	DB_PTR(s, 0x109c) = DAT_00298690;
 	Actor_InitCharData(DB_PTR(s, 0x30));
 	DB_PTR(DB_PTR(s, 0x30), 0x324) = DAT_00297b20;
-	for (i = 0; i < 47; i++)
+	/* 43 names (0x264..0x30c), not the 47 of the other actors: the XBE loop ends at
+	   +0x310, and the 0x00297b20 table has 43 names ("idle_ready" .. "controller") */
+	for (i = 0; i < 43; i++)
 	{
 		actor = (char *)DB_PTR(s, 0x30);
 		DB_PTR(actor, 0x264 + i * 4) = baFindSubObject((struct BActorInstance *)(actor + 0x10),
