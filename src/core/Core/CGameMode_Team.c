@@ -17,7 +17,8 @@ class's vtable, so it is placed here.
 
 static const char team_cpp[] = "C:\\BlitzParty\\Game\\Src\\Core\\CGameMode_Team.cpp";
 
-/* a popup text (core_modes_a 0x00011c50): vtable +0x04 show, +0x10 (int) open, +0x14 close */
+/* a popup text (core_modes_a CBGTypeText 0x00011c50, vtable 0x00253810): [1] nothing, [2] Update,
+[3] Render, [4] Show (float), [5] Hide (float) */
 typedef void *const *Popup;
 
 /* CGameMode_Team, 0x198 bytes */
@@ -37,8 +38,8 @@ struct CGameMode_Team {
 	Popup team_captions[2];          /* +0x150 */
 	Popup captions[4];               /* +0x158 */
 	Popup accept;                    /* +0x168 */
-	void *const *fader;              /* +0x16c an object (core_modes_a 0x00013820), 0x24 bytes */
-	unsigned char fader_rest[0x20];  /* +0x170; +0x17c: the popup list */
+	void *const *fader;              /* +0x16c a CBGEffectGroup (core_modes_a 0x00013820, vtable 0x00253bac) */
+	unsigned char fader_rest[0x20];  /* +0x170; +0x17c: its list of effects */
 	void *font_bold;                 /* +0x190 */
 	void *font_light;                /* +0x194 */
 };
@@ -49,7 +50,7 @@ _Static_assert(sizeof(struct CGameMode_Team) == 0x198, "CGameMode_Team size");
 #define POPUP_LIST(self) ((void *)((unsigned char *)(self) + 0x17c))
 #define POPUP_FLAGS(p) (*(uint32_t *)((unsigned char *)(p) + 0x8c))
 #define ext_PopupCtor ((Popup (*)(void *, int, int, const void *, void *))FUN_00011c50)
-#define ext_PopupInit ((void (*)(Popup, int))FUN_000114b0)
+#define ext_PopupInit ((void (*)(Popup, float))FUN_000114b0)
 
 extern const void *const vtable_0025667c[14];
 extern unsigned char DAT_00292ca0[];       /* charlib: animations, 0x44 bytes each (name, speed) */
@@ -63,7 +64,7 @@ extern unsigned char DAT_002900c8[];       /* classlib_ui: characters, 0x108 byt
 
 static const float team_light_dir[4] = { 0.3f, 0.3f, -0.5f, 1.0f };
 
-/* add POPUP to the popup list (at the end) and show it */
+/* add POPUP to the effect group (at the end) and call its slot 1 (nothing for CBGTypeText) */
 static void CGameMode_Team_ShowPopup(struct CGameMode_Team *self, Popup popup)
 {
 	ext_ListAdd(POPUP_LIST(self), popup != NULL ? (void *)((unsigned char *)popup + 4) : NULL, 1);
@@ -125,7 +126,7 @@ int CGameMode_Team_Button(struct CGameMode_Team *self, int button, int player)
 	if (self->state != 0.0f && button > 3 && button < 6 && *(uint32_t *)&self->state == 0x3f800000)
 	{
 		ext_PlaySfx(9, 0x7f, 0, 0, 0);
-		((void (*)(void *, int))self->fader[5])(&self->fader, 0);
+		((void (*)(void *, float))self->fader[5])(&self->fader, 0.0f);   /* CBGEffectGroup::Hide */
 		self->state = 2.0f;
 	}
 	return 0;
@@ -206,14 +207,14 @@ void CGameMode_Team_Pushed(struct CGameMode_Team *self)
 	self->font_light = ext_FindResource(0, "handgotl.ttf", 3, 0xdefa);
 	self->title = CGameMode_Team_NewPopup(0x53, -320, 200, *(void **)(table + 0x1750), self->font_bold);
 	POPUP_FLAGS(self->title) |= 8;
-	ext_PopupInit(self->title, 0);
+	ext_PopupInit(self->title, 0.0f);
 	CGameMode_Team_ShowPopup(self, self->title);
 	for (i = 0, x = -0x1e0; i < 2; i++, x += 0x140)
 	{
 		self->team_captions[i] = CGameMode_Team_NewPopup(0x5b, x, 0xa0, *(void **)(table + 0x1760 + i * 0x10),
 			self->font_bold);
 		POPUP_FLAGS(self->team_captions[i]) |= 8;
-		ext_PopupInit(self->team_captions[i], 0);
+		ext_PopupInit(self->team_captions[i], 0.0f);
 	}
 	for (i = 0; i < 4; i++)
 	{
@@ -224,11 +225,11 @@ void CGameMode_Team_Pushed(struct CGameMode_Team *self)
 		self->captions[i] = CGameMode_Team_NewPopup(0x65, (i / 2) * 0x78 - 0x212 + i * 0x5f, -0x5f, text,
 			self->font_light);
 		POPUP_FLAGS(self->captions[i]) |= 8;
-		ext_PopupInit(self->captions[i], 0);
+		ext_PopupInit(self->captions[i], 0.0f);
 	}
 	self->accept = CGameMode_Team_NewPopup(0x69, -400, -140, *(void **)(table + 0x10d0), self->font_bold);
 	POPUP_FLAGS(self->accept) |= 0x10;
-	ext_PopupInit(self->accept, 0);
+	ext_PopupInit(self->accept, 0.0f);
 }
 
 /* 0x0002ad30  Core/CGameMode_Team.cpp  loaded (vtable +0x2c): a text box with each character */
@@ -393,12 +394,12 @@ void CGameMode_Team_Process(struct CGameMode_Team *self, int top)
 		/* the teams stand: show the captions, walk to the team places */
 		self->state = 1.0f;
 		CGameMode_Team_ShowPopup(self, self->accept);
-		((void (*)(Popup, int))VCALL(self->title, 5))(self->title, 0);
+		((void (*)(Popup, float))VCALL(self->title, 5))(self->title, 0.0f);   /* Hide */
 		self->title = NULL;
 		for (i = 0; i < 2; i++)
 		{
 			CGameMode_Team_ShowPopup(self, self->team_captions[i]);
-			((void (*)(Popup, int))VCALL(self->team_captions[i], 4))(self->team_captions[i], 0);
+			((void (*)(Popup, float))VCALL(self->team_captions[i], 4))(self->team_captions[i], 0.0f);   /* Show */
 		}
 		for (i = 0; i < 4; i++)
 		{
@@ -411,7 +412,7 @@ void CGameMode_Team_Process(struct CGameMode_Team *self, int top)
 			*(float *)((unsigned char *)self->captions[i] + 0x10) =
 				(float)((double)((slot / 2) * 0x91) + (double)slot * 85.0 - 520.0);
 			CGameMode_Team_ShowPopup(self, self->captions[i]);
-			((void (*)(Popup, int))VCALL(self->captions[i], 4))(self->captions[i], 0);
+			((void (*)(Popup, float))VCALL(self->captions[i], 4))(self->captions[i], 0.0f);   /* Show */
 			box = self->boxes[i];
 			memcpy(box + 0x64, box + 0x300, 0x10);
 			*(uint32_t *)(box + 0x2e0) = 0x40a00000;  /* 5.0f */

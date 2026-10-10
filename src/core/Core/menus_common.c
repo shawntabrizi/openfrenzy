@@ -239,9 +239,9 @@ void CMenuMode_Draw(struct CMenuMode *self, int top)
 	ext_SetRenderState(6, 1, 0);
 	ext_SetRenderState(4, 1, 0);
 	ext_SetRenderState(10, 0, 0);
-	ext_SetCamera(eye, at, 0);
+	ext_SetCamera(eye, at, 0.0f);
 	ext_SetClipPlanes(1.0f, 8000.0f);
-	ext_SetFov(1.5707964f, 0);
+	ext_SetFov(1.5707964f, 0.0f);
 	ext_ApplyCamera();
 	if (g_MenuActor != NULL)
 	{

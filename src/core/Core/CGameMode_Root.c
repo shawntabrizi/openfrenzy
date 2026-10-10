@@ -58,7 +58,8 @@ extern int DAT_002b9718;          /* core_modes_a: test map */
 extern int DAT_002ed340;          /* classlib_fx: debris off */
 
 #define ext_MusicStop ((void (*)(void *))FUN_000563f0)
-#define ext_MusicPlay ((int (*)(void *, int, int, int, int, int, int))FUN_00056370)
+/* 0x00056370 bsPlayAudioStream (stream, flags, volume, pan, frequency, callback, ...) */
+#define ext_MusicPlay ((int (*)(void *, unsigned int, int, int, int, void *, ...))FUN_00056370)
 #define ext_MusicLoop ((void (*)(void *, int))FUN_00056590)
 #define ext_MusicVolume ((int (*)(void *, int, int, int))FUN_000564e0)
 #define ext_MusicMaster ((void (*)(int))FUN_00056530)
@@ -265,7 +266,7 @@ void CGameMode_Root_Update(struct CGameMode_Root *self, int top)
 						if (self->music[0] != NULL)
 						{
 							((void (*)(void))FUN_000722a0)();
-							ext_MusicPlay(self->music[0], 0, self->volume[0], 0, 0, 0, 0);
+							ext_MusicPlay(self->music[0], 0, self->volume[0], 0, 0, NULL, 0);
 							ext_MusicLoop(self->music[0], 1);
 							ext_Nothing(NULL);   /* an empty function */
 						}

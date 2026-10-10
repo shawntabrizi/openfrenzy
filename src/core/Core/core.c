@@ -252,8 +252,8 @@ void Core_Init(void)
 							saved_mode = DAT_002be57c;
 							ext_SetRenderMode(0);
 							ext_FUN_000438b0();
-							ext_DrawText(font, g_FpsText,
-								ext_TextLayout(g_FpsText, 240.0f, 200.0f, 0x7f, 0x7f, 0x7f, 0x7f, 0, 0));
+							ext_DrawText(font, g_FpsText, ext_WideStrlen(g_FpsText), 240.0f, 200.0f,
+								0x7f, 0x7f, 0x7f, 0x7f, NULL, NULL);
 							ext_SetRenderMode(saved_mode);
 						}
 					}

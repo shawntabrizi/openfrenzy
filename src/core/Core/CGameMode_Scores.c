@@ -176,8 +176,8 @@ void CGameMode_Scores_DrawBackground(struct CGameMode_Scores *self)
 	ext_LightEnable(self->light_a, 1);
 	ext_LightEnable(self->light_b, 1);
 	ext_SetClipPlanes(50.0f, 2000.0f);
-	ext_SetFov(F(0x00283c1c), 0);
-	ext_SetCamera((const float *)CORE_ADDR(0x00283c0c), (const float *)CORE_ADDR(0x00283bfc), 0);
+	ext_SetFov(F(0x00283c1c), 0.0f);
+	ext_SetCamera((const float *)CORE_ADDR(0x00283c0c), (const float *)CORE_ADDR(0x00283bfc), 0.0f);
 	ext_ApplyCamera();
 	ext_FUN_000438b0();
 	/* the shadows: the winners drawn flattened (scale y -1) */
@@ -557,9 +557,9 @@ void CGameMode_Scores_Draw(struct CGameMode_Scores *self, int top)
 	ext_FUN_00073900(1);
 	if (self->orb_count != 0)
 	{
-		ext_SetCamera(eye, at, 0);
+		ext_SetCamera(eye, at, 0.0f);
 		ext_SetClipPlanes(100.0f, 1000.0f);
-		ext_SetFov(F(0x00283c64), 0);
+		ext_SetFov(F(0x00283c64), 0.0f);
 		ext_ApplyCamera();
 		ext_SetAmbient(0, 0, 0);
 		ext_LightEnable(self->light_c, 1);
@@ -887,7 +887,7 @@ void CGameMode_Scores_Process(struct CGameMode_Scores *self, int top)
 				*(uint32_t *)((unsigned char *)self->popup + 0x7c) = 0x44020000;  /* 520.0f */
 				*(uint32_t *)((unsigned char *)self->popup + 0x8c) |= 0x30;
 				*(float *)((unsigned char *)self->popup + 0x34) = 0.75f;
-				((void (*)(void *, int))FUN_000114b0)(self->popup, 0);
+				((void (*)(void *, float))FUN_000114b0)(self->popup, 0.0f);
 				((void (*)(void *, float))(*self->popup)[4])(self->popup, 30.0f);
 			}
 			self->timer = 0.0f;

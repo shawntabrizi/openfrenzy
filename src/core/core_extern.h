@@ -74,8 +74,8 @@ struct CGameMode;
 #define ext_FindResource ((void *(*)(int, const char *, int, int))FUN_0004bb30)
 /* 0x0004ae80 swprintf for 16-bit (UTF-16) strings */
 #define ext_WSprintf ((int (*)(uint16_t *, const uint16_t *, ...))FUN_0004ae80)
-/* 0x0004b110 text layout (string, x, y, r, g, b, a, 0, 0) */
-#define ext_TextLayout ((int (*)(const uint16_t *, float, float, int, int, int, int, int, int))FUN_0004b110)
+/* 0x0004b110 bkWideStrlen (string) */
+#define ext_WideStrlen ((int (*)(const uint16_t *))FUN_0004b110)
 /* 0x0004b7a0 heap check (9, ptr, size, line) */
 #define ext_HeapCheck ((int (*)(int, uint32_t, uint32_t, uint32_t))FUN_0004b7a0)
 /* 0x00048d60 controller state changed (any) */
@@ -109,8 +109,8 @@ struct CGameMode;
 /* 0x00043b70 select a render state set; 0x000438b0 */
 #define ext_SetRenderMode ((void (*)(int))FUN_00043b70)
 #define ext_FUN_000438b0 ((void (*)(void))FUN_000438b0)
-/* 0x00043440 draw text (font, string, layout) */
-#define ext_DrawText ((void (*)(void *, const uint16_t *, int))FUN_00043440)
+/* 0x00043440 bdPrintFontLite (font, text, length, x, y, r, g, b, a, callback, context) */
+#define ext_DrawText ((void (*)(void *, const uint16_t *, int, float, float, int, int, int, int, void *, void *))FUN_00043440)
 /* 0x0003efa0 (0x152, 0) */
 #define ext_FUN_0003efa0 ((void (*)(int, int))FUN_0003efa0)
 
@@ -211,8 +211,10 @@ struct CGameMode;
 /* ---------- bdisplay: render state */
 
 #define ext_SetRenderState ((void (*)(int, int, int))FUN_00044b00)
-#define ext_SetFov ((void (*)(float, int))FUN_00044a00)
-#define ext_SetCamera ((void (*)(const float *, const float *, int))FUN_000435f0)
+/* 0x00044a00 bdSetFieldOfView (x, y) */
+#define ext_SetFov ((void (*)(float, float))FUN_00044a00)
+/* 0x000435f0 bdSetCameraLookAt (eye, target, roll) */
+#define ext_SetCamera ((void (*)(const float *, const float *, float))FUN_000435f0)
 #define ext_ApplyCamera ((void (*)(void))FUN_00043790)
 #define ext_DrawPrimitives ((void (*)(int, void *, int))FUN_0003f2d0)
 #define ext_SetTexture ((void (*)(int, int))FUN_000416c0)

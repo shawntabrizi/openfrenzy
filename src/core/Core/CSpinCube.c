@@ -139,9 +139,9 @@ void CSpinCube_Draw(struct CSpinCube *self)
 	__attribute__((aligned(16))) float world[16];
 	int turn, side;
 
-	ext_SetCamera(eye, (const float *)CORE_ADDR(0x00284440), 0);
+	ext_SetCamera(eye, (const float *)CORE_ADDR(0x00284440), 0.0f);
 	ext_SetClipPlanes(10.0f, 1000.0f);
-	ext_SetFov(1.0471976f, 0);
+	ext_SetFov(1.0471976f, 0.0f);
 	ext_ApplyCamera();
 	ext_SetRenderMode(1);
 	ext_SetRenderState(10, 0, 0);
