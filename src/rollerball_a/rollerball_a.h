@@ -6,16 +6,35 @@ Module rollerball_a: the first part of the RollerBall minigame
 "RollerBall", variations "Sphere of Destiny", "Ball Fighting", "Roll of Honour",
 "Rolls Race"; packages packages\roll-v<n> and packages\roll-gen).
 
-  CModule_RollerBall.cpp    0x001877b0-0x001878b0  the CGame entry of core's game list
-  CRollerball_Game.cpp      0x001878b0-0x0018dad0  the game object (0x2ae0 bytes) and its
+  CModule_RollerBall.cpp    0x001877b0-0x00187840  the CGame entry of core's game list
+  CRollerball_Game.cpp      0x001878b0-0x0018d4f0  the game object (0x2ae0 bytes) and its
                                                    five variation objects
-  (unplaced)                0x0018dad0-0x00190910  small game subsystems (sfx, video screens,
-                                                   timers, countdown, spot effects, ...)
-  CRollerball_Shader.cpp    0x0018dd00             the shader system
-  CRollerBall_Light.cpp     0x0018fcf0             the light system
-  CRollerBall_Respawn.cpp   0x00190910-0x00190b70  respawn points
-  CRollerball_Goal.cpp      0x00191060-0x00191530  goals
+  (unplaced)                0x0018dad0-0x00190600  small game subsystems: rumble, floating
+                                                   texts, video screens, sound effects, Direct3D
+                                                   helpers, frame clock, timers, input, physics,
+                                                   spot effects, HUD, texture animations
+  CRollerball_Shader.cpp    0x0018dcc0-0x0018dd90  the shader system
+  CRollerBall_Light.cpp     0x0018fa10-0x0018fcf0  the light system and its lights
+  CRollerBall_Respawn.cpp   0x00190620-0x00190b70  respawn points
+  CRollerball_Goal.cpp      0x00190b80-0x00191530  goals, flares (rollerball_b has the rest)
   (unplaced)                0x00187570-0x00187660  two player animation helpers
+
+Variations (game +0x1c): 0 base (goals), 1 sumo, 2 race2 (one lap), 3 race (three laps),
+4 drop.
+
+Functions missing from of_functions.tsv, defined here with their FUN_ names (declared at
+the end of this header): 0x00187c70, 0x00188fa0, 0x001890e0, 0x001892e0 (the game's mode
+slots, jumped to by rollerball_b's thunks 0x00198660..), 0x001888e0 (path record
+destructor thunk), 0x0018ddf0 (video screen texture callback), 0x00190400, 0x00190410
+(texture animation constructor / destructor), 0x00190b70 (animation callback). Two table
+entries are not functions but chunks of the function before them: 0x0018b8c0 (of
+0x0018b8b0) and 0x0018c000 (of 0x0018bf40); they are defined as empty functions.
+
+Shared code: Demolition (demolition_a..d) and BumperCars call the timers, the sound
+effect player, the light methods, the stencil helpers and the list helpers of this
+module (identical code folded by the linker). Where the original method does not use
+ECX (0x0018e490, 0x0018e4b0, 0x0018e540) the port drops `this`, so the table's arity
+that those callers use stays valid.
 
 Owner: rollerball_a. Other modules may include this header; only rollerball_a edits it.
 
