@@ -15,7 +15,7 @@ are updated and drawn by carryon_a (0x000c9ee0, 0x000ca060).
 /* 0x000ca230  CarryOn/CFire_Conveyor.cpp
 Makes `count` pieces on consecutive paths and `count2` more (count2 0: as many) on the
 same paths. `unused` is not read. */
-void CFire_Conveyor_Init(struct CFire_Conveyor *self, float *pos, int arg, struct CFire_Path *paths,
+void CFire_Conveyor_Init(struct CFire_Conveyor *self, float *pos, float arg, struct CFire_Path *paths,
 	int count, int unused, int count2)
 {
 	struct CFire_ConveyorItem *item;
