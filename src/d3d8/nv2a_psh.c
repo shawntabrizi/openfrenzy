@@ -373,6 +373,16 @@ static void texture_stage(struct xgpu_text *text, const struct nv2a_pixel_shader
 	case _mode_project2d:
 	case _mode_project3d:
 		snprintf(coordinates, sizeof(coordinates), "vec4(xT%d.xyz / (xT%d.w != 0.0 ? xT%d.w : 1.0), 1.0)", stage, stage, stage);
+		if (stage == 3 && key->point_sprite)
+		{
+			/* the sprite's corner (0, 0) is its top left; ES draws the
+			image upside down (gl_Position.y is negated) */
+#ifdef HALO_GLES
+			snprintf(coordinates, sizeof(coordinates), "vec4(gl_PointCoord.x, 1.0 - gl_PointCoord.y, 0.0, 1.0)");
+#else
+			snprintf(coordinates, sizeof(coordinates), "vec4(gl_PointCoord, 0.0, 1.0)");
+#endif
+		}
 		xgpu_text_append(text, "\tt%d = ", stage);
 		sample(text, key, stage, coordinates);
 		xgpu_text_append(text, ";\n");

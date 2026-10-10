@@ -63,7 +63,9 @@ struct d3d8_ff_vertex_key
 	unsigned char texture_index[4];
 	unsigned char texture_generation[4];
 	unsigned char texture_transform[4];
-	unsigned char reserved[3];
+	/* D3DRS_POINTSCALEENABLE (and not pretransformed) */
+	unsigned char point_scale;
+	unsigned char reserved[2];
 };
 
 /* the key for the current render and texture stage states and lights */
@@ -71,7 +73,7 @@ void d3d8_ff_vertex_key_build(DWORD fvf, struct d3d8_ff_vertex_key *key);
 
 /* GLSL for a fixed-function vertex; outputs as nv2a_vsh.c's (xD0, xT0, ...,
 gl_Position as its clip-space path). Uniforms: ff[D3D8_FF_UNIFORM_COUNT],
-viewport_scale, viewport_offset, point_size, screen_offset. malloc'd. */
+viewport_scale, viewport_offset, point_scale, point_base, screen_offset. malloc'd. */
 char *d3d8_ff_vertex_glsl(const struct d3d8_ff_vertex_key *key);
 
 /* ff[]: the matrices, material, ambient light and lights, in camera space */

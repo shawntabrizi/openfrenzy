@@ -370,6 +370,10 @@ struct draw_uniforms
 	float viewport_scale[4];
 	float viewport_offset[4];
 	float point_size;
+	/* the fixed-function point size (d3d8_ff.c): A, B, C of
+	D3DRS_POINTSCALE_*; the base size, minimum and maximum in pixels */
+	float point_scale[4];
+	float point_base[4];
 	float ps_c0[8][4];
 	float ps_c1[8][4];
 	float ps_final_c0[4];
@@ -394,6 +398,7 @@ struct program_entry
 	GLint viewport_scale;
 	GLint viewport_offset;
 	GLint point_size;
+	GLint point_scale, point_base;
 	GLint ps_c0, ps_c1, ps_final_c0, ps_final_c1;
 	GLint fog_color, fog_parameters, alpha_reference;
 	GLint bump_matrix, bump_luminance, texture_scale;
@@ -652,6 +657,14 @@ static float dword_to_float(DWORD value)
 
 	u.d = value;
 	return u.f;
+}
+
+static DWORD float_to_dword(float value)
+{
+	union { DWORD d; float f; } u;
+
+	u.f = value;
+	return u.d;
 }
 
 static void color_to_vec4(D3DCOLOR color, float *out)
@@ -1867,6 +1880,10 @@ HRESULT WINAPI Direct3D_CreateDevice(UINT adapter, D3DDEVTYPE device_type, void 
 		D3D__RenderState[D3DRS_EMISSIVEMATERIALSOURCE] = D3DMCS_MATERIAL;
 		D3D__RenderState[D3DRS_TEXTUREFACTOR] = 0xffffffff;
 		D3D__RenderState[D3DRS_SHADEMODE] = 0x1d01; /* D3DSHADE_GOURAUD (GL_SMOOTH) */
+		/* the point defaults (Direct3D 8's) */
+		D3D__RenderState[D3DRS_POINTSIZE] = float_to_dword(1.0f);
+		D3D__RenderState[D3DRS_POINTSIZE_MAX] = float_to_dword(64.0f);
+		D3D__RenderState[D3DRS_POINTSCALE_A] = float_to_dword(1.0f);
 		for (index = 0; index < D3DTSS_MAXSTAGES; index++)
 		{
 			D3D__TextureState[index][D3DTSS_COLOROP] = index ? D3DTOP_DISABLE : D3DTOP_MODULATE;
@@ -2942,6 +2959,8 @@ static struct program_entry *program_get(GLuint vertex_shader, GLuint fragment_s
 	entry->viewport_scale = glGetUniformLocation(entry->program, "viewport_scale");
 	entry->viewport_offset = glGetUniformLocation(entry->program, "viewport_offset");
 	entry->point_size = glGetUniformLocation(entry->program, "point_size");
+	entry->point_scale = glGetUniformLocation(entry->program, "point_scale");
+	entry->point_base = glGetUniformLocation(entry->program, "point_base");
 	entry->ps_c0 = glGetUniformLocation(entry->program, "ps_c0");
 	entry->ps_c1 = glGetUniformLocation(entry->program, "ps_c1");
 	entry->ps_final_c0 = glGetUniformLocation(entry->program, "ps_final_c0");
@@ -3703,11 +3722,50 @@ static void gl_check_errors(const char *where)
 
 /* the uniforms of the latest draws, converted from these inputs; the serial
 counts the conversions */
-#define DRAW_UNIFORM_INPUT_COUNT (4 + 4 + 16 + 1 + 16 + 2 + 4 + 1 + 1 + 7 * D3DTSS_MAXSTAGES)
+#define DRAW_UNIFORM_INPUT_COUNT (4 + 4 + 16 + 1 + 8 + 16 + 2 + 4 + 1 + 1 + 7 * D3DTSS_MAXSTAGES)
 
 static DWORD draw_uniform_inputs[DRAW_UNIFORM_INPUT_COUNT];
 static struct draw_uniforms draw_uniforms;
 static unsigned long draw_uniforms_serial;
+
+/* the fixed-function point size (d3d8_ff.c), as the XBE's
+D3D_LazySetPointParams (0x001f8730) gives it to the hardware: without
+scaling, D3DRS_POINTSIZE within the minimum and maximum, at most 0x1ff
+eighths of a pixel; with scaling, height * size / sqrt(A + B * d + C * d * d)
+within the minimum and maximum (the hardware's 64 pixels at most), for the
+eye distance d. scale: A, B, C; base: the size (or height * size), minimum
+and maximum, in the bound target's pixels */
+static void point_parameters(float scale[4], float base[4])
+{
+	float size = dword_to_float(D3D__RenderState[D3DRS_POINTSIZE]);
+	float minimum = dword_to_float(D3D__RenderState[D3DRS_POINTSIZE_MIN]);
+	float maximum = dword_to_float(D3D__RenderState[D3DRS_POINTSIZE_MAX]);
+	float pixels = target_scale[1];
+
+	if (maximum > 64.0f)
+		maximum = 64.0f;
+	scale[0] = dword_to_float(D3D__RenderState[D3DRS_POINTSCALE_A]);
+	scale[1] = dword_to_float(D3D__RenderState[D3DRS_POINTSCALE_B]);
+	scale[2] = dword_to_float(D3D__RenderState[D3DRS_POINTSCALE_C]);
+	scale[3] = 0.0f;
+	if (D3D__RenderState[D3DRS_POINTSCALEENABLE])
+	{
+		base[0] = (float)device.viewport.Height * size * pixels;
+	}
+	else
+	{
+		if (size < minimum)
+			size = minimum;
+		if (size > maximum)
+			size = maximum;
+		if (size > 511.0f / 8.0f)
+			size = 511.0f / 8.0f;
+		base[0] = size * pixels;
+	}
+	base[1] = minimum * pixels;
+	base[2] = maximum * pixels;
+	base[3] = 0.0f;
+}
 
 /* sets a program's uniform unless it already holds value */
 static void uniform_vec4(GLint location, float *shadow, const float *value, int count)
@@ -3839,6 +3897,7 @@ static struct program_entry *prepare_draw(BOOL immediate)
 	if (target_samples > 1 && key.alpha_test_function && !D3D__RenderState[D3DRS_ALPHABLENDENABLE])
 		key.alpha_test_samples = (unsigned char)target_samples;
 #endif
+	key.point_sprite = D3D__RenderState[D3DRS_POINTSPRITEENABLE] != 0;
 	key.fog_enable = D3D__RenderState[D3DRS_FOGENABLE] != 0;
 	key.fog_table_mode = (unsigned char)D3D__RenderState[D3DRS_FOGTABLEMODE];
 #ifdef HALO_GLES
@@ -3979,6 +4038,14 @@ static struct program_entry *prepare_draw(BOOL immediate)
 		memcpy(&inputs[count], uniforms.texture_scale, sizeof(uniforms.texture_scale));
 		count += 16;
 		inputs[count++] = D3D__RenderState[D3DRS_POINTSIZE];
+		inputs[count++] = D3D__RenderState[D3DRS_POINTSIZE_MIN];
+		inputs[count++] = D3D__RenderState[D3DRS_POINTSIZE_MAX];
+		inputs[count++] = D3D__RenderState[D3DRS_POINTSCALEENABLE];
+		inputs[count++] = D3D__RenderState[D3DRS_POINTSCALE_A];
+		inputs[count++] = D3D__RenderState[D3DRS_POINTSCALE_B];
+		inputs[count++] = D3D__RenderState[D3DRS_POINTSCALE_C];
+		memcpy(&inputs[count++], &target_scale[1], sizeof(DWORD));
+		inputs[count++] = device.viewport.Height;
 		for (stage = 0; stage < 8; stage++)
 		{
 			inputs[count++] = ps_state[D3DRS_PSCONSTANT0_0 + stage];
@@ -4015,6 +4082,7 @@ static struct program_entry *prepare_draw(BOOL immediate)
 			memcpy(converted->texture_scale, uniforms.texture_scale, sizeof(converted->texture_scale));
 			converted->point_size = D3D__RenderState[D3DRS_POINTSIZE] ?
 				dword_to_float(D3D__RenderState[D3DRS_POINTSIZE]) : 1.0f;
+			point_parameters(converted->point_scale, converted->point_base);
 			for (stage = 0; stage < 8; stage++)
 			{
 				color_to_vec4(ps_state[D3DRS_PSCONSTANT0_0 + stage], converted->ps_c0[stage]);
@@ -4051,6 +4119,8 @@ static struct program_entry *prepare_draw(BOOL immediate)
 	uniform_vec4(entry->viewport_scale, entry->uniforms.viewport_scale, draw_uniforms.viewport_scale, 1);
 	uniform_vec4(entry->viewport_offset, entry->uniforms.viewport_offset, draw_uniforms.viewport_offset, 1);
 	uniform_float(entry->point_size, &entry->uniforms.point_size, draw_uniforms.point_size);
+	uniform_vec4(entry->point_scale, entry->uniforms.point_scale, draw_uniforms.point_scale, 1);
+	uniform_vec4(entry->point_base, entry->uniforms.point_base, draw_uniforms.point_base, 1);
 	uniform_vec4(entry->ps_c0, entry->uniforms.ps_c0[0], draw_uniforms.ps_c0[0], 8);
 	uniform_vec4(entry->ps_c1, entry->uniforms.ps_c1[0], draw_uniforms.ps_c1[0], 8);
 	uniform_vec4(entry->ps_final_c0, entry->uniforms.ps_final_c0, draw_uniforms.ps_final_c0, 1);

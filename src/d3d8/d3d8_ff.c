@@ -206,6 +206,8 @@ void d3d8_ff_vertex_key_build(DWORD fvf, struct d3d8_ff_vertex_key *key)
 		else
 			key->fog = rs[D3DRS_RANGEFOGENABLE] && !transformed ? 2 : 1;
 	}
+	/* point sizes that shrink with the eye distance (D3DRS_POINTSCALEENABLE) */
+	key->point_scale = rs[D3DRS_POINTSCALEENABLE] && !transformed;
 	for (stage = 0; stage < D3DTSS_MAXSTAGES; stage++)
 	{
 		DWORD coordinates = D3D__TextureState[stage][D3DTSS_TEXCOORDINDEX];
@@ -266,6 +268,8 @@ char *d3d8_ff_vertex_glsl(const struct d3d8_ff_vertex_key *key)
 		"uniform vec4 viewport_scale;\n"
 		"uniform vec4 viewport_offset;\n"
 		"uniform float point_size;\n"
+		"uniform vec4 point_scale;\n"
+		"uniform vec4 point_base;\n"
 		"uniform float screen_offset;\n"
 		"out vec4 xD0;\nout vec4 xD1;\nout vec4 xB0;\nout vec4 xB1;\n"
 		"out vec4 xT0;\nout vec4 xT1;\nout vec4 xT2;\nout vec4 xT3;\n"
@@ -443,6 +447,18 @@ char *d3d8_ff_vertex_glsl(const struct d3d8_ff_vertex_key *key)
 		xgpu_text_append(&text, "\t}\n");
 	}
 
+	/* the point size in the target's pixels (d3d8_gl.c point_base): with
+	scaling, D3D's size * height / sqrt(A + B * d + C * d * d) (the XBE's
+	D3D_LazySetPointParams 0x001f8730 hands the hardware the same), within
+	the minimum and maximum */
+	if (key->point_scale)
+		xgpu_text_append(&text,
+			"\t{\n\t\tfloat d = length(P);\n"
+			"\t\tgl_PointSize = clamp(point_base.x * inversesqrt(max(point_scale.x + point_scale.y * d +\n"
+			"\t\t\tpoint_scale.z * d * d, 1.0e-12)), point_base.y, point_base.z);\n\t}\n");
+	else
+		xgpu_text_append(&text, "\tgl_PointSize = point_base.x;\n");
+
 	switch (key->fog)
 	{
 	case 1: xgpu_text_append(&text, "\txFog = abs(P.z);\n"); break;
@@ -458,7 +474,6 @@ char *d3d8_ff_vertex_glsl(const struct d3d8_ff_vertex_key *key)
 		"\tgl_Position.y = -gl_Position.y;\n"
 		"\tgl_Position.z = 2.0 * gl_Position.z - gl_Position.w;\n"
 #endif
-		"\tgl_PointSize = point_size;\n"
 		"\txD0 = clamp(color0, 0.0, 1.0);\n"
 		"\txD1 = clamp(color1, 0.0, 1.0);\n"
 		"\txB0 = xD0;\n"
@@ -631,6 +646,16 @@ enum
 
 /* what the stage has bound (d3d8_ff_combiners' texture_kind) */
 static const unsigned char *stage_textures;
+/* D3DRS_POINTSPRITEENABLE: the one combiner stage is built from texture
+stage 3, the stage the hardware gives point sprite coordinates (the XBE's
+0x001f8a20 passes texture stage 3 to 0x001ff9d0/0x001ff030 for combiner 0) */
+static BOOL point_sprites;
+
+/* the texture stage whose states and texture combiner stage `stage` uses */
+static int texture_stage(int stage)
+{
+	return point_sprites ? 3 : stage;
+}
 
 static unsigned long argument_input(int stage, DWORD argument, BOOL alpha_portion)
 {
@@ -644,9 +669,9 @@ static unsigned long argument_input(int stage, DWORD argument, BOOL alpha_portio
 	case D3DTA_TEXTURE:
 		/* a stage without a texture reads white (so the default stage 0,
 		texture times diffuse, gives the diffuse color) */
-		if (stage_textures && stage_textures[stage] == _d3d8_ff_texture_none)
+		if (stage_textures && stage_textures[texture_stage(stage)] == _d3d8_ff_texture_none)
 			return (argument & D3DTA_COMPLEMENT) ? ZERO : ONE;
-		reg = (unsigned long)(_reg_t0 + stage);
+		reg = (unsigned long)(_reg_t0 + texture_stage(stage));
 		break;
 	case D3DTA_TFACTOR: reg = _reg_c0; break;
 	case D3DTA_SPECULAR: reg = _reg_v1; break;
@@ -679,7 +704,7 @@ static unsigned long expanded(unsigned long input)
 static BOOL missing_texture(int stage, DWORD argument)
 {
 	return (argument & D3DTA_SELECTMASK) == D3DTA_TEXTURE && stage_textures &&
-		stage_textures[stage] == _d3d8_ff_texture_none;
+		stage_textures[texture_stage(stage)] == _d3d8_ff_texture_none;
 }
 
 /* whether the operation reads (with one of the arguments it uses, or its own
@@ -687,7 +712,7 @@ texture alpha) the texture of a stage that has none (0x001ff2c0/0x001fead0 retur
 1 for such an argument) */
 static BOOL stage_reads_missing_texture(int stage, DWORD op, BOOL alpha)
 {
-	const DWORD *ts = D3D__TextureState[stage];
+	const DWORD *ts = D3D__TextureState[texture_stage(stage)];
 	DWORD arg0 = ts[alpha ? D3DTSS_ALPHAARG0 : D3DTSS_COLORARG0];
 	DWORD arg1 = ts[alpha ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
 	DWORD arg2 = ts[alpha ? D3DTSS_ALPHAARG2 : D3DTSS_COLORARG2];
@@ -720,7 +745,7 @@ static BOOL stage_reads_missing_texture(int stage, DWORD op, BOOL alpha)
 word, or FALSE if the stage leaves this portion alone */
 static BOOL stage_portion(int stage, BOOL alpha, DWORD *inputs, DWORD *outputs)
 {
-	const DWORD *ts = D3D__TextureState[stage];
+	const DWORD *ts = D3D__TextureState[texture_stage(stage)];
 	DWORD op = ts[alpha ? D3DTSS_ALPHAOP : D3DTSS_COLOROP];
 	unsigned long arg0 = argument_input(stage, ts[alpha ? D3DTSS_ALPHAARG0 : D3DTSS_COLORARG0], alpha);
 	unsigned long arg1 = argument_input(stage, ts[alpha ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1], alpha);
@@ -827,14 +852,20 @@ void d3d8_ff_combiners(const unsigned char texture_kind[D3DTSS_MAXSTAGES], DWORD
 
 	memset(state, 0, sizeof(DWORD) * D3DRS_PS_MAX);
 	stage_textures = texture_kind;
-	for (stage = 0; stage < D3DTSS_MAXSTAGES; stage++)
+	point_sprites = D3D__RenderState[D3DRS_POINTSPRITEENABLE] != 0;
+	for (stage = 0; stage < (point_sprites ? 1 : D3DTSS_MAXSTAGES); stage++)
 	{
-		const DWORD *ts = D3D__TextureState[stage];
+		const DWORD *ts = D3D__TextureState[texture_stage(stage)];
 		DWORD inputs, outputs;
 
 		if (ts[D3DTSS_COLOROP] == D3DTOP_DISABLE || ts[D3DTSS_COLOROP] == 0)
 			break;
-		if (stage && (D3D__TextureState[stage - 1][D3DTSS_COLOROP] == D3DTOP_BUMPENVMAP ||
+		if (point_sprites)
+		{
+			/* (texture 3 is sampled at the sprite's coordinates) */
+			modes |= (DWORD)(texture_mode(texture_kind[3]) << (5 * 3));
+		}
+		else if (stage && (D3D__TextureState[stage - 1][D3DTSS_COLOROP] == D3DTOP_BUMPENVMAP ||
 			D3D__TextureState[stage - 1][D3DTSS_COLOROP] == D3DTOP_BUMPENVMAPLUMINANCE))
 		{
 			modes |= (DWORD)((D3D__TextureState[stage - 1][D3DTSS_COLOROP] == D3DTOP_BUMPENVMAP ? 0x06 : 0x07)

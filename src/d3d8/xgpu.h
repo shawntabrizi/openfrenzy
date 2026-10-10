@@ -143,6 +143,9 @@ struct nv2a_pixel_shader_key
 	proportion to how far alpha is past the reference, not all of the pixel
 	or none of it, so that cut-out edges (foliage, grates) are smoothed too */
 	unsigned char alpha_test_samples;
+	/* D3DRS_POINTSPRITEENABLE: texture 3 is read at the point sprite's
+	coordinates (gl_PointCoord), the only stage the hardware gives them */
+	unsigned char point_sprite;
 };
 
 char *nv2a_pixel_shader_to_glsl(const struct nv2a_pixel_shader_key *key);

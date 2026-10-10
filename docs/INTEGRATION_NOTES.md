@@ -192,6 +192,11 @@ integration round 2 (921ec75); see below.
   the mode there (SMGame_UpdateOutro); the stack returns to Root.
 - Rendering seen in frame dumps: glow sprites draw as solid white/coloured squares in TankedUp
   and Special Delivery (Fireworks). Everything else looked right.
+  Fixed: these were ClassLib particles (point sprites, 0x000a9d20), not CTankEntities_DrawGlow.
+  The d3d8 fixed-function path built the combiner from stage 0 (no texture) and drew 1-pixel-per-unit
+  points without scaling. Now, as the XBE's D3D (0x001f8a20, 0x001f8730): with
+  D3DRS_POINTSPRITEENABLE the one combiner stage comes from texture stage 3, read at gl_PointCoord;
+  D3DRS_POINTSCALEENABLE sizes points height * size / sqrt(A + B d + C d^2) within min/max (64).
 
 ## Library identifications
 

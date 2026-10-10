@@ -418,6 +418,29 @@ static void test_combiners(void)
 	kinds[1] = _d3d8_ff_texture_cube;
 	stages_reset();
 
+	/* point sprites (ClassLib's particles, 0x000a9d20): the texture is on stage 3 (texture *
+	diffuse * 2, the diffuse alpha), stages 0-2 have none and stage 1 is off. The XBE's D3D
+	builds its one combiner stage from texture stage 3 while D3DRS_POINTSPRITEENABLE is set
+	(0x001f8a20); a combiner built from stage 0 drew each particle as a solid square of its
+	color (the squares of TankedUp and Special Delivery) */
+	{
+		static const unsigned char sprite_kinds[4] = { 0, 0, 0, _d3d8_ff_texture_2d };
+
+		in.t[3][0] = 0.25f; in.t[3][1] = 0.0f; in.t[3][2] = 0.5f; in.t[3][3] = 1.0f;
+		stage_state(0, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_CURRENT, D3DTOP_MODULATE, D3DTA_TEXTURE,
+			D3DTA_DIFFUSE);
+		stage_state(3, D3DTOP_MODULATE2X, D3DTA_DIFFUSE, D3DTA_TEXTURE, D3DTOP_SELECTARG1, D3DTA_DIFFUSE,
+			D3DTA_TEXTURE);
+		D3D__RenderState[D3DRS_POINTSPRITEENABLE] = TRUE;
+		run_stages(sprite_kinds, &in, result, &modes);
+		CHECK_COLOR(result, 0.25f, 0.0f, 0.5f, 0.3f, "point sprite: stage 3's texture * diffuse * 2");
+		CHECK(modes == (1u << 15), "point sprite: texture mode only on stage 3, got 0x%lx", (unsigned long)modes);
+		D3D__RenderState[D3DRS_POINTSPRITEENABLE] = FALSE;
+		run_stages(sprite_kinds, &in, result, &modes);
+		CHECK_COLOR(result, 0.5f, 1.0f, 0.5f, 0.3f, "no point sprite: stage 3 is not reached");
+		stages_reset();
+	}
+
 	/* specular added, then fog: f * color + (1 - f) * fog color */
 	stage_state(0, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_DIFFUSE, D3DTOP_SELECTARG1, D3DTA_TEXTURE, D3DTA_DIFFUSE);
 	D3D__RenderState[D3DRS_SPECULARENABLE] = TRUE;
