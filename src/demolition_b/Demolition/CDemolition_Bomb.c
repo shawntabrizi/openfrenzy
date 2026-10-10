@@ -1021,7 +1021,7 @@ int CDemolition_FragBomb_Init(struct CDemolition_FragBomb *self, int type)
 	float axis[4];
 	float origin[3];
 	float quat[4];
-	float up[3];
+	float up[4];
 	int degrees;
 
 	DB_I32(s, 0x10) = 0;
@@ -1057,7 +1057,8 @@ int CDemolition_FragBomb_Init(struct CDemolition_FragBomb *self, int type)
 	up[0] = 0.0f;
 	up[1] = 1.0f;
 	up[2] = 0.0f;
-	FUN_000ab4c0((int)(s + 0x4660), (undefined4 *)up);
+	up[3] = 0.0f;   /* uninitialised stack in the original; Obj_SetVector48 copies 4 floats */
+	Obj_SetVector48(s + 0x4660, up);
 	FUN_0010bd80((int)s, 0x10);
 	DB_VFN(s, 0x10, void (*)(void *))(s);
 	return 1;
@@ -1449,4 +1450,1147 @@ int CDemolition_RemoteBomb_StateRoll(struct CDemolition_RemoteBomb *self, int en
 		CDemolition_RemoteBomb_CheckContact(self) == 0 && DB_I32(DB_PTR(s, 0x30), 0x218) != 0)
 		CDemolition_RemoteBomb_Detonate(self, NULL, DB_PTR(s, 0x11d8));
 	return 0;
+}
+
+/* ====================================================================================
+   CDemolition_TimedBomb, continued (0x2b0 bytes:
+     +0x10 the bomb model (BActorInstance)   +0x180 position   +0x190 velocity
+     +0x1a0 orientation   +0x1b0 heading   +0x1b4 ground height + 40   +0x1b8 landed (short)
+     +0x1bc radius   +0x1c0 active   +0x1c1 visible   +0x1c2 frozen
+     +0x1c8 effects: +0x1c8 position, +0x1d8 "bombstate" node, +0x1e0 fuse timer,
+     +0x218 sparks, +0x298..+0x2a2 glow colours (shorts))
+   ==================================================================================== */
+
+/* 0x000f3010  Demolition/CDemolition_Bomb.cpp  constructor */
+struct CDemolition_TimedBomb *CDemolition_TimedBomb_Construct(struct CDemolition_TimedBomb *self)
+{
+	char *s = (char *)self;
+
+	DB_PTR(s, 0) = (void *)vtable_0026af2c;
+	FUN_000ec2f0((undefined4 *)(s + 0x1c8 + 0x18));
+	CSparkPointSystem_Construct((struct CSparkPointSystem *)(s + 0x1c8 + 0x50));
+	return self;
+}
+
+/* 0x000f3070  Demolition/CDemolition_Bomb.cpp  (0x0026af2c slot 0) deleting destructor */
+void *CDemolition_TimedBomb_DeletingDestruct(struct CDemolition_TimedBomb *self, unsigned int flags)
+{
+	CDemolition_TimedBomb_Destruct(self);
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}
+
+/* 0x000f3090  Demolition/CDemolition_Bomb.cpp
+   Sets the timed bomb up: the bomb model (game +0x13a4), "bombstate" node, sparks. */
+int CDemolition_TimedBomb_Init(struct CDemolition_TimedBomb *self)
+{
+	char *s = (char *)self;
+	float up[4];
+
+	baInitActorInstance((struct BActorInstance *)(s + 0x10), DB_PTR(DAT_002ff85c, 0x13a4), 1,
+		"C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp", 0x703);
+	DB_F32(s, 0x1bc) = 40.5f;
+	DB_PTR(s, 0x1d8) = baFindNode((struct BActorNode *)DB_PTR(s, 0x144), "bombstate");
+	FUN_000ec310((int)(s + 0x1e0));
+	CSparkPointSystem_Init((struct CSparkPointSystem *)(s + 0x218), NULL, 0x32);
+	DB_I32(s, 0x288) = 0x10;
+	DB_I32(s, 0x28c) = 0x10;
+	DB_U8(s, 0x271) = 0;
+	DB_F32(s, 0x27c) = -0.5f;
+	DB_I32(s, 0x290) = 4;
+	DB_I32(s, 0x294) = 4;
+	DB_F32(s, 0x274) = 15.0f;
+	DB_F32(s, 0x284) = 1.0f;
+	CParticleSystem_SetTexture((struct CPSHeader *)(s + 0x218), DB_I32(DAT_002ff85c, 0x6c54));
+	CParticleSystem_SetTexture2((struct CParticleSystem *)(s + 0x218), DB_I32(DAT_002ff85c, 0x6c78));
+	up[0] = 0.0f;
+	up[1] = 1.0f;
+	up[2] = 0.0f;
+	up[3] = 1.0f;
+	Obj_SetVector48(s + 0x218, up);
+	DB_U8(s, 0x1c0) = 0;
+	DB_U8(s, 0x1c1) = 0;
+	DB_U8(s, 0x1c2) = 0;
+	return 1;
+}
+
+/* 0x000f31b0  Demolition/CDemolition_Bomb.cpp
+   The timed bomb goes off (power 400, nobody's frag). */
+void CDemolition_TimedBomb_Explode(struct CDemolition_TimedBomb *self)
+{
+	char *s = (char *)self;
+
+	DB_U8(s, 0x1c0) = 0;
+	DB_U8(s, 0x1c1) = 0;
+	db_sound(db_rand() % 4, 0xff);
+	CDemolition_ExplosionMgr_Start((struct CDemolition_ExplosionMgr *)(DAT_002ff85c + 0x13f0),
+		NULL, NULL, DB_FP(s, 0x180), 0.3f, 400.0f);
+}
+
+/* ====================================================================================
+   CDemolition_CrossBomb, continued (frame +0x43a0, effects at +0x45d8:
+     +0x45d8 position, +0x45e8 "bombstate" node, +0x45f0 fuse timer, +0x4628 sparks,
+     +0x46a8..+0x46b2 glow colours; +0x45d0 holder, +0x45d4 thrower, +0x46c0 light,
+     +0x46c8 roll speed, +0x46cc roll radius (81), +0x46d0 pick-up delay,
+     +0x46d4 tilt (a quarter turn about z))
+   ==================================================================================== */
+
+/* 0x000f3240  Demolition/CDemolition_Bomb.cpp  (0x0026af30 slot 0) deleting destructor */
+void *CDemolition_CrossBomb_DeletingDestruct(struct CDemolition_CrossBomb *self, unsigned int flags)
+{
+	CDemolition_CrossBomb_Destruct(self);
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}
+
+/* 0x000f3260  Demolition/CDemolition_Bomb.cpp
+   Sets the cross bomb (dynamite, game +0x13ac) up for `system`, then resets it. */
+int CDemolition_CrossBomb_Init(struct CDemolition_CrossBomb *self, struct CDemolition_BombSystem *system)
+{
+	char *s = (char *)self;
+	float axis[4];
+	float origin[3];
+	float quat[4];
+	float up[4];
+	float tilt[4];
+	int degrees;
+
+	DB_PTR(s, 0x4450) = system;
+	DB_I32(s, 0x10) = 0;
+	DB_F32(s, 0x4410) = 40.5f;
+	DB_F32(s, 0x439c) = 40.5f;
+	DB_F32(s, 0x46cc) = 81.0f;
+	baInitActorInstance((struct BActorInstance *)(s + 0x4460), DB_PTR(DAT_002ff85c, 0x13ac), 1,
+		"C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp", 0x896);
+	degrees = db_rand() % 360;
+	axis[0] = 0.0f;
+	axis[1] = 1.0f;
+	axis[2] = 0.0f;
+	axis[3] = (float)degrees * 0.0174532924f;
+	bmAxisAngleToQuaternion(quat, axis);
+	origin[0] = 0.0f;
+	origin[1] = 0.0f;
+	origin[2] = 0.0f;
+	FUN_000ec490((undefined4 *)(s + 0x43a0), (undefined4 *)origin, (undefined4 *)quat, 2.0f);
+	DB_PTR(s, 0x45e8) = baFindNode((struct BActorNode *)DB_PTR(s, 0x4594), "bombstate");
+	FUN_000ec310((int)(s + 0x45f0));
+	CSparkPointSystem_Init((struct CSparkPointSystem *)(s + 0x4628), NULL, 0x1e);
+	DB_U8(s, 0x4681) = 0;
+	DB_F32(s, 0x468c) = -0.5f;
+	DB_I32(s, 0x4698) = 0x10;
+	DB_I32(s, 0x469c) = 0x10;
+	DB_I32(s, 0x46a0) = 4;
+	DB_I32(s, 0x46a4) = 6;
+	DB_F32(s, 0x4684) = 30.0f;
+	DB_F32(s, 0x4694) = 1.0f;
+	CParticleSystem_SetTexture((struct CPSHeader *)(s + 0x4628), DB_I32(DAT_002ff85c, 0x6c54));
+	CParticleSystem_SetTexture2((struct CParticleSystem *)(s + 0x4628), DB_I32(DAT_002ff85c, 0x6c78));
+	up[0] = 0.0f;
+	up[1] = 1.0f;
+	up[2] = 0.0f;
+	up[3] = 0.0f;   /* uninitialised stack in the original; Obj_SetVector48 copies 4 floats */
+	Obj_SetVector48(s + 0x4628, up);
+	tilt[0] = 0.0f;
+	tilt[1] = 0.0f;
+	tilt[2] = 1.0f;
+	tilt[3] = db_bitsf(0x3f490fdb);   /* pi / 4 */
+	bmAxisAngleToQuaternion(DB_FP(s, 0x46d4), tilt);
+	FUN_0010bd80((int)s, 0x10);
+	DB_VFN(s, 0x10, void (*)(void *))(s);
+	return 1;
+}
+
+/* 0x000f3470  Demolition/CDemolition_Bomb.cpp
+   A loose cross bomb rolls with its speed (about the axis across its path) and, once its
+   pick-up delay is over, the first player who can carry it and touches it takes it. */
+void CDemolition_CrossBomb_UpdateLoose(struct CDemolition_CrossBomb *self, float dt)
+{
+	char *s = (char *)self;
+	float vx = DB_F32(s, 0x43c4);
+	float vz = DB_F32(s, 0x43cc);
+	float speed = (float)sqrt((double)vz * vz + (double)vx * vx);
+	char *p;
+
+	(void)dt;
+	if (speed > 1.0f)
+	{
+		float inv = 1.0f / speed;
+		float axis[4];
+		float spin[4];
+
+		axis[1] = 0.0f;
+		axis[0] = -(vz * inv);
+		axis[2] = inv * vx;
+		axis[3] = speed * 1.57079625f / DB_F32(s, 0x46cc) * DB_F32(s, 0x46c8);
+		bmAxisAngleToQuaternion(spin, axis);
+		bmQuaternionMultiply(DB_FP(s, 0x43f4), DB_FP(s, 0x43f4), spin);
+		FUN_00198590(DB_FP(s, 0x43f4));
+	}
+	if (DB_U8(DAT_002ff85c, 0x25) != 0 || !(DB_F32(s, 0x46d0) <= 0.0f))
+		return;
+	for (p = DB_GAME_PLAYERS(); p != NULL; p = DB_PLAYER_NEXT(p))
+	{
+		unsigned short state;
+
+		if (DB_U8(p, 0x1244) != 0)
+			continue;
+		state = DB_U16(p, 0x36);
+		if (state == 0xe || state == 0xf || state == 0x10 || state == 0xd)
+			continue;
+		if (FUN_000eee30(DB_FP(s, 0x43a4), DB_F32(s, 0x4410), DB_F32(s, 0x4410), DB_FP(p, 0x1144),
+			DB_F32(p, 0x1164), DB_F32(p, 0x1168)) != 0)
+		{
+			CDemolition_CrossBomb_Attach(self, (struct CDemolition_Player *)p);
+			return;
+		}
+	}
+}
+
+/* 0x00297974  height of a carried cross bomb above the hands, by character */
+float DAT_00297974[6] = { 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f };
+
+/* 0x000f35c0  Demolition/CDemolition_Bomb.cpp
+   A carried cross bomb follows its holder like a frag bomb, tilted. */
+void CDemolition_CrossBomb_FollowHolder(struct CDemolition_CrossBomb *self, float dt)
+{
+	char *s = (char *)self;
+	char *holder = (char *)DB_PTR(s, 0x45d0);
+	float left[4];
+	float right[4];
+	float pos[4];
+	float axis[4];
+	float heading[4];
+
+	(void)dt;
+	baGetNodePosition((struct BActorInstance *)((char *)DB_PTR(holder, 0x30) + 0x10),
+		(struct BActorNode *)DB_PTR(holder, 0x123c), left);
+	holder = (char *)DB_PTR(s, 0x45d0);
+	baGetNodePosition((struct BActorInstance *)((char *)DB_PTR(holder, 0x30) + 0x10),
+		(struct BActorNode *)DB_PTR(holder, 0x1240), right);
+	holder = (char *)DB_PTR(s, 0x45d0);
+	pos[0] = (right[0] + left[0]) * 0.5f;
+	pos[1] = (right[1] + left[1]) * 0.5f;
+	pos[2] = (right[2] + left[2]) * 0.5f;
+	pos[3] = 1.0f;   /* uninitialised stack in the original */
+	pos[1] = pos[1] + DAT_00297974[DB_I32(holder, 0x1188)];
+	axis[0] = 0.0f;
+	axis[1] = 1.0f;
+	axis[2] = 0.0f;
+	axis[3] = -DB_F32(DB_PTR(holder, 0x30), 0x1e8);
+	bmAxisAngleToQuaternion(heading, axis);
+	bmQuaternionMultiply(DB_FP(s, 0x43f4), heading, DB_FP(s, 0x46d4));
+	CDemolition_Object_SetPosition((struct CDemolition_Object *)s, pos);
+}
+
+/* 0x000f36d0  Demolition/CDemolition_Bomb.cpp
+   Takes one contact from the object's contact queue (demolition_d physics: +0x04 contacts of
+   0x34 bytes, +0x08 size (a power of two), +0x0a first, +0x0c count) and plays the knock
+   sound when it was hard enough (10). */
+void CDemolition_Object_PlayImpact(struct CDemolition_Object *self, float dt)
+{
+	char *s = (char *)self;
+	unsigned short count = DB_U16(s, 0xc);
+	unsigned short first;
+	char *contact;
+	double hit;
+
+	(void)dt;
+	if (count == 0)
+		return;
+	first = DB_U16(s, 0xa);
+	contact = (char *)DB_PTR(s, 4) + first * 0x34;
+	switch (DB_U16(contact, 4))
+	{
+	case 0:
+		hit = sqrt((double)DB_F32(contact, 0x1c) * DB_F32(contact, 0x1c) +
+			(double)DB_F32(contact, 0x14) * DB_F32(contact, 0x14));
+		break;
+	case 1:
+		hit = sqrt((double)DB_F32(contact, 0x18) * DB_F32(contact, 0x18) +
+			(double)DB_F32(contact, 0x10) * DB_F32(contact, 0x10));
+		break;
+	case 2:
+		hit = 10.0;
+		break;
+	default:
+		DB_U16(s, 0xc) = (unsigned short)(count - 1);
+		DB_U16(s, 0xa) = (unsigned short)((DB_U16(s, 8) - 1) & (first + 1));
+		return;
+	}
+	if (!(hit < 10.0))
+		db_sound(0x15, 0x7f);
+	count = DB_U16(s, 0xc);
+	if (count != 0)
+	{
+		DB_U16(s, 0xa) = (unsigned short)((DB_U16(s, 8) - 1) & (DB_U16(s, 0xa) + 1));
+		DB_U16(s, 0xc) = (unsigned short)(count - 1);
+	}
+}
+
+/* 0x000f3790  Demolition/CDemolition_Bomb.cpp  (0x0026af30 slot 4) Reset */
+void CDemolition_CrossBomb_Reset(struct CDemolition_CrossBomb *self)
+{
+	char *s = (char *)self;
+
+	DB_I32(s, 0x4454) = 0;
+	DB_U8(s, 0x14) = 0;
+	DB_U8(s, 0x15) = 0;
+	DB_U8(s, 0x16) = 0;
+	DB_U8(s, 0x1c) = 1;
+	DB_U8(s, 0x17) = 0;
+	DB_U32(s, 0x4414) = 0;
+	DB_U32(s, 0x4418) = 0xc0000000;   /* -2.0f */
+	DB_U32(s, 0x441c) = 0;
+	DB_F32(s, 0x4434) = db_bitsf(0x3ca3d70a);   /* 0.02 */
+	DB_F32(s, 0x4438) = db_bitsf(0x3dcccccd);   /* 0.1 */
+	DB_F32(s, 0x443c) = db_bitsf(0x3e4ccccd);   /* 0.2 */
+	DB_F32(s, 0x4440) = db_bitsf(0x3dcccccd);   /* 0.1 */
+	DB_F32(s, 0x4444) = db_bitsf(0x3fa66666);   /* 1.3 */
+	DB_F32(s, 0x4448) = 0.5f;
+	CDemolition_Object_Stop((struct CDemolition_Object *)s);
+	DB_PTR(s, 0x45d0) = NULL;
+	DB_PTR(s, 0x45d4) = NULL;
+	{
+		int r = db_rand();
+
+		DB_U32(s, 0x444c) = 0;
+		DB_F32(s, 0x46d0) = 0.0f;
+		DB_F32(s, 0x46c8) = (float)r * 3.05185094e-05f * 1.5f + 0.5f;
+	}
+}
+
+/* 0x000f3860  Demolition/CDemolition_Bomb.cpp
+   Drops a cross bomb at `pos` with a random heading and a fuse of 6..11 s; it takes a
+   light (game +0x1510). */
+void CDemolition_CrossBomb_Spawn(struct CDemolition_CrossBomb *self, float *pos)
+{
+	char *s = (char *)self;
+	float axis[4];
+	int degrees;
+
+	DB_U8(s, 0x15) = 1;
+	DB_U8(s, 0x16) = 1;
+	DB_U8(s, 0x1c) = 1;
+	DB_F32(s, 0x43a4) = pos[0];
+	DB_F32(s, 0x43a8) = pos[1];
+	DB_F32(s, 0x43ac) = pos[2];
+	DB_F32(s, 0x43b0) = pos[3];
+	DB_F32(s, 0x43c4) = 0.0f;
+	DB_F32(s, 0x43c8) = 0.0f;
+	DB_F32(s, 0x43cc) = 0.0f;
+	CDemolition_Object_Stop((struct CDemolition_Object *)s);
+	degrees = db_rand() % 360;
+	axis[0] = 0.0f;
+	axis[1] = 1.0f;
+	axis[2] = 0.0f;
+	axis[3] = (float)degrees * 0.0174532924f;
+	bmAxisAngleToQuaternion(DB_FP(s, 0x43f4), axis);
+	DB_I32(s, 0x4454) = 0;
+	DB_PTR(s, 0x45d0) = NULL;
+	DB_PTR(s, 0x45d4) = NULL;
+	db_timer_start(s + 0x45f0, (float)db_rand() * 3.05185094e-05f * 5.0f + 6.0f);
+	DB_I32(s, 0x46c0) = FUN_000ee7f0((int)(DAT_002ff85c + 0x1510));
+	DB_U8(DB_PTR(s, 0x46c0), 0x66) = 0;
+}
+
+/* 0x000f39a0  Demolition/CDemolition_Bomb.cpp
+   The cross bomb goes off 10 above its position (power 550); its holder drops it. */
+void CDemolition_CrossBomb_Detonate(struct CDemolition_CrossBomb *self, void *source, void *owner)
+{
+	char *s = (char *)self;
+	char *holder = (char *)DB_PTR(s, 0x45d0);
+	float pos[4];
+
+	DB_U8(s, 0x15) = 0;
+	DB_U8(s, 0x16) = 0;
+	if (holder != NULL)
+	{
+		DB_U8(holder, 0x1244) = 0;
+		DB_PTR(s, 0x45d0) = NULL;
+	}
+	pos[0] = DB_F32(s, 0x43a4);
+	pos[1] = DB_F32(s, 0x43a8) + 10.0f;
+	pos[2] = DB_F32(s, 0x43ac);
+	pos[3] = DB_F32(s, 0x43b0);
+	DB_U8(DB_PTR(s, 0x46c0), 0x66) = 0;
+	db_sound(db_rand() % 4, 0xff);
+	CDemolition_ExplosionMgr_Start((struct CDemolition_ExplosionMgr *)(DAT_002ff85c + 0x13f0),
+		source, owner, pos, 0.3f, 550.0f);
+}
+
+/* 0x000f3a70  Demolition/CDemolition_Bomb.cpp
+   `thrower` throws the cross bomb with `velocity`; it cannot be caught for 10 frames. */
+void CDemolition_CrossBomb_Throw(struct CDemolition_CrossBomb *self, void *thrower, float *velocity)
+{
+	char *s = (char *)self;
+	int r;
+
+	DB_I32(s, 0x4454) = 0;
+	DB_U8(s, 0x1c) = 1;
+	DB_PTR(s, 0x45d4) = thrower;
+	DB_PTR(s, 0x45d0) = NULL;
+	CDemolition_Object_SetVelocity((struct CDemolition_Object *)s, velocity);
+	r = db_rand();
+	DB_F32(s, 0x46d0) = 10.0f;
+	DB_F32(s, 0x46c8) = (float)r * 3.05185094e-05f * 0.5f + 0.25f;
+	db_sound(0x14, 0xff);
+}
+
+/* ====================================================================================
+   The bomb systems, continued
+   ==================================================================================== */
+
+/* 0x000f3b10  Demolition/CDemolition_Bomb.cpp  (0x0026af44 slot 0) deleting destructor */
+void *CDemolition_BombSystem_DeletingDestruct(struct CDemolition_BombSystem *self, unsigned int flags)
+{
+	DB_PTR(self, 0) = (void *)vtable_0026af44;
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}
+
+/* 0x000f3b30  Demolition/CDemolition_Bomb.cpp
+   The game frees its bomb system (+0x48) and the 17 bomb models (+0x04). */
+void CDemolition_Game_FreeBombs(void *game)
+{
+	void *system = DB_PTR(game, 0x48);
+	int i;
+
+	DB_VFN(system, 4, void (*)(void *))(system);
+	bkHeapFree(DB_PTR(game, 0x48));
+	for (i = 0; i < 17; i++)
+	{
+		void *res = DB_PTR(game, 4 + i * 4);
+
+		if (res != NULL)
+		{
+			bkDeleteResource(res);
+			DB_PTR(game, 4 + i * 4) = NULL;
+		}
+	}
+}
+
+/* 0x000f3b70  Demolition/CDemolition_Bomb.cpp  (0x0026af48 slot 8) deleting destructor */
+void *CDemolition_BombSystemFrag_DeletingDestruct(struct CDemolition_BombSystem *self, unsigned int flags)
+{
+	DB_PTR(self, 0) = (void *)vtable_0026af48;
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}
+
+/* 0x000f3b90  Demolition/CDemolition_Bomb.cpp  (0x0026af48 slot 0) Init
+   Eight frag bombs (two per player), then a reset. */
+int CDemolition_BombSystemFrag_Init(struct CDemolition_BombSystem *self, void *package)
+{
+	char *s = (char *)self;
+	int i;
+	int j;
+
+	(void)package;
+	DB_PTR(s, 4) = NULL;
+	DB_I32(s, 8) = 0;
+	for (i = 0; i < 4; i++)
+	{
+		for (j = 0; j < 2; j++)
+		{
+			void *mem = bkHeapAlloc(0x4710, "C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp",
+				0xc6f, 0x1001);
+			char *b = mem != NULL ? (char *)CDemolition_FragBomb_Construct(mem) : NULL;
+
+			CDemolition_FragBomb_Init((struct CDemolition_FragBomb *)b, self);
+			DB_PTR(b, 0x10) = DB_PTR(s, 4);
+			DB_PTR(s, 4) = b;
+			DB_I32(b, 0x4458) = DB_I32(s, 8);
+			DB_I32(s, 8)++;
+		}
+	}
+	DB_VFN(s, 0x14, void (*)(void *))(s);
+	return 1;
+}
+
+/* 0x000f3c70  Demolition/CDemolition_Bomb.cpp  (0x0026af6c slot 8) deleting destructor */
+void *CDemolition_BombSystemRemote_DeletingDestruct(struct CDemolition_BombSystem *self, unsigned int flags)
+{
+	DB_PTR(self, 0) = (void *)vtable_0026af6c;
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}
+
+/* 0x000f3c90  Demolition/CDemolition_Bomb.cpp  (0x0026af6c slot 0) Init
+   One remote bomb per player (game +0x70), then a reset. */
+int CDemolition_BombSystemRemote_Init(struct CDemolition_BombSystem *self, void *package)
+{
+	char *s = (char *)self;
+	int i;
+
+	(void)package;
+	for (i = 0; i < 4; i++)
+	{
+		void *mem = bkHeapAlloc(0x1260, "C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp",
+			0xd8f, 0x1001);
+		char *b = mem != NULL ? (char *)CDemolition_RemoteBomb_Construct(mem) : NULL;
+		char *player = (char *)DB_PTR(DAT_002ff85c, 0x70 + i * 4);
+
+		DB_PTR(player, 0x11a0) = b;
+		DB_PTR(b, 0x11d8) = player;
+		DB_PTR(s, 4 + i * 4) = b;
+		DB_VFN(b, 0xdc, int (*)(void *, int))(b, i);
+	}
+	DB_VFN(s, 0x14, void (*)(void *))(s);
+	return 1;
+}
+
+/* 0x000f3d50  Demolition/CDemolition_Bomb.cpp  constructor of the timed system */
+struct CDemolition_BombSystem *CDemolition_BombSystemTimed_Construct(struct CDemolition_BombSystem *self)
+{
+	char *s = (char *)self;
+	int i;
+
+	DB_PTR(s, 0) = (void *)vtable_0026af90;
+	/* MSVC's `eh vector constructor iterator` (0x001def84) */
+	for (i = 0; i < 8; i++)
+		CDemolition_TimedBomb_Construct((struct CDemolition_TimedBomb *)(s + 0x10 + i * 0x2b0));
+	FUN_000ec2f0((undefined4 *)(s + 0x1590));
+	return self;
+}
+
+/* 0x000f3dc0  Demolition/CDemolition_Bomb.cpp  (0x0026af90 slot 8) deleting destructor */
+void *CDemolition_BombSystemTimed_DeletingDestruct(struct CDemolition_BombSystem *self, unsigned int flags)
+{
+	CDemolition_BombSystemTimed_Destruct(self);
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}
+
+/* 0x000f3de0  Demolition/CDemolition_Bomb.cpp  (0x0026af90 slot 0) Init */
+int CDemolition_BombSystemTimed_Init(struct CDemolition_BombSystem *self, void *package)
+{
+	char *s = (char *)self;
+	int i;
+
+	(void)package;
+	for (i = 0; i < 8; i++)
+		CDemolition_TimedBomb_Init((struct CDemolition_TimedBomb *)(s + 0x10 + i * 0x2b0));
+	DB_F32(s, 0x15c8) = 40.0f;
+	FUN_000ec310((int)(s + 0x1590));
+	DB_VFN(s, 0x14, void (*)(void *))(s);
+	return 1;
+}
+
+/* 0x000f3e30  Demolition/CDemolition_Bomb.cpp
+   Drops a timed bomb (the first free one) at `pos`: it falls to 40 above the ground and
+   goes off after 5 s. */
+void CDemolition_BombSystemTimed_PlaceBomb(struct CDemolition_BombSystem *self, float *pos)
+{
+	char *s = (char *)self;
+	char *b;
+	float axis[4];
+	int i;
+
+	for (i = 0; i < 8; i++)
+	{
+		if (DB_U8(s, 0x1d0 + i * 0x2b0) == 0)
+			break;
+	}
+	if (i == 8)
+		return;
+	b = s + 0x10 + i * 0x2b0;
+	DB_F32(b, 0x1b0) = (float)(db_rand() % 360) * 0.0174532924f;
+	DB_F32(b, 0x180) = pos[0];
+	DB_F32(b, 0x184) = pos[1];
+	DB_F32(b, 0x188) = pos[2];
+	axis[0] = 0.0f;
+	axis[1] = 1.0f;
+	axis[2] = 0.0f;
+	axis[3] = DB_F32(b, 0x1b0);
+	DB_F32(b, 0x190) = 0.0f;
+	DB_F32(b, 0x194) = 0.0f;
+	DB_F32(b, 0x198) = 0.0f;
+	bmAxisAngleToQuaternion(DB_FP(b, 0x1a0), axis);
+	DB_F32(b, 0x1b4) = DB_F32(b, 0x184) - CLColl_GroundProbe(DB_FP(b, 0x180), 0.0f, NULL, NULL, 0);
+	DB_F32(b, 0x1b4) = DB_F32(b, 0x1b4) + DB_F32(s, 0x15c8);
+	DB_I16(b, 0x1b8) = 0;
+	DB_U8(b, 0x1c0) = 1;
+	DB_U8(b, 0x1c1) = 1;
+	db_timer_start(b + 0x1e0, 5.0f);
+	db_rand();   /* the original draws a number it does not use */
+	db_timer_start(s + 0x1590, 1.0f);
+}
+
+/* 0x0026b028  the minimum squared distance between two timed bombs (300 units) */
+
+/* 0x000f3f90  Demolition/CDemolition_Bomb.cpp
+   Places a new timed bomb in the quarter of the world (world +0x30: 4 areas, +0x24/+0x2c
+   centre, +0x34 half size) that has the fewest bombs, at a random spot 2500 high that is
+   at least 300 from the other bombs (after 10 tries it takes any spot). */
+void CDemolition_BombSystemTimed_SpawnBomb(struct CDemolition_BombSystem *self)
+{
+	char *s = (char *)self;
+	char *best_area = NULL;
+	int best = 99999;
+	float pos[4];
+	int tries;
+	int area;
+
+	for (area = 0; area < 4; area++)
+	{
+		void *world = DB_PTR(DAT_002ff85c, 0x79a0);
+		char *zone = DB_VFN(world, 0x30, char *(*)(void *, int))(world, area);
+		int count = 0;
+		int i;
+
+		for (i = 0; i < 8; i++)
+		{
+			if (DB_U8(s, 0x1d0 + i * 0x2b0) == 0)
+				continue;
+			if (FUN_00101ac0((int)zone, DB_FP(s, 0x190 + i * 0x2b0)) != 0)
+				count++;
+			if (count > best)
+				break;
+		}
+		if (i < 8)
+			continue;
+		if (count < best)
+		{
+			best = count;
+			best_area = zone;
+		}
+	}
+	tries = 0;
+	pos[3] = 0.0f;   /* uninitialised stack in the original; PlaceBomb reads x, y, z */
+	for (;;)
+	{
+		int r1 = db_rand();
+		int r2 = db_rand();
+		int i;
+
+		pos[0] = (float)r1 * 3.05185094e-05f * (DB_F32(best_area, 0x34) + DB_F32(best_area, 0x34)) -
+			DB_F32(best_area, 0x34) + DB_F32(best_area, 0x24);
+		pos[1] = 2500.0f;
+		pos[2] = (float)r2 * 3.05185094e-05f * (DB_F32(best_area, 0x34) + DB_F32(best_area, 0x34)) -
+			DB_F32(best_area, 0x34) + DB_F32(best_area, 0x2c);
+		if (FUN_00101ac0((int)best_area, pos) == 0)
+			continue;
+		for (i = 0; i < 8; i++)
+		{
+			char *b = s + 0x10 + i * 0x2b0;
+			float dx;
+			float dz;
+
+			if (DB_U8(b, 0x1c0) == 0)
+				continue;
+			dx = pos[0] - DB_F32(b, 0x180);
+			if (!(fabsf(dx) <= 600.0f))
+				continue;
+			dz = pos[2] - DB_F32(b, 0x188);
+			if (!(fabsf(dz) <= 600.0f))
+				continue;
+			if ((double)dz * dz + (double)dx * dx <= 90000.0)
+				break;
+		}
+		if (i == 8)
+			break;
+		if (tries++ > 10)
+			break;
+	}
+	CDemolition_BombSystemTimed_PlaceBomb(self, pos);
+}
+
+/* 0x000f41a0  Demolition/CDemolition_Bomb.cpp  (0x0026af90 slot 6) Start */
+void CDemolition_BombSystemTimed_Start(struct CDemolition_BombSystem *self)
+{
+	char *s = (char *)self;
+
+	db_rand();   /* the original draws a number it does not use */
+	db_timer_start(s + 0x1590, 1.0f);
+	DB_U8(s, 0x15cc) = 1;
+}
+
+/* 0x000f41e0  Demolition/CDemolition_Bomb.cpp  (0x0026afb4 slot 8) deleting destructor */
+void *CDemolition_BombSystemCross_DeletingDestruct(struct CDemolition_BombSystem *self, unsigned int flags)
+{
+	DB_PTR(self, 0) = (void *)vtable_0026afb4;
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}
+
+/* 0x000f4200  Demolition/CDemolition_Bomb.cpp  (0x0026afb4 slot 0) Init
+   The four drop points (game +0x7c0, 0x20 apart) and four cross bombs, then a reset.
+   Drop point i: +0x14 + 0x18 * i position, +0x24 idle time, +0x28 in use. */
+int CDemolition_BombSystemCross_Init(struct CDemolition_BombSystem *self, void *package)
+{
+	char *s = (char *)self;
+	int i;
+
+	(void)package;
+	DB_PTR(s, 4) = NULL;
+	for (i = 0; i < 4; i++)
+	{
+		DB_F32(s, 0x14 + i * 0x18) = DB_F32(DAT_002ff85c, 0x7c0 + i * 0x20);
+		DB_F32(s, 0x18 + i * 0x18) = DB_F32(DAT_002ff85c, 0x7c4 + i * 0x20);
+		DB_F32(s, 0x1c + i * 0x18) = DB_F32(DAT_002ff85c, 0x7c8 + i * 0x20);
+		DB_F32(s, 0x20 + i * 0x18) = DB_F32(DAT_002ff85c, 0x7cc + i * 0x20);
+	}
+	for (i = 0; i < 4; i++)
+	{
+		char *b = bkHeapAlloc(0x46f0, "C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp",
+			0xff0, 0x1001);
+
+		if (b != NULL)
+		{
+			/* the cross bomb's constructor, inlined */
+			CDemolition_Object_Construct((struct CDemolition_Object *)b);
+			DB_PTR(b, 0) = (void *)vtable_0026af30;
+			FUN_000ec2f0((undefined4 *)(b + 0x45d8 + 0x18));
+			CSparkPointSystem_Construct((struct CSparkPointSystem *)(b + 0x45d8 + 0x50));
+		}
+		CDemolition_CrossBomb_Init((struct CDemolition_CrossBomb *)b, self);
+		DB_PTR(b, 0x10) = DB_PTR(s, 4);
+		DB_PTR(s, 4) = b;
+		DB_I32(b, 0x4458) = DB_I32(s, 8);
+		DB_I32(s, 8)++;
+	}
+	DB_VFN(s, 0x14, void (*)(void *))(s);
+	return 1;
+}
+
+/* 0x000f43a0  Demolition/CDemolition_Bomb.cpp  (0x0026afb4 slot 5) Reset
+   Resets the bombs and the drop points; the first drop comes after 5..10 s. */
+void CDemolition_BombSystemCross_Reset(struct CDemolition_BombSystem *self)
+{
+	char *s = (char *)self;
+	char *b;
+	int i;
+
+	DB_U8(s, 0x10) = 0;
+	DB_U8(s, 0x11) = 0;
+	for (b = (char *)DB_PTR(s, 4); b != NULL; b = (char *)DB_PTR(b, 0x10))
+		DB_VFN(b, 0x10, void (*)(void *))(b);
+	for (i = 0; i < 4; i++)
+	{
+		DB_F32(s, 0x24 + i * 0x18) = 0.0f;
+		DB_I32(s, 0x28 + i * 0x18) = 1;
+	}
+	DB_F32(s, 0xc) = (float)db_rand() * 3.05185094e-05f * 5.0f + 5.0f;
+}
+
+/* 0x000f4430  Demolition/CDemolition_Bomb.cpp
+   A thrown frag bomb with a burning fuse: the glow goes from green to red, the sparks fly
+   from the "bombstate" node; it goes off near a player (200) or when the fuse ends. */
+void CDemolition_FragBomb_UpdateFuse(struct CDemolition_FragBomb *self, float dt)
+{
+	char *s = (char *)self;
+	char *p;
+	float t;
+	short a;
+	short b;
+
+	t = BCarTimer_GetRemaining((struct BCarTimer *)(s + 0x4628));
+	a = (short)(int)(t * 127.0f);
+	DB_I16(s, 0x46e6) = a;
+	b = (short)(int)((1.0f - t) * 127.0f);
+	DB_I16(s, 0x46e8) = b;
+	DB_I16(s, 0x46e0) = (short)(a >> 2);
+	DB_I16(s, 0x46e2) = (short)(b >> 2);
+	DB_I16(s, 0x46ea) = 0;
+	DB_I16(s, 0x46e4) = 0;
+	baGetNodePosition((struct BActorInstance *)(s + 0x4460), (struct BActorNode *)DB_PTR(s, 0x4620),
+		DB_FP(s, 0x4610));
+	DB_F32(s, 0x461c) = 1.0f;
+	DB_F32(s, 0x467c) = DB_F32(s, 0x4610);
+	DB_F32(s, 0x4680) = DB_F32(s, 0x4614);
+	DB_F32(s, 0x4684) = DB_F32(s, 0x4618);
+	DB_F32(s, 0x4688) = DB_F32(s, 0x461c);
+	FUN_0019d0c0((int *)(s + 0x4660), 1);
+	DB_U8(s, 0x46b8) = 1;
+	DB_VFN(s + 0x4660, 4, void (*)(void *, float))(s + 0x4660, dt);
+	if (DB_U8(DAT_002ff85c, 0x25) != 0)
+		return;
+	for (p = DB_GAME_PLAYERS(); p != NULL; p = DB_PLAYER_NEXT(p))
+	{
+		if (db_dist3(DB_FP(s, 0x43a4), DB_FP(p, 0x1144)) < 200.0)
+		{
+			CDemolition_FragBomb_Detonate(self, NULL, DB_PTR(s, 0x45d0));
+			break;
+		}
+	}
+	if (!(t < 1.0f))
+		CDemolition_FragBomb_Detonate(self, NULL, DB_PTR(s, 0x45d0));
+}
+
+/* 0x000f45b0  Demolition/CDemolition_Bomb.cpp
+   A timed bomb: falls (gravity 1 per frame, bouncing with 0.2 of its speed) to its ground
+   height, glows from green to red, and goes off when its fuse ends. */
+void CDemolition_TimedBomb_Update(struct CDemolition_TimedBomb *self, float dt)
+{
+	char *s = (char *)self;
+	float t;
+	short g;
+	short r;
+
+	if (DB_U8(s, 0x1c2) == 0)
+		FUN_0018e8e0((int)(s + 0x1e0));
+	t = BCarTimer_GetRemaining((struct BCarTimer *)(s + 0x1e0));
+	if (DB_F32(s, 0x184) <= -1000.0f)
+	{
+		DB_U8(s, 0x1c0) = 0;
+		DB_U8(s, 0x1c1) = 0;
+		return;
+	}
+	if (DB_I16(s, 0x1b8) == 0)
+	{
+		DB_F32(s, 0x194) = DB_F32(s, 0x194) - dt;
+		DB_F32(s, 0x180) = dt * DB_F32(s, 0x190) + DB_F32(s, 0x180);
+		DB_F32(s, 0x184) = dt * DB_F32(s, 0x194) + DB_F32(s, 0x184);
+		DB_F32(s, 0x188) = dt * DB_F32(s, 0x198) + DB_F32(s, 0x188);
+		if (DB_F32(s, 0x184) < DB_F32(s, 0x1b4))
+		{
+			DB_F32(s, 0x184) = DB_F32(s, 0x1b4);
+			DB_F32(s, 0x190) = DB_F32(s, 0x190) * 0.2f;
+			DB_F32(s, 0x194) = DB_F32(s, 0x194) * 0.2f;
+			DB_F32(s, 0x198) = DB_F32(s, 0x198) * 0.2f;
+			if (fabsf(DB_F32(s, 0x194)) > 1.0f)
+			{
+				DB_F32(s, 0x190) = -DB_F32(s, 0x190);
+				DB_F32(s, 0x194) = -DB_F32(s, 0x194);
+				DB_F32(s, 0x198) = -DB_F32(s, 0x198);
+			}
+			else
+			{
+				DB_I16(s, 0x1b8) = 1;
+				DB_F32(s, 0x194) = 0.0f;
+			}
+		}
+	}
+	memcpy(DB_FP(s, 0xf0), DB_FP(s, 0x1a0), 16);
+	memcpy(DB_FP(s, 0xd0), DB_FP(s, 0x180), 16);
+	baPrepActorInstance((struct BActorInstance *)(s + 0x10), 1);
+	memcpy(DB_FP(s, 0x234), DB_FP(s, 0x1c8), 16);
+	FUN_0019d0c0((int *)(s + 0x218), 1);
+	DB_U8(s, 0x270) = 1;
+	DB_VFN(s + 0x218, 4, void (*)(void *, float))(s + 0x218, dt);
+	g = (short)(int)(t * 127.0f);
+	DB_I16(s, 0x29e) = g;
+	r = (short)(int)((1.0f - t) * 127.0f);
+	DB_I16(s, 0x2a0) = r;
+	DB_I16(s, 0x2a2) = 0;
+	DB_I16(s, 0x298) = (short)(DB_I16(s, 0x29e) >> 2);
+	DB_I16(s, 0x29a) = (short)(DB_I16(s, 0x2a0) >> 2);
+	DB_I16(s, 0x29c) = (short)(DB_I16(s, 0x2a2) >> 2);
+	baGetNodePosition((struct BActorInstance *)(s + 0x10), (struct BActorNode *)DB_PTR(s, 0x1d8),
+		DB_FP(s, 0x1c8));
+	DB_F32(s, 0x1d4) = 1.0f;
+	if (DB_U8(DAT_002ff85c, 0x25) == 0 && !(t < 1.0f))
+		CDemolition_TimedBomb_Explode(self);
+}
+
+/* 0x000f48f0  Demolition/CDemolition_Bomb.cpp  (0x0026af30 slot 2) Update(dt)
+   A cross bomb: loose or carried, its glow and sparks and light; it goes off when its fuse
+   ends or when it falls out of the world (below -1990). */
+void CDemolition_CrossBomb_Update(struct CDemolition_CrossBomb *self, float dt)
+{
+	char *s = (char *)self;
+	float dir[4];
+	float t;
+	short g;
+	short r;
+
+	if (DB_U8(s, 0x15) == 0)
+		return;
+	CDemolition_Object_PlayImpact((struct CDemolition_Object *)s, dt);
+	DB_F32(s, 0x46d0) = DB_F32(s, 0x46d0) - dt;
+	if (DB_F32(s, 0x46d0) < 0.0f)
+		DB_F32(s, 0x46d0) = 0.0f;
+	if (DB_U8(s, 0x17) == 0)
+		FUN_0018e8e0((int)(s + 0x45f0));
+	t = BCarTimer_GetRemaining((struct BCarTimer *)(s + 0x45f0));
+	switch (DB_I32(s, 0x4454))
+	{
+	case 0:
+		CDemolition_CrossBomb_UpdateLoose(self, dt);
+		break;
+	case 1:
+		CDemolition_CrossBomb_FollowHolder(self, dt);
+		break;
+	}
+	memcpy(DB_FP(s, 0x4520), DB_FP(s, 0x43a4), 16);
+	if (DB_F32(s, 0x43f4) != 0.0f || DB_F32(s, 0x43f8) != 0.0f || DB_F32(s, 0x43fc) != 0.0f ||
+		DB_F32(s, 0x4400) != 0.0f)
+	{
+		memcpy(DB_FP(s, 0x4540), DB_FP(s, 0x43f4), 16);
+		baPrepActorInstance((struct BActorInstance *)(s + 0x4460), 1);
+	}
+	g = (short)(int)(t * 127.0f);
+	DB_I16(s, 0x46ae) = g;
+	r = (short)(int)((1.0f - t) * 127.0f);
+	DB_I16(s, 0x46b0) = r;
+	DB_I16(s, 0x46a8) = (short)(g >> 2);
+	DB_I16(s, 0x46aa) = (short)(r >> 2);
+	DB_I16(s, 0x46b2) = 0;
+	DB_I16(s, 0x46ac) = 0;
+	baGetNodePosition((struct BActorInstance *)(s + 0x4460), (struct BActorNode *)DB_PTR(s, 0x45e8),
+		DB_FP(s, 0x45d8));
+	DB_F32(s, 0x45e4) = 1.0f;
+	dir[0] = DB_F32(s, 0x45d8) - DB_F32(s, 0x43a4);
+	dir[1] = DB_F32(s, 0x45dc) - DB_F32(s, 0x43a8);
+	dir[2] = DB_F32(s, 0x45e0) - DB_F32(s, 0x43ac);
+	dir[3] = 0.0f;   /* uninitialised stack in the original; Obj_SetVector48 copies 4 floats */
+	if (dir[1] < 0.1f)
+		dir[1] = 0.1f;
+	bmVectorNormalise(dir, dir);
+	Obj_SetVector48(s + 0x4628, dir);
+	memcpy(DB_FP(s, 0x4644), DB_FP(s, 0x45d8), 16);
+	FUN_0019d0c0((int *)(s + 0x4628), 2);
+	DB_U8(s, 0x4680) = 1;
+	DB_VFN(s + 0x4628, 4, void (*)(void *, float))(s + 0x4628, dt);
+	memcpy(DB_FP(DB_PTR(s, 0x46c0), 0x1c), DB_FP(s, 0x45d8), 16);
+	DB_U8(DB_PTR(s, 0x46c0), 0x64) = 1;
+	DB_U8(DB_PTR(s, 0x46c0), 0x66) = 1;
+	if (DB_U8(DAT_002ff85c, 0x25) != 0)
+		return;
+	if (DB_F32(s, 0x43a8) <= -1990.0f)
+	{
+		CDemolition_CrossBomb_Detonate(self, NULL, DB_PTR(s, 0x45d4));
+		return;
+	}
+	if (!(t < 1.0f))
+		CDemolition_CrossBomb_Detonate(self, NULL, DB_PTR(s, 0x45d4));
+}
+
+/* 0x00297870  the bomb models, loaded into game +0x04 (17) */
+const char *DAT_00297870[17] = {
+	"models\\bomb.obe", "models\\rem_bomb.obe", "models\\dynamite.obe",
+	"models\\bshard01.obe", "models\\bshard02.obe", "models\\bshard03.obe", "models\\bshard04.obe",
+	"models\\bshard05.obe", "models\\bshard06.obe", "models\\bshard07.obe", "models\\bshard08.obe",
+	"models\\dynshard01.obe", "models\\dynshard02.obe", "models\\dynshard03.obe",
+	"models\\dynshard04.obe", "models\\dynshard05.obe", "models\\dynshard06.obe",
+};
+
+/* 0x000f4bf0  Demolition/CDemolition_Bomb.cpp
+   The game loads the bomb models from `package` and creates the bomb system of its
+   variation (game +0x28) at +0x48. Returns 0 if a model is missing. */
+int CDemolition_Game_InitBombs(void *game, void *package)
+{
+	void *system;
+	int i;
+
+	for (i = 0; i < 17; i++)
+	{
+		void *res = bLoadResource(package, DAT_00297870[i], 1, 0xdefa);
+
+		DB_PTR(game, 4 + i * 4) = res;
+		if (res == NULL)
+			return 0;
+	}
+	switch (DB_I32(DAT_002ff85c, 0x28))
+	{
+	case 0:
+		system = bkHeapAlloc(0xc, "C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp", 0xbb4, 0x1001);
+		if (system != NULL)
+			DB_PTR(system, 0) = (void *)vtable_0026af48;
+		DB_PTR(game, 0x48) = system;
+		break;
+	case 1:
+		system = bkHeapAlloc(0x14, "C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp", 0xbb7, 0x1001);
+		if (system != NULL)
+			DB_PTR(system, 0) = (void *)vtable_0026af6c;
+		DB_PTR(game, 0x48) = system;
+		break;
+	case 2:
+		system = bkHeapAlloc(0x15e0, "C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp", 0xbba, 0x1001);
+		if (system != NULL)
+			system = CDemolition_BombSystemTimed_Construct(system);
+		DB_PTR(game, 0x48) = system;
+		break;
+	case 3:
+		system = bkHeapAlloc(0x74, "C:\\BlitzParty\\Game\\Src\\Demolition\\CDemolition_Bomb.cpp", 0xbbd, 0x1001);
+		if (system != NULL)
+			DB_PTR(system, 0) = (void *)vtable_0026afb4;
+		DB_PTR(game, 0x48) = system;
+		break;
+	}
+	system = DB_PTR(game, 0x48);
+	if (DB_VFN(system, 0, int (*)(void *, void *))(system, package) == 0)
+		bkPrintf("CDemolition_BombSystem::Initialise - variation.Initialise FAILED!\n");
+	return 1;
+}
+
+/* 0x000f4d70  Demolition/CDemolition_Bomb.cpp  (0x0026af90 slot 2) Update(dt)
+   Updates the timed bombs and keeps 8 - (7 * the elapsed part of the round, game +0x78c0)
+   of them in the world (+0x15d0). */
+void CDemolition_BombSystemTimed_Update(struct CDemolition_BombSystem *self, float dt)
+{
+	char *s = (char *)self;
+	int active = 0;
+	int wanted;
+	int i;
+
+	if (DB_U8(s, 0x15cc) == 0)
+		return;
+	for (i = 0; i < 8; i++)
+	{
+		char *b = s + 0x10 + i * 0x2b0;
+
+		if (DB_U8(b, 0x1c0) != 0)
+		{
+			CDemolition_TimedBomb_Update((struct CDemolition_TimedBomb *)b, dt);
+			active++;
+		}
+	}
+	FUN_0018e8e0((int)(s + 0x1590));
+	if (DB_U8(s, 0x15cd) != 0)
+		return;
+	wanted = 8 - (int)((1.0f - BCarTimer_GetRemaining((struct BCarTimer *)(DAT_002ff85c + 0x78c0))) * 7.0f);
+	DB_I32(s, 0x15d0) = wanted;
+	if (active < wanted)
+		CDemolition_BombSystemTimed_SpawnBomb(self);
+}
+
+/* 0x000f4e10  Demolition/CDemolition_Bomb.cpp  (0x0026afb4 slot 2) Update(dt), with
+   CDemolition_BombSystemVariationCross::PlaceBomb inlined.
+   Every 5..10 s a cross bomb drops 2000 above (within 300 of) the drop point of a living
+   player that has the fewest bombs within 400 and has waited longest. */
+void CDemolition_BombSystemCross_Update(struct CDemolition_BombSystem *self, float dt)
+{
+	char *s = (char *)self;
+	char *b;
+
+	if (DB_U8(s, 0x10) == 0)
+		return;
+	if (DB_U8(s, 0x11) == 0)
+	{
+		char *free = NULL;
+		char *p;
+		int counts[4];
+		int k;
+
+		for (b = (char *)DB_PTR(s, 4); b != NULL; b = (char *)DB_PTR(b, 0x10))
+		{
+			if (DB_U8(b, 0x15) == 0)
+			{
+				free = b;
+				break;
+			}
+		}
+		k = 0;
+		for (p = DB_GAME_PLAYERS(); p != NULL; p = DB_PLAYER_NEXT(p), k++)
+		{
+			if (DB_U8(p, 0x116c) == 0)
+				DB_I32(s, 0x28 + k * 0x18) = 0;
+		}
+		for (k = 0; k < 4; k++)
+		{
+			if (DB_I32(s, 0x28 + k * 0x18) != 0)
+				DB_F32(s, 0x24 + k * 0x18) = dt + DB_F32(s, 0x24 + k * 0x18);
+		}
+		DB_F32(s, 0xc) = DB_F32(s, 0xc) - dt;
+		if (DB_F32(s, 0xc) < 0.0f)
+			DB_F32(s, 0xc) = 0.0f;
+		if (DB_F32(s, 0xc) <= 0.0f && free != NULL)
+		{
+			int least = 99999;
+			int pick = -1;
+			float idle = 0.0f;
+
+			for (k = 0; k < 4; k++)
+			{
+				float *spot = DB_FP(s, 0x14 + k * 0x18);
+				float lo_x = spot[0] - 400.0f;
+
+				counts[k] = 0;
+				for (b = (char *)DB_PTR(s, 4); b != NULL; b = (char *)DB_PTR(b, 0x10))
+				{
+					if (lo_x <= DB_F32(b, 0x43a4) && !(spot[0] + 400.0f < DB_F32(b, 0x43a4)) &&
+						spot[2] - 400.0f <= DB_F32(b, 0x43ac) && !(spot[2] + 400.0f < DB_F32(b, 0x43ac)))
+						counts[k]++;
+				}
+			}
+			for (k = 0; k < 4; k++)
+			{
+				if (DB_I32(s, 0x28 + k * 0x18) != 0 && counts[k] < least)
+					least = counts[k];
+			}
+			if (DB_I32(s, 0x28) != 0 && counts[0] == least && DB_F32(s, 0x24) > 0.0f)
+			{
+				pick = 0;
+				idle = DB_F32(s, 0x24);
+			}
+			for (k = 1; k < 4; k++)
+			{
+				if (DB_I32(s, 0x28 + k * 0x18) != 0 && counts[k] == least &&
+					idle < DB_F32(s, 0x24 + k * 0x18))
+				{
+					pick = k;
+					idle = DB_F32(s, 0x24 + k * 0x18);
+				}
+			}
+			if (pick != -1)
+			{
+				char *spot = s + pick * 0x18;
+				float pos[4];
+				float ox;
+				float oz;
+
+				DB_F32(spot, 0x24) = 0.0f;
+				DB_F32(s, 0xc) = (float)db_rand() * 3.05185094e-05f * 5.0f + 5.0f;
+				ox = (float)db_rand() * 3.05185094e-05f * 600.0f - 300.0f;
+				oz = (float)db_rand() * 3.05185094e-05f * 600.0f - 300.0f;
+				pos[0] = ox + DB_F32(spot, 0x14);
+				pos[1] = DB_F32(spot, 0x18) + 2000.0f;
+				pos[2] = oz + DB_F32(spot, 0x1c);
+				/* w shares the stack slot of counts[3] in the original */
+				memcpy(&pos[3], &counts[3], sizeof pos[3]);
+				for (b = (char *)DB_PTR(s, 4); b != NULL; b = (char *)DB_PTR(b, 0x10))
+				{
+					if (DB_U8(b, 0x15) == 0)
+						break;
+				}
+				if (b == NULL)
+					bkPrintf("*** CDemolition_BombSystemVariationCross::PlaceBomb: Failed to find a free "
+						"bomb slot ***\n");
+				else
+					CDemolition_CrossBomb_Spawn((struct CDemolition_CrossBomb *)b, pos);
+			}
+		}
+	}
+	for (b = (char *)DB_PTR(s, 4); b != NULL; b = (char *)DB_PTR(b, 0x10))
+		DB_VFN(b, 8, void (*)(void *, float))(b, dt);
+	FUN_0018ec60((int)(DAT_002ff85c + 0x77d4), (undefined4)DB_PTR(s, 4));
+	db_game_77d4_update(dt);
+}
+
+/* 0x000f51c0  Demolition/CDemolition_Bomb.cpp  (0x0026ae18 slot 2) Update(dt)
+   A frag bomb: held (follows its holder), thrown (the fuse catches when 2.5 s remain), or
+   burning; it goes off when it falls out of the world (below -1000). */
+void CDemolition_FragBomb_Update(struct CDemolition_FragBomb *self, float dt)
+{
+	char *s = (char *)self;
+
+	if (DB_U8(s, 0x17) == 0)
+		FUN_0018e8e0((int)(s + 0x4628));
+	CDemolition_Object_PlayImpact((struct CDemolition_Object *)s, dt);
+	switch (DB_I32(s, 0x4454))
+	{
+	case 1:
+		CDemolition_FragBomb_FollowHolder(self, dt);
+		break;
+	case 2:
+		if (!(FUN_0018ea50((int)(s + 0x4628)) > 2.5f))
+			DB_I32(s, 0x4454) = 3;
+		break;
+	case 3:
+		CDemolition_FragBomb_UpdateFuse(self, dt);
+		break;
+	}
+	memcpy(DB_FP(s, 0x4540), DB_FP(s, 0x43f4), 16);
+	memcpy(DB_FP(s, 0x4520), DB_FP(s, 0x43a4), 16);
+	baPrepActorInstance((struct BActorInstance *)(s + 0x4460), 1);
+	if (DB_F32(s, 0x43a8) <= -1000.0f)
+		CDemolition_FragBomb_Detonate(self, NULL, DB_PTR(s, 0x45d0));
 }
