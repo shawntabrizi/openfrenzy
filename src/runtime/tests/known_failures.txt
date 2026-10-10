@@ -1,6 +1,4 @@
 # Tests that fail because of a bug outside src/runtime. run_tests.sh reports them as XFAIL
 # (not counted as failures) and as XPASS once they pass: then remove the line.
 # name                     owner   reason
-test_d3d_present_order     d3d8    D3DDevice_Present blocks on frame 3: the vertical blank thread starts only from SetVerticalBlankCallback/BlockUntilVerticalBlank, which the game never calls
 test_toolchain_strings     architect  port/macos/tools/asm_convert.py drops the leading '_' of quoted .asciz strings ("_stricmp" -> "stricmp"): every guest string literal that starts with '_' is changed
-test_disc_read             vfs     committed xbox_files.c does not yet serve D:\ from the disc image (passes with the vfs agent's uncommitted xiso_fs work on 2026-10-10)

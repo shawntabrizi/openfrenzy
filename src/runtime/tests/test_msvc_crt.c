@@ -74,5 +74,18 @@ int main(void)
 	OF_CHECK(!strcmp(drive, "d:") && !strcmp(directory, "\\Packages\\English\\") && !strcmp(name, "CharVoice") &&
 		!strcmp(extension, ".xbp"), "_splitpath of a disc path (%s|%s|%s|%s)", drive, directory, name, extension);
 
+	/* rand (0x001e133e, src/xkernel/xbox_crt.c) and RAND_MAX (include/linux/stdlib.h): the
+	game scales rand() by 1/32767 and draws rand() % n, so the range must be MSVC's 0..0x7fff
+	and the sequence MSVC's (seed 1 at start) */
+	{
+		int first = rand(), second = rand(), third = rand();
+
+		OF_CHECK(first == 41 && second == 18467 && third == 6334, "rand from seed 1 is MSVC's (%d %d %d)",
+			first, second, third);
+		srand(1);
+		OF_CHECK(rand() == 41, "srand(1) restarts the sequence");
+		OF_CHECK(RAND_MAX == 0x7fff, "RAND_MAX is 0x7fff (%d)", (int)RAND_MAX);
+	}
+
 	return of_test_result("test_msvc_crt");
 }

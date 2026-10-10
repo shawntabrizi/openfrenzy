@@ -15,6 +15,10 @@ Host <stdlib.h> plus MSVC-named functions and constants.
 #define _MAX_FNAME 256
 #define _MAX_EXT 256
 
+/* MSVC's rand() (0x001e133e; src/xkernel/xbox_crt.c) returns 0..0x7fff, not musl's 0..0x7fffffff */
+#undef RAND_MAX
+#define RAND_MAX 0x7fff
+
 char *_itoa(int value, char *string, int radix);
 char *_ltoa(long value, char *string, int radix);
 char *_ultoa(unsigned long value, char *string, int radix);

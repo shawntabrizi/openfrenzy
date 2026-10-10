@@ -31,6 +31,16 @@ IDENTIFIED = {
     # __fastcall (stage, state, value): ORs the dirty bit and stores into
     # D3D_g_DeferredTextureState[stage * 0x20 + state]
     "001f6700": "D3DDevice_SetTextureState_Deferred",
+    # the XBE names it D3D_GetDeviceCaps; the HLE (d3d8_gl.c) is Direct3D_GetDeviceCaps
+    "002022f0": "Direct3D_GetDeviceCaps",
+    # returns 1 (the Xbox's IDirect3D8 is a dummy object): Direct3DCreate8 (d3d8_extra.h)
+    "002022e0": "Direct3DCreate8",
+    # XGBuffer: decrements the reference count at +0, frees +4 and itself at zero
+    "0022184b": "XGBuffer_Release",
+    # XGBuffer: returns the data pointer at +4
+    "00221874": "XGBuffer_GetBufferPointer",
+    # assembles vertex shader text (d3d8/xgraphics.c)
+    "0022835a": "XGAssembleShader",
 }
 
 
