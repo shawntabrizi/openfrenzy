@@ -330,6 +330,7 @@ void CRollerBallScreen_Follow(void *self, float dt)
 	v[3] = 0.0f;
 	bmVectorRotateY(out, v, RB_F32(p, RB_PL_HEADING));
 	RB_F32(self, 0x2c) = out[0] + RB_F32(self, 0x1c);
+	RB_F32(self, 0x30) = out[1] + RB_F32(self, 0x20);
 	RB_F32(self, 0x34) = out[2] + RB_F32(self, 0x24);
 }
 
@@ -355,6 +356,7 @@ void CRollerBallScreen_Orbit(void *self, float dt)
 	v[3] = 0.0f;
 	bmVectorRotateXY(out, v, RB_F32(self, 0x3c), RB_F32(self, 0x40));
 	RB_F32(self, 0x1c) = out[0] + RB_F32(self, 0x2c);
+	RB_F32(self, 0x20) = out[1] + RB_F32(self, 0x30);
 	RB_F32(self, 0x24) = out[2] + RB_F32(self, 0x34);
 }
 
