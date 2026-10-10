@@ -36,6 +36,12 @@ struct wma_xmo
 	struct wma_file_format format;
 };
 
+/* dsound_sdl.c refers to this so that the linker loads this file with it: the game
+image may hold a weak stand-in of WmaCreateDecoder (engine_misc's
+BSOUND/platform_fallback.c), and an archive member that defines only a symbol already
+defined, if weakly, is never loaded */
+const char dsound_wma_xmo_linked = 1;
+
 static struct wma_xmo *xmo_from_interface(XMediaObject *object)
 {
 	return (struct wma_xmo *)object;

@@ -1739,6 +1739,10 @@ static IDirectSoundStreamVtbl stream_vtable =
 
 /* ---------- the DirectSound object */
 
+/* loads wma_xmo.c (WmaCreateDecoder) with this file (see dsound_wma_xmo_linked) */
+extern const char dsound_wma_xmo_linked;
+const char *const dsound_wma_xmo_anchor = &dsound_wma_xmo_linked;
+
 struct sdl_direct_sound
 {
 	ULONG reference_count;
