@@ -830,3 +830,25 @@ void bsUpdateListener(void)
 	IDirectSound_SetAllParameters(DAT_002db808, &listener, 1);
 	IDirectSound_CommitDeferredSettings(DAT_002db808);
 }
+
+/* 0x000571c0  BSOUND (unplaced)
+Starts the sound system: DirectSound, the channels, the streams. */
+int bsInitSound(void)
+{
+	if (bsInitDirectSound() != 0) {
+		if (bsInitChannels() != 0) {
+			if (bsInitAudioStreams() != 0)
+				return 1;
+			bsStopAllThunk();
+		}
+		bsShutdownDirectSound();
+	}
+	return 0;
+}
+
+/* 0x000571f0  BSOUND (unplaced) */
+void bsShutdownSound(void)
+{
+	bsStopAllThunk();
+	bsShutdownDirectSound();
+}

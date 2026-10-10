@@ -64,3 +64,53 @@
 00055940 void bsSetChannelPosition(int channel, float *prevPos, float *pos);
 000559a0 void bsSetDistanceFactor(float factor);
 000559c0 void bsUpdateListener(void);
+
+# BSOUND play lists (xbPlayList.cpp)
+00055ae0 void bsPlayListEnumSongs(int soundtrack, void *callback, struct EmSoundtrackData data, void *context);
+00055b90 int bsPlayListEnum(void *callback, void *context);
+00055c40 struct BPlayList *bsPlayListSelect(int soundtrack);
+00055df0 void bsPlayListStop(struct BPlayList *list);
+00055e30 void bsPlayListDelete(struct BPlayList *list);
+00055eb0 int bsPlayListSetFlags(struct BPlayList *list, unsigned char flags);
+00055f20 int bsPlayListClearFlags(struct BPlayList *list, unsigned char flags);
+00055f90 unsigned short *bsPlayListGetSongName(struct BPlayList *list, int song);
+00055fd0 unsigned int bsPlayListGetNumSongs(struct BPlayList *list);
+00055fe0 unsigned short *bsPlayListGetName(struct BPlayList *list);
+00055ff0 int bsPlayListPlay(struct BPlayList *list, int song, unsigned int flags, int volume, int pan, int frequency);
+00056190 void bsPlayListUpdate(void);
+
+# BSOUND audio streams (xbAudioStream.cpp)
+00056270 int bsInitAudioStreams(void);
+000562d0 void bsAudioStreamFixup(int package, int name);
+00056340 void bsDeleteAudioStream(struct BAudioStream *stream);
+00056370 int bsPlayAudioStream(struct BAudioStream *stream, unsigned int flags, int volume, int pan, int frequency, void *callback, void *file);
+000563f0 void bsStopAudioStream(struct BAudioStream *stream);
+00056420 int bsAudioStreamTestFlags(struct BAudioStream *stream, unsigned int mask);
+00056440 void bsGetAudioStreamInfo(struct BAudioStream *stream, int *frequency, int *bits, int *formatFlags, int *blockTime, int *field8c, void **data90);
+000564a0 int bsGetAudioStreamState(struct BAudioStream *stream, int *volume, int *pan, int *frequency);
+000564e0 int bsSetAudioStreamVolume(struct BAudioStream *stream, int volume, int pan);
+00056530 void bsSetMusicVolume(int volume);
+00056590 int bsPauseAudioStream(struct BAudioStream *stream, unsigned char flags);
+000565e0 int bsResumeAudioStream(struct BAudioStream *stream, unsigned char flags);
+
+# BSOUND WMA streams (xbAudioStreamWMA.cpp)
+00056640 void bsStreamDebug(const char *format, ...);
+00056660 void bsDeleteAudioStreamWMA(struct BAudioStream *stream);
+000566b0 void bsWmaReadBlock(struct BAudioStream *stream, int buf);
+00056860 void bsStopAudioStreamWMA(struct BAudioStream *stream);
+000569b0 int bsWmaCreateBuffer(struct BAudioStream *stream);
+00056a70 int bsPlayAudioStreamWMA(struct BAudioStream *stream, unsigned int flags, int volume, int pan, int frequency, void *callback, void *file);
+00056d20 void bsWmaDecode(struct BAudioStream *stream);
+00057060 void bsWmaBlockLoaded(struct BAudioStream *stream);
+00057160 void bsWmaUpdate(void);
+
+# BSOUND start-up (unplaced)
+000571c0 int bsInitSound(void);
+000571f0 void bsShutdownSound(void);
+
+# BSOUND ADPCM streams (xbAudioStreamADPCM.cpp)
+00057200 void bsDeleteAudioStreamADPCM(struct BAudioStream *stream);
+00057220 void bsAdpcmReadBlock(struct BAudioStream *stream);
+000573e0 int bsAdpcmCreateBuffer(struct BAudioStream *stream);
+000575f0 int bsPlayAudioStreamADPCM(struct BAudioStream *stream, unsigned int flags, int volume, int pan, int frequency, void *callback);
+00057890 void bsStopAudioStreamADPCM(struct BAudioStream *stream);

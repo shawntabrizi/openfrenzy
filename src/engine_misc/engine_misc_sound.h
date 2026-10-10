@@ -223,6 +223,14 @@ OF_ASSERT_SIZE(struct BAudioStream, 0xb0);
 extern struct BAudioStream *DAT_002db810[3]; /* [0] the active play list (xbPlayList),
 	[1], [2] the two stream slots */
 extern int DAT_002db81c;                     /* streams playing */
+extern int DAT_002db824;                     /* 1: stream debug output */
+extern const char *const DAT_00285a90[2];    /* the slots' background-load events */
+extern char DAT_002d0758[0x100];             /* the data path (module bkernel) */
+
+/* functions missing from the function table (docs/ARCHITECTURE.md 11) */
+int WINAPI FUN_00056780(void *context, DWORD offset, DWORD size, void **data);
+void FUN_000574c0(const char *eventName, int unused, struct BAudioStream *stream);
+int FUN_00057570(struct BAudioStream *stream);
 
 /* ---------- play lists (soundtracks) */
 

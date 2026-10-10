@@ -56,8 +56,8 @@ Owner: engine_misc. Other modules: do not rely on these names.
 #define em_bkKillThread ((void (*)(int))FUN_0004e5a0)
 /* 0x0004e8f0: no arguments */
 #define em_bkThreadYield ((void (*)(void))FUN_0004e8f0)
-/* 0x0004b130: string copy into a fixed buffer (dst, src) */
-#define em_bkStrCopy ((void (*)(void *, const void *))FUN_0004b130)
+/* 0x0004b130: wide-string copy (dst, src) */
+#define em_bkWcsCopy ((void (*)(unsigned short *, const unsigned short *))FUN_0004b130)
 
 /* BINPUT (input.cpp, module bkernel) */
 #define em_biCreateChannel \
