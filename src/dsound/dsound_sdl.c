@@ -201,6 +201,38 @@ static struct
 
 static float master_volume = 1.0f;
 
+/* Port debugging: OPENFRENZY_DSOUND_LOG=1 logs the device, each buffer's creation, data and
+Play, and once a second of output what the mixer mixed (voices playing, peak level before the
+limiter). wma_xmo.c logs the peak of the decoded WMA PCM. */
+int dsound_log_enabled(void)
+{
+	static int enabled = -1;
+
+	if (enabled < 0)
+		enabled = getenv("OPENFRENZY_DSOUND_LOG") != NULL;
+	return enabled;
+}
+
+/* the largest magnitude of 16-bit PCM, 0 to 32768 */
+int dsound_pcm16_peak(const void *data, unsigned long bytes)
+{
+	const short *samples = data;
+	unsigned long count = bytes / 2, index;
+	int peak = 0, value;
+
+	for (index = 0; samples && index < count; index++)
+	{
+		value = samples[index] < 0 ? -samples[index] : samples[index];
+		if (value > peak)
+			peak = value;
+	}
+	return peak;
+}
+
+/* the mixer's statistics since the last line (mix) */
+static unsigned long log_frames, log_voices_max;
+static float log_peak;
+
 /* the I3DL2 listener properties (SetI3DL2Listener), which the reverb models:
 DirectSound's defaults until the game sets an environment, their room level
 leaving it silent; serial counts the changes */
@@ -1346,6 +1378,27 @@ static void mix(float *output, unsigned long frames)
 	pthread_mutex_lock(&mixer_lock);
 	for (stream = streams; stream; stream = stream->next)
 		mix_voice(stream, output, reverb.send, frames);
+	if (dsound_log_enabled())
+	{
+		unsigned long voices = 0, index;
+
+		for (stream = streams; stream; stream = stream->next)
+			voices += stream->is_buffer ? stream->buffer.playing : stream->packet_count != 0;
+		if (voices > log_voices_max)
+			log_voices_max = voices;
+		for (index = 0; index < frames * OUTPUT_CHANNELS; index++)
+			if (fabsf(output[index]) > log_peak)
+				log_peak = fabsf(output[index]);
+		log_frames += frames;
+		if (log_frames >= OUTPUT_RATE)
+		{
+			platform_log("dsound: mixed %lu frames, up to %lu voices playing, peak %.4f", log_frames,
+				log_voices_max, log_peak);
+			log_frames = 0;
+			log_voices_max = 0;
+			log_peak = 0.0f;
+		}
+	}
 	/* a new environment, once the fade to the last is over */
 	if (reverb.serial != environment_serial && !reverb.fade)
 	{
@@ -1464,6 +1517,9 @@ static void audio_start(void)
 		if (audio_stream)
 		{
 			SDL_ResumeAudioStreamDevice(audio_stream);
+			if (dsound_log_enabled())
+				platform_log("dsound: audio device '%s' opened (%d Hz, %d channels)", audio_device_name,
+					OUTPUT_RATE, OUTPUT_CHANNELS);
 			return;
 		}
 		platform_log("cannot open an audio device (%s); sound is silent", SDL_GetError());
@@ -1471,6 +1527,8 @@ static void audio_start(void)
 	{
 		pthread_t thread;
 
+		if (dsound_log_enabled())
+			platform_log("dsound: no audio device; voices drain silently");
 		pthread_create(&thread, NULL, silent_clock_thread, NULL);
 		pthread_detach(thread);
 	}
@@ -2280,6 +2338,13 @@ HRESULT WINAPI DirectSoundCreateBuffer(LPCDSBUFFERDESC description, LPDIRECTSOUN
 	stream->next = streams;
 	streams = stream;
 	pthread_mutex_unlock(&mixer_lock);
+	if (dsound_log_enabled())
+		platform_log("dsound: buffer %p created: format %u, %u channels, %u bits, %lu Hz, %lu bytes, flags 0x%lx",
+			(void *)stream, description->lpwfxFormat ? description->lpwfxFormat->wFormatTag : 0,
+			description->lpwfxFormat ? description->lpwfxFormat->nChannels : 0,
+			description->lpwfxFormat ? description->lpwfxFormat->wBitsPerSample : 0,
+			description->lpwfxFormat ? (unsigned long)description->lpwfxFormat->nSamplesPerSec : 0,
+			(unsigned long)description->dwBufferBytes, (unsigned long)description->dwFlags);
 	*result = (LPDIRECTSOUNDBUFFER)stream;
 	return DS_OK;
 }
@@ -2358,6 +2423,10 @@ HRESULT WINAPI IDirectSoundBuffer_SetBufferData(LPDIRECTSOUNDBUFFER buffer, LPVO
 	buffer_layout(&stream->buffer);
 	pthread_mutex_unlock(&mixer_lock);
 	free(owned);
+	if (dsound_log_enabled())
+		platform_log("dsound: buffer %p data %p, %lu bytes (%lu frames), 16-bit peak %d", (void *)stream, data,
+			(unsigned long)size, (unsigned long)stream->buffer.frames,
+			stream->buffer.bits == 16 ? dsound_pcm16_peak(data, size) : -1);
 	return DS_OK;
 }
 
@@ -2374,6 +2443,10 @@ HRESULT WINAPI IDirectSoundBuffer_Play(LPDIRECTSOUNDBUFFER buffer, DWORD reserve
 		stream->buffer.position = 0;
 	stream->buffer.playing = stream->buffer.frames != 0;
 	pthread_mutex_unlock(&mixer_lock);
+	if (dsound_log_enabled())
+		platform_log("dsound: buffer %p Play (%lu frames at %lu Hz%s)%s", (void *)stream,
+			(unsigned long)stream->buffer.frames, (unsigned long)stream->frequency,
+			stream->buffer.looping ? ", looping" : "", stream->buffer.playing ? "" : ": no data, silent");
 	return DS_OK;
 }
 

@@ -33,14 +33,16 @@ int bsInitAudioStreams(void)
 }
 
 /* 0x000562d0  BSOUND (xbAudioStream.cpp?)
-Fixes up a stream resource found in a package. */
-void bsAudioStreamFixup(int package, int name)
+Fixes up a stream resource found in a package and returns it.
+The resource loader (bkernel's table at 0x002852e8) uses the result: the x86 code leaves
+the resource (or 0) in EAX, which Ghidra's void prototype hides. */
+void *bsAudioStreamFixup(int package, int name)
 {
 	struct BAudioStream *stream;
 
 	stream = (struct BAudioStream *)em_bkFindResource(package, name, 0, 0, 0, 0);
 	if (stream == NULL)
-		return;
+		return NULL;
 	stream->package = (void *)package;
 	stream->buffer = NULL;
 	if (stream->data90 != NULL)
@@ -50,6 +52,7 @@ void bsAudioStreamFixup(int package, int name)
 	stream->state = 0;
 	stream->flags &= ~BSTREAM_KEEPBUFFERS;
 	stream->slot = 4;
+	return stream;
 }
 
 /* 0x00056340  BSOUND (xbAudioStream.cpp?) (Ghidra: switchD_0004b710::caseD_9, a case of

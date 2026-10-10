@@ -552,20 +552,23 @@ void bsUpdate(int arg)
 }
 
 /* 0x00055390  BSOUND (unplaced)
-Fixes up a sample resource found in a package. */
-void bsSampleFixup(int package, int name)
+Fixes up a sample resource found in a package and returns it.
+The resource loader (bkernel's table at 0x002852e8) uses the result: the x86 code leaves
+the resource (or 0) in EAX, which Ghidra's void prototype hides. */
+void *bsSampleFixup(int package, int name)
 {
 	struct BSample *sample;
 
 	sample = (struct BSample *)em_bkFindResource(package, name, 0, 0, 0, 0);
 	if (sample == NULL)
-		return;
+		return NULL;
 	sample->data = (char *)sample + sizeof(struct BSample);
 	sample->desc.dwSize = 0x18;
 	sample->desc.dwFlags = 0xa0;
 	sample->desc.dwBufferBytes = 0;
 	sample->desc.lpwfxFormat = &sample->format;
 	sample->channels = (char)sample->format.nChannels;
+	return sample;
 }
 
 /* 0x000553e0  BSOUND (unplaced) (Ghidra: switchD_0004b710::caseD_2, a case of

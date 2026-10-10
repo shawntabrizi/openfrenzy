@@ -81,6 +81,29 @@ before you fix the build, and remove an item when it is fixed.
   object (guest_cc.py adds them to the depfile). A build directory made before this change
   needs one clean build.
 
+## Sound (integration round 1, 2026-10-10)
+
+- `bLoadResource: Could not find '<name>.wav' in memory` lines are expected; the Xbox prints
+  them too. ClassLib/GenericSamples.cpp (0x00071170, 0x00071540) probes `<kind>00.wav`,
+  `<kind>01.wav`, ... until a lookup fails, for every voice kind of every character and every
+  commentary kind. Each probe loop ends with one failed lookup. Checked against every SAMP
+  file of every .xbp on the disc: no name that fails is in a package that is loaded at that
+  time. At boot only CharVoice.xbp (the 16 `selected` samples) is loaded, so the other kinds
+  fail until the character packages (Zak.xbp etc.) load. After that, `zak\taunt00` and
+  `zak\taunt01` are found and `zak\taunt02` fails. Some kinds are on no package of the disc:
+  `unselected`, `zonename`, `levelname`, `stop`, `tiebreak`, `playerwins`, `roundcomplete`,
+  `newchampion`, `playerleads`, `charnamejoins`, `charnamemightwin`, `charnamewinsstage`.
+  Hopper's `v1\blade_col_coll.obe` / `_shad.obe` probes also fail on the Xbox (the disc
+  has only `v1\blade_col.obe`).
+- The loaders of samples (0x00055390), audio streams (0x000562d0) and collision meshes
+  (0x00052700) return the resource in EAX; Ghidra shows them as void. They now return it.
+  Before, bkFindOrLoadResource used whatever x0 held (it was the resource by chance).
+- `OPENFRENZY_DSOUND_LOG=1` logs the audio device, each DirectSound buffer (format, data,
+  Play), the mixer once a second (voices playing, peak before the limiter) and the WMA
+  decoder once a second of PCM (peak). A run outside the sandbox (Hopper and the front end)
+  opens the device. The WMA music decodes with a peak of 10000-32768, and the ADPCM effects
+  and voices play (up to 19 voices at once in Hopper). Nobody listened to the output.
+
 ## Library identifications
 
 - 0x1e0323 `_purecall`; 0xa6fa0 returns 1; 0xf8ab0 returns 0 (stdcall, 1 argument).

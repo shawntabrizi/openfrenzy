@@ -84,6 +84,7 @@ Environment:
 | `OPENFRENZY_<SECTION>_<KEY>` | a setting of `src/runtime/of_config.c`, e.g. `OPENFRENZY_DISPLAY_VSYNC=false` |
 | `OPENFRENZY_GAME=<name>` | start that minigame directly (BumperCars, Fireworks, Clusteroids, Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp); `src/runtime/of_launch.c` |
 | `OPENFRENZY_VARIATION=<n>` | its variation (default 1) |
+| `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
 
 Sandbox note (Claude Code): a window needs the window server, which the sandbox blocks

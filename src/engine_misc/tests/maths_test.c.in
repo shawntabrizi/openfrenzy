@@ -70,10 +70,13 @@ void FUN_000514a0(float *out, const float *in)
 	}
 }
 
+/* bkLoadPackageFile: the file test_coll_mesh_fixup hands out */
+static void *s_packageFile;
+
 void *FUN_0004e390(int a, int b, int c, int d, int e, int f)
 {
 	(void)a; (void)b; (void)c; (void)d; (void)e; (void)f;
-	return NULL;
+	return s_packageFile;
 }
 
 /* ---------- checks */
@@ -276,8 +279,25 @@ static void test_ray_mesh(void)
 		"  with room for one, the nearest is kept");
 }
 
+/* bkernel's resource loader (0x0004b720) stores what a type's loader returns as the
+resource; the x86 loader leaves it in EAX. A loader that returned nothing would make a
+loaded collision mesh look missing (or a stray value look like one). */
+static void test_coll_mesh_fixup(void)
+{
+	struct BCollMesh mesh;
+
+	memset(&mesh, 0, sizeof(mesh));
+	s_packageFile = &mesh;
+	check(bmCollMeshFixup(0, 0) == &mesh, "the collision mesh loader returns the mesh it fixed up");
+	check((char *)mesh.verts == (char *)&mesh && (char *)mesh.grid == (char *)&mesh,
+		"  its offsets became pointers into it");
+	s_packageFile = NULL;
+	check(bmCollMeshFixup(0, 0) == NULL, "  a file not in the package gives NULL");
+}
+
 int main(void)
 {
+	test_coll_mesh_fixup();
 	test_ray_triangle();
 	test_sphere_triangle();
 	test_sphere_edge();

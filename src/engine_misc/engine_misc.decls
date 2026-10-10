@@ -49,7 +49,7 @@
 00054fe0 int bsPlaySampleOnChannel(int channel, struct BSample *sample, int volume, int pan, int frequency, unsigned int flags);
 00055090 int bsPlaySampleMovingOnChannel(int channel, struct BSample *sample, float *pos, int volume, int frequency, unsigned int flags, void *callback, void *context, float minDist, float maxDist);
 00055240 void bsUpdate(int arg);
-00055390 void bsSampleFixup(int package, int name);
+00055390 void *bsSampleFixup(int package, int name);
 000553e0 void bsDeleteSample(struct BSample *sample);
 00055400 void bsPrintCaps(void);
 00055440 int bsInitDirectSound(void);
@@ -81,7 +81,7 @@
 
 # BSOUND audio streams (xbAudioStream.cpp)
 00056270 int bsInitAudioStreams(void);
-000562d0 void bsAudioStreamFixup(int package, int name);
+000562d0 void *bsAudioStreamFixup(int package, int name);
 00056340 void bsDeleteAudioStream(struct BAudioStream *stream);
 00056370 int bsPlayAudioStream(struct BAudioStream *stream, unsigned int flags, int volume, int pan, int frequency, void *callback, ...);
 000563f0 void bsStopAudioStream(struct BAudioStream *stream);
@@ -125,7 +125,7 @@
 000526f0 void bmUpdateAnimatingCollision(struct BAnimatingCollision *coll);
 
 # BMATHS collision tests (unplaced)
-00052700 void bmCollMeshFixup(int package, int name);
+00052700 void *bmCollMeshFixup(int package, int name);
 00052770 int bmRaySphere(struct BRay *ray, struct BSphere *sphere, struct BCollHit *hit);
 00052960 int bmRayMesh(struct BRay *ray, struct BCollMesh *mesh, int *count, struct BCollHit *hits);
 00052ce0 int bmSphereSideOfPlane(struct BSphere *sphere, float *delta, float *plane);

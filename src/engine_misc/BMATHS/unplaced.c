@@ -39,21 +39,24 @@ static unsigned int sign_bit(float f)
 }
 
 /* 0x00052700  BMATHS (unplaced)
-Fixes up a collision mesh found in a package. */
-void bmCollMeshFixup(int package, int name)
+Fixes up a collision mesh found in a package and returns it.
+The resource loader (bkernel's table at 0x002852e8) uses the result: the x86 code leaves
+the resource (or 0) in EAX, which Ghidra's void prototype hides. */
+void *bmCollMeshFixup(int package, int name)
 {
 	struct BCollMesh *mesh;
 	int n, i;
 
 	mesh = (struct BCollMesh *)em_bkFindResource(package, name, 0, 0, 0, 0);
 	if (mesh == NULL)
-		return;
+		return NULL;
 	mesh->tris = (unsigned short (*)[3])((char *)mesh->tris + (uintptr_t)mesh);
 	n = mesh->cells[2] * mesh->cells[1] * mesh->cells[0];
 	mesh->verts = (float (*)[3])((char *)mesh->verts + (uintptr_t)mesh);
 	mesh->grid = (struct BCollCell *)((char *)mesh->grid + (uintptr_t)mesh);
 	for (i = 0; i < n; i++)
 		mesh->grid[i].list = (unsigned short *)((char *)mesh->grid[i].list + (uintptr_t)mesh);
+	return mesh;
 }
 
 /* 0x00052770  BMATHS (unplaced)

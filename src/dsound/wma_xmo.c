@@ -34,7 +34,13 @@ struct wma_xmo
 	LPVOID context;
 	struct wma_file *file;
 	struct wma_file_format format;
+	/* OPENFRENZY_DSOUND_LOG (dsound_sdl.c): decoded since the last line, and its peak */
+	uint32_t log_frames;
+	int log_peak;
 };
+
+int dsound_log_enabled(void);
+int dsound_pcm16_peak(const void *data, unsigned long bytes);
 
 /* dsound_sdl.c refers to this so that the linker loads this file with it: the game
 image may hold a weak stand-in of WmaCreateDecoder (engine_misc's
@@ -123,6 +129,23 @@ static HRESULT STDMETHODCALLTYPE xmo_process(XMediaObject *object, LPCXMEDIAPACK
 	frame_bytes = 2u * (uint32_t)xmo->format.channels;
 	frames = packet->dwMaxSize / frame_bytes;
 	decoded = frames ? wma_file_read(xmo->file, packet->pvBuffer, frames) : 0;
+	if (dsound_log_enabled())
+	{
+		/* once a second of decoded PCM: its peak (0 to 32768) */
+		int peak = dsound_pcm16_peak(packet->pvBuffer, decoded * frame_bytes);
+
+		if (peak > xmo->log_peak)
+			xmo->log_peak = peak;
+		xmo->log_frames += decoded;
+		if (xmo->log_frames >= (uint32_t)xmo->format.sample_rate || decoded < frames)
+		{
+			platform_log("dsound: WMA %p decoded %u frames (%u Hz, %u channels), peak %d%s", (void *)xmo,
+				xmo->log_frames, (unsigned)xmo->format.sample_rate, (unsigned)xmo->format.channels,
+				xmo->log_peak, decoded < frames ? ", end of stream" : "");
+			xmo->log_frames = 0;
+			xmo->log_peak = 0;
+		}
+	}
 	if (packet->pdwCompletedSize)
 		*packet->pdwCompletedSize = decoded * frame_bytes;
 	if (packet->pdwStatus)

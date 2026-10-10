@@ -24,7 +24,7 @@ struct BCollHit;
 struct BCollMesh;
 
 /* this module (engine_misc.decls) */
-void bmCollMeshFixup(int package, int name);
+void *bmCollMeshFixup(int package, int name);
 int bmRaySphere(struct BRay *ray, struct BSphere *sphere, struct BCollHit *hit);
 int bmRayMesh(struct BRay *ray, struct BCollMesh *mesh, int *count, struct BCollHit *hits);
 int bmSphereSideOfPlane(struct BSphere *sphere, float *delta, float *plane);
