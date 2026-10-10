@@ -35,9 +35,6 @@
 00110b90 void CDrillersGame_UpdateSnare(void *self);
 
 # callees (prototypes from the disassembly; renamed when their file is written)
-0011e140 void FUN_0011e140(void *self);
-0011e1e0 void FUN_0011e1e0(void *self);
-0011f770 void FUN_0011f770(void *self);
 0011fd50 void FUN_0011fd50(void *self);
 00120260 void FUN_00120260(void *self);
 001202c0 void FUN_001202c0(void *self);
@@ -126,3 +123,9 @@
 0011c6f0 int DrCamera_WinnerPressed(void *self, int *flags);
 0011c7c0 void *DrCamera_DeletingDtor(void *self, unsigned int flags);
 0011c7e0 int DrCamera_Update(void *self);
+
+# Drillers/CDrillers_Resources.cpp (the resources object 0x002aa900)
+0011e140 void DrRes_ResetStates(void *self);
+0011e1c0 void *DrRes_DeletingDtor(void *self, unsigned int flags);
+0011e1e0 void DrRes_Load(void *self);
+0011f770 void DrRes_Free(void *self);

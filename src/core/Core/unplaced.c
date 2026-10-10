@@ -629,8 +629,9 @@ void Core_PollSoundChannel(void)
 		sscanf(message, "%X %X %s %d %d %d", &address, &unused, name, &a, &b, &flags);
 		_strlwr(name);
 		sample = ext_FindResource(0, name, 2, 0xdefa);
-		/* ADDRESS is an Xbox address sent by the PC tool: meaningless in the port */
-		ext_PlaySample(sample, a, b, 0, (flags & 1) ? (void *)(uintptr_t)(address + 0xc0) : NULL);
+		/* x86 at 0x0002c4c1-0x0002c4ec: the last argument tests bit 0 of B (the second %d)
+		and is A + 0xc0; ADDRESS, UNUSED and FLAGS are parsed but not used */
+		ext_PlaySample(sample, a, b, 0, (b & 1) ? (void *)(uintptr_t)(unsigned int)(a + 0xc0) : NULL);
 	}
 }
 

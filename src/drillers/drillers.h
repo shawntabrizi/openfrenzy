@@ -317,8 +317,9 @@ object + i * 0x730 with the original offsets +0x004 .. +0x733; the prior DR_PL m
 0x618 bytes from +0x64cc, and per-player values from +0xc644. Fields at original offsets:
   +0x004 x, +0x008 z (1024 per cell, cell centres at 512)   +0x00c heading (degrees)
   +0x014 shown heading   +0x018 speed   +0x01c, +0x01d cell x, z (char)
-  +0x01e, +0x01f last cell drilled   +0x020 (char) in play (1)   +0x02c the pad
-  +0x04c, +0x050 the actors (driver, driller)   +0x05c height   +0x060 points
+  +0x01e, +0x01f last cell drilled   +0x020 (char) in play (1)   +0x028, +0x02c the pad's buttons
+  +0x03c bike, +0x044, +0x048 rider actors (+0x040 = +0x048)
+  +0x04c bike instance, +0x050 the rider instance (= +0x058), +0x054 rider instance   +0x05c height   +0x060 points
   +0x064 (short) trail length   +0x06c x[128], +0x26c z[128], +0x46c w[128] the trail
   +0x6f4 hit timer   +0x6f8 fade   +0x700 round points   +0x704 (char) human
   +0x710 tilt   +0x724 out   +0x72c winner */
