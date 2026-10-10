@@ -79,3 +79,17 @@
 00074ac0 void COverlay_Destroy(int self);
 00074ba0 void COverlay_DeleteAll(void);
 00074be0 void COverlay_UpdateAll(void);
+00074e30 void CLPause_CreateInput(int self);
+00074f60 void CLPause_EscapeText(unsigned short *text, unsigned short *out);
+00075000 unsigned short *CLPause_SoundtrackName(int soundtrack, int max);
+00075070 unsigned short *CLPause_SongName(int soundtrack, int song, int max);
+000750f0 int CLPause_NextSoundtrack(int step);
+00075210 void CLPause_ShowSoundtrack(int self);
+000752c0 void CLPause_ResumeSound(void);
+00075320 void CLPause_PauseSound(void);
+00075380 void CLPause_NextSong(int self, int step);
+00075480 void CLPause_End(int self, int keep_sound);
+00075510 void CLPause_SetPage(int self, int page);
+00075c10 void CLPause_LayoutFrame(int self);
+00076110 void CLPause_ColourItems(int self);
+000762e0 void CLPause_DrawMessages(int self);

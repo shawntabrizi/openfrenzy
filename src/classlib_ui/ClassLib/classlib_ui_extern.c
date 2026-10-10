@@ -38,3 +38,16 @@ int DAT_002844d4;
 undefined4 DAT_00284b10;          /* bactor: actor tint */
 undefined4 DAT_00284b14;
 undefined4 DAT_00284b18;
+int DAT_002bae7c;                 /* core */
+int DAT_002bae94;                 /* core: player count */
+int DAT_002baea8;                 /* core */
+int DAT_002baed4[40];             /* core: player table (10 ints per player) */
+int DAT_002baed8[40];             /* core: player table +4 */
+int DAT_002baee0[40];             /* core: player table +0xc */
+int DAT_002ba8b8[16];             /* core */
+int DAT_002ba900;                 /* core */
+float DAT_002ba904;               /* core */
+unsigned short DAT_002ba7a8[0x88]; /* core */
+int DAT_002ba99c;                 /* core */
+int DAT_00284408;                 /* core */
+int DAT_002db810;                 /* engine_misc */
