@@ -1,0 +1,13 @@
+# Game files: never commit (user supplies own disc)
+orig/
+*.xbe
+*.iso
+*.xiso
+
+# Local tooling and Ghidra projects
+tools/
+ghidra/
+*.gpr
+*.rep/
+
+.DS_Store
