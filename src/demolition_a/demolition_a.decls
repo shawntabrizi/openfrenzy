@@ -213,7 +213,7 @@
 000ee870 void *CDemoSpotPuff_DeletingDtor(void *self, unsigned int flags);
 000ee890 void *CDemoSpotFX_DeletingDtor(void *self, unsigned int flags);
 000ee8b0 int CDemoSpotFX_Init(void *self, void *package);
-000ee940 void CDemoSpotFX_StartBurst(void *self, float *pos, int colour);
+000ee940 void CDemoSpotFX_StartBurst(void *self, float *pos, float *dir);
 000ee9e0 void *CDemoOverlay_Ctor(void *self);
 000eea00 void CDemoOverlay_Dtor(void *self);
 000eea10 void CDemoOverlay_Shutdown(void *self);

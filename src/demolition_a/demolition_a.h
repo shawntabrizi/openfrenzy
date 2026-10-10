@@ -327,8 +327,10 @@ struct CDemolition_Light {
 	char on;                  /* +0x10 */
 	char dirty;               /* +0x11 */
 	char pad12[2];
-	struct DA_Vec4 pos;       /* +0x14 */
-	int r, g, b;              /* +0x24 colour */
+	struct DA_Vec4 pos;       /* +0x14 position (point lights) */
+	float range;              /* +0x24 (point lights) */
+	int r, g, b;              /* +0x28 colour */
+	/* +0x34: a directional light's direction (vec4); the hazard light's own BLight */
 };
 
 /* +0x6ca4: the light system and the spark sprites (vtable 0x0026a8a8, 0xb30 bytes) */
@@ -591,7 +593,7 @@ extern const char *const DAT_00297820[DA_TEXTURE_COUNT]; /* spotfx\sprites\... *
 #define DA_HudCreateScoreTexts(scores) ((void (*)(void *, int *))FUN_0007a200)(DAT_002ecfac, (scores))
 #define DA_HudCreateWinnerText(scores, type) ((int (*)(void *, int *, int))FUN_0007ad50)(DAT_002ecfac, (scores), (type))
 #define DA_HudUpdateBars() ((void (*)(void *))FUN_0007bd80)(DAT_002ecfac)
-#define DA_HudInitBarGeometry(h) ((void (*)(void *, float))FUN_0007bfd0)(DAT_002ecfac, (h))
+#define DA_HudInitBarGeometry() ((void (*)(void *))FUN_0007bfd0)(DAT_002ecfac)
 #define DA_HudSetBarLevels(a, b, c, d, scale) \
 	((void (*)(void *, float, float, float, float, float))FUN_0007c080)(DAT_002ecfac, (a), (b), (c), (d), (scale))
 
