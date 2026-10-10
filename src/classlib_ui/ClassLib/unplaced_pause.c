@@ -142,7 +142,11 @@ Copies a UTF-16 text and doubles the '@' and '\' (text escape characters); at mo
 about 126 characters. */
 void CLPause_EscapeText(unsigned short *text, unsigned short *out)
 {
-	unsigned short at[2];
+	/* "@@" converts to 3 UTF-16 units with its terminator. The original had at[2] directly
+	   below backslash[2] (the extra unit landed in backslash, written next), but here it
+	   overwrote a caller's saved register (CGameMode_MainOptions_RefreshTexts lost its
+	   format pointer and overflowed its text buffer: the Options menu fault). */
+	unsigned short at[3];
 	unsigned short backslash[2];
 	unsigned short c;
 	int written;

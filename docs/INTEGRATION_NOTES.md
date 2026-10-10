@@ -230,15 +230,18 @@ integration round 2 (921ec75); see below.
   CBbash_Game_Outro 0x00173470) calls Actor_Delete(bug + 0) for every bug with no type check,
   so CLList_Remove reads address 0. The port ends the mode there instead, as ScratchMatch
   does; the stack returns to Root. MouseWhack 1-3, 120 s each: no fault.
-- Open fault (real menu path): main menu -> Options faults at once, `pc = "\models\"`
-  (0x5c736c65646f6d5c, string bytes as the return address: a stack buffer overflow). The
-  stack scan shows CGameMode_MainMenu_OnButton -> CMB_PUSH_MODE -> MainOptions. Trace
-  prints in CGameMode_MainOptions_Start show Start runs to its end; with prints in
-  RefreshTexts the fault and the garbage go away (heisenbug). Without them, glyphs
-  0x0330-0x0368 that are not in the font are drawn each frame. A print after the second
-  bkWideSprintf call in RefreshTexts showed an empty result (text[0] == 0) for
-  `"%S: %S"`. Repro: `OPENFRENZY_DEBUG_TEST_INPUT="START@6000,A@11000,DOWN@15500,
-  DOWN@16200,A@17500"`, headless, 40 s.
+- Fixed (real menu path): main menu -> Options faulted at once, `pc = "\models\"`. Cause:
+  CLPause_EscapeText (classlib_ui 0x00074f60, inlined into CLPause_SongName) converts "@@"
+  (3 UTF-16 units with the terminator) into a 2-unit local. On the Xbox the extra unit fell
+  into the next local, which is written right after; here it zeroed the low 16 bits of the
+  caller's saved x22, which in CGameMode_MainOptions_RefreshTexts held the `L"%S: %S"`
+  pointer. The second bkWideSprintf then read rodata as its format and overflowed `text[64]`
+  (layout dependent, hence the heisenbug). Fix: `at[3]`. Found with an in-process ARM
+  hardware watchpoint on the smashed slot (debug-only host patch, not committed: thread_set_state
+  ARM_DEBUG_STATE64 + SIGTRAP handler that steps over the store with a breakpoint at pc+4).
+  Verified (windowed frame dump, 62 s): Options opens with correct texts, sound volume 8->9,
+  music 10->9, vibration on->off, song sample -> Radio Waves, soundtrack stays (no custom
+  soundtracks exist), Credits opens, B -> Options, B -> main menu, no fault.
 - Main menu -> Game Demos: XLaunchNewImage("D:\XDemos\XDemos.xbe") exits the game (host).
 - Audio (`OPENFRENZY_DSOUND_LOG=1`, 6-stage run): device opened (48 kHz stereo), WMA music
   decodes, mixer peak before the limiter over 2692 one-second reports: median 1.19, max
