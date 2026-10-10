@@ -89,12 +89,46 @@ callee's `ret N` (thiscall `this` first). Owner: tankedup_b.
 #define TA_SpawnGetPoints(spawn, name) TU_CALL(FUN_001c40d0, void *(*)(void *, const char *))(spawn, name)
 #define TA_SpawnGetCount(spawn, name) TU_CALL(FUN_001c4160, int (*)(void *, const char *))(spawn, name)
 
-/* ---------- engine_misc: the original returns the inner test's result (the table and
-   engine_misc's definitions say void; reported for integration) */
-#define TU_SegmentSphere(seg, sphere, hit) \
-	TU_CALL(FUN_00052ea0, int (*)(float *, float *, void *))(seg, sphere, hit)
-#define TU_SweepSphereSphere(a, b, vec, hit) \
-	TU_CALL(FUN_00053af0, int (*)(float *, float *, float *, void *))(a, b, vec, hit)
+/* ---------- engine_misc: 0x00052ea0 and 0x00053af0 return the inner test's result in the
+   original (eax of 0x00052770 / 0x00052da0), but engine_misc defines them void. Calling a
+   void function through an int cast reads a garbage w0 on arm64, so these wrappers repeat
+   the two small wrapper bodies and call the int-returning inner tests directly (reported
+   for integration). */
+#include "engine_misc_maths.h"
+
+/* 0x00052ea0: a segment {origin[4], delta[4]} against a sphere */
+static inline int TU_SegmentSphere(float *seg, void *sphere, void *hit)
+{
+	struct BRay ray;
+	float inv;
+
+	ray.origin[0] = seg[0];
+	ray.origin[1] = seg[1];
+	ray.origin[2] = seg[2];
+	ray.origin[3] = seg[3];
+	ray.length = sqrtf(seg[6] * seg[6] + seg[5] * seg[5] + seg[4] * seg[4]);
+	inv = 1.0f / ray.length;
+	ray.dir[0] = inv * seg[4];
+	ray.dir[1] = inv * seg[5];
+	ray.dir[2] = inv * seg[6];
+	ray.dir[3] = 0.0f; /* not set by the original */
+	return bmRaySphere(&ray, (struct BSphere *)sphere, (struct BCollHit *)hit);
+}
+
+/* 0x00053af0: sphere a moving by vec against sphere b */
+static inline int TU_SweepSphereSphere(void *a, void *b, float *vec, void *hit)
+{
+	float len, inv, dir[4];
+
+	len = sqrtf(vec[2] * vec[2] + vec[1] * vec[1] + vec[0] * vec[0]);
+	inv = 1.0f / len;
+	dir[0] = inv * vec[0];
+	dir[1] = inv * vec[1];
+	dir[2] = inv * vec[2];
+	dir[3] = 0.0f; /* not set by the original */
+	return bmSweepSphereSphere((struct BSphere *)a, (struct BSphere *)b, dir, len,
+		(struct BCollHit *)hit);
+}
 
 /* |a - b|^2: 0x00051540 returns it on the x87 stack (bkernel's definition is empty) */
 static inline float tu_dist_sq(const float *a, const float *b)
