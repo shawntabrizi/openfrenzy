@@ -21,14 +21,14 @@ struct CLightningMgr DAT_00308460;
 
 /* 0x0015cef0  Meta/CLightning.cpp
 A lightning strike from `from` to `to` (float[4] each): a white spiral beam with both
-ends raised by 50, and a spark burst object (charlib, 0xe8 bytes) at the top. */
+ends raised by 50, and a fading green light (charlib, 0xe8 bytes) where it strikes. */
 void CLightning_Strike(float *from, float *to)
 {
 	float top[4];
 	float bottom[4];
 	int colour[3];
-	float zero[3];
-	void *burst;
+	int black[3];
+	void *light;
 
 	top[0] = from[0];
 	top[1] = from[1] + 50.0f;       /* 0x002559b8 */
@@ -41,23 +41,23 @@ void CLightning_Strike(float *from, float *to)
 	colour[0] = 0;
 	colour[1] = 0x7f;
 	colour[2] = 0x46;
-	zero[0] = 0.0f;
-	zero[1] = 0.0f;
-	zero[2] = 0.0f;
+	black[0] = 0;
+	black[1] = 0;
+	black[2] = 0;
 	CProjector_SpiralBeam(top, bottom, DAT_002b0a4c, DAT_002b0a54, DAT_002b0a50, DAT_002b0a58,
 		(struct CProjSpiralType *)DAT_00290dc8, 10.0f, 1, 0xffffffffu);
-	burst = MB_NEW(0xe8, "C:\\BlitzParty\\Game\\Src\\Meta\\CLightning.cpp", 0x29f);
-	if (burst != NULL)
+	light = MB_NEW(0xe8, "C:\\BlitzParty\\Game\\Src\\Meta\\CLightning.cpp", 0x29f);
+	if (light != NULL)
 	{
-		/* charlib spark burst constructor: (this, colour, velocity, position,
-		   0.0008, 0.008, 80.0, 0) */
+		/* charlib Light_InitFadingPoint: a light at the bottom fading from (0, 127, 70) to
+		   black (ranges 0.0008, 0.008, 80 frames, no delay) */
 		MB_DUAL(FUN_000b6fa0,
 			int (*)(int, undefined4 *, undefined4 *, undefined4 *, undefined4, undefined4,
 				undefined4, undefined4),
-			int (*)(void *, int *, float *, float *, float, float, float, int),
-			((int)burst, (undefined4 *)colour, (undefined4 *)zero, (undefined4 *)bottom,
+			void *(*)(void *, int *, int *, float *, float, float, float, float),
+			((int)light, (undefined4 *)colour, (undefined4 *)black, (undefined4 *)bottom,
 				0x3a51b717u, 0x3c03126fu, 0x42a00000u, 0),
-			(burst, colour, zero, bottom, 0.0008f, 0.008f, 80.0f, 0));
+			(light, colour, black, bottom, 0.0008f, 0.008f, 80.0f, 0.0f));
 	}
 }
 
