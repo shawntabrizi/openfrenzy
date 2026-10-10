@@ -13,6 +13,16 @@ game uses (Core_Rand, Core_RandUnit).
 #include "core_modes_a.h"
 #include "core_modes_a_modes.h"
 
+OF_ASSERT_SIZE(struct CBGEffect, 0x10);
+OF_ASSERT_SIZE(struct CBGMatrixText, 0x48);
+OF_ASSERT_SIZE(struct CBGText, 0x3c);
+OF_ASSERT_SIZE(struct CBGTextBuf, 0x44);
+OF_ASSERT_SIZE(struct CBGTypeText, 0x90);       /* new(0x90) */
+OF_ASSERT_SIZE(struct CBGTypeTextBox, 0xb0);    /* new(0xb0) */
+OF_ASSERT_SIZE(struct CBGTilingBackdrop, 0x24);
+OF_ASSERT_SIZE(struct CMA_TextLayout, 0x20);
+OF_ASSERT_SIZE(struct CMA_Vertex, 0x24);
+
 /* ---------- data */
 
 /* 0x002b9480: the four vertices of BG_DrawRect */
@@ -631,8 +641,6 @@ int CBGTypeText_Update(struct CBGTypeText *self)
 {
 	char name[32];
 	double t;
-	float step;
-	float target;
 	float alphaTarget;
 
 	self->buf.text.length = CMA_WStrLen(self->buf.buffer);
@@ -679,33 +687,35 @@ int CBGTypeText_Update(struct CBGTypeText *self)
 		self->revealed = self->typed;
 	}
 
-	/* glow moves towards its target */
+	/* glow moves towards its target (the step is rounded to a float, the sums are not) */
 	if (self->glow != self->glowTarget) {
-		step = DAT_0028fda8 * self->glowRate;
-		target = self->glowTarget;
-		if (self->glow >= target) {
-			if (target - step >= self->glow)
+		float step = DAT_0028fda8 * self->glowRate;
+		double towards = (double)self->glowTarget - (double)step;
+
+		if (self->glow >= self->glowTarget) {
+			if (towards >= (double)self->glow)
 				self->glow = self->glowTarget;
 			else
-				self->glow = self->glow - step;
-		} else if (target - step <= self->glow) {
+				self->glow = (float)((double)self->glow - (double)step);
+		} else if (towards <= (double)self->glow) {
 			self->glow = self->glowTarget;
 		} else {
-			self->glow = step + self->glow;
+			self->glow = (float)((double)step + (double)self->glow);
 		}
 	}
 
-	/* alpha moves towards the colour's alpha */
+	/* alpha moves towards the colour's alpha (the step stays unrounded, as on the x87 stack) */
 	alphaTarget = (float)self->buf.text.color[3];
 	if (self->alpha != alphaTarget) {
-		step = DAT_0028fda8 * self->alphaRate;
-		if (alphaTarget - step <= self->alpha) {
-			if (alphaTarget + step >= self->alpha)
+		double step = (double)DAT_0028fda8 * (double)self->alphaRate;
+
+		if ((double)alphaTarget - step <= (double)self->alpha) {
+			if ((double)alphaTarget + step >= (double)self->alpha)
 				self->alpha = alphaTarget;
 			else
-				self->alpha = self->alpha - step;
+				self->alpha = (float)((double)self->alpha - step);
 		} else {
-			self->alpha = step + self->alpha;
+			self->alpha = (float)(step + (double)self->alpha);
 		}
 	}
 	return self->alpha > 0.0f;

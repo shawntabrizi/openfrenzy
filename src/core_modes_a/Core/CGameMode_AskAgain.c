@@ -21,6 +21,13 @@ void D3DDevice_GetDisplayFieldStatus(void *status);
 #define CMA_IntroCam_Set(p) ((void (*)(void *, void *))FUN_0007a200)(DAT_002ecfac, (p))
 #define CMA_IntroCam_Start() FUN_0007be80() /* ECX = DAT_002ecfac, unused */
 
+OF_ASSERT_SIZE(struct CGameMode, 0x28);
+OF_ASSERT_SIZE(struct CGameModeMenu, 0x98);
+OF_ASSERT_SIZE(struct CGameMode_AskAgain, 0xc0);
+OF_ASSERT_SIZE(struct CBGEffectGroup, 0x20);     /* new(0x20) */
+OF_ASSERT_SIZE(struct CGameMode_BGEffects, 0x84);
+OF_ASSERT_OFFSET(struct CGameMode_BGEffects, group, 0x64);
+
 static const char s_AskAgain_cpp[] = "C:\\BlitzParty\\Game\\Src\\Core\\CGameMode_AskAgain.cpp";
 
 /* ---------- vtables */
