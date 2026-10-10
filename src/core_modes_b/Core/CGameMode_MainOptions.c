@@ -132,12 +132,12 @@ static void cmb_toggle_vibration(int pad)
 	DAT_002bae7c = DAT_002bae7c == 0;
 	if (DAT_002bae7c != 0) {
 		CMB_F32(DAT_002ecfac, 0x90) = 1.0f;
-		DAT_002baed8[pad][0] = 1;
+		DAT_002baed4[pad][1] = 1;
 		((int (*)(void *, int, int, int, int, int, int, int, int))FUN_00080400)(
 			DAT_002ed324, pad, 1, 0x7ff8, 200, 10, 0x5a, 0, 3);
 		((int (*)(void *, int, int, int, int, int, int, int, int))FUN_00080400)(
 			DAT_002ed324, pad, 0, 0x7ff8, 200, 10, 0x5a, 0, 3);
-		DAT_002baed8[pad][0] = 0;
+		DAT_002baed4[pad][1] = 0;
 		CMB_F32(DAT_002ecfac, 0x90) = 0.0f;
 	}
 	CMB_PLAY_SAMPLE(7, 0x7f, 0, 0, 0);

@@ -218,8 +218,9 @@ OF_ASSERT_SIZE(struct CScoreTable, 0x310);
 extern struct CScoreTable DAT_002b9968;
 #define g_score_table DAT_002b9968
 
-/* the per-player game records (core): 4 x 0x28 bytes at 0x002baed8; the score is at +0x10 */
-extern int DAT_002baed8[4][10];
+/* the per-player records (core): 4 x 0x28 bytes at 0x002baed4: [0] character,
+   [1] human player, [5] score, [7] votes */
+extern int DAT_002baed4[4][10];
 /* tournament data (core): +0x1b0 holds an int per player */
 extern int DAT_002ba55c;
 
@@ -360,6 +361,70 @@ static inline int cmb_rand(void)
 	DAT_00285630 = DAT_00285630 * 0x343fdu + 0x269ec3u;
 	return (int)((DAT_00285630 >> 16) & 0x7fff);
 }
+
+/* ---------- CGameMode_MetaVote: the players spend their round score (chips) on votes */
+
+struct CMetaToken {
+	float gravity;              /* 0x00: +0.3 falls down onto the stack, -0.3 goes back */
+	float y;                    /* 0x04 */
+	float z;                    /* 0x08 */
+	float floor;                /* 0x0c: rest height */
+	float base;                 /* 0x10 */
+	float velocity;             /* 0x14 */
+	float f18;
+	void *actor;                /* 0x1c: tile model */
+};
+OF_ASSERT_SIZE(struct CMetaToken, 0x20);
+
+struct CGameMode_MetaVote {
+	struct cmb_CGameMode base;
+	int state;                  /* 0x098 */
+	float timer;                /* 0x09c */
+	float blink;                /* 0x0a0 */
+	int place[4];               /* 0x0a4: place by score */
+	int keep[4];                /* 0x0b4: chips a CPU player keeps */
+	int chips[4];               /* 0x0c4: chips left */
+	int spent[4];               /* 0x0d4: chips voted */
+	int active[4];              /* 0x0e4: still voting */
+	int voting;                 /* 0x0f4: players still voting */
+	float saved_fov[2];         /* 0x0f8: from bdisplay 0x002be588 */
+	float saved_clip[2];        /* 0x100: from bdisplay 0x002be580 */
+	unsigned char saved_state[0x78]; /* 0x108: render state (bdisplay FUN_00046d40) */
+	int rain;                   /* 0x180: chingching1.wav */
+	int chink;                  /* 0x184: orbchink.wav */
+	unsigned char pad_188[8];
+	void *hint;                 /* 0x190: overlays */
+	void *title;                /* 0x194 */
+	void *portrait[4];          /* 0x198 */
+	void *button[4];            /* 0x1a8 */
+	void *chips_text[4];        /* 0x1b8 */
+	void *spent_text[4];        /* 0x1c8 */
+	void *left_arrow[4];        /* 0x1d8 */
+	void *right_arrow[4];       /* 0x1e8 */
+	unsigned char list[0xc];    /* 0x1f8: overlay list */
+	int anim;                   /* 0x204: "default" animation */
+	int tile_model[4];          /* 0x208 */
+	unsigned char light[0x70];  /* 0x218: BLight */
+	struct CMetaToken *tokens[4]; /* 0x288: 30 tokens each */
+	int token_count[4];         /* 0x298 */
+	int package;                /* 0x2a8: Packages\ScoreScreen */
+	int field_2ac;
+	int font_bold;              /* 0x2b0 */
+	int font_light;             /* 0x2b4 */
+};
+OF_ASSERT_OFFSET(struct CGameMode_MetaVote, saved_state, 0x108);
+OF_ASSERT_OFFSET(struct CGameMode_MetaVote, list, 0x1f8);
+OF_ASSERT_OFFSET(struct CGameMode_MetaVote, tokens, 0x288);
+OF_ASSERT_OFFSET(struct CGameMode_MetaVote, font_light, 0x2b4);
+
+extern int DAT_002ba228;                  /* MetaVote background effect object */
+extern int DAT_0029074c[0x49];            /* classlib_ui: per player, +0x60 apart */
+extern int DAT_003055e0;
+extern int DAT_002ba99c;                  /* frame counter */
+extern float DAT_002be580, DAT_002be584, DAT_002be588, DAT_002be58c; /* bdisplay clip, fov */
+extern float DAT_002838c8, DAT_002838cc, DAT_002838d0, DAT_002838d4;
+extern int DAT_002844fc[3];               /* text colour */
+extern float DAT_00283888[4];             /* MetaVote light direction */
 
 void CGameMode_MainMenu_CreateBoxes(struct CGameMode_MainMenu *self);
 

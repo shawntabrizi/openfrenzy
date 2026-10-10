@@ -67,7 +67,7 @@ int CScoreTable_Rank(struct CScoreTable *self)
 			sorted_first[player] = self->bonus[player];
 			sorted_round[player] = self->rounds[self->round].sum[player];
 		}
-		sorted_score[player] = DAT_002baed8[player][4];
+		sorted_score[player] = DAT_002baed4[player][5];
 	}
 	qsort(sorted_first, DAT_002bae94, 4, cmb_compare_descending);
 	qsort(sorted_round, DAT_002bae94, 4, cmb_compare_descending);
@@ -97,7 +97,7 @@ int CScoreTable_Rank(struct CScoreTable *self)
 		if (rank != 0 && sorted_score[rank] == sorted_score[rank - 1])
 			continue;
 		for (player = 0; player < 4; player++) {
-			if (DAT_002baed8[player][4] == sorted_score[rank])
+			if (DAT_002baed4[player][5] == sorted_score[rank])
 				points[player] += 4 - rank;
 		}
 	}

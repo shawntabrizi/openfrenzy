@@ -52,7 +52,7 @@ int DAT_002bae88;
 int DAT_002bae94;                 /* number of players */
 int DAT_002bae98;                 /* 1: tournament */
 int DAT_002bae9c;
-int DAT_002baed8[4][10];          /* player records */
+int DAT_002baed4[4][10];          /* player records */
 int DAT_002baf78[4][9];           /* per player, per button: input objects */
 unsigned int DAT_002bc490[256];   /* colour channel tables */
 unsigned int DAT_002bc898[256];
@@ -86,3 +86,19 @@ unsigned char DAT_002be370[0x40];
 unsigned int DAT_002bc40c;
 unsigned int DAT_002bc410;
 __attribute__((weak)) unsigned int DAT_00285630 = 1;   /* rand() seed */
+
+/* used by CGameMode_MetaVote */
+int DAT_002ba228;                 /* the vote screen's background effect */
+__attribute__((weak)) int DAT_0029074c[0x49] = { [0x00] = 10, [0x18] = 10, [0x30] = 20, [0x48] = 30 };
+int DAT_003055e0;
+int DAT_002ba99c;
+float DAT_002be580;
+float DAT_002be584;
+float DAT_002be588;
+float DAT_002be58c;
+__attribute__((weak)) float DAT_002838c8 = 0.3f;    /* chip gravity */
+__attribute__((weak)) float DAT_002838cc = -0.35f;  /* bounce */
+__attribute__((weak)) float DAT_002838d0 = 0.08f;   /* stretch per speed */
+__attribute__((weak)) float DAT_002838d4 = 0.16f;   /* chip scale */
+__attribute__((weak)) int DAT_002844fc[3] = { 0xff, 0xff, 0xff };
+__attribute__((weak)) float DAT_00283888[4] = { -1.0f, 1.0f, -1.0f, 1.0f };

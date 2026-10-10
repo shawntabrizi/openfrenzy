@@ -75,3 +75,18 @@
 00021100 void CGameMode_Map_Update(struct CGameMode_Map *self, int active);
 00021630 void CGameMode_Map_Render(struct CGameMode_Map *self, int active);
 000216a0 int CGameMode_Map_OnButton(struct CGameMode_Map *self, int button, int pad);
+
+# Core/CGameMode_MetaVote.c (0x00021820-0x000218e0 are unplaced in the table)
+00021820 struct CGameMode_MetaVote *CGameMode_MetaVote_ctor(struct CGameMode_MetaVote *self);
+00021880 void CGameMode_MetaVote_dtor(struct CGameMode_MetaVote *self);
+000218e0 void CGameMode_MetaVote_Finish(struct CGameMode_MetaVote *self);
+00021970 void *CGameMode_MetaVote_DeletingDtor(struct CGameMode_MetaVote *self, unsigned char flags);
+00021990 void CGameMode_MetaVote_Load(struct CGameMode_MetaVote *self);
+00021c40 void CGameMode_MetaVote_Stop(struct CGameMode_MetaVote *self);
+00021d50 void CGameMode_MetaVote_MoveTokens(struct CGameMode_MetaVote *self);
+00022010 void CGameMode_MetaVote_Render(struct CGameMode_MetaVote *self, int active);
+00022280 int CGameMode_MetaVote_OnButton(struct CGameMode_MetaVote *self, int button, int pad);
+00022530 struct CMetaToken *CGameMode_MetaVote_MakeToken(struct CGameMode_MetaVote *self, int player, int index);
+00022660 void CGameMode_MetaVote_Start(struct CGameMode_MetaVote *self);
+00022f40 void CGameMode_MetaVote_Update(struct CGameMode_MetaVote *self, int active);
+000233b0 void CGameMode_MetaVote_Loaded(struct CGameMode_MetaVote *self);

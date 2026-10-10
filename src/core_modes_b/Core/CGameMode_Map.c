@@ -497,7 +497,7 @@ struct CGameMode_Map *CGameMode_Map_ctor(struct CGameMode_Map *self, int kind)
 	if (kind != 0)
 		self->base.flags |= 2;
 	if (DAT_002bae8c == 0)
-		DAT_002baed8[0][0] = 1;
+		DAT_002baed4[0][1] = 1;
 	self->kind = kind;
 	self->selector = NULL;
 	return self;
