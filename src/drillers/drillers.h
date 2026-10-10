@@ -41,10 +41,14 @@ Conventions (docs/ARCHITECTURE.md):
 #define OPENFRENZY_DRILLERS_H
 
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "xtl.h"
+#include "bdisplay_types.h"
+#include "bdisplay_globals.h"
+#include "classlib_fx.h"
 #include "drillers_data.h"
 
 /* ---------- raw field access at original offsets */
@@ -123,6 +127,141 @@ static inline unsigned int dr_fbits(float value)
 /* 0x00300c78  the effects object (constructor 0x00112d40, destructor 0x001116b0) */
 #define DR_FX_ADDR 0x00300c78u
 
+/* ---------- Drillers/CDrillers_Particle.c: three small particle systems (0x50 bytes)
+
+The layout is classlib_fx's CPSHeader (particles of classlib_fx's CParticle, 0x68 bytes) plus
+four parameters and a vertex buffer. Virtual functions (vtable_0026cbbc sparks, _0026cbd4
+dust, _0026cbec smoke):
+  +0x00 Release  +0x04 Update(dt)  +0x08 Draw  +0x0c Stop  +0x10 InitParticle(p, colour)
+  +0x14 deleting destructor */
+typedef struct DrPsParams
+{
+	unsigned int flags; /* bit 0 active, bit 1 bounce on the floor (header pos[1]) */
+	float speed;        /* start speed */
+	float drag;         /* velocity factor per tick */
+	float gravity;      /* added to the y velocity per tick */
+} DrPsParams;
+
+typedef struct DrParticleSystem
+{
+	CPSHeader h;               /* 0x00 */
+	DrPsParams p;              /* 0x3c */
+	struct bdVertexBuffer *vb; /* 0x4c */
+} DrParticleSystem;
+OF_ASSERT_SIZE(DrParticleSystem, 0x50);
+
+#define DR_PS_VFN(ps, off, type) DR_VFN(ps, off, type)
+#define DrPs_VUpdate(ps, dt) DR_PS_VFN(ps, 0x04, void (*)(DrParticleSystem *, float))((ps), (dt))
+#define DrPs_VDraw(ps) DR_PS_VFN(ps, 0x08, void (*)(DrParticleSystem *))(ps)
+#define DrPs_VStop(ps) DR_PS_VFN(ps, 0x0c, void (*)(DrParticleSystem *))(ps)
+
+/* the item of the "rain" extra system (0x58 bytes; baAddExtraItem passes a pointer to a
+   DrRainArgs: the original pushed the 13 words by value) */
+typedef struct DrRainArgs
+{
+	float y;          /* 0x00 start height */
+	float floor;      /* 0x04 the drop goes below this */
+	int alpha;        /* 0x08 (low byte) */
+	int rangeX;       /* 0x0c x in [-rangeX, rangeX) */
+	int rangeZ;       /* 0x10 */
+	float vel[3];     /* 0x14 4 x the move per tick */
+	float unused20;   /* 0x20 */
+	float tail[3];    /* 0x24 offset of the line's lower end */
+	float unused30;   /* 0x30 */
+} DrRainArgs;
+
+typedef struct DrRainDrop
+{
+	float pos[4];     /* 0x00 */
+	int unused10[4];  /* 0x10 */
+	int age;          /* 0x20 */
+	DrRainArgs a;     /* 0x24 */
+} DrRainDrop;
+OF_ASSERT_SIZE(DrRainDrop, 0x58);
+
+/* ---------- Drillers/CDrillers_Effects.c: the effects object (0x00300c78, vtable 0x0026c124) */
+
+/* a group of three particle systems that bursts at a point (0x10c bytes) */
+typedef struct DrFxGroup
+{
+	int unk00;                 /* 0x000 */
+	float pos[4];              /* 0x004 */
+	float time;                /* 0x014 */
+	unsigned int flags;        /* 0x018 bit 0 update, bit 1 draw */
+	DrParticleSystem sparks;   /* 0x01c */
+	DrParticleSystem dust;     /* 0x06c */
+	DrParticleSystem smoke;    /* 0x0bc */
+} DrFxGroup;
+OF_ASSERT_SIZE(DrFxGroup, 0x10c);
+
+/* a rising score number ("1", "3", "5", "x2") (0x10 bytes) */
+typedef struct DrScoreMarker
+{
+	float pos[3];              /* 0x0 y rises 50 per tick */
+	signed char type;          /* 0xc 0-3 */
+	signed char player;        /* 0xd colour */
+	char active;               /* 0xe */
+	char pad0f;
+} DrScoreMarker;
+OF_ASSERT_SIZE(DrScoreMarker, 0x10);
+
+/* a bonus token on the map (0x30 bytes) */
+typedef struct DrTokenSlot
+{
+	signed char type;          /* 0x00 0-2 */
+	char active;               /* 0x01 */
+	short pad02;
+	float x;                   /* 0x04 in cells from the centre */
+	float y;                   /* 0x08 80 */
+	float z;                   /* 0x0c */
+	float bounceSpeed;         /* 0x10 */
+	float bounce;              /* 0x14 */
+	float bounces;             /* 0x18 */
+	float spin;                /* 0x1c */
+	float heading;             /* 0x20 degrees */
+	float speed;               /* 0x24 */
+	float travelled;           /* 0x28 */
+	struct CToken *token;      /* 0x2c */
+} DrTokenSlot;
+OF_ASSERT_SIZE(DrTokenSlot, 0x30);
+
+typedef struct DrEffects
+{
+	const void *const *vtable;          /* 0x000 */
+	int unk004;                         /* 0x004 */
+	DrScoreMarker markers[22];          /* 0x008 */
+	unsigned char unk168[0xa0];         /* 0x168 */
+	DrTokenSlot tokens[22];             /* 0x208 */
+	unsigned char unk628[0x1f8];        /* 0x628 */
+	int flash;                          /* 0x820 white screen flash, -8 per frame */
+	int unk824;                         /* 0x824 */
+	struct BExtraSystem *suck;          /* 0x828 */
+	struct BExtraSystem *steam;         /* 0x82c */
+	struct BExtraSystem *corona;        /* 0x830 */
+	struct BExtraSystem *hsteam;        /* 0x834 */
+	struct BExtraSystem *ring;          /* 0x838 (also named "hsteam") */
+	struct BExtraSystem *dust;          /* 0x83c */
+	struct BExtraSystem *scorch;        /* 0x840 */
+	struct BExtraSystem *worm;          /* 0x844 */
+	struct BExtraSystem *light;         /* 0x848 */
+	struct BExtraSystem *gen;           /* 0x84c effect generators */
+	int unk850[3];                      /* 0x850 */
+	struct bdRenderTarget *screen;      /* 0x85c */
+	int screenWidth;                    /* 0x860 */
+	int screenHeight;                   /* 0x864 */
+	struct BExtraSystem *rain;          /* 0x868 */
+	int unk86c;                         /* 0x86c */
+	unsigned char floaty[0x90];         /* 0x870 bumpercars_b's struct BCarFloatyScore; its
+	                                       system pointer is 0x003014e8 */
+	DrFxGroup groups[4];                /* 0x900 one per player */
+	DrParticleSystem sparks[8];         /* 0xd30 five are used */
+} DrEffects;
+OF_ASSERT_SIZE(DrEffects, 0xfb0);
+#define DR_FX_FLOATY_RISE(fx) DR_F32((fx)->floaty, 0x80)
+#define DR_FX_FLOATY_SCALE(fx) DR_F32((fx)->floaty, 0x84)
+#define DR_FX_FLOATY_LIFE(fx) DR_F32((fx)->floaty, 0x88)
+#define g_DrFx DR_PTR(DrEffects, DR_FX_ADDR)
+
 /* ---------- other modules (real shapes where the table prototype is a Ghidra guess) */
 
 /* the mode stack (core, CGameModeStack at 0x002ba750) */
@@ -146,6 +285,11 @@ extern int DAT_002baee8[];          /* minigame score of player i: [i * 10] */
 extern int DAT_002baf00;            /* player 1 human ([10] of 0x002baed8) */
 extern int DAT_002baf28;            /* player 2 human */
 extern int DAT_002baf50;            /* player 3 human */
+/* the player colours, 0x60 bytes per character (classlib_ui) */
+extern unsigned char DAT_00290718[];
+extern int DAT_002baed4[];          /* character of player i: [i * 10] */
+/* the rumble manager (classlib_ui CRumble) */
+extern unsigned char DAT_002ed324[];
 /* the DirectSound object (engine_misc) */
 extern void *DAT_002db808;
 
@@ -158,11 +302,40 @@ void FUN_0010ffa0(void *self);             /* update of Rubble Alliance */
 void FUN_001100e0(void *self);             /* update of Erodeo */
 void FUN_00110270(void *self, int top);    /* render (slot +0x1c) */
 void FUN_00110bf0(void *self, int top);    /* update (slot +0x18) */
-/* the effects object (0x00300c78) */
+/* Drillers/CDrillers_Effects.c: the effects object (0x00300c78) and its extra systems */
 void FUN_00111770(void *self);
 void FUN_001117a0(void *self);
 void FUN_00112a70(void *self);
 void FUN_00113c60(void *self);
+void FUN_001147d0(float x, float y, float z);
+int FUN_00111930(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00111ab0(struct BExtraSystem *system, int deleted);
+int FUN_00111b10(struct BExtraSystem *system, void *item, void *args);
+int FUN_00111bf0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00111cc0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00111e30(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00111fb0(struct BExtraSystem *system, void *item, void *args);
+int FUN_00112050(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001121a0(struct BExtraSystem *system, void *item, void *args);
+int FUN_00112210(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001122c0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00112360(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001123a0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001124c0(struct BExtraSystem *system, void *item, void *args);
+int FUN_001124f0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00112520(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00112700(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00112ea0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00112f30(struct BExtraSystem *system, void *item, void *args);
+int FUN_00113030(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001130d0(struct BExtraSystem *system, void *item, void *args);
+int FUN_00113140(struct BExtraSystem *system, void *item, void *args);
+int FUN_001131c0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001134f0(struct BExtraSystem *system, void *item, void *args);
+int FUN_001135a0(struct BExtraSystem *system, int count, void **items, void *arg);
+/* hopper's range, not in the table: the item callback of "steam" (weak copy in
+   CDrillers_Effects.c) */
+int FUN_00149650(struct BExtraSystem *system, void *item, void *args);
 /* the map object (0x00298da0) */
 void FUN_001151f0(void *self);
 void FUN_001154b0(void *self);
@@ -181,5 +354,9 @@ void FUN_00121c80(void *self, int player);
 void FUN_00122530(void *self, int player);
 void FUN_00122c10(void *self, int player);
 void FUN_001230b0(void *self, int player);
+/* Drillers/CDrillers_Particle.c: the callbacks of the "rain" extra system */
+int FUN_00124950(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001249c0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_00124b00(struct BExtraSystem *system, DrRainDrop *d, void *args);
 
 #endif
