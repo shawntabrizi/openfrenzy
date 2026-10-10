@@ -25,6 +25,7 @@ at the window's pixels, "original" at 640x480). The host decides the window mode
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 /* the Xbox picture: 640x480 (with "original" resolution scaling, d3d8_gl.c scales it to the drawable) */
 #define XBOX_WIDTH 640
@@ -407,10 +408,14 @@ void platform_handle_event(const SDL_Event *event)
 		input_state.mouse_wheel += event->wheel.y;
 		break;
 	case SDL_EVENT_WINDOW_FOCUS_GAINED:
+		if (!input_state.focused)
+			platform_log("window focus gained: keyboard on");
 		input_state.focused = TRUE;
 		break;
 	case SDL_EVENT_WINDOW_FOCUS_LOST:
 		/* no key stays held while another application has the keyboard */
+		if (input_state.focused)
+			platform_log("window focus lost: keyboard off, keys released");
 		input_state.focused = FALSE;
 		memset(input_state.keys, 0, sizeof(input_state.keys));
 		memset(input_state.mouse_buttons, 0, sizeof(input_state.mouse_buttons));
@@ -421,6 +426,106 @@ void platform_handle_event(const SDL_Event *event)
 	pthread_mutex_unlock(&input_lock);
 }
 
+/* debug.test_keys (OPENFRENZY_DEBUG_TEST_KEYS), port-only: real SDL events for automated runs of
+the keyboard path. "NAME@MS[+HOLD][,...]": key NAME (an SDL scancode name, any case: RETURN,
+SPACE, ESCAPE, UP, J, KEYPAD 8 ...) goes down MS milliseconds after the first keyboard read
+(the first XInputGetState of pad 1, the time base of debug.test_input) and up HOLD ms later
+(default 150). FOCUS_LOST@MS / FOCUS_GAINED@MS post the window focus events. The events go
+through SDL_PushEvent on the event thread, then SDL_PollEvent and platform_handle_event, as a
+key press does. (integration round 5) */
+#define TEST_KEY_COUNT 256
+#define TEST_KEY_FOCUS_LOST (-1)
+#define TEST_KEY_FOCUS_GAINED (-2)
+
+static struct test_key
+{
+	int scancode; /* or TEST_KEY_FOCUS_* */
+	Uint64 at, hold;
+	int sent; /* 0 nothing, 1 down (or the focus event), 2 up */
+	char name[24];
+} test_keys[TEST_KEY_COUNT];
+static int test_key_count = -1;
+/* SDL_GetTicks of the first platform_input_read (0: not yet) */
+static Uint64 test_keys_start;
+
+static void test_keys_parse(void)
+{
+	const char *script = config_string("debug.test_keys");
+
+	test_key_count = 0;
+	while (script && *script && test_key_count < TEST_KEY_COUNT)
+	{
+		struct test_key *key = &test_keys[test_key_count];
+		size_t length = strcspn(script, "@,");
+		char *end;
+
+		if (script[length] != '@' || length >= sizeof(key->name))
+		{
+			platform_log("test_keys: syntax error at '%s'; the rest is ignored", script);
+			break;
+		}
+		memcpy(key->name, script, length);
+		key->name[length] = 0;
+		key->at = strtoull(script + length + 1, &end, 10);
+		key->hold = *end == '+' ? strtoull(end + 1, &end, 10) : 150;
+		if (!strcasecmp(key->name, "FOCUS_LOST"))
+			key->scancode = TEST_KEY_FOCUS_LOST;
+		else if (!strcasecmp(key->name, "FOCUS_GAINED"))
+			key->scancode = TEST_KEY_FOCUS_GAINED;
+		else
+			key->scancode = (int)SDL_GetScancodeFromName(key->name);
+		if (key->scancode == SDL_SCANCODE_UNKNOWN)
+			platform_log("test_keys: unknown key '%s'", key->name);
+		else
+			test_key_count++;
+		script = end + strcspn(end, ",");
+		if (*script == ',')
+			script++;
+	}
+}
+
+static void test_keys_push(void)
+{
+	Uint64 elapsed;
+	int index;
+
+	if (test_key_count < 0)
+		test_keys_parse();
+	if (!test_key_count || !test_keys_start)
+		return;
+	elapsed = SDL_GetTicks() - test_keys_start;
+	for (index = 0; index < test_key_count; index++)
+	{
+		struct test_key *key = &test_keys[index];
+		SDL_Event event;
+		BOOL down;
+
+		if (key->sent == 2 || elapsed < key->at)
+			continue;
+		memset(&event, 0, sizeof(event));
+		if (key->scancode < 0)
+		{
+			event.type = key->scancode == TEST_KEY_FOCUS_LOST ? SDL_EVENT_WINDOW_FOCUS_LOST : SDL_EVENT_WINDOW_FOCUS_GAINED;
+			key->sent = 2;
+			down = TRUE;
+		}
+		else
+		{
+			down = key->sent == 0;
+			if (!down && elapsed < key->at + key->hold)
+				continue;
+			event.type = down ? SDL_EVENT_KEY_DOWN : SDL_EVENT_KEY_UP;
+			event.key.scancode = (SDL_Scancode)key->scancode;
+			event.key.down = down;
+			key->sent = down ? 1 : 2;
+		}
+		if (!SDL_PushEvent(&event))
+			platform_log("test_keys: SDL_PushEvent failed: %s", SDL_GetError());
+		else if (down)
+			platform_log("test_keys: %s at %llu ms", key->name, (unsigned long long)elapsed);
+	}
+}
+
 /* main thread only (the thread that made the window): macOS delivers window events there */
 void platform_pump_events(void)
 {
@@ -428,6 +533,7 @@ void platform_pump_events(void)
 
 	if (!platform_sdl_started || (platform_event_thread && SDL_GetCurrentThreadID() != platform_event_thread))
 		return;
+	test_keys_push();
 	while (SDL_PollEvent(&event))
 		platform_handle_event(&event);
 }
@@ -437,6 +543,8 @@ void platform_input_read(struct platform_input_state *state, BOOL consume_motion
 	unsigned int index;
 
 	pthread_mutex_lock(&input_lock);
+	if (!test_keys_start)
+		test_keys_start = SDL_GetTicks();
 	*state = input_state;
 	for (index = 0; index < SDL_SCANCODE_COUNT; index++)
 		state->keys[index] |= keys_pressed[index];

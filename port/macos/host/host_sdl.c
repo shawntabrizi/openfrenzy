@@ -236,6 +236,15 @@ int host_sdl_poll_event(void *event) {
     return 1;
 }
 
+/* openfrenzy: the guest's SDL_PushEvent (debug.test_keys); the same layout
+rule as host_sdl_poll_event, so only pointer-free events may come here */
+int host_sdl_push_event(const void *event) {
+    SDL_Event host_event;
+
+    memcpy(&host_event, event, sizeof(host_event));
+    return SDL_PushEvent(&host_event) ? 1 : 0;
+}
+
 /* ---------- gamepads */
 
 int host_sdl_get_gamepads(uint32_t *ids, int capacity) {

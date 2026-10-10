@@ -127,6 +127,13 @@ bool SDL_PollEvent(SDL_Event *event)
 	return host_sdl_poll_event(event ? event : &scratch) != 0;
 }
 
+/* openfrenzy: debug.test_keys (sdl_platform.c) posts key and focus events
+into SDL's own queue; only pointer-free event types may be pushed */
+bool SDL_PushEvent(SDL_Event *event)
+{
+	return host_sdl_push_event(event) != 0;
+}
+
 /* ---------- gamepads */
 
 SDL_JoystickID *SDL_GetGamepads(int *count)

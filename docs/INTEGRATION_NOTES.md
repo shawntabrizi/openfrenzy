@@ -423,6 +423,36 @@ No new fault was found, so no code changed. `OPENFRENZY_BKLOG=1` is needed for t
 - Not verified: keyboard input with real key events. Key events posted to the process with
   `CGEventPostToPid` (window not focused) did not move the title screen; the computer-use
   daemon was not available. The scripted pad path works.
+  Update (fix-keyboard-input-verify): verified with SDL key events; see "Keyboard input" below.
+
+### Keyboard input (fix-keyboard-input-verify)
+
+- New port-only switch `OPENFRENZY_DEBUG_TEST_KEYS` (docs/BUILD.md "Scripted keys"): it pushes
+  `SDL_EVENT_KEY_DOWN` / `SDL_EVENT_KEY_UP` (and the window focus events) with `SDL_PushEvent`
+  on the event thread. The guest got `SDL_PushEvent` (`port/guest/runtime/guest_sdl.c`) and the
+  host `host_sdl_push_event`. `OPENFRENZY_DEBUG_TEST_INPUT` was not set, so the scripted pad
+  path did not run.
+- Board run with keys only (window, outside the sandbox, renamed copies of the binaries, videos
+  skipped, 160 s, stopped with `kill -TERM`, `Game exited (0)`): the round-2 recipe with
+  START = `RETURN` and A = `SPACE`. BMP dumps every 300 frames show: title, main menu
+  (tournament), character select (Dub picked, CPU difficulty), Stage 1 Power Station, Tube
+  Tremors to "Player 3 wins!", the round results, then Twisted System to PLAYING. A second run
+  (dumps every 180 frames) reached the same, then a Power Station arena minigame.
+- Pad states, from a temporary log in `XInputGetState` (not committed): `RETURN` gives
+  START (0x0010), `SPACE` A = 255, `K` B = 255, `LEFT` d-pad left (0x0004) and LX -32767,
+  `UP` d-pad up (0x0001) and LY +32767. Each key comes back to 0 when it goes up. The mapping
+  in `input_keyboard_to_pad` is correct for these keys. No mapping bug found.
+- P1 scored 0 in Tube Tremors with LEFT/UP holds and K presses. The pad log shows the inputs
+  reached the game, so this is the blind script (it does not aim at bugs), not an input fault.
+- Focus, synthetic (`FOCUS_LOST@70000,FOCUS_GAINED@76000`, during Tube Tremors): the keys
+  pushed between the two events gave no pad change; the first key after `FOCUS_GAINED` gave
+  its pad state again (LEFT + SPACE at 76020 ms). No focus bug found. The new log lines name
+  each focus change.
+- Not verified: a real OS focus change. A window started from a background shell does not
+  become the front app, so SDL sends no focus events. `osascript` (System Events frontmost,
+  `Finder` activate) did not change the front app, and the cmux computer-use daemon was not
+  available. The real path differs only in where the focus event comes from:
+  `platform_handle_event` handles both the same way.
 
 ## Audio levels (integration round 3, 2026-10-10)
 

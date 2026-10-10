@@ -66,6 +66,7 @@ static struct setting settings[] =
 	{ "debug.gpu_skip_vertex_shaders", "" },
 	{ "debug.screenshot_directory", "" },
 	{ "debug.test_input", "" },
+	{ "debug.test_keys", "" },
 	{ "debug.texture_dump_directory", "" },
 };
 

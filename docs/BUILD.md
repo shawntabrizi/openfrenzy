@@ -90,6 +90,7 @@ Environment:
 | `OPENFRENZY_GAME=<name>` | start that minigame directly (BumperCars, Fireworks, Clusteroids, Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp); `src/runtime/of_launch.c` |
 | `OPENFRENZY_VARIATION=<n>` | its variation. Unset, each game starts its first variation. Each game reads the value itself (original code): Demolition and RollerBall take it 0-based (Demolition 0-3 = `demo-v1`..`v4`; 4 loads the missing `demo-v5` and faults), TankedUp, Drillers and BumperCars 1-based |
 | `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
+| `OPENFRENZY_DEBUG_TEST_KEYS=<script>` | real SDL key and focus events for automated runs of the keyboard path; see "Scripted keys" below |
 | `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` | skip the Bink videos (boot logos, attract video), as builds without FFmpeg do. Boot reaches the title in a few seconds instead of about 75 s; use it for scripted runs whose presses assume the title at once (`START@6000`) |
 | `OPENFRENZY_DSOUND_CAPTURE=<path>` | write the final audio output (after the limiter) to a WAV file: 48 kHz, stereo, 16-bit. It works without an audio device too (sandbox). See "Audio capture" below |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
@@ -114,6 +115,27 @@ call. The old pad-1 syntax (`START@6000,A@11000`) still works. `src/input/xinput
   `START@6000,A@11000,A@15500,A@23000,A@27000,P2:A@27500,P3:A@28000,P4:A@28500,
   P2:RIGHT@30000,P3:LX+@30000,P3:LX+@31000,P4:LX-@30000,A@33000,P2:A@33500,P3:A@34000,
   P4:A@34500,START@38000,START@42000,START@46000`, then `A` every 3 s.
+
+### Scripted keys (keyboard path)
+
+`OPENFRENZY_DEBUG_TEST_KEYS="ITEM[,ITEM...]"`, with `ITEM` = `NAME@MS[+HOLD]`. Port-only
+(`src/runtime/sdl_platform.c`). Key `NAME` goes down MS milliseconds after the first keyboard read
+(the first `XInputGetState` of pad 1, the same time base as `OPENFRENZY_DEBUG_TEST_INPUT`) and
+up HOLD ms later (default 150). `NAME` is an SDL scancode name in any case: `RETURN`, `ESCAPE`,
+`SPACE`, `J`, `K`, `UP`, `LEFT`, `TAB`, `KEYPAD 8`. `FOCUS_LOST@MS` and `FOCUS_GAINED@MS` post
+the window focus events.
+
+- The events go into SDL's own queue (`SDL_PushEvent`, host `host_sdl_push_event`) on the event
+  thread. Then `SDL_PollEvent`, `platform_handle_event`, `platform_input_read` and
+  `input_keyboard_to_pad` (`src/input/xinput_map.c`) handle them, as they do a real key. Use it
+  to test the keyboard layout. Use `OPENFRENZY_DEBUG_TEST_INPUT` for pads 2-4.
+- Each press is logged: `test_keys: SPACE at 9004 ms`. Focus changes are logged:
+  `window focus lost: keyboard off, keys released`, `window focus gained: keyboard on`.
+- While the window has no focus, the keyboard gives an empty pad (keys pushed then are ignored).
+- Example: the round-2 board recipe with keys only (START = `RETURN`, A = `SPACE`):
+  `RETURN@6000,SPACE@9000,SPACE@11000,SPACE@13000,RETURN@16000,RETURN@20000,RETURN@24000,
+  RETURN@28000,SPACE@32000,RETURN@36000`, then `SPACE` every 3 s. Add `LEFT@52000+700` (d-pad
+  and left stick) or `K@52500` (B) for minigame input.
 
 ### Audio capture
 
