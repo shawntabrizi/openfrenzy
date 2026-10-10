@@ -594,15 +594,6 @@ unsigned int CLList_Next(unsigned int *list, unsigned int *node)
 
 /* ---------- screen fades, loading screens and music (0x00071c20-0x00072720) */
 
-/* a pre-transformed vertex of the 2D quads below (0x24 bytes) */
-struct CLQuadVertex {
-	float x, y, z;       /* 0x00 */
-	float unused[3];     /* 0x0c */
-	unsigned int colour; /* 0x18 ARGB */
-	float u, v;          /* 0x1c */
-};
-OF_ASSERT_SIZE(struct CLQuadVertex, 0x24);
-
 /* 0x002ec900  the custom soundtrack stream of the music that plays now (0: disc music) */
 #define clu_music_custom CLU_VAR(int, 0x002ec900)
 /* 0x002ec904  the screen fade (CLFade_Draw) runs */

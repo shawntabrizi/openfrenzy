@@ -34,6 +34,11 @@ with the owner's definition, docs/ARCHITECTURE.md section 12).
 prototype has one parameter; call it through a variadic pointer. */
 #define CLU_DebugPrintf ((void (*)(const char *, ...))FUN_0004b230)
 
+/* operator new of the game: bkHeapAlloc (bkernel 0x0004c480; the table prototype
+returns void) */
+#define CLU_Alloc(size, file, line, flags) \
+	((void *(*)(unsigned int, const char *, int, unsigned int))FUN_0004c480)((size), (file), (line), (flags))
+
 /* MSVC rand(), inlined by the compiler into the game: holdrand is the C library's
 seed at 0x00285630 (initial value 1, owned by the C runtime). */
 extern unsigned int DAT_00285630;
@@ -42,6 +47,17 @@ static inline int CLU_Rand(void)
 	DAT_00285630 = DAT_00285630 * 0x343fdu + 0x269ec3u;
 	return (int)((DAT_00285630 >> 16) & 0x7fff);
 }
+
+/* ---------- types */
+
+/* a pre-transformed vertex of the 2D quads drawn with FUN_0003f2d0 (0x24 bytes) */
+struct CLQuadVertex {
+	float x, y, z;       /* 0x00 */
+	float unused[3];     /* 0x0c */
+	unsigned int colour; /* 0x18 ARGB */
+	float u, v;          /* 0x1c */
+};
+OF_ASSERT_SIZE(struct CLQuadVertex, 0x24);
 
 /* ---------- globals of other modules used here (tentative definitions) */
 

@@ -28,3 +28,13 @@ unsigned int DAT_002bcc94[256];   /* bdisplay */
 unsigned int DAT_002bce18[256];   /* bdisplay */
 unsigned int DAT_002bd640[256];   /* bdisplay */
 float DAT_002855f0[16];           /* engine: identity matrix (initialised data of its owner) */
+float DAT_002be580;               /* bdisplay: near clip */
+float DAT_002be584;               /* bdisplay: far clip */
+float DAT_002be588;               /* bdisplay: field of view */
+float DAT_002be58c;               /* bdisplay: aspect */
+int DAT_002844cc;                 /* core: model shadow colour */
+int DAT_002844d0;
+int DAT_002844d4;
+undefined4 DAT_00284b10;          /* bactor: actor tint */
+undefined4 DAT_00284b14;
+undefined4 DAT_00284b18;
