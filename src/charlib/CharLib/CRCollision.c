@@ -1142,9 +1142,9 @@ float CRColl_RayCast(float *start, float *delta, float *hit, float **tri_out, vo
 			tri = *(float **)mesh + i * TRI_FLOATS;
 			if (lo[0] <= tri[17] && tri[16] <= hi[0] && lo[1] <= tri[19] && tri[18] <= hi[1] &&
 			    lo[2] <= tri[21] && tri[20] <= hi[2] && coll_ray_tri(tri, start, end, delta, &t)) {
-				/* the original passes a null start point here (EBX = 0 at 0x000b4942):
-				kept as in the original */
-				FUN_00050ff0(point, NULL, t, end, 1.0f - t);
+				/* EBX holds `start` at 0x000b4942 (loaded at 0x000b488d), as in the
+				scenery pass */
+				FUN_00050ff0(point, start, t, end, 1.0f - t);
 				if (CRColl_PointInTri(tri, point) != 0 && best < t) {
 					if (tri_out != NULL)
 						*tri_out = tri;
