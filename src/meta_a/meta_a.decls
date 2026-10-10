@@ -6,3 +6,5 @@
 
 # Meta/unplaced_player.c
 00152f30 undefined4 *FUN_00152f30(undefined4 *self);
+00151090 int FUN_00151090(void *self, int level);
+00153020 void FUN_00153020(int group);

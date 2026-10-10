@@ -37,7 +37,9 @@ extern int DAT_002baeb0;            /* chosen variant */
 extern int DAT_002baeb8;            /* attract mode */
 extern int DAT_002bae94;            /* number of players */
 extern int DAT_002baed4[];          /* players, 10 ints each: +0x04 character */
-extern int DAT_002baed8[];          /* players, 10 ints each: +0x08 */
+extern int DAT_002baed8[];
+extern int DAT_002baee0[];          /* players, 10 ints each: +0x10 pad */
+extern int DAT_002bae88, DAT_002baeb4;          /* players, 10 ints each: +0x08 */
 extern int DAT_002baee8[];          /* players, 10 ints each: +0x18 score */
 extern int DAT_002baef0[];          /* players, 10 ints each: +0x20 */
 extern int DAT_002baf10[], DAT_002baf38[], DAT_002baf60[]; /* score of players 1-3 */
@@ -97,6 +99,9 @@ extern int DAT_002f7a30, DAT_002f7a34;
 /* classlib_fx */
 extern unsigned char s_aisteam1_00290f00[0x1b0]; /* 6 CSpriteDef */
 
+/* charlib (camera yaw of the extra camera) */
+extern int _DAT_002f7a2c;
+
 /* Hopper */
 extern int DAT_002ae9c4;            /* a sample */
 extern char DAT_002aec00;           /* state of play */
@@ -125,6 +130,11 @@ extern float DAT_002b05a8;          /* KO animation speed */
 extern int DAT_002b05ac;            /* auto collect */
 extern int DAT_002b05b0;            /* auto score */
 extern float DAT_002b074c;          /* attack angle (degrees) */
+extern float DAT_002b0750;          /* velocity kept when stopping */
+extern float DAT_002b0754, DAT_002b0758; /* drown: fade start, respawn (frames) */
+extern float DAT_002b075c, DAT_002b0760; /* drown: rise and sink speed */
+extern int DAT_002b0764;            /* drown: bob range */
+extern float DAT_002b0768, DAT_002b076c; /* stand/idle switch times */
 extern int DAT_002b0770, DAT_002b0774;
 extern float DAT_002b0778, DAT_002b077c;
 extern int DAT_002b0780;
@@ -134,8 +144,11 @@ extern float DAT_002b078c[4];       /* attack blend speeds */
 extern float DAT_002b079c[4];       /* attack animation speeds */
 extern float DAT_002b07ac;
 extern float DAT_002b07b0;
+extern int DAT_002b07b4;
 extern float DAT_002b07b8;          /* get-up time */
-extern int DAT_002b07c8[4];         /* ball scores */
+extern float DAT_002b07bc, DAT_002b07c0; /* knockout: slide time and speed */
+extern int DAT_002b07c4[5];         /* ball scores by type 1-4 ([0] unused) */
+#define DAT_002b07c8 (DAT_002b07c4 + 1) /* 0x002b07c8 */
 extern float DAT_002b0850;          /* AI attack delay */
 extern float DAT_002b0874;          /* carry factor */
 extern float DAT_002b0878, DAT_002b087c, DAT_002b0880; /* thickness base, amp, freq */
@@ -157,6 +170,7 @@ extern float DAT_003045a4[4];       /* per player: rumble frames */
 extern int DAT_003045b4;
 extern int DAT_003045b8;            /* colour set in use */
 extern float DAT_003045c4;
+extern int DAT_003045c8[1000];      /* cleared before the level loads */
 extern int DAT_00305568, DAT_0030556c;
 extern int DAT_00305570;            /* saved sample volume */
 extern int DAT_00305574;            /* show frame rate */
@@ -166,9 +180,11 @@ extern int DAT_003055d4;            /* the camera (charlib, 0x574 bytes) */
 extern int DAT_003055d8;
 extern float DAT_00305648;
 extern int DAT_0030564c;            /* the level's game object */
+extern int DAT_00305660[1000];      /* the level's object table */
 extern int DAT_00305650;
 extern float DAT_00305654;
 extern int DAT_00305658;            /* steal orb on hurt */
+extern unsigned char DAT_003075b0[0xc]; /* CLList of light groups */
 extern int DAT_003075bc[4];         /* the four CMetaPlayer objects */
 extern int DAT_003082bc;
 extern int DAT_003082c0;            /* the tile board */
