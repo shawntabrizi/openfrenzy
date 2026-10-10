@@ -44,8 +44,8 @@ Owner: bactor. Other modules: do not rely on these names.
 #define ba_bkHash ((uint32_t (*)(const char *))FUN_0004dc30)
 /* 0x0004d8b0: sends a text message to a target */
 #define ba_bkSendMessage ((int (*)(int, const char *))FUN_0004d8b0)
-/* 0x0004e390: finds a resource in the loaded packages (item, package, 0, 0, 0, 0) */
-#define ba_bkFindResource ((void *(*)(void *, void *, int, int, int, int))FUN_0004e390)
+/* 0x0004e390: loads a resource from a package (package, crc, buffer, size, tags, extra) */
+#define ba_bkFindResource ((void *(*)(void *, uint32_t, void *, void *, void *, int))FUN_0004e390)
 /* 0x0004b7a0: finds a texture (0, name, package handle, package index) */
 #define ba_bkFindTexture ((void *(*)(int, int, uint32_t, int))FUN_0004b7a0)
 /* 0x0004e8f0: no arguments */

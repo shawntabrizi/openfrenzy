@@ -36,20 +36,20 @@ int baInitSets(void)
 }
 
 /* 0x0003ca50  BACTOR/(unplaced)
-package loader of a set resource */
-struct BSet *baLoadSet(struct BSet *item, void *package)
+bKernel's loader of set resources: finds the set crc in a package */
+struct BSet *baLoadSet(void *package, uint32_t crc)
 {
-	struct BSet *set = (struct BSet *)ba_bkFindResource(item, package, 0, 0, 0, 0);
+	struct BSet *set = (struct BSet *)ba_bkFindResource(package, crc, NULL, NULL, NULL, 0);
 
 	if (set == NULL)
 		return NULL;
-	set->handle = item->handle;
+	set->handle = *(uint32_t *)package; /* the package id */
 	s_setInit[set->type](set);
 	return set;
 }
 
 /* 0x0003ca90  BACTOR/(unplaced)
-package release function of a set resource (bKernel's switch case 6) */
+bKernel's release function of set resources (resource type 6) */
 void baFreeSet(struct BSet *set)
 {
 	s_setFree[set->type](set);

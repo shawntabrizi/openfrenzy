@@ -8,7 +8,7 @@
 000347e0 struct BActorNode *bInitNodes(struct BActorNodeDef *first, struct BActorNode *node, struct BActorNode *parent, int numSlots);
 00034930 void baDeleteActorInstance(struct BActorInstance *inst);
 00034990 void bFixupNodeDefs(char *base, struct BActorNodeDef *first, int depth, struct BActor *actor);
-00034b50 struct BActor *baLoadActor(struct BActor *item, void *package);
+00034b50 struct BActor *baLoadActor(void *package, uint32_t crc);
 00034bf0 void baPrepActorInstance(struct BActorInstance *inst, int flags);
 00034d50 int baDrawActorInstance(struct BActorInstance *inst, int passes);
 00034dd0 void bReleaseNodeDefs(struct BActorNodeDef *first);
@@ -148,7 +148,7 @@
 
 # ---------- BACTOR/unplaced.c
 0003ca40 int baInitSets(void);
-0003ca50 struct BSet *baLoadSet(struct BSet *item, void *package);
+0003ca50 struct BSet *baLoadSet(void *package, uint32_t crc);
 0003ca90 void baFreeSet(struct BSet *set);
 0003cac0 void baDrawSet(struct BSet *set, int pass);
 0003cae0 void bGetKey3(float *out, struct BKeyTrack3 *track, int time);

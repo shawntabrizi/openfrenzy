@@ -186,14 +186,16 @@ void bFixupNodeDefs(char *base, struct BActorNodeDef *first, int depth, struct B
 }
 
 /* 0x00034b50  BACTOR/actor.cpp (file inferred)
-package loader of an actor resource (called through bKernel's resource type switch) */
-struct BActor *baLoadActor(struct BActor *item, void *package)
+bKernel's loader of actor resources (in its resource type table,
+src/bkernel/bKernel/unplaced_resource.c): finds the actor crc in a package and fixes it up */
+struct BActor *baLoadActor(void *package, uint32_t crc)
 {
-	struct BActor *actor = (struct BActor *)ba_bkFindResource(item, package, 0, 0, 0, 0);
+	struct BActor *actor = (struct BActor *)ba_bkFindResource(package, crc, NULL, NULL, NULL, 0);
 
 	if (actor == NULL)
 		return NULL;
-	actor->handle = (actor->handle & 0x80000000u) | (item->handle & 0x7fffffffu);
+	/* the package id (the package's first word), keeping the actor's bit 31 */
+	actor->handle = (actor->handle & 0x80000000u) | (*(uint32_t *)package & 0x7fffffffu);
 	if (actor->root != NULL)
 		actor->root = (struct BActorNodeDef *)((char *)actor->root + (intptr_t)actor);
 	if (actor->subObjects != NULL)
@@ -278,7 +280,7 @@ void bReleaseNodeDefs(struct BActorNodeDef *first)
 }
 
 /* 0x00034e30  BACTOR/actor.cpp (file inferred)
-package release function of an actor resource (bKernel's switch case 1) */
+bKernel's release function of actor resources (resource type 1) */
 void baFreeActor(struct BActor *actor)
 {
 	bReleaseNodeDefs(actor->root);
