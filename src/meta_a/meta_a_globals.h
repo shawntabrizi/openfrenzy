@@ -99,6 +99,19 @@ extern float DAT_002855f0[16];      /* the identity world matrix */
 
 extern unsigned int DAT_002bc490[], DAT_002bc898[], DAT_002bce18[], DAT_002bd640[]; /* colour tables */
 
+/* ---------- owned elsewhere: meta_b (Meta/CWater.c), classlib_fx (ClassLib/clf_extern.c) */
+
+extern int DAT_003090b4;            /* number of water areas */
+extern void *DAT_003090b8[6];       /* the water areas (struct CMetaWater *) */
+extern int DAT_00284b10, DAT_00284b14, DAT_00284b18; /* ambient light r, g, b (bactor) */
+
+/* ---------- owned by meta_a: Meta/Effects.c, Meta/unplaced_lightning.c */
+
+extern float DAT_003083d8[4][4];    /* the goal effects' positions */
+extern float DAT_00308424[4];       /* frames until each goal effect starts */
+extern short DAT_00308458;          /* number of live lightning bolts */
+extern unsigned int DAT_003084e8[13 * 9]; /* the bolt's vertices */
+
 /* ---------- owned elsewhere: charlib */
 
 extern int DAT_00292c4c, DAT_00292c50; /* route grid columns, rows */

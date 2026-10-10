@@ -31,4 +31,10 @@
 0015b050 void FUN_0015b050(int list);
 
 # Meta/Effects.c
+0015be90 void FUN_0015be90(float *pos, int count);
+0015c4b0 void FUN_0015c4b0(int sprite);
+0015c7a0 void FUN_0015c7a0(char *model, float *pos, float speed_u, float speed_v, int tag);
 0015c400 int FUN_0015c400(float *pos, float width, float height, char *texture, int r, int g, int b, int a, float offset);
+
+# Meta/unplaced_lightning.c
+0015cc80 void FUN_0015cc80(float *from, float *to, int segments, float brightness);
