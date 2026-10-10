@@ -676,6 +676,46 @@ static unsigned long expanded(unsigned long input)
 	return (input & ~MAP_MASK) | MAP_EXPAND;
 }
 
+static BOOL missing_texture(int stage, DWORD argument)
+{
+	return (argument & D3DTA_SELECTMASK) == D3DTA_TEXTURE && stage_textures &&
+		stage_textures[stage] == _d3d8_ff_texture_none;
+}
+
+/* whether the operation reads (with one of the arguments it uses, or its own
+texture alpha) the texture of a stage that has none (0x001ff2c0/0x001fead0 return
+1 for such an argument) */
+static BOOL stage_reads_missing_texture(int stage, DWORD op, BOOL alpha)
+{
+	const DWORD *ts = D3D__TextureState[stage];
+	DWORD arg0 = ts[alpha ? D3DTSS_ALPHAARG0 : D3DTSS_COLORARG0];
+	DWORD arg1 = ts[alpha ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
+	DWORD arg2 = ts[alpha ? D3DTSS_ALPHAARG2 : D3DTSS_COLORARG2];
+
+	switch (op)
+	{
+	case D3DTOP_DISABLE:
+		return FALSE;
+	case D3DTOP_SELECTARG1:
+		return missing_texture(stage, arg1);
+	case D3DTOP_SELECTARG2:
+		return missing_texture(stage, arg2);
+	case D3DTOP_BLENDTEXTUREALPHA:
+	case D3DTOP_BLENDTEXTUREALPHAPM:
+		return missing_texture(stage, D3DTA_TEXTURE);
+	case D3DTOP_MULTIPLYADD:
+	case D3DTOP_LERP:
+		return missing_texture(stage, arg0) || missing_texture(stage, arg1) || missing_texture(stage, arg2);
+	case D3DTOP_PREMODULATE:
+	case D3DTOP_BUMPENVMAP:
+	case D3DTOP_BUMPENVMAPLUMINANCE:
+		/* (passed on in any case, see stage_portion) */
+		return FALSE;
+	default:
+		return missing_texture(stage, arg1) || missing_texture(stage, arg2);
+	}
+}
+
 /* one portion (color or alpha) of one stage: its inputs word and outputs
 word, or FALSE if the stage leaves this portion alone */
 static BOOL stage_portion(int stage, BOOL alpha, DWORD *inputs, DWORD *outputs)
@@ -752,6 +792,13 @@ static BOOL stage_portion(int stage, BOOL alpha, DWORD *inputs, DWORD *outputs)
 		break;
 	}
 	*inputs = (DWORD)((a << 24) | (b << 16) | (c << 8) | d);
+	if (stage_reads_missing_texture(stage, op, alpha))
+	{
+		/* as the XBE's D3D (0x001ff9d0 color, 0x001ff030 alpha): an operation that reads
+		the texture of a stage without one passes the stage's input on (the diffuse color
+		at stage 0, the current color after it); the output flags stay */
+		*inputs = (DWORD)((((stage ? _reg_r0 : _reg_v0) | (alpha ? INPUT_ALPHA : 0)) << 24) | (ONE << 16));
+	}
 	if (dot)
 		*outputs = (DWORD)((flags << 12) | (result << 4));
 	else

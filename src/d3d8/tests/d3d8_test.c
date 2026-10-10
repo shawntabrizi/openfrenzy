@@ -390,11 +390,33 @@ static void test_combiners(void)
 	run_stages(NULL, &in, result, NULL);
 	CHECK_COLOR(result, 0.5f, 1.0f, 0.5f, 0.3f, "no stage");
 
-	/* the default stage 0 (texture * current) without a texture: diffuse */
+	/* the default stage 0 (texture * current) without a texture: diffuse (the XBE's D3D passes
+	the diffuse color and alpha on when a stage reads a texture it does not have) */
 	stage_state(0, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_CURRENT, D3DTOP_SELECTARG1, D3DTA_TEXTURE, D3DTA_CURRENT);
 	run_stages(none, &in, result, &modes);
-	CHECK_COLOR(result, 0.5f, 1.0f, 0.5f, 1.0f, "MODULATE without a texture");
+	CHECK_COLOR(result, 0.5f, 1.0f, 0.5f, 0.3f, "MODULATE without a texture");
 	CHECK(modes == 0, "no texture: no texture mode");
+	stage_state(0, D3DTOP_MODULATE2X, D3DTA_TEXTURE, D3DTA_DIFFUSE, D3DTOP_SELECTARG1, D3DTA_TEXTURE, D3DTA_DIFFUSE);
+	run_stages(none, &in, result, NULL);
+	CHECK_COLOR(result, 1.0f, 1.0f, 1.0f, 0.3f, "MODULATE2X without a texture: diffuse, still doubled");
+
+	/* Hopper variation 2 leaves stage 1 at BLENDFACTORALPHA (texture, current) while it draws
+	untextured on stage 1 (players, floor lines): the stage must pass the current color on,
+	not blend toward white (the white players of integration round 1) */
+	stages_reset();
+	stage_state(0, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_DIFFUSE, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_DIFFUSE);
+	stage_state(1, D3DTOP_BLENDFACTORALPHA, D3DTA_TEXTURE, D3DTA_CURRENT, D3DTOP_SELECTARG2, D3DTA_TEXTURE,
+		D3DTA_CURRENT);
+	D3D__RenderState[D3DRS_TEXTUREFACTOR] = 0xff000000;
+	kinds[1] = _d3d8_ff_texture_none;
+	run_stages(kinds, &in, result, &modes);
+	CHECK_COLOR(result, 0.25f, 0.25f, 0.5f, 0.24f, "stage 1 reading a missing texture passes the current color");
+	CHECK(((modes >> 5) & 0x1f) == 0, "stage 1 without a texture: no texture mode, got 0x%lx", (unsigned long)modes);
+	kinds[1] = _d3d8_ff_texture_2d;
+	run_stages(kinds, &in, result, NULL);
+	CHECK_COLOR(result, 0.2f, 0.4f, 0.6f, 0.24f, "BLENDFACTORALPHA (factor alpha 1) with the texture: the texture");
+	kinds[1] = _d3d8_ff_texture_cube;
+	stages_reset();
 
 	/* specular added, then fog: f * color + (1 - f) * fog color */
 	stage_state(0, D3DTOP_MODULATE, D3DTA_TEXTURE, D3DTA_DIFFUSE, D3DTOP_SELECTARG1, D3DTA_TEXTURE, D3DTA_DIFFUSE);

@@ -97,11 +97,14 @@ globals (xdk_d3d8.h) or calls:
 #define D3DTOP_ADDSIGNED2X 9
 #define D3DTOP_SUBTRACT 10
 #define D3DTOP_ADDSMOOTH 11
+/* 12-16 as the XBE's D3D combiner builder decodes them (0x001ff9d0 and 0x001ff030 give
+0x001ff530/0x001fed30 the blend-alpha source: 12 diffuse, 13 texture, 14 factor, 15 texture
+premultiplied, 16 current), the same order as the PC */
 #define D3DTOP_BLENDDIFFUSEALPHA 12
-#define D3DTOP_BLENDCURRENTALPHA 13
-#define D3DTOP_BLENDTEXTUREALPHA 14
-#define D3DTOP_BLENDFACTORALPHA 15
-#define D3DTOP_BLENDTEXTUREALPHAPM 16
+#define D3DTOP_BLENDTEXTUREALPHA 13
+#define D3DTOP_BLENDFACTORALPHA 14
+#define D3DTOP_BLENDTEXTUREALPHAPM 15
+#define D3DTOP_BLENDCURRENTALPHA 16
 #define D3DTOP_PREMODULATE 17
 #define D3DTOP_MODULATEALPHA_ADDCOLOR 18
 #define D3DTOP_MODULATECOLOR_ADDALPHA 19

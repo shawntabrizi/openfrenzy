@@ -4111,6 +4111,26 @@ static void trace_draw(const char *kind, D3DPRIMITIVETYPE type, unsigned long co
 				D3D__TextureState[stage][D3DTSS_MAXMIPLEVEL]);
 		}
 	}
+	if (!rs[D3DRS_PSTEXTUREMODES])
+	{
+		int stage;
+
+		/* the fixed-function texture stages (no pixel shader) */
+		platform_log("    ff lighting %lu fog %lu/%lu specular %lu tfactor %08lx", rs[D3DRS_LIGHTING],
+			rs[D3DRS_FOGENABLE], rs[D3DRS_FOGTABLEMODE], rs[D3DRS_SPECULARENABLE], rs[D3DRS_TEXTUREFACTOR]);
+		for (stage = 0; stage < D3DTSS_MAXSTAGES; stage++)
+		{
+			const DWORD *ts = D3D__TextureState[stage];
+			D3DBaseTexture *texture = device.textures[stage];
+
+			if (ts[D3DTSS_COLOROP] == D3DTOP_DISABLE || ts[D3DTSS_COLOROP] == 0)
+				break;
+			platform_log("    ts%d: color %lu %lx %lx alpha %lu %lx %lx texture %08lx format %08lx", stage,
+				ts[D3DTSS_COLOROP], ts[D3DTSS_COLORARG1], ts[D3DTSS_COLORARG2], ts[D3DTSS_ALPHAOP],
+				ts[D3DTSS_ALPHAARG1], ts[D3DTSS_ALPHAARG2], texture ? texture->Data : 0,
+				texture ? texture->Format : 0);
+		}
+	}
 	platform_log("    offset enable %lu slope %g offset %g zbias %ld stencil %lu func %lx ref %lx mask %lx write %lx ops %lx/%lx/%lx",
 		rs[D3DRS_SOLIDOFFSETENABLE], dword_to_float(rs[D3DRS_POLYGONOFFSETZSLOPESCALE]),
 		dword_to_float(rs[D3DRS_POLYGONOFFSETZOFFSET]), (long)rs[D3DRS_ZBIAS], rs[D3DRS_STENCILENABLE],
