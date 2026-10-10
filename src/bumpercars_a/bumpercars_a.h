@@ -29,6 +29,7 @@ Conventions (docs/ARCHITECTURE.md):
 
 #include "xtl.h"
 #include "bactor.h"
+#include "engine_misc_maths.h"
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -135,7 +136,7 @@ struct DebrisStreak {
 
 /* a debris type: what Debris_Add makes (passed by every minigame) */
 struct DebrisType {
-	int unknown00;                 /* 0x00 */
+	const char *name;              /* 0x00 "STEAM1", "RESPAWNCHAR", ... */
 	struct DebrisParams *params;   /* 0x04 */
 	float *spinInit;               /* 0x08 8 floats: axis/angle and rates, or NULL */
 	void *spriteAnim;              /* 0x0c CSpriteAnim (classlib_fx) */

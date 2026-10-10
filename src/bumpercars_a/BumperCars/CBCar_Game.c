@@ -67,7 +67,7 @@ extern struct Settings *DAT_002ba9a0;
 /* 0x00086b80  (gap): constructor of a player slot (the array constructor's callback) */
 void *CBCar_Game_PlayerSlotCtor(void *slot)
 {
-	FUN_00089020(slot);
+	FUN_00089020((char *)slot + 0x10);
 	return slot;
 }
 

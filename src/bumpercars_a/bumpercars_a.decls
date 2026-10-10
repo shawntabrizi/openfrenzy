@@ -42,9 +42,6 @@
 # code uses: ECX `this` first); each is checked when its function is written
 00082860 struct Settings *Settings_Init(struct Settings *self);
 00082870 char *Settings_Get(struct Settings *self, const char *key);
-00089020 void *FUN_00089020(void *self);
-00089070 void FUN_00089070(void *self);
-000890f0 void FUN_000890f0(void *self);
 0008bf50 void *FUN_0008bf50(void *self);
 0008bf90 void FUN_0008bf90(void *self);
 0008bfa0 void FUN_0008bfa0(void *self, int playing);
@@ -109,3 +106,44 @@
 00082aa0 void DebrisColours_Set2(float *colour);
 00082ae0 void DebrisColours_Set3(float *colour);
 00082b20 void DebrisColours_SetAll(float *colour0, float *colour1, float *colour2, float *colour3);
+
+# ---- BumperCars/unplaced_ai.c (the computer driver, class CBCarAI at player slot + 0x10)
+00088f80 struct DebrisType *Debris_FindType(const char *name, struct DebrisType *types, int count);
+00089020 struct CBCarAI *CBCarAI_Ctor(struct CBCarAI *self);
+00089070 void CBCarAI_Dtor(struct CBCarAI *self);
+000890d0 void CBCarAI_DestroyTimers(struct CBCarAI *self);
+000890f0 void CBCarAI_Reset(struct CBCarAI *self);
+00089130 unsigned char *CBCarAI_FindNearest(struct CBCarAI *self, int kind);
+00089280 unsigned char *CBCarAI_FindNearestFlashing(struct CBCarAI *self);
+000893c0 unsigned char *CBCarAI_FindFurthest(struct CBCarAI *self);
+00089510 unsigned char *CBCarAI_FindNearestToGoal(struct CBCarAI *self);
+00089670 unsigned char *CBCarAI_FindNearestPuck(struct CBCarAI *self);
+00089710 void CBCarAI_Pause(struct CBCarAI *self);
+00089730 void CBCarAI_Resume(struct CBCarAI *self);
+00089750 struct CBCarAI *CBCarAI_Destroy(struct CBCarAI *self, byte flags);
+00089770 int CBCarAI_Init(struct CBCarAI *self, unsigned char *player, unsigned int *behaviours);
+00089910 unsigned char *CBCarAI_FindBlocker(struct CBCarAI *self);
+00089b30 void CBCarAI_Chase(struct CBCarAI *self);
+00089ca0 void CBCarAI_Circle(struct CBCarAI *self);
+00089e40 int CBCarAI_Ram(struct CBCarAI *self);
+0008a070 void CBCarAI_Flee(struct CBCarAI *self);
+0008a1e0 void CBCarAI_GotoWaypoint(struct CBCarAI *self);
+0008a270 void CBCarAI_FollowWaypoints(struct CBCarAI *self);
+0008a740 void CBCarAI_AvoidFlames(struct CBCarAI *self);
+0008a8b0 void CBCarAI_AvoidHoles(struct CBCarAI *self);
+0008ab20 void CBCarAI_AvoidWalls(struct CBCarAI *self);
+0008ad90 void CBCarAI_AvoidGoal(struct CBCarAI *self);
+0008ae80 void CBCarAI_FindTarget(struct CBCarAI *self);
+0008b0a0 void CBCarAI_RethinkTarget(struct CBCarAI *self);
+0008b1e0 void CBCarAI_StateChase(struct CBCarAI *self);
+0008b480 void CBCarAI_StateFlee(struct CBCarAI *self);
+0008b600 void CBCarAI_StatePuck(struct CBCarAI *self);
+0008b800 void CBCarAI_Sense(struct CBCarAI *self);
+0008bb30 void CBCarAI_StateWander(struct CBCarAI *self);
+0008bdd0 void CBCarAI_Update(struct CBCarAI *self, int param);
+
+# ---- not written yet, called by the AI (this-first shapes)
+00091a00 void *FUN_00091a00(void *self, float *pos);
+00091aa0 float FUN_00091aa0(void *self, float *pos);
+00095150 int FUN_00095150(void *self, float *ray, float radius, float *heading);
+000951f0 int FUN_000951f0(void *self, float *pos, float radius, float *delta);
