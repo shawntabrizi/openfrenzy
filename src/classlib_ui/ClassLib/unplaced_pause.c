@@ -1,19 +1,23 @@
 /*
 ClassLib/unplaced_pause.c  (classlib_ui)
 
-The in-game pause menu (0x00074e30-0x000772e0): pause input map, the menu pages
+The in-game pause menu (0x00074e30-0x00078870): pause input map, the menu pages
 (main, options, quit confirmation, soundtrack), the window frame, the "controller
 unplugged" message and the per-frame update. The original source file is not known
 (gap between COverlay.cpp and Hud.cpp); docs/ARCHITECTURE.md asks for unplaced.c, this
 file is its pause-menu part, kept separate for size.
 
 The pause object (self) is a C++ object; offsets used here:
+  0x00  page to show after the window resize          0x04, 0x08  window size target
   0x18  title text index           0x1c  input map of the game (disabled while paused)
+  0x20, 0x24  stick y, x actions   0x28, 0x2c, 0x30  select, back, cheat actions
   0x34  pause input map            0x38  "Pause" action per player (4)
   0x48  "Any" (menu) action per player (4)
-  0x58  time (glow phase)          0x5c  paused flag
+  0x58  time (glow phase)          0x5c  paused flag (1: menu open)
+  0x60, 0x64  open time and frames 0x7c  closing countdown (resume)
   0x68  pausing player             0x6c  selected item
-  0x70  default item               0x74  page (0 main, 1 options, 2-4 confirm, 5 title)
+  0x70  default item               0x74  page (0 main, 1 options, 2-4 confirm, 5 title;
+        6 fade out, 8 resize, 7 fade in)
   0x78  item count                 0x80  font
   0x84  root overlay (window)      0x88-0xa4  window frame pieces (corners, edges)
   0xa8-0xb8  frame overlays hidden on page 0   0xbc-0xdc  text lines (title, items)
@@ -98,7 +102,7 @@ extern int DAT_002baea8;           /* core: quit to the board allowed */
 extern int DAT_002baed4[40];       /* core: players (10 ints each): character at +0 */
 extern int DAT_002baed8[40];       /* core: players: plugged in at +0 */
 extern int DAT_002baee0[40];       /* core: players: pad port bits at +0 */
-extern int DAT_002ba8b8[16];       /* core: debug message ids */
+extern int DAT_002ba8b8[17];       /* core: debug message ids (16; the update clears 17 words) */
 extern int DAT_002ba900;           /* core: debug message count */
 extern float DAT_002ba904;         /* core: debug message timer */
 extern unsigned short DAT_002ba7a8[0x88]; /* core: debug message text */
@@ -957,4 +961,537 @@ void CLPause_Begin(int self, int player)
 	OV_I(self, 0x70) = 1;
 	CLList_Remove((int *)clu_overlay_root, (int *)(OV_I(self, 0x84) + 0x10));
 	CLList_Insert((int *)clu_overlay_root, (int *)(OV_I(self, 0x84) + 0x10), 1);
+}
+
+/* ---------- the per-frame update */
+
+/* 0x00290968  stick dead zone of the menu (9828.0) */
+#define clu_stick_dead_zone CLU_VAR(float, 0x00290968)
+/* 0x002909a4 / 0x002909a8  first and next repeat delay of the menu stick (30, 5 frames) */
+#define clu_repeat_first CLU_VAR(float, 0x002909a4)
+#define clu_repeat_next CLU_VAR(float, 0x002909a8)
+/* 0x002909b0  time after which the results end by themselves (3600 frames) */
+#define clu_results_timeout CLU_VAR(float, 0x002909b0)
+/* 0x002909cc  fade speed of the window and lines (8.0) */
+#define clu_fade_speed CLU_VAR(float, 0x002909cc)
+/* 0x002909d0  per-frame ease of the window size (0.5) */
+#define clu_window_ease CLU_VAR(float, 0x002909d0)
+/* 0x002909d4  lines of the title page window (6.5) */
+#define clu_title_page_lines CLU_VAR(float, 0x002909d4)
+/* 0x002ecc70  stick repeat delay now */
+#define clu_repeat_delay CLU_VAR(float, 0x002ecc70)
+/* 0x002ecd80  stick repeat timer (> 0 after a move down, < 0 after a move up) */
+#define clu_repeat_timer CLU_VAR(float, 0x002ecd80)
+/* 0x002ecf04  frames the window has had its size */
+#define clu_window_settled CLU_VAR(int, 0x002ecf04)
+/* 0x002ed324  the rumble manager (CRumble.cpp); 0x002ed338 its flags */
+#define clu_rumble ((int)CLU_ADDR(0x002ed324))
+#define clu_rumble_flags CLU_VAR(unsigned int, 0x002ed338)
+
+extern int DAT_0028198c;  /* core: next game mode (-1: none) */
+extern float DAT_00283760; /* core_modes_b: attract timeout (frames) */
+extern int DAT_0028440c;  /* core: controller that asks for the pause (-1: none) */
+extern int DAT_002bae8c;  /* core: players in the game */
+extern int DAT_002bae90;  /* core: players out of the game */
+extern int DAT_002baeb8;  /* core: results shown */
+extern int DAT_002baed0;  /* core: game over */
+
+/* goes back to the main page with item `item` selected (from page 1-5) */
+static void CLPause_BackToMain(int self, int item)
+{
+	int lines;
+
+	OV_I(self, 0x74) = 6;
+	OV_I(self, 0) = 0;
+	lines = (DAT_002baea8 != 0) + 5;
+	OV_F(self, 4) = 268.0f;
+	OV_F(self, 8) = (float)((double)lines * (double)clu_line_step + (double)clu_window_base);
+	OV_I(self, 0x70) = item;
+	CLPause_ColourItems(self);
+}
+
+/* the "shuffle" item of the options page: toggles the shuffle, rumbles both motors of
+the pausing player once when it is on (even with the rumble paused) and updates the line */
+static void CLPause_ToggleShuffle(int self)
+{
+	unsigned int saved;
+	unsigned short *shuffle;
+
+	DAT_002bae7c = DAT_002bae7c == 0;
+	CLRumble_StopAll(clu_rumble);
+	if (DAT_002bae7c != 0) {
+		CLRumble_Resume(clu_rumble);
+		saved = clu_rumble_flags;
+		clu_rumble_flags = saved & ~1u;
+		CLRumble_PlayMotor(clu_rumble, OV_I(self, 0x68), 1, 0x7ff8, 200, 10, 0x5a, 0, 3);
+		CLRumble_PlayMotor(clu_rumble, OV_I(self, 0x68), 0, 0x7ff8, 200, 10, 0x5a, 0, 3);
+		clu_rumble_flags = (clu_rumble_flags & ~1u) | (saved & 1u);
+	}
+	if (DAT_002bae7c == 0)
+		shuffle = CL_TEXT(0x1740);
+	else
+		shuffle = CL_TEXT(0x1730);
+	CL_WSprintf((unsigned short *)(OV_I(self, 0xd0) + 0xa4), L"%S %S", CL_TEXT(0x1720), shuffle);
+	CLSamples_PlayGeneric(7, 0x7f, 0, 0, NULL);
+}
+
+/* resumes the game from the menu: the window closes (page 6, then 8 and 7 count down) */
+static void CLPause_Resume(int self)
+{
+	CLRumble_Resume(clu_rumble);
+	OV_I(self, 0x7c) = 1;
+	OV_I(self, 0x74) = 6;
+	OV_F(self, 8) = 0.0f;
+	OV_F(self, 4) = 0.0f;
+}
+
+/* changes a volume bar (0..10) by the sign of `x`; returns 0 at the limit */
+static int CLPause_StepVolume(int bar, int x, int *volume)
+{
+	int level = OV_I(bar, 0x3d4);
+
+	if (x > 0) {
+		if (level >= 10)
+			return 0;
+		level++;
+	} else {
+		if (level <= 0)
+			return 0;
+		level--;
+	}
+	OV_I(bar, 0x3d4) = level;
+	*volume = (OV_I(bar, 0x3d4) * 0xff) / 10;
+	CLSamples_PlayGeneric(8, 0xff, 0, 0, NULL);
+	return 1;
+}
+
+/* 0x000772e0  ClassLib (pause menu; thiscall)
+The per-frame update of the pause object (self+0x5c: 1 while the menu is open). Opens the
+menu on a pause request, ends the results screen, brings back players that press Pause
+and, while open, animates the window (page 6: lines fade out, 8: window resizes, 7: lines
+fade in), reads the stick and buttons and acts on the selected item. Returns 1 when the
+game mode must end (results over, quit, restart), else 0. The parameter keeps the table's
+pointer type for the callers in other modules. */
+int CLPause_Update(undefined4 *pause)
+{
+	int self = (int)pause;
+	float time;
+	double fade;
+	double ease;
+	double alpha;
+	float limit;
+	int state;
+	int player;
+	int done;
+	int i;
+	int x;
+	int y;
+	int held;
+	int line;
+
+	clu_pause_controller = DAT_002ba99c;
+	time = clu_time_scale + OV_F(self, 0x58);
+	OV_F(self, 0x58) = time;
+	state = OV_I(self, 0x5c);
+	if (state >= 0x14)
+		return 0;
+	if (state != 1 && DAT_0028440c != -1) {
+		CLPause_Begin(self, DAT_0028440c);
+		return 0;
+	}
+
+	/* the results screen ends after a time or on any button */
+	if (DAT_002baeb8 != 0) {
+		if (time > clu_results_timeout)
+			goto end_mode;
+		for (player = 0; player < DAT_002bae94; player++) {
+			if (OV_I(OV_I(self, 0x38 + player * 4), 0x14) != 0 ||
+			    OV_I(OV_I(self, 0x48 + player * 4), 0x14) != 0) {
+				DAT_00283760 = 1800.0f;
+				goto end_mode;
+			}
+		}
+	}
+
+	/* Pause: opens the menu, or brings an out player back into the game */
+	if (state != 1) {
+		for (player = 0; player < DAT_002bae94; player++) {
+			if (OV_I(OV_I(self, 0x38 + player * 4), 0x14) == 0)
+				continue;
+			if (DAT_002baed8[player * 10] != 0) {
+				CLPause_Begin(self, player);
+				return 0;
+			}
+			if (DAT_002baed0 == 0) {
+				CLSamples_PlayCommentary(0x18, -1, 0xff, 0, 0, NULL);
+				DAT_002baed8[player * 10] = 1;
+				DAT_002bae90 = DAT_002bae90 - 1;
+				DAT_002bae8c = DAT_002bae8c + 1;
+				CLHud_ShowPositionMarker(player);
+			}
+		}
+	}
+	if (OV_I(self, 0x5c) != 1)
+		return 0;
+
+	OV_F(OV_I(self, 0x84), 0x2ac) = (float)clu_character_rgb[DAT_002baed4[OV_I(self, 0x68) * 10] * 4];
+	OV_F(OV_I(self, 0x84), 0x2b0) = (float)clu_character_rgb[DAT_002baed4[OV_I(self, 0x68) * 10] * 4 + 1];
+	OV_F(OV_I(self, 0x84), 0x2b4) = (float)clu_character_rgb[DAT_002baed4[OV_I(self, 0x68) * 10] * 4 + 2];
+	CLPause_ColourItems(self);
+	if (OV_I(OV_I(self, 0x30), 0x14) != 0 && OV_I(self, 0x74) < 6) {
+		FUN_0002be10(); /* cheats (ECX holds the cheat action; the callee does not read it) */
+		return 0;
+	}
+	DAT_002ba900 = 0;
+	memset(DAT_002ba8b8, 0, 0x11 * 4);
+	if (OV_I(self, 0x7c) != 0 && OV_I(self, 0x74) == 7) {
+		OV_I(self, 0x7c) = OV_I(self, 0x7c) - 1;
+		if (OV_I(self, 0x7c) != 0)
+			return 0;
+		CLPause_End(self, 0);
+		return 0;
+	}
+
+	/* page 6: the volume bars, title page lines and menu lines fade out */
+	if (OV_I(self, 0x74) == 6) {
+		fade = (double)clu_fade_speed * (double)clu_time_scale;
+		line = OV_I(self, 0xdc);
+		OV_F(line, 0x2b8) = (float)((double)OV_F(line, 0x2b8) - (fade + fade));
+		if (OV_F(OV_I(self, 0xdc), 0x2b8) <= 0.0f)
+			OV_F(OV_I(self, 0xdc), 0x2b8) = 0.0f;
+		line = OV_I(self, 0xd8);
+		OV_F(line, 0x2b8) = (float)((double)OV_F(line, 0x2b8) - (fade + fade));
+		if (OV_F(OV_I(self, 0xd8), 0x2b8) <= 0.0f)
+			OV_F(OV_I(self, 0xd8), 0x2b8) = 0.0f;
+		for (i = 0; i < 5; i++) {
+			line = OV_I(self, 0xa8 + i * 4);
+			OV_F(line, 0x2b8) = (float)((double)OV_F(line, 0x2b8) - fade);
+			if (OV_F(OV_I(self, 0xa8 + i * 4), 0x2b8) <= 0.0f)
+				OV_F(OV_I(self, 0xa8 + i * 4), 0x2b8) = 0.0f;
+		}
+		done = 0;
+		for (i = 0; i < 7; i++) {
+			line = OV_I(self, 0xbc + i * 4);
+			OV_F(line, 0x2b8) = (float)((double)OV_F(line, 0x2b8) - fade);
+			if (OV_F(OV_I(self, 0xbc + i * 4), 0x2b8) <= 0.0f) {
+				OV_F(OV_I(self, 0xbc + i * 4), 0x2b8) = 0.0f;
+				done++;
+			}
+		}
+		if (done == 7) {
+			CLPause_SetPage(self, OV_I(self, 0));
+			OV_I(self, 0x74) = 8;
+			clu_window_settled = 0;
+		}
+	}
+
+	/* page 8: the window fades in (or out when closing) and eases to its size */
+	if (OV_I(self, 0x74) == 8) {
+		done = 0;
+		fade = (double)clu_fade_speed * (double)clu_time_scale * (double)3.0f;
+		line = OV_I(self, 0x84);
+		if (OV_I(self, 0x7c) != 0) {
+			OV_F(line, 0x2b8) = (float)((double)OV_F(line, 0x2b8) - fade);
+			if (OV_F(OV_I(self, 0x84), 0x2b8) <= 0.0f) {
+				OV_F(OV_I(self, 0x84), 0x2b8) = 0.0f;
+				done = 1;
+			}
+		} else {
+			OV_F(line, 0x2b8) = (float)(fade + (double)OV_F(line, 0x2b8));
+			if (OV_F(OV_I(self, 0x84), 0x2b8) >= 200.0f) {
+				OV_F(OV_I(self, 0x84), 0x2b8) = 200.0f;
+				done = 1;
+			}
+		}
+		line = OV_I(self, 0x84);
+		if (fabs((double)OV_F(line, 0x364) - (double)OV_F(self, 4)) <= 2.0) {
+			OV_F(line, 0x364) = OV_F(self, 4);
+			done++;
+		} else {
+			ease = pow((double)clu_window_ease, (double)clu_time_scale);
+			OV_F(line, 0x364) = (float)((1.0 - ease) * (double)OV_F(self, 4) + ease * (double)OV_F(line, 0x364));
+		}
+		line = OV_I(self, 0x84);
+		if (fabs((double)OV_F(line, 0x368) - (double)OV_F(self, 8)) <= 2.0) {
+			OV_F(line, 0x368) = OV_F(self, 8);
+			done++;
+		} else {
+			ease = pow((double)clu_window_ease, (double)clu_time_scale);
+			OV_F(line, 0x368) = (float)((1.0 - ease) * (double)OV_F(self, 8) + ease * (double)OV_F(line, 0x368));
+		}
+		line = OV_I(self, 0x84);
+		OV_F(line, 0x300) = OV_F(line, 0x364) * -0.5f;
+		line = OV_I(self, 0x84);
+		OV_F(line, 0x304) = (float)((double)OV_F(line, 0x368) * (double)0.5f + (double)clu_window_y);
+		CLPause_LayoutFrame(self);
+		if (done == 3)
+			clu_window_settled = clu_window_settled + 1;
+		if (clu_window_settled == 3) {
+			OV_I(self, 0x74) = 7;
+			clu_window_settled = 0;
+		}
+	}
+
+	/* page 7: the lines of the new page fade in, then the page is shown */
+	if (OV_I(self, 0x74) == 7 && OV_I(self, 0x7c) == 0) {
+		done = 0;
+		fade = (double)clu_fade_speed * (double)clu_time_scale;
+		alpha = (double)clu_item_selected_rgba[3] + (double)clu_item_selected_rgba[3];
+		line = OV_I(self, 0xdc);
+		OV_F(line, 0x2b8) = (float)((fade + fade) + (double)OV_F(line, 0x2b8));
+		if (alpha <= (double)OV_F(OV_I(self, 0xdc), 0x2b8))
+			OV_F(OV_I(self, 0xdc), 0x2b8) = (float)alpha;
+		line = OV_I(self, 0xd8);
+		OV_F(line, 0x2b8) = (float)((fade + fade) + (double)OV_F(line, 0x2b8));
+		if (alpha <= (double)OV_F(OV_I(self, 0xd8), 0x2b8))
+			OV_F(OV_I(self, 0xd8), 0x2b8) = (float)alpha;
+		for (i = 0; i < 5; i++) {
+			line = OV_I(self, 0xa8 + i * 4);
+			OV_F(line, 0x2b8) = (float)(fade + (double)OV_F(line, 0x2b8));
+			if (OV_F(OV_I(self, 0xa8 + i * 4), 0x2b8) >= 127.0f)
+				OV_F(OV_I(self, 0xa8 + i * 4), 0x2b8) = 127.0f;
+		}
+		line = OV_I(self, 0xbc);
+		OV_F(line, 0x2b8) = (float)(fade + (double)OV_F(line, 0x2b8));
+		limit = (float)clu_item_selected_rgba[3];
+		if (limit <= OV_F(OV_I(self, 0xbc), 0x2b8)) {
+			OV_F(OV_I(self, 0xbc), 0x2b8) = limit;
+			done = 1;
+		}
+		for (i = 1; i < 7; i++) {
+			line = OV_I(self, 0xbc + i * 4);
+			OV_F(line, 0x2b8) = (float)(fade + (double)OV_F(line, 0x2b8));
+			if (OV_I(self, 0x6c) == i)
+				limit = (float)clu_item_selected_rgba[3];
+			else
+				limit = (float)clu_item_rgba[3];
+			if (limit <= OV_F(OV_I(self, 0xbc + i * 4), 0x2b8)) {
+				OV_F(OV_I(self, 0xbc + i * 4), 0x2b8) = limit;
+				done++;
+			}
+		}
+		if (done == 7)
+			OV_I(self, 0x74) = OV_I(self, 0);
+	}
+
+	OV_F(self, 0x60) = clu_time_scale + OV_F(self, 0x60);
+	OV_I(self, 0x64) = OV_I(self, 0x64) + 1;
+	if (clu_repeat_timer > 0.0f) {
+		clu_repeat_timer = clu_repeat_timer - clu_time_scale;
+		if (clu_repeat_timer < 0.0f)
+			clu_repeat_timer = 0.0f;
+	} else if (clu_repeat_timer < 0.0f) {
+		clu_repeat_timer = clu_repeat_timer + clu_time_scale;
+		if (clu_repeat_timer > 0.0f)
+			clu_repeat_timer = 0.0f;
+	}
+
+	/* the stick moves the selection, with a repeat delay */
+	if (OV_I(self, 0x74) <= 5) {
+		y = OV_I(OV_I(self, 0x20), 0x14);
+		if ((double)y <= (double)clu_stick_dead_zone && !((double)y < -(double)clu_stick_dead_zone)) {
+			clu_repeat_delay = clu_repeat_first;
+			clu_repeat_timer = 0.0f;
+		}
+		if (OV_I(self, 0x78) != 0) {
+			if (!(clu_repeat_timer > 0.0f)) {
+				y = OV_I(OV_I(self, 0x20), 0x14);
+				if ((double)y > (double)clu_stick_dead_zone &&
+				    y > abs(OV_I(OV_I(self, 0x24), 0x14)) * 2) {
+					CLSamples_PlayGeneric(7, 0x7f, 0, 0, NULL);
+					clu_repeat_timer = clu_repeat_delay;
+					clu_repeat_delay = clu_repeat_next;
+					OV_I(self, 0x6c) = OV_I(self, 0x6c) + 1;
+					if (OV_I(self, 0x6c) == OV_I(self, 0x78) + 1)
+						OV_I(self, 0x6c) = 1;
+				}
+			}
+			if (!(clu_repeat_timer < 0.0f)) {
+				y = OV_I(OV_I(self, 0x20), 0x14);
+				if (-(double)clu_stick_dead_zone > (double)y &&
+				    -y > abs(OV_I(OV_I(self, 0x24), 0x14)) * 2) {
+					CLSamples_PlayGeneric(7, 0x7f, 0, 0, NULL);
+					clu_repeat_timer = -clu_repeat_delay;
+					clu_repeat_delay = clu_repeat_next;
+					OV_I(self, 0x6c) = OV_I(self, 0x6c) - 1;
+					if (OV_I(self, 0x6c) == 0)
+						OV_I(self, 0x6c) = OV_I(self, 0x78);
+				}
+			}
+		}
+	}
+
+	/* left/right on the options page: volumes, soundtrack, song, shuffle */
+	x = OV_I(OV_I(self, 0x24), 0x14);
+	held = OV_I(OV_I(self, 0x24), 0x20);
+	if (x != 0 && abs(x) > abs(OV_I(OV_I(self, 0x20), 0x14)) * 2 &&
+	    (held == 1 || (held > 0xf && held % 5 == 0)) && OV_I(self, 0x74) == 1) {
+		switch (OV_I(self, 0x6c)) {
+		case 1:
+			CLPause_StepVolume(OV_I(self, 0xdc), x, &DAT_002bae6c);
+			FUN_00054690(DAT_002bae6c);
+			break;
+		case 2:
+			CLPause_StepVolume(OV_I(self, 0xd8), x, &DAT_002bae68);
+			break;
+		case 4:
+			if (clu_soundtrack_menu != 0) {
+				CLSamples_PlayGeneric(7, 0x7f, 0, 0, NULL);
+				if (OV_I(OV_I(self, 0x24), 0x14) > 0)
+					CLPause_NextSong(self, 1);
+				else
+					CLPause_NextSong(self, -1);
+			}
+			break;
+		case 3:
+			if (clu_soundtrack_menu != 0) {
+				CLPause_NextSoundtrack(x > 0 ? 1 : -1);
+				CLPause_ShowSoundtrack(self);
+			}
+			break;
+		case 5:
+			CLPause_ToggleShuffle(self);
+			break;
+		}
+	}
+
+	/* select */
+	if (OV_I(OV_I(self, 0x28), 0x14) != 0) {
+		switch (OV_I(self, 0x74)) {
+		case 0: /* main page */
+			CLSamples_PlayGeneric(9, 0x7f, 0, 0, NULL);
+			switch (OV_I(self, 0x6c)) {
+			case 1: /* resume */
+				CLPause_Resume(self);
+				return 0;
+			case 2: /* options */
+				OV_I(self, 0) = 1;
+				OV_I(self, 0x74) = 6;
+				OV_I(self, 0x70) = 1;
+				OV_F(self, 8) = (float)((double)clu_line_step * (double)6.0f + (double)clu_window_base);
+				CLPause_ColourItems(self);
+				return 0;
+			case 3: /* the title page */
+				OV_I(self, 0x74) = 6;
+				OV_I(self, 0) = 5;
+				OV_F(self, 4) = 468.0f;
+				OV_F(self, 8) = (float)((double)clu_title_page_lines * (double)clu_line_step +
+							(double)clu_window_base);
+				return 0;
+			case 4: /* quit to the board */
+				OV_I(self, 0) = 3;
+				break;
+			case 5: /* quit */
+				OV_I(self, 0) = 2;
+				break;
+			case 6: /* restart */
+				OV_I(self, 0) = 4;
+				break;
+			default:
+				return 0;
+			}
+			OV_I(self, 0x74) = 6;
+			OV_I(self, 0x70) = 2;
+			OV_F(self, 8) = (float)((double)clu_line_step + (double)clu_line_step + (double)clu_window_base);
+			CLPause_ColourItems(self);
+			return 0;
+		case 1: /* options page */
+			switch (OV_I(self, 0x6c)) {
+			case 4:
+				if (clu_soundtrack_menu == 0)
+					return 0;
+				CLPause_NextSong(self, 1);
+				CLSamples_PlayGeneric(7, 0x7f, 0, 0, NULL);
+				return 0;
+			case 3:
+				if (clu_soundtrack_menu == 0)
+					return 0;
+				CLPause_NextSoundtrack(1);
+				CLPause_ShowSoundtrack(self);
+				return 0;
+			case 6: /* back */
+				CLSamples_PlayGeneric(10, 0x7f, 0, 0, NULL);
+				CLPause_BackToMain(self, 2);
+				return 0;
+			case 5:
+				CLPause_ToggleShuffle(self);
+				return 0;
+			}
+			return 0;
+		case 2: /* quit? */
+			CLSamples_PlayGeneric(9, 0x7f, 0, 0, NULL);
+			if (OV_I(self, 0x6c) == 1) {
+				CLRumble_Resume(clu_rumble);
+				goto quit;
+			}
+			CLPause_BackToMain(self, 5);
+			return 0;
+		case 3: /* quit <player>? */
+			CLSamples_PlayGeneric(9, 0x7f, 0, 0, NULL);
+			if (OV_I(self, 0x6c) != 1) {
+				CLPause_BackToMain(self, 4);
+				return 0;
+			}
+			DAT_002baed8[OV_I(self, 0x68) * 10] = 0;
+			DAT_002bae90 = DAT_002bae90 + 1;
+			DAT_002bae8c = DAT_002bae8c - 1;
+			if (DAT_002bae8c == 0)
+				goto quit;
+			CLPause_Resume(self);
+			return 0;
+		case 4: /* restart? */
+			CLSamples_PlayGeneric(9, 0x7f, 0, 0, NULL);
+			if (OV_I(self, 0x6c) == 1) {
+				CLPause_End(self, 1);
+				FUN_0002b6f0((int)DAT_002ba750, 1);
+				return 1;
+			}
+			CLPause_BackToMain(self, 6);
+			return 0;
+		case 5: /* title page */
+			CLSamples_PlayGeneric(10, 0x7f, 0, 0, NULL);
+			CLPause_BackToMain(self, 3);
+			return 0;
+		}
+		return 0;
+	}
+
+	/* back */
+	if (OV_I(OV_I(self, 0x2c), 0x14) != 0) {
+		if (OV_I(self, 0x74) <= 5)
+			CLSamples_PlayGeneric(10, 0x7f, 0, 0, NULL);
+		switch (OV_I(self, 0x74)) {
+		case 0:
+			CLPause_Resume(self);
+			return 0;
+		case 1:
+			CLPause_BackToMain(self, 2);
+			return 0;
+		case 2:
+			CLPause_BackToMain(self, 5);
+			return 0;
+		case 3:
+			CLPause_BackToMain(self, 4);
+			return 0;
+		case 4:
+			CLPause_BackToMain(self, 6);
+			return 0;
+		case 5: /* (the sound plays twice) */
+			CLSamples_PlayGeneric(10, 0x7f, 0, 0, NULL);
+			CLPause_BackToMain(self, 3);
+			return 0;
+		}
+	}
+	return 0;
+
+quit:
+	CLPause_End(self, 1);
+	DAT_0028198c = -1;
+	FUN_0002c2e0();
+	return 1;
+
+end_mode:
+	FUN_0002b6f0((int)DAT_002ba750, 1);
+	CLSamples_ClearQueue();
+	return 1;
 }

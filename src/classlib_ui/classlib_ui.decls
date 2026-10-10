@@ -94,6 +94,7 @@
 00076110 void CLPause_ColourItems(int self);
 000762e0 void CLPause_DrawMessages(int self);
 00076700 void CLPause_Begin(int self, int player);
+000772e0 int CLPause_Update(undefined4 *pause);
 00078870 int *CLHud_Construct(int *self);
 000788e0 void CLHud_ShowMarkerText(int self, int player, int text);
 00078930 void CLHud_StopCountdown(int self);
