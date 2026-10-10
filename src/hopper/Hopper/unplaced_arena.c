@@ -37,8 +37,6 @@ The object (0x57c bytes):
 #define AR_XCOUNT(self) HOP_AI(self, 0x470)
 #define AR_WATER(self) HOP_AP(self, 0x10)
 
-/* the arena's clock (int64 at the debug timers +0xd8, 0x002b0110: the play time left) */
-#define hop_TimeLeft HOP_G(0x002b0110, long long)
 #define hop_Detail HOP_F(0x002ae964)          /* tweak "detail" */
 #define hop_Frame HOP_I(0x003027b4)           /* the game's frame counter */
 #define hop_PauseState HOP_B(0x003027b0)

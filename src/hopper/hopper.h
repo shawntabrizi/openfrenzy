@@ -183,6 +183,9 @@ extern int DAT_00293eb8[4];            /* charlib: the shadow projector of each 
 #define hop_RouteObject ((void *)HOP_ADDR(0x003024c8)) /* core static init: the shared route object */
 #define hop_Platforms ((void **)HOP_ADDR(0x002af098)) /* the arena's platform actors (27) */
 #define hop_CamAngle HOP_F(0x002aebfc)         /* the camera angle (degrees; camera +0x24) */
+/* the play time left (hundredths of a second; a 64-bit value at the debug timers +0xd8,
+only 4-byte aligned, so it is read in halves) */
+#define hop_TimeLeft hop_GetTimeLeft()
 #define hop_Sink HOP_F(0x002af15c)             /* how far the arena has sunk */
 
 /* this module's vtables (0x0026e14c-0x0026f08c, .rdata) */
@@ -200,6 +203,11 @@ extern const void *const vtable_0026f038[];   /* the debug timers */
 extern const void *const vtable_0026f05c[];
 extern const void *const vtable_0026f060[];   /* shader fragment (colour) */
 extern const void *const vtable_0026f08c[];   /* shader fragment (lit colour) */
+
+static inline long long hop_GetTimeLeft(void)
+{
+	return (long long)(((unsigned long long)(unsigned int)HOP_I(0x002b0114) << 32) | HOP_U(0x002b0110));
+}
 
 /* the actor of player i */
 #define hop_PlayerActor(i) HOP_AP(hop_Players[(i)], 0x30)

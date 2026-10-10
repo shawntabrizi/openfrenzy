@@ -102,6 +102,21 @@
 00145920 void HopArena_Draw4(void *self, int fast);
 00145c30 void HopArena_Draw(void *self, int fast);
 
+# ---- Hopper/unplaced_player.c (the Hopper AI player)
+00145cb0 void *HopPlayer_Ctor(void *self, int index, float *pos);
+00145eb0 void HopPlayer_Dtor(void *self);
+00145ec0 float HopPlayer_GroundHeight(void *self, float *pos, float radius, int unused3, int unused4);
+00145f10 float HopPlayer_AngleDiff(float a, float b);
+00145f80 void HopPlayer_ResetMode(void *self);
+00145fb0 void HopPlayers_Start(void);
+00146180 void HopPlayer_SetDetail(void *self, unsigned int opt, int anim);
+00146320 void HopPlayer_Chase(void *self, int mode);
+001464e0 void HopPlayer_Think1(void *self);
+00146750 void HopPlayer_Think2(void *self);
+00146a50 void HopPlayer_Think3(void *self);
+00146f90 int HopPlayer_Think(void *self);
+00146fd0 int HopPlayer_Attack(void *self);
+
 # ---- provisional shapes (written later in this module)
 0014c970 void HopShader_SetConstant(float r, float g, float b, float a);
 001472d0 void HopBubbles_Start(void *self);
@@ -119,7 +134,4 @@
 0014c880 void HopOverlay_Resume(void *self);
 0014c8f0 void *HopShaderColour_Ctor(void *self);
 0014c950 void *HopShaderLit_Ctor(void *self);
-00145cb0 void *HopPlayer_Ctor(void *self, int index, float *pos);
-00145eb0 void HopPlayer_Dtor(void *self);
-00145fb0 void HopPlayers_Start(void);
 00148c90 void HopFx_PlayerEffect(void *self, int player, int kind);
