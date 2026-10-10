@@ -106,9 +106,17 @@ extern int DAT_0029415c[4];             /* per variant: fog blue */
 extern float DAT_0029416c[4];           /* per variant: fog near */
 extern float DAT_0029417c[4];           /* per variant: fog far */
 extern const char *PTR_s_rocket_0029418c[4];  /* per variant: the level (LOM) name */
+struct CoSoundDef;
+extern struct CoSoundDef DAT_002941a0[46];  /* the sounds (name, looped, generic, kind) */
+extern float DAT_00294310[4];           /* position of the floor model instances (0,0,0,1) */
+extern float DAT_00294324;              /* variant 2 camera: eye x per mean player x (2.2) */
+extern float DAT_00294328[4];           /* CCamera pivot start (-2000, -1500, 2000, 1) */
+extern float DAT_00294338[4];           /* CCamera eye start (1552, 2227, -2153, 1) */
 extern int DAT_00294348;                /* tweak "V4:Launch Anyones" */
 extern int DAT_0029434c;                /* tweak "V4:GivePointsAway" */
 extern int DAT_00294350;                /* tweak "V4:PaintKeepsGoing" */
+extern unsigned int DAT_00294354[6];    /* belt: marker colour per type (no floor model) */
+extern int DAT_0029436c[9];             /* belt launch: shell type by launch count */
 extern int DAT_00294390;                /* tweak "V1:Launcher" */
 extern float DAT_00294394;              /* tweak "V1:LInterval" */
 extern float DAT_00294398;              /* tweak "V1:LSpeed" */
@@ -148,8 +156,13 @@ extern int *DAT_002f6d58;               /* tapir trail colours (30 x 4) */
 extern struct CFireResource *DAT_002f6d5c;  /* the resources and frame timing */
 #define g_fireRes DAT_002f6d5c
 extern int DAT_002f6d60;                /* tweak "Debug Lines" */
+struct CoVertex;
+extern struct CoVertex DAT_002f6d68[2]; /* CFire_Resource_DrawLines' line */
+extern struct CoVertex DAT_002f6db0[81]; /* CFire_Resource_DrawCircle's circle */
+extern struct CoVertex DAT_002f7918[2]; /* CFire_Resource_DrawSkeleton's bone */
 extern struct CFireCamera *DAT_002f7960;  /* the camera */
 #define g_fireCam DAT_002f7960
+extern void *DAT_002f7964;              /* the charlib CCamera (0x574 bytes) of camera mode 3 */
 extern void *DAT_002f7968;              /* carryon_b: the sprites (+0xc sparks) */
 extern void *DAT_002f798c;              /* carryon_b: the flames */
 

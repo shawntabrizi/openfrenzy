@@ -700,7 +700,7 @@ lights:
 	CO_F32(DAT_002f27c4, 0x80) = CO_F32(DAT_002f27c4, 0x80) * 30.0f;   /* 0x002553a8 */
 	CO_F32(DAT_002f27c4, 0x88) = CO_F32(DAT_002f27c4, 0x88) * 60.0f;   /* 0x00254e98 */
 	CO_F32(DAT_002f27c4, 0x84) = 0.12f;
-	CFire_Resource_SetSample(g_fireRes, CFire_Resource_FindSample(g_fireRes, 10,
+	CFire_Resource_ReserveChannel(g_fireRes, CFire_Resource_FindSample(g_fireRes, 10,
 		CO_VARIANT(self), 0x80));
 	CProjector_Reset();
 	RefBot_Create();
@@ -874,7 +874,7 @@ void CFire_Game_Draw(struct CFireGame *self, int draw)
 	/* the level */
 	baSetAmbientLight(DAT_00293e50[CO_VARIANT(self)][0], DAT_00293e50[CO_VARIANT(self)][1],
 		DAT_00293e50[CO_VARIANT(self)][2]);
-	CFire_Resource_DrawBackground(g_fireRes);
+	CFire_Resource_ApplyFog(g_fireRes);
 	bdSetRenderState(4, 1, 0);
 	co_Sky_EnableLights(self->sky, 4, 0);
 	co_Sky_EnableLights(self->sky, 2, 0);
@@ -1556,6 +1556,6 @@ players:
 	bdSetProjectionMode(0);
 	CLHud_SetScores((int)DAT_002ecfac, self->scores);
 	co_Timer_Stop(timer, 0);
-	if (CFire_Camera_IsFading(g_fireCam) == 0 || co_PauseMenu_Update(DAT_002ecd90) != 1)
+	if (CFire_Camera_IsReady(g_fireCam) == 0 || co_PauseMenu_Update(DAT_002ecd90) != 1)
 		co_Timer_Start(timer, 0xffffffff);
 }

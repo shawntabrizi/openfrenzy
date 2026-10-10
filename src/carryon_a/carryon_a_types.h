@@ -217,6 +217,160 @@ int FUN_000c5610(int node, unsigned char *world);
 int FUN_000c59a0(int node, unsigned char *world);
 int FUN_000c6c00(int node, unsigned char *world);
 
+/* a vertex of the debug lines, the glitter net and the tapir trail (0x24 bytes, FVF
+0x152 / 0x144) */
+struct CoVertex
+{
+	float x, y, z;
+	float nx, ny, nz;
+	unsigned int colour;
+	float u, v;
+};
+OF_ASSERT_SIZE(struct CoVertex, 0x24);
+
+/* ---------- CFire_Resource.cpp */
+
+/* the resources and frame state of the game (0x3e0 bytes, g_fireRes = DAT_002f6d5c):
+packages, fonts, the floor models, the sounds, the fog and the frame timer */
+struct CFireResource
+{
+	void *levelPackage;         /* +0x000 packages\carryon_v%d */
+	void *genericPackage;       /* +0x004 packages\carryon_gen */
+	void *font;                 /* +0x008 gunship2.ttf */
+	void *fontAlt;              /* +0x00c handgotb.ttf (Printf flag 2) */
+	void *scoreFont;            /* +0x010 score.ttf */
+	int pad014;                 /* +0x014 */
+	unsigned char timer[0x234]; /* +0x018 carryon_b CFire_Timer (+0x98 ms, +0x9c frames:
+	                               the game reads +0xb0 and +0xb4 of the resource) */
+	int pad24c;                 /* +0x24c */
+	int variant;                /* +0x250 0..3 */
+	int numPlayers;             /* +0x254 */
+	int testMesh;               /* +0x258 setting "testmesh" (variant 1 only) */
+	float eye[4];               /* +0x25c the camera, copied each frame */
+	float target[4];            /* +0x26c */
+	void *floorModel[7];        /* +0x27c floor / rack models of the variant */
+	void *floorInst[7];         /* +0x298 their instances */
+	void *floorAnim[7];         /* +0x2b4 their "default" sub-objects */
+	void *potModel[5];          /* +0x2d0 variant 2: the glow pots */
+	void *potInst[5];           /* +0x2e4 */
+	void **samples;             /* +0x2f8 46 sounds (DAT_002941a0) */
+	int firstSample[15];        /* +0x2fc first sound of each kind */
+	int numSamples[15];         /* +0x338 sounds of each kind */
+	float cellSize;             /* +0x374 route cell size (CFire_Game) */
+	int fogOn;                  /* +0x378 */
+	int fogColour[3];           /* +0x37c */
+	float fogNear;              /* +0x388 */
+	float fogFar;               /* +0x38c */
+	int frames;                 /* +0x390 */
+	void *inputMap;             /* +0x394 */
+	void *detailChannel;        /* +0x398 input "Detail": toggles the detail tweak */
+	int numReserved;            /* +0x39c */
+	int reserved[16];           /* +0x3a0 reserved sound channels */
+};
+OF_ASSERT_OFFSET(struct CFireResource, variant, 0x250);
+OF_ASSERT_OFFSET(struct CFireResource, floorInst, 0x298);
+OF_ASSERT_OFFSET(struct CFireResource, samples, 0x2f8);
+OF_ASSERT_OFFSET(struct CFireResource, numSamples, 0x338);
+OF_ASSERT_OFFSET(struct CFireResource, fogOn, 0x378);
+OF_ASSERT_OFFSET(struct CFireResource, reserved, 0x3a0);
+OF_ASSERT_SIZE(struct CFireResource, 0x3e0);
+
+/* a sound of the table at 0x002941a0 (46 entries) */
+struct CoSoundDef
+{
+	const char *name;           /* +0x0 sounds\<name>.wav */
+	unsigned char looped;       /* +0x4 loopedsounds\<name>.wav */
+	unsigned char generic;      /* +0x5 from the generic package */
+	signed char kind;           /* +0x6 0..14: CFire_Resource_FindSample's kind */
+	unsigned char pad;
+};
+OF_ASSERT_SIZE(struct CoSoundDef, 0x8);
+
+/* ---------- CFire_Camera.cpp */
+
+/* the camera (0xd4 bytes, g_fireCam = DAT_002f7960). Modes: 0 intro (classlib_ui
+CIntroCam), 1 follow the players (variant 2), 2 follow the fireworks (variant 3), 3 the
+charlib CCamera (DAT_002f7964; variants 0 and 1), 4/5 the winner at the end. */
+struct CFireCamera
+{
+	int snap;                   /* +0x00 mode 3: blend to the CCamera at once (carryon_b) */
+	int mode;                   /* +0x04 */
+	int fadeOut;                /* +0x08 the end fade-out runs */
+	int frames;                 /* +0x0c frames drawn, up to 3 (snap the first ones) */
+	void *inputMap;             /* +0x10 */
+	void *skip;                 /* +0x14 input "skip" (+0x14: pressed) */
+	int pad18;                  /* +0x18 */
+	float zoom;                 /* +0x1c modes 1, 2 */
+	float hold;                 /* +0x20 */
+	int variant;                /* +0x24 */
+	float blend;                /* +0x28 mode 3 */
+	float blendTarget;          /* +0x2c */
+	int wantFadeIn;             /* +0x30 */
+	int wantFadeOut;            /* +0x34 */
+	int fadeIn;                 /* +0x38 */
+	float volume;               /* +0x3c 0..1: darkening and sound fade-in */
+	float endTime;              /* +0x40 frames since the end */
+	struct CCarryOnPlayer *winner;  /* +0x44 */
+	float fade;                 /* +0x48 */
+	int fadeCount;              /* +0x4c */
+	float min[4];               /* +0x50 the players' bounds */
+	float max[4];               /* +0x60 */
+	float centre[4];            /* +0x70 */
+	float mean[4];              /* +0x80 */
+	float target[4];            /* +0x90 */
+	float targetGoal[4];        /* +0xa0 */
+	float eye[4];               /* +0xb0 */
+	float eyeGoal[4];           /* +0xc0 */
+	float phase;                /* +0xd0 mode 2: sway */
+};
+OF_ASSERT_OFFSET(struct CFireCamera, winner, 0x44);
+OF_ASSERT_OFFSET(struct CFireCamera, target, 0x90);
+OF_ASSERT_OFFSET(struct CFireCamera, eye, 0xb0);
+OF_ASSERT_SIZE(struct CFireCamera, 0xd4);
+
+/* ---------- the conveyor belts (variant 4) */
+
+/* a belt (0x330 bytes, CFireGame.conveyor[]): `count` slots move along a two-point
+path; the slots in the `window` are on the visible belt. A slot holds a player's
+firework (type = player + 1). */
+struct CFireBelt
+{
+	void *fireworks;            /* +0x000 carryon_b CFire_Fireworks */
+	int count;                  /* +0x004 slots */
+	int window;                 /* +0x008 */
+	int points;                 /* +0x00c score for a launch */
+	float pos;                  /* +0x010 0..count */
+	float speed;                /* +0x014 slots per frame */
+	int types[64];              /* +0x018 0: empty */
+	float timers[64];           /* +0x118 a passed firework arrives when it runs out */
+	int pending[64];            /* +0x218 its type */
+	struct CoAsePath *path;     /* +0x318 the "Convey" path (two points) */
+	int pad31c[5];              /* +0x31c */
+};
+OF_ASSERT_OFFSET(struct CFireBelt, timers, 0x118);
+OF_ASSERT_OFFSET(struct CFireBelt, path, 0x318);
+OF_ASSERT_SIZE(struct CFireBelt, 0x330);
+
+/* a piece on a fuse / paint path (0x48 bytes). carryon_b owns the object
+(struct CFire_ConveyorItem in carryon_b.h, same layout); this module updates and draws
+it. */
+struct CoConveyorItem
+{
+	int active;                 /* +0x00 */
+	int player;                 /* +0x04 */
+	float pos[4];               /* +0x08 the head */
+	float pos2[4];              /* +0x18 the tail (starts after `delay`) */
+	float delay;                /* +0x28 */
+	int point;                  /* +0x2c the head's next path point */
+	int point2;                 /* +0x30 the tail's */
+	float speed;                /* +0x34 */
+	int paint;                  /* +0x38 0: a lit fuse, 1: paint */
+	struct CoAsePath *path;     /* +0x3c */
+	void *vb;                   /* +0x40 the beam vertex buffer */
+	void *texture;              /* +0x44 */
+};
+OF_ASSERT_SIZE(struct CoConveyorItem, 0x48);
+
 /* ---------- the text reader used by the ASE import (vtable 0x00267bb8; other minigames
 use it too: rollerball_b 0x001989c0 sets it up on a file buffer) */
 struct CoTextReader

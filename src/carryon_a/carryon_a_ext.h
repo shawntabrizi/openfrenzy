@@ -18,6 +18,7 @@ extern int DAT_002bae94;                /* number of players */
 extern int DAT_002bae98;                /* game type (2: tournament) */
 extern int DAT_002baeb8;                /* demo mode: CPU players only */
 extern int DAT_002bae7c;                /* rumble on */
+extern int DAT_002bae6c;                /* the sound effect volume */
 extern int DAT_002baebc;                /* team game */
 extern int DAT_002baed4[4][10];         /* players: [0] character, [1] human, [8] team */
 extern int DAT_002baee8[];              /* = &DAT_002baed4[0][5]: score, stride 10 */
@@ -64,6 +65,11 @@ extern void *DAT_002f27d8;              /* the route tables in use */
 extern void *DAT_002ea488;              /* the route context in use */
 extern void *DAT_002f26c4;              /* bumpercars_b object (the demo camera?) */
 extern void *DAT_002f27c4;              /* bumpercars_b object (0x000a74d0) */
+extern float DAT_002f7a2c;              /* CCamera.cpp: the camera heading */
+extern float DAT_00294b64;              /* CCamera.cpp: camera height */
+extern float DAT_00294b98[4];           /* CCamera.cpp: eye start */
+extern float DAT_00294ba8[4];           /* CCamera.cpp: pivot start */
+extern float DAT_00294bb8;              /* CCamera.cpp: camera pitch */
 
 /* classlib_ui */
 extern void *DAT_002ecfac;              /* the score HUD */
@@ -165,6 +171,14 @@ extern unsigned char DAT_00290718[];
 
 /* rowing_a: the frame timer's mark (the timer object is the resource's +0x18) */
 #define co_Timer_Mark ((void (*)(void *, int))FUN_001af540)
+
+/* bumpercars_a: the settings (command line / ini) */
+extern void *DAT_002ba9a0;
+/* carryon_b: the frame timer (at +0x18 of the resource object) */
+#define co_Timer_Ctor ((void (*)(void *))FUN_000d1e10)
+#define co_Timer_Dtor ((void (*)(void *))FUN_000d1e50)
+#define co_Timer_Init ((void (*)(void *))FUN_000d1e60)
+#define co_Timer_Frame ((void (*)(void *))FUN_000d1eb0)
 
 /* classlib_ui */
 #define co_Rumble_SetMotors ((int (*)(void *, int, int, int, int))FUN_00080630)

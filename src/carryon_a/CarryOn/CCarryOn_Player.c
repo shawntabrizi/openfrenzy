@@ -1138,7 +1138,7 @@ void CCarryOn_Player_DrawAll(void)
 		if (DAT_0029411c == 0)
 		{
 			rgb = &DAT_00290718[DAT_002baed4[CO_U16(node, CA_PLAYER)][0] * 0x60];
-			CFire_Resource_DrawActorFlat(CO_ADDR(node, 0x10),
+			CFire_Resource_DrawSkeleton(CO_ADDR(node, 0x10),
 				(unsigned int)rgb[1] << 9 | (unsigned int)rgb[2] << 1 | (unsigned int)rgb[0] << 17
 					| 0xff000000);
 		}
@@ -1372,7 +1372,7 @@ struct CCarryOnPlayer *CCarryOn_Player_Ctor(struct CCarryOnPlayer *self, int pla
 		self->volume = 0;
 		self->lastGlitter = 0;
 		self->glitterHeld = 0.0f;
-		CFire_Resource_SetSample(g_fireRes, self->sample);
+		CFire_Resource_ReserveChannel(g_fireRes, self->sample);
 		bsSetChannelVolume(self->sample, 0);
 	}
 	DAT_00293f48 = -1;
@@ -1590,7 +1590,7 @@ void CCarryOn_Player_Punch(struct CCarryOnPlayer *self, struct CCarryOnPlayer *o
 	float damage;
 	void *actor;
 
-	CFire_Resource_PlayEvent(g_fireRes, CP_PLAYER(self), 2);
+	CFire_Resource_Rumble(g_fireRes, CP_PLAYER(self), 2);
 	push[0] = CP_POS(other)[0] - CP_POS(self)[0];
 	push[1] = CP_POS(other)[1] - CP_POS(self)[1];
 	push[2] = CP_POS(other)[2] - CP_POS(self)[2];

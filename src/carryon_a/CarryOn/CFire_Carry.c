@@ -248,15 +248,6 @@ void CFire_Carried_Update(struct CoCarried *self, float step)
 	}
 }
 
-/* a vertex of the net and the trail (0x24 bytes, FVF 0x152 / 0x144) */
-struct CoVertex
-{
-	float x, y, z;
-	float nx, ny, nz;
-	unsigned int colour;
-	float u, v;
-};
-
 /* 0x000c4830  CarryOn/CFire_Carry.cpp (file inferred)
 Draws the object while held. The glitter net also draws its glitter as a waving cone
 (11 rim points, alpha blended, brighter with more glitter); the tapir its smoke trail as
