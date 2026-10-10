@@ -14,6 +14,19 @@ before you fix the build, and remove an item when it is fixed.
 - An undefined weak symbol referenced PC-relatively resolves to the current page, not 0. Do not use
   `if (weak_fn)` checks in guest code (core agent finding).
 - `src/runtime/of_math.c` called itself forever through the `halo_math.h` macros; fixed in 57a6602.
+- Codegen trap (bkernel review, 2026-10-10): `adrp`/`adr` give the biased address
+  (`0x100_xxxxxxxx`), because guest code runs at BIAS + address. When llc packs two pointers into
+  one register with `orr xD, xLo, xHi, lsl #32` (a 16-byte struct of pointers passed by value), the
+  bias of the low half lands in bits 32-40, so the high pointer gets `| 0x100`. Proved in
+  `vfs_fopen` (src/vfs/xbox_files.c): `fopencookie(stream, "r", functions)` stores `close` as
+  0x88057540 instead of 0x88057440 (`disc_stream_close`). `fclose` then jumps into the middle of
+  `disc_find`, which overwrites the caller's stack and returns to 0 ("fault 11 at 0x0; pc=0").
+  The crash comes and goes with code layout: the pointer is only wrong when its bit 8 is 0. This
+  is the "unexplained crash" of `src/bkernel/tests/run_tests.sh` (it fails at HEAD 4558e3c in the
+  probe's `fclose`). Masking `adrp`/`adr` results is not a general fix (jump tables and constant
+  pools load through them without the pass). Needs an architect fix in the toolchain; a local
+  workaround (not tested) is to not build pointer structs from `adrp` values (for vfs: a
+  non-const `functions`, so it is loaded from memory).
 
 ## Shared storage
 
