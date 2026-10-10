@@ -693,14 +693,8 @@ int CDemoDebug_Init(void *self)
 	return font != NULL;
 }
 
-/* 0x002ff860: the line the skeleton drawing uses (two vertices of 0x24 bytes: position, normal,
-   diffuse colour, texture coordinates; FVF 0x152) */
-struct DA_LineVertex {
-	float x, y, z;       /* +0x00 */
-	float nx, ny, nz;    /* +0x0c */
-	uint32_t colour;     /* +0x18 */
-	float u, v;          /* +0x1c */
-};
+/* 0x002ff860: the line the skeleton drawing uses (two vertices of FVF 0x152; struct DA_LineVertex
+   in demolition_a.h) */
 static struct DA_LineVertex DAT_002ff860[2];
 
 /* 0x000ec130

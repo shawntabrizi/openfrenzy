@@ -366,13 +366,58 @@ struct CDemolition_LightSystem {
 
 /* ---------- explosions (CDemolition_Explosion.cpp) */
 
+/* a light flash of an explosion (vtable 0x0026ab84, 0x60 bytes): a point light whose range
+   and colour fade with its countdown (demolition_b starts it) */
+struct CDemolition_Flash {
+	const void *const *vtbl;  /* +0x00 */
+	int unk04;                /* +0x04 */
+	struct CDemolition_Light *light; /* +0x08 a point light (CDemolition_Light.cpp) */
+	int unk0c;                /* +0x0c */
+	struct CDemolition_Countdown timer; /* +0x10 */
+	char active;              /* +0x48 */
+	char pad49[3];
+	struct DA_Vec4 pos;       /* +0x4c (written by demolition_b) */
+	float age;                /* +0x5c */
+};
+
+/* an explosion (vtable 0x0026ab90, 0x790 bytes): four particle systems and a countdown */
+struct CDemolition_Explosion {
+	const void *const *vtbl;  /* +0x000 */
+	int unk04[3];             /* +0x004 */
+	struct CDemolition_Explosion *next; /* +0x010 */
+	struct DA_Vec4 pos;       /* +0x014 */
+	float age;                /* +0x024 */
+	char active;              /* +0x028 */
+	char visible;             /* +0x029 */
+	char pad2a[2];
+	unsigned char sparks[0x78];  /* +0x02c DcSparkSystem (demolition_c) */
+	unsigned char smoke[0x60];   /* +0x0a4 smoke particles (classlib_fx) */
+	unsigned char glow[0x6c];    /* +0x104 glow particles (classlib_fx) */
+	unsigned char debris[0x5d0]; /* +0x170 DcDebrisSystem (demolition_c) */
+	struct CDemolition_Countdown timer; /* +0x740 */
+	float power;              /* +0x778 the flash size */
+	void *owner;              /* +0x77c */
+	void *source;             /* +0x780 the object that caused it (itself when none) */
+	int unk784;               /* +0x784 */
+	int unk788[2];            /* +0x788 */
+};
+
 /* +0x13f0: the explosion system (vtable 0x0026ab94) */
 struct CDemolition_ExplosionSystem {
 	const void *const *vtbl;  /* +0x00 */
 	int unk04;                /* +0x04 */
-	void *first;              /* +0x08 first explosion (struct of 0x790 bytes) */
+	struct CDemolition_Explosion *first; /* +0x08 12 explosions, made by Init */
 	int unk0c;                /* +0x0c */
-	unsigned char flashes[2][0x60]; /* +0x10 two screen flashes (vtable 0x0026ab84) */
+	struct CDemolition_Flash flashes[2]; /* +0x10 */
+};
+
+/* a vertex of FVF 0x152 (position, normal, diffuse colour, texture coordinates; 0x24 bytes):
+   the skeleton line (0x002ff860) and the explosion flash quad (0x002ff8a8) */
+struct DA_LineVertex {
+	float x, y, z;       /* +0x00 */
+	float nx, ny, nz;    /* +0x0c */
+	uint32_t colour;     /* +0x18 */
+	float u, v;          /* +0x1c */
 };
 
 /* ---------- the physics of the bombs and pieces (demolition_b objects, solved here) */
