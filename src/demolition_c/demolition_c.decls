@@ -161,3 +161,35 @@
 000ff200 void CDemolition_GasJets_Draw(struct CDemolition_GasJets *self);
 000ff240 void DcGasJet_Update(struct DcGasJet *self, float dt);
 000ff570 void CDemolition_GasJets_Update(struct CDemolition_GasJets *self, float dt);
+
+# Demolition/CDemolition_LiftShaft.c
+000ff630 void CDemolition_LiftShaft_ReleasePlatforms(struct CDemolition_LiftShaft *self);
+000ff680 void CDemolition_LiftShaft_ResetFall(struct CDemolition_LiftShaft *self);
+000ff6b0 void CDemolition_LiftShaft_Fall(struct CDemolition_LiftShaft *self, float dt);
+000ff760 void CDemolition_LiftShaft_DrawShaft(struct CDemolition_LiftShaft *self);
+000ff860 void CDemolition_LiftShaft_DrawPlatforms(struct CDemolition_LiftShaft *self);
+000ff890 void CDemolition_LiftShaft_UpdateBarriers(struct CDemolition_LiftShaft *self, float dt);
+000ffc00 void CDemolition_LiftShaft_DrawBarriers(struct CDemolition_LiftShaft *self);
+000ffda0 void CDemolition_LiftShaft_AddBarrier(struct CDemolition_LiftShaft *self, float y);
+000ffee0 void CDemolition_LiftShaft_Destruct(struct CDemolition_LiftShaft *self);
+000fff50 int CDemolition_LiftShaft_InitPlatforms(struct CDemolition_LiftShaft *self);
+00100240 void CDemolition_LiftShaft_Shutdown(struct CDemolition_LiftShaft *self);
+001002b0 void CDemolition_LiftShaft_Start(struct CDemolition_LiftShaft *self);
+00100330 void CDemolition_LiftShaft_Wait(struct CDemolition_LiftShaft *self, float dt);
+001003b0 void CDemolition_LiftShaft_SlowDown(struct CDemolition_LiftShaft *self, float dt);
+00100420 void CDemolition_LiftShaft_WaitFall(struct CDemolition_LiftShaft *self, float dt);
+00100490 void CDemolition_LiftShaft_Brake(struct CDemolition_LiftShaft *self);
+001005c0 void CDemolition_LiftShaft_UpdateShaft(struct CDemolition_LiftShaft *self, float dt);
+001006e0 unsigned int CDemolition_LiftShaft_Pattern0(struct CDemolition_LiftShaft *self, float dt);
+00100800 void CDemolition_LiftShaft_Pattern1(struct CDemolition_LiftShaft *self, float dt);
+00100920 void CDemolition_LiftShaft_Pattern2(struct CDemolition_LiftShaft *self, float dt);
+00100a40 void CDemolition_LiftShaft_Pattern3(struct CDemolition_LiftShaft *self, float dt);
+00100b60 void CDemolition_LiftShaft_UpdatePlatforms(struct CDemolition_LiftShaft *self, float dt);
+00100fd0 void CDemolition_LiftShaft_ResetShaft(struct CDemolition_LiftShaft *self);
+001011c0 void CDemolition_LiftShaft_ResetBarriers(struct CDemolition_LiftShaft *self);
+00101250 void CDemolition_LiftShaft_SwayCamera(struct CDemolition_LiftShaft *self, float dt);
+00101480 struct CDemolition_LiftShaft *CDemolition_LiftShaft_Construct(struct CDemolition_LiftShaft *self);
+00101500 struct CDemolition_LiftShaft *CDemolition_LiftShaft_DeletingDtor(struct CDemolition_LiftShaft *self, unsigned char flags);
+00101520 void CDemolition_LiftShaft_UpdateLights(struct CDemolition_LiftShaft *self, float dt);
+001016a0 int CDemolition_LiftShaft_Initialise(struct CDemolition_LiftShaft *self, void *package);
+00101900 void CDemolition_LiftShaft_Update(struct CDemolition_LiftShaft *self, float dt);

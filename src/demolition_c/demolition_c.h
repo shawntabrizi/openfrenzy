@@ -262,4 +262,108 @@ OF_ASSERT_OFFSET(struct CDemolition_GasJets, lights, 0x118);
 OF_ASSERT_OFFSET(struct CDemolition_GasJets, timer, 0x240);
 OF_ASSERT_SIZE(struct CDemolition_GasJets, 0x288);
 
+/* ======================================================================== CDemolition_LiftShaft */
+
+/* a platform of the lift in the shaft (0x430 bytes): its actor, 4 spark systems at its brakes
+   (ClassLib CSparkPointSystem, 0x98 bytes each) and the brake animations */
+struct DcPlatform {
+	unsigned char enabled;      /* 0x000 */
+	unsigned char visible;      /* 0x001 */
+	unsigned char soundStarted; /* 0x002 */
+	unsigned char pad003;
+	int sound;                  /* 0x004 the falling sound */
+	int falling;                /* 0x008 1 once it falls */
+	int unk00c;                 /* 0x00c */
+	char actor[0x170];          /* 0x010 BActorInstance */
+	float pos[4];               /* 0x180 */
+	float quat[4];              /* 0x190 */
+	float fallSpeed;            /* 0x1a0 */
+	void *sparkNodes[4];        /* 0x1a4 "sparks03".."sparks06" */
+	unsigned char braking;      /* 0x1b4 */
+	char pad1b5[3];
+	char sparks[4][0x98];       /* 0x1b8 CSparkPointSystem */
+	void *anims[2];             /* 0x418 "brake_in", "brake_out" */
+	char *worldObject;          /* 0x420 "platform0N" of the world */
+	int pad424[3];
+};
+OF_ASSERT_OFFSET(struct DcPlatform, pos, 0x180);
+OF_ASSERT_OFFSET(struct DcPlatform, sparks, 0x1b8);
+OF_ASSERT_SIZE(struct DcPlatform, 0x430);
+
+/* a ring of lights falling past (a barrier, 0x68 bytes): 2 or 4 glows at (x, z) on a level */
+struct DcBarrier {
+	float centre[4];            /* 0x00 (0, y, 0): y rises with the lift */
+	float points[4][4];         /* 0x10 x at [0], z at [2] */
+	int count;                  /* 0x50 */
+	short colour[3];            /* 0x54 faded */
+	short baseColour[3];        /* 0x5a */
+	float size;                 /* 0x60 */
+	float zBias;                /* 0x64 */
+};
+OF_ASSERT_SIZE(struct DcBarrier, 0x68);
+
+/* a slot of the shaft section ring */
+struct DcShaftSlot {
+	struct DcLiftSegment *seg;  /* 0x0 */
+	unsigned char opaqueOnly;   /* 0x4 draw pass 1 only */
+	char pad5[3];
+};
+
+struct CDemolition_LiftShaft {
+	const void *const *vtable;        /* 0x0000 vtable 0x0026b880 */
+	int unk0004[3];                   /* 0x0004 */
+	void *shaftModels[4];             /* 0x0010 walls top start, walls, walldoor, glass walls */
+	void *platformModel;              /* 0x0020 cross\objects\lift.obe */
+	unsigned char soundOn;            /* 0x0024 */
+	char pad0025[3];
+	float speed;                      /* 0x0028 */
+	float scroll;                     /* 0x002c */
+	float drop;                       /* 0x0030 up to 2000 */
+	int state;                        /* 0x0034 0 wait, 1 slow down, 2 wait, 3 fall, 4 brake */
+	int unk0038;                      /* 0x0038 */
+	int sectionCounter;               /* 0x003c */
+	unsigned char started;            /* 0x0040 */
+	char pad0041[3];
+	struct DcLiftSegment sections[4]; /* 0x0044 */
+	struct DcShaftSlot ring[10];      /* 0x0064 */
+	int ringCount;                    /* 0x00b4 */
+	int ringHead;                     /* 0x00b8 */
+	float timer;                      /* 0x00bc */
+	struct DcPlatform platforms[4];   /* 0x00c0 */
+	int pattern;                      /* 0x1180 barrier pattern 0-3 */
+	int shape;                        /* 0x1184 0, 1: two glows across x or z; 2: four */
+	int kind;                         /* 0x1188 */
+	int barrierCounter;               /* 0x118c */
+	int barrierEvery;                 /* 0x1190 */
+	int fadeIn;                       /* 0x1194 the ambient light fades in */
+	float barrierDist;                /* 0x1198 */
+	int unk119c[3];                   /* 0x119c */
+	short colour[3];                  /* 0x11a8 of the next barrier */
+	short pad11ae;
+	char lights[3][0x34];             /* 0x11b0 CDemolition_Light (demolition_a) */
+	struct DcBarrier barriers[10];    /* 0x124c */
+	int barrierCount;                 /* 0x165c */
+	int barrierHead;                  /* 0x1660 */
+	float distance;                   /* 0x1664 fallen so far */
+	float camTimerX;                  /* 0x1668 */
+	float camTimerY;                  /* 0x166c */
+	float shake;                      /* 0x1670 */
+	float shakeVel;                   /* 0x1674 */
+	int sound;                        /* 0x1678 */
+	int pad167c[5];
+};
+OF_ASSERT_OFFSET(struct CDemolition_LiftShaft, platforms, 0xc0);
+OF_ASSERT_OFFSET(struct CDemolition_LiftShaft, pattern, 0x1180);
+OF_ASSERT_OFFSET(struct CDemolition_LiftShaft, lights, 0x11b0);
+OF_ASSERT_OFFSET(struct CDemolition_LiftShaft, barriers, 0x124c);
+OF_ASSERT_OFFSET(struct CDemolition_LiftShaft, sound, 0x1678);
+OF_ASSERT_SIZE(struct CDemolition_LiftShaft, 0x1690);
+
+/* functions of CDemolition_LiftShaft.cpp missing from src/include/of_functions.tsv (defined in
+   Demolition/CDemolition_LiftShaft.c) */
+void *FUN_000ffe90(void *platform);                    /* DcPlatform constructor */
+void FUN_000ffec0(void *platform);                     /* DcPlatform destructor */
+void FUN_00100ef0(struct CDemolition_LiftShaft *self); /* Draw: shaft and platforms */
+void FUN_00100f60(struct CDemolition_LiftShaft *self); /* DrawEffects: sparks and barriers */
+
 #endif
