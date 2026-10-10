@@ -63,8 +63,9 @@ and animated */
 #define rbb_SceneryOn() (RBD_I(0x002b4ba8 + rbb_Variation * 0x40) != 0)
 
 /* rollerball_a 0x0018e540 (CRollerBallDirect3D, game + 0x26f4): the texture factor
-alpha stage. The x86 code ignores ECX, so the call passes only the alpha. */
-#define rbb_SetAlphaStage(a) RBB_FN(FUN_0018e540, void, (int))(a)
+alpha stage. The x86 code ignores ECX, so the call passes only the alpha (the table
+prototype; a direct call, so a changed prototype fails to compile). */
+#define rbb_SetAlphaStage(a) FUN_0018e540(a)
 
 static const char rbb_WorldFile[] = "C:\\BlitzParty\\Game\\Src\\RollerBall\\CRollerball_World.cpp";
 

@@ -93,3 +93,51 @@
 00196560 void CRollerballWorld_DrawShadowPass(void *self);
 001965f0 int CRollerballWorld_LoadLOM(void *self, struct bkPackage *package, const char *path);
 001966a0 int CRollerballWorld_Load(void *self, struct bkPackage *package, const char *level);
+
+# RollerBall/CRollerball_Shadow.cpp
+00196710 void CRollerballShadow_Render(void *self);
+00196760 void CRollerballShadow_AddCaster(void *self, unsigned char **caster);
+001967a0 void CRollerballShadowSystem_Add(void *self, void *shadow);
+001967c0 void CRollerballShadowSystem_Update(void *self);
+001967f0 int CRollerballShadow_Init(void *self, int type, int width, int height, void *player);
+00196900 int CRollerballShadowSystem_Init(void *self);
+00196910 void CRollerballShadowSystem_Shutdown(void *self);
+00196940 void CRollerballShadowSystem_Begin(void *self);
+00196a00 void CRollerballShadowSystem_End(void *self);
+
+# RollerBall/CRollerBall_EntityEvent.cpp (0x00196a80/0x00196aa0 above)
+00196a60 void CRollerBallEvent_Ctor(void *self);
+00196a70 void CRollerBallEvent_Dtor(void *self);
+00196ad0 void CRollerBallEntityEventSystem_InitQueue(void *self, unsigned int size);
+00196b90 void *CRollerBallEvent_DeletingDtor(void *self, unsigned int flags);
+00196bf0 void CRollerBallEntityEventSystem_Post(void *self, void *event);
+00196d90 void *CRollerBallEntityEventSystem_DeletingDtor(void *self, unsigned int flags);
+
+# RollerBall/CRollerBall_Water.cpp
+00196de0 void CRollerBallWater_Ctor(void *self);
+00196df0 void CRollerBallWater_Dtor(void *self);
+00196e00 void CRollerBallWater_Shutdown(void *self);
+00196e30 void CRollerBallWater_Update(void *self);
+00196e80 void CRollerBallWater_Draw(void *self);
+00196f70 void CRollerBallWater_Splash(void *self, float *pos, float depth, float inner, float outer);
+00196fa0 void *CRollerBallWater_DeletingDtor(void *self, unsigned int flags);
+00196fc0 int CRollerBallWater_Init(void *self, float *pos, float size, int nx, int nz);
+00197150 void CRollerBallWater_SetRing(void *self, float inner, float outer);
+
+# RollerBall/CRollerBall_Cutter.cpp
+001973c0 void *CRollerBallCutter_Ctor(void *self);
+001973e0 void CRollerBallCutter_Dtor(void *self);
+001973f0 void CRollerBallCutter_Draw(void *self);
+001974f0 void CRollerBallCutter_Reset(void *self);
+00197540 void CRollerBallCutter_SetRadius(void *self, float radius);
+00197550 void CRollerBallCutter_SetDuration(void *self, float seconds);
+00197560 void CRollerBallCutter_SetReverse(void *self, int reverse);
+00197570 void CRollerBallCutter_SetStartAngle(void *self, float angle);
+00197580 void CRollerBallCutter_Pause(void *self);
+00197590 void *CRollerBallCutter_DeletingDtor(void *self, unsigned int flags);
+001975b0 int CRollerBallCutter_Init(void *self, float *centre, int segments);
+001977d0 void CRollerBallCutter_Shutdown(void *self);
+00197850 void CRollerBallCutter_BuildBeam(void *self, float dt);
+00197bd0 void CRollerBallCutter_BuildScorch(void *self, float dt);
+00197f40 void CRollerBallCutter_Start(void *self);
+00197fa0 int CRollerBallCutter_Update(void *self, float dt);
