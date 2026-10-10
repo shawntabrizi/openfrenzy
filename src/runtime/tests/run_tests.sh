@@ -22,7 +22,10 @@ OUT=$B/runtime-tests
 LLD=${OPENFRENZY_LLD:-/opt/homebrew/opt/lld@22/bin/ld.lld}
 mkdir -p "$OUT"
 
-cmake --build "$B" > "$OUT/build.log" 2>&1 || { tail -30 "$OUT/build.log"; echo "run_tests: build failed" >&2; exit 1; }
+# only what the tests link: the host, the platform layer, musl and the guest runtime (a broken
+# game module elsewhere in src/ does not stop them)
+{ cmake --build "$B" --target openfrenzy && cmake --build "$G" --target ofplatform guestc guest_runtime; } \
+	> "$OUT/build.log" 2>&1 || { tail -30 "$OUT/build.log"; echo "run_tests: build failed" >&2; exit 1; }
 
 # the smoke test's compile command, up to its dependency/output options
 CC_LINE=$(ninja -C "$G" -t commands openfrenzy_smoke | grep -F 'tests/smoke/smoke.c' | head -1 | sed 's/ -MD .*//')
