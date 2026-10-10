@@ -611,7 +611,7 @@ void FUN_001ac8f0(void *self, float dt)
 	PL_I32(0x19c) = ly;
 	PL_I32(0x1a0) = rx;
 	if (PL_U8(0x34a) == 0 && g_RowWater != NULL && PL_F32(0x2b8) - PL_F32(0x344) < 50.0f)
-		RA_VFN(g_RowWater, 0x28, void (*)(void *, float, float, float, float, float))(g_RowWater,
+		(void)RA_VFN(g_RowWater, 0x28, int (*)(void *, float, float, float, float, float))(g_RowWater,
 			PL_F32(0x2b4), PL_F32(0x2bc), -5.0f, 32.4410019f, 62.4410019f);
 }
 

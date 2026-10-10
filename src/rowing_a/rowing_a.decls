@@ -151,7 +151,6 @@
 001ab0c0 void FUN_001ab0c0(void *self, int lx, int ly, int rx, int ry, float dt);
 001aba70 void FUN_001aba70(void *self);
 001a74b0 int FUN_001a74b0(void *slot, void *inst, int index);
-001af720 void FUN_001af720(void *self, int index);
 001a7710 void FUN_001a7710(void *self, int *lx, int *ly, int *rx, int *ry);
 001ac560 void FUN_001ac560(void *self);
 001ada40 void FUN_001ada40(void *self);
@@ -167,3 +166,7 @@
 001ae6b0 void FUN_001ae6b0(void *self, float pitch, float yaw, float minDist, float margin);
 001aea40 void FUN_001aea40(void *self, float unused);
 001af9b0 int FUN_001af9b0(void);
+001af720 int FUN_001af720(void *self, int index);
+001afdc0 void FUN_001afdc0(float x, float y, float w, float h, unsigned int colour);
+001af660 void *FUN_001af660(void *self, unsigned int flags);
+001aff20 void *FUN_001aff20(void *self, unsigned int flags);
