@@ -35,7 +35,6 @@
 00110b90 void CDrillersGame_UpdateSnare(void *self);
 
 # callees (prototypes from the disassembly; renamed when their file is written)
-00120a70 void FUN_00120a70(void *self);
 00121a80 void FUN_00121a80(void *self);
 
 # Drillers/CDrillers_Particle.cpp (the three particle systems; DrParticleSystem in drillers.h)
@@ -132,3 +131,7 @@
 00120260 void DrPads_Delete(void *self);
 001202a0 void *DrPads_DeletingDtor(void *self, unsigned int flags);
 001202c0 void DrPads_Update(void *self);
+
+# Drillers/unplaced_hud.c (the HUD extras object 0x002aab08)
+00120a70 void DrHud_UpdateClock(void *self);
+00120ce0 void *DrHud_DeletingDtor(void *self, unsigned int flags);
