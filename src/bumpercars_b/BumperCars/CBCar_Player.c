@@ -1050,7 +1050,14 @@ void BCarPlayers_Update(float dt, int control)
 		if (g_BCarVariant == 4 && player->entity->place != -1)
 			BCarPlayer_DriveToPodium(player);
 		else if (player->human == 0)
-			BCB_CALL(FUN_0008bdd0, void (*)(void *, float))(player->ai, dt);
+		{
+			/* bumpercars_a types the argument int (it only stores the 4 bytes at +0x30):
+			pass the bits of `dt` in that int */
+			int dtBits;
+
+			memcpy(&dtBits, &dt, sizeof(dtBits));
+			BCB_CALL(FUN_0008bdd0, void (*)(void *, int))(player->ai, dtBits);
+		}
 		else
 		{
 			if (BCarCamera_GetViewPlayer(BCB_CAMERA, NULL) != 0)

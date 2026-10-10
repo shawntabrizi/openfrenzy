@@ -29,8 +29,9 @@ int BCarFlame_Initialise(void *self, struct bkPackage *package, const char *name
 		else
 		{
 			BCarTextReader_Init(&reader, file, (int)size, name);
-			BCB_CALL(FUN_000952e0, void (*)(void *, struct bkPackage *, struct BCarTextReader *))(
-				self, package, &reader);
+			/* the original pushes `package` too (ret 8), but 0x000952e0 never reads it;
+			bumpercars_a defines it as LoadFlameInfo(self, reader) */
+			BCB_CALL(FUN_000952e0, void (*)(void *, struct BCarTextReader *))(self, &reader);
 		}
 	}
 	BCarTextReader_Destruct(&reader);

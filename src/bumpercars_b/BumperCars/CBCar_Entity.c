@@ -1379,7 +1379,7 @@ void BCarEntities_Update(float dt, int control)
 					self->growing = 0;
 					if (self->extraInst != NULL)
 						baFlushAnimations(self->extraInst, self->extraInst->root, 1, 0);
-					BCB_CALL(FUN_0008ce30, void (*)(void *, float *, float, float, float, int, ...))(
+					BCB_CALL(FUN_0008ce30, void (*)(void *, float *, float, float, float, int, int, ...))(
 						BCB_EFFECTS, pos, 26.0f, 26.0f, 10.0f, 6, 4, 5, 6, 7, 8);
 					BCarSound_Play(BCB_SOUND, 0x17, 0xff, 0, -1);
 				}

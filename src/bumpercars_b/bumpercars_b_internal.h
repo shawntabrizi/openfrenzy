@@ -45,10 +45,12 @@ static inline int BCarSound_Play(void *sound, int sample, int volume, int arg, i
 		arg, channel);
 }
 
-/* 0x00092290: nonzero when `channel` has stopped playing (0 for -1) */
+/* 0x00092290: nonzero when `channel` has stopped playing (0 for -1). The original does not
+use ECX (ret 4: one stack argument); bumpercars_a defines it as ChannelDone(int channel). */
 static inline int BCarSound_IsFree(void *sound, int channel)
 {
-	return BCB_CALL(FUN_00092290, int (*)(void *, int))(sound, channel);
+	(void)sound;
+	return BCB_CALL(FUN_00092290, int (*)(int))(channel);
 }
 
 /* 0x000922d0: sets a parameter (0xc: the pitch) of a channel */
@@ -57,10 +59,12 @@ static inline void BCarSound_SetParam(void *sound, int channel, int param, int v
 	BCB_CALL(FUN_000922d0, void (*)(void *, int, int, int))(sound, channel, param, value);
 }
 
-/* 0x00092310: plays a character's voice sample */
+/* 0x00092310: plays a character's voice sample. The original does not use ECX (ret 0xc:
+three stack arguments); bumpercars_a defines it as Commentary(kind, choice, volume). */
 static inline void BCarSound_PlayVoice(void *sound, int sample, int character, int volume)
 {
-	BCB_CALL(FUN_00092310, void (*)(void *, int, int, int))(sound, sample, character, volume);
+	(void)sound;
+	BCB_CALL(FUN_00092310, void (*)(int, int, int))(sample, character, volume);
 }
 
 /* 0x00092450: a speech of player `player` (a random sample of group `speech`) */
@@ -92,10 +96,12 @@ static inline void BCarLight_Restore(void *lights)
 	BCB_CALL(FUN_00092610, void (*)(void *))(lights);
 }
 
-/* 0x00092a10: colours the light of an entity */
+/* 0x00092a10: colours the light of an entity. bumpercars_a defines it without the
+CBCar_Light `this` (ECX): SetColour(struct BCarLight *light, r, g, b). */
 static inline void BCarLight_SetColour(void *lights, int light, int r, int g, int b)
 {
-	BCB_CALL(FUN_00092a10, void (*)(void *, int, int, int, int))(lights, light, r, g, b);
+	(void)lights;
+	BCB_CALL(FUN_00092a10, void (*)(void *, int, int, int))((void *)(uintptr_t)light, r, g, b);
 }
 
 /* ---------- bumpercars_a: debug switches (this = 0x002ed470) */
