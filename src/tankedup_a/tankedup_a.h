@@ -31,6 +31,13 @@ The object at 0x003150b0 (0x158 bytes) is tankedup_b's debug object (CTank_Debug
 Initialise 0x001d6d90). Its fields are the tweakable settings that this module reads
 (ambient light, draw switches); see TU_DBG_* below.
 
+Functions missing from src/include/of_functions.tsv, defined here with their FUN_ names:
+0x001c3490 (the debris ground test, TankedUp/unplaced_debris.c) and 0x001c9f50 (the world
+objects' animation callback, TankedUp/CTank_World.c).
+
+__thiscall methods that do not use `this` and that tankedup_b calls without it are written
+without it: 0x001c38a0, 0x001cdc30, 0x001cebd0 (see tankedup_a.decls).
+
 Owner: tankedup_a. Other modules may include this header; only tankedup_a edits it.
 
 Conventions (docs/ARCHITECTURE.md):
