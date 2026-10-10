@@ -2218,7 +2218,9 @@ void FUN_001a2890(void *self, int top)
 				CGameModeStack_Pop((struct CGameModeStack *)DAT_002ba750, 1);
 				return;
 			}
-			CGameModeStack_PopTo((struct CGameModeStack *)DAT_002ba750, "BGeffects", 1);
+			/* push 0x00283b18 (0x001a38d9): the name buffer, which a direct launch sets to
+			   "Root"; a literal "BGeffects" popped nothing there and leaked each round */
+			CGameModeStack_PopTo((struct CGameModeStack *)DAT_002ba750, s_BGeffects_00283b18, 1);
 			RA_VFN(DAT_002ba97c, 0x0c, int (*)(void *, int))(DAT_002ba97c, (int)((r >> 2) & 3) + 1);
 			return;
 		}

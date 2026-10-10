@@ -116,6 +116,8 @@ extern int DAT_002ecdec;              /* the game is paused (classlib_ui) */
 extern float DAT_0028fda8;            /* frame time factor, 1.0 = 1/60 s (core) */
 extern int DAT_002ba9a4;              /* background loading is on (core) */
 extern void *DAT_002ba9a0;            /* the settings (core) */
+extern char s_BGeffects_00283b18[];   /* the name of the mode under the minigames (core):
+                                         "BGeffects", or "Root" after a direct launch */
 extern int DAT_002baee8[];            /* per player record (core): [i * 10] minigame score */
 extern unsigned char DAT_002b9968[];  /* the score table (core_modes_b CScoreTable) */
 extern int DAT_002bae94;              /* number of players (core) */
