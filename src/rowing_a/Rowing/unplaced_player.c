@@ -1,9 +1,12 @@
 /*
-Rowing/unplaced_player.c  <-  Rowing gap 0x001a74a0-0x001a7ac0 (no file tag)
+Rowing/unplaced_player.c  <-  Rowing gaps 0x001a74a0-0x001a7ac0 and 0x001ac560-0x001ada40
+(no file tag)
 
-Player (CRowing_Player) methods between the floating body (Rowing/unplaced_body.c) and the
-first function tagged CRowing_Player.cpp (0x001a7ac0). They use the player's fields (see
+Player (CRowing_Player) methods just before the first and just after the last function
+tagged CRowing_Player.cpp (0x001a7ac0, 0x001abc70). They use the player's fields (see
 Rowing/CRowing_Player.c) and are probably in CRowing_Player.cpp, but no string proves it.
+
+"Variant N" is the game's variant N (1-4); the code tests (game flags >> 2) & 3 = N - 1.
 */
 
 #include "rowing_a.h"
@@ -14,10 +17,26 @@ Rowing/CRowing_Player.c) and are probably in CRowing_Player.cpp, but no string p
 #define PL_U8(off) RA_U8(self, off)
 #define PL_PTR(off) RA_PTRF(self, off)
 
+#define g_RowGameFlags RW_VAR(unsigned int, 0x0030f0b0)
+#define g_GameState RW_VAR(int, 0x0030f0b4)
 #define g_RowWorld RW_VAR(void *, 0x0030f12c)
+#define g_RowWater RW_VAR(void *, 0x0030f130)
+#define g_RowPlayer(i) RW_VAR(void *, 0x0030f490 + (i) * 4)
+#define g_RowPlayers RW_VAR(int, 0x0030f0d4) /* game +0x24: the number of players */
+#define RA_VARIANT ((g_RowGameFlags >> 2) & 3)
+#define RA_CHARACTER(index) DAT_002baed4[(index) * 10]
 
 extern int DAT_00283dc0; /* core: the steering type (0: two sticks) */
 extern int DAT_00293928; /* classlib_ui: the voice volume */
+extern int DAT_00290e8c;           /* bumpercars_a: the debris colour index */
+extern unsigned char DAT_00291734[]; /* bumpercars_a: the debris type */
+extern float DAT_0029394c;         /* classlib_ui: 180.0 */
+extern int DAT_002ed324[];           /* classlib_ui: the rumble object */
+
+/* a voice of the player's character at the boat */
+#define PL_VOICE(self, kind) \
+	CLSamples_PlayVoice((char)RA_CHARACTER(RA_I32(self, 0x370)), (kind), RA_FP(self, 0x2b4), DAT_00293928, \
+		180.0f, 0, -1, 0)
 
 /* an input channel's value (channel +0x14) */
 #define PL_INPUT(off) RA_I32(PL_PTR(off), 0x14)
@@ -212,4 +231,386 @@ void FUN_001a7710(void *self, int *lx, int *ly, int *rx, int *ry)
 	*ly = ra_ClampStick((*ly * 32768) / 29000);
 	*rx = ra_ClampStick((*rx * 32768) / 29000);
 	*ry = ra_ClampStick((*ry * 32768) / 29000);
+}
+
+/* 0x001ac560  Rowing (gap; after CRowing_Player.cpp's last tagged function)
+Lap progress (variant 1, world +0x144 checkpoints): finds the checkpoint segment the boat is
+in (+0xf8; the current one, the next, the previous, then all; +0xfc the fraction along it,
++0x36c the course heading). Crossing from the last quarter into the first counts a lap
+(+0xf4; the last-lap jingle once, a random cheer 11-13); after the last lap (3, or 1 in the
+other variants) the boat finishes (+0xe8 place, +0xf0 time, +0xec rank shared by equal
+times; a voice for first and fourth place). Crossing back takes the lap off again; +0x100 is
+set while going backwards. */
+void FUN_001ac560(void *self)
+{
+	int n = RA_I32(g_RowWorld, 0x144);
+	int old, cur, i, laps, snd, best, time, bestTime;
+	float frac;
+
+	if (n == 0)
+		return;
+	old = PL_I32(0xf8);
+	cur = old;
+	if ((unsigned char)FUN_001b9490(cur, PL_F32(0x2b4), PL_F32(0x2bc), &frac, RA_FP(self, 0x36c)) == 0) {
+		cur = (old + 1) % n;
+		if ((unsigned char)FUN_001b9490(cur, PL_F32(0x2b4), PL_F32(0x2bc), &frac, RA_FP(self, 0x36c)) == 0) {
+			cur = (n - 1 + old) % n;
+			if ((unsigned char)FUN_001b9490(cur, PL_F32(0x2b4), PL_F32(0x2bc), &frac, RA_FP(self, 0x36c)) == 0) {
+				for (cur = 0; cur < n; cur++)
+					if ((unsigned char)FUN_001b9490(cur, PL_F32(0x2b4), PL_F32(0x2bc), &frac,
+						    RA_FP(self, 0x36c)) != 0)
+						break;
+				if (cur >= n) {
+					bkPrintf("This Never Happens\n");
+					cur = 0;
+					frac = 0.0f;
+				}
+			}
+		}
+	}
+	if (old >= n * 3 / 4 && cur <= n / 4) {
+		/* a lap */
+		PL_I32(0xf4)++;
+		PL_U8(0x100) = 0;
+		laps = (g_RowGameFlags & 0xc) != 0 ? 1 : 3;
+		if (PL_I32(0xf4) == laps && RA_I32(g_RowSound, 0x57c) == 0) {
+			rwb_Sound_PlayRandom(0x12, 0x80);
+			RA_I32(g_RowSound, 0x57c) = 1;
+		}
+		snd = rw_rand() % 3 + 0xb;
+		if (PL_I32(0xf4) > laps && PL_I32(0xe8) == 0) {
+			best = 0;
+			for (i = 0; i < g_RowPlayers; i++)
+				if (RA_I32(g_RowPlayer(i), 0xe8) > best)
+					best = RA_I32(g_RowPlayer(i), 0xe8);
+			time = PL_I32(0x39c);
+			PL_I32(0xe8) = best + 1;
+			PL_I32(0xf0) = time;
+			if (best + 1 == 1) {
+				snd = (rw_rand() & 1) + 7;
+				PL_I32(0xec) = 1;
+				PL_VOICE(self, 9);
+			} else {
+				best = 0;
+				bestTime = 0;
+				for (i = 0; i < g_RowPlayers; i++) {
+					if (RA_I32(g_RowPlayer(i), 0xec) > best) {
+						best = RA_I32(g_RowPlayer(i), 0xec);
+						bestTime = RA_I32(g_RowPlayer(i), 0xf0);
+					}
+				}
+				if (time != bestTime)
+					best++;
+				PL_I32(0xec) = best;
+				if (PL_I32(0xe8) == 4)
+					PL_VOICE(self, 0x10);
+			}
+			FUN_001a8940(self, 1);
+		}
+		rwb_Sound_PlayRandom(snd, 0x80);
+	} else if (old <= n / 4 && cur >= n * 3 / 4) {
+		/* back over the line */
+		if (--PL_I32(0xf4) < 0)
+			PL_I32(0xf4) = 0;
+		PL_U8(0x100) = 1;
+	} else
+		PL_U8(0x100) = cur <= old;
+	if (cur >= n)
+		cur = 0;
+	PL_I32(0xf8) = cur;
+	PL_F32(0xfc) = frac;
+}
+
+/* 0x001ac8f0  Rowing (gap; after CRowing_Player.cpp's last tagged function)
+The player's frame. Computer drivers pick a target by variant and steer (0x001a8d30);
+humans (or all players with 0x0030f0a0 set) read the sticks; both set the camera's
+look-ahead point (+0x35c). Then the flash, the state clock, sticks centred outside the race
+states, the variant's rules (2: gates and penalty time; 3: tokens, falling in and respawning;
+4: distance, sinking places), the controls, the hull dents (spread to the neighbours, a bump
+animation, rumble, voice and sound), the boing bones, the body's physics and collisions, the
+move, the lap progress, the sticks kept for next frame and a splash on the water. */
+void FUN_001ac8f0(void *self, float dt)
+{
+	float v[4], d[4], start[4], s[8], max, heading;
+	char text[16];
+	int lx, ly, rx, ry, i, score, keep, lost, dentA, dentB, best, idx;
+	const int *col;
+	void *token, *body;
+
+	PL_I32(0x39c)++;
+	if (DAT_002baed4[PL_I32(0x370) * 10 + 1] == 0 && RW_VAR(int, 0x0030f0a0) == 0) {
+		switch (RA_VARIANT) {
+		case 0:
+			FUN_001a99f0(self);
+			PL_F32(0x144) = PL_F32(0x2b8);
+			PL_F32(0x14c) = PL_F32(0x2c0);
+			Core_Vec3Sub(d, RA_FP(self, 0x140), RA_FP(self, 0x2b4));
+			bmVectorSetLength(v, d, 200.0f);
+			cmb_vec3_add(RA_FP(self, 0x35c), RA_FP(self, 0x2b4), v);
+			break;
+		case 1:
+			FUN_001a9af0(self);
+			Core_Vec4Copy(RA_FP(self, 0x35c), RA_FP(self, 0x2b4));
+			PL_F32(0x35c) = sinf(PL_F32(0x36c)) * 300.0f + PL_F32(0x35c);
+			PL_F32(0x364) = cosf(PL_F32(0x36c)) * 300.0f + PL_F32(0x364);
+			break;
+		case 2:
+			FUN_001a9e60(self);
+			Core_Vec4Copy(RA_FP(self, 0x35c), RA_FP(self, 0x2b4));
+			break;
+		case 3:
+			FUN_001aa000(self, dt);
+			Core_Vec4Copy(RA_FP(self, 0x35c), RA_FP(self, 0x2b4));
+			break;
+		}
+		FUN_001a8d30(self, dt, &lx, &ly, &rx, &ry);
+	} else {
+		switch (RA_VARIANT) {
+		case 0:
+			FUN_001a99f0(self);
+			PL_F32(0x144) = PL_F32(0x2b8);
+			PL_F32(0x14c) = PL_F32(0x2c0);
+			d[0] = PL_F32(0x140) - PL_F32(0x2b4);
+			d[1] = PL_F32(0x144) - PL_F32(0x2b8);
+			d[2] = PL_F32(0x148) - PL_F32(0x2bc);
+			bmVectorSetLength(v, d, 300.0f);
+			PL_F32(0x35c) = v[0] + PL_F32(0x2b4);
+			PL_F32(0x360) = v[1] + PL_F32(0x2b8);
+			PL_F32(0x364) = v[2] + PL_F32(0x2bc);
+			break;
+		case 1:
+			memcpy(RA_FP(self, 0x35c), RA_FP(self, 0x2b4), 0x10);
+			PL_F32(0x35c) = sinf(PL_F32(0x36c)) * 600.0f + PL_F32(0x35c);
+			PL_F32(0x364) = cosf(PL_F32(0x36c)) * 600.0f + PL_F32(0x364);
+			break;
+		case 2:
+		case 3:
+			memcpy(RA_FP(self, 0x35c), RA_FP(self, 0x2b4), 0x10);
+			break;
+		}
+		FUN_001a7710(self, &lx, &ly, &rx, &ry);
+	}
+	FUN_001aaa30(self, dt);
+	PL_I32(0x384)++;
+	PL_F32(0x388) = dt + PL_F32(0x388);
+	switch (PL_I32(0x380)) {
+	case 0:
+	case 2:
+	case 3:
+	case 5:
+		lx = -0x8000;
+		rx = 0x8000;
+		ly = 0;
+		ry = 0;
+		break;
+	}
+
+	switch (RA_VARIANT) {
+	case 1: /* variant 2: the gates */
+		i = FUN_001b9ac0(PL_F32(0x2b4), PL_F32(0x2bc), (int *)RA_P(self, 0x10c), (char *)RA_P(self, 0x110),
+			RA_I32(g_RowWorld, 0x19c), (struct RowPath *)RA_PTRF(g_RowWorld, 0x1a0));
+		if (i == 1) {
+			FUN_001b6ee0(0xf, RA_FP(self, 0x2b4), 0xff);
+		} else if (i == 2) {
+			FUN_001b6ee0(0x10, RA_FP(self, 0x2b4), 0xff);
+			PL_VOICE(self, 0xe);
+			CLRumble_PlayNamed((int)(uintptr_t)DAT_002ed324, PL_I32(0x370), "JB_WrongGate");
+		}
+		if (PL_I32(0x380) == 1)
+			PL_F32(0x124) = RA_F32(RW_VAR(void *, 0x0030f148), 0x98) + PL_F32(0x124);
+		FUN_001a7540(self);
+		break;
+	case 2: /* variant 3: the tokens */
+		if (PL_I32(0x380) == 1 && PL_U8(0x34a) == 0 && PL_U8(0x349) == 0)
+			token = FUN_001b5740(PL_F32(0x2b4), PL_F32(0x2bc), 62.4410019f);
+		else
+			token = NULL;
+		score = 0;
+		if (g_GameState == 5 && token != NULL) {
+			switch (RA_I32(token, 0x1ec)) {
+			case 0:
+				score = 1;
+				break;
+			case 1:
+				score = 3;
+				break;
+			case 2:
+				score = 5;
+				PL_VOICE(self, 4);
+				break;
+			}
+			for (i = 0; i < 4; i++)
+				if (RA_PTRF(g_RowPlayer(i), 0x15c) == token)
+					RA_PTRF(g_RowPlayer(i), 0x15c) = NULL;
+			CToken_Collect((struct CToken *)token);
+			if (score != 0) {
+				PL_I32(0x3a0) += score;
+				sprintf(text, "%d", score);
+				col = ra_CharacterColour[RA_CHARACTER(PL_I32(0x370))];
+				baAddExtraItem(*(struct BExtraSystem **)DAT_002f27c4, RW_VAR(void *, 0x0030f160),
+					(double)PL_F32(0x2b4), (double)PL_F32(0x2b8), (double)PL_F32(0x2bc),
+					(unsigned int)col[0] >> 2, (unsigned int)col[1] >> 2, (unsigned int)col[2] >> 2, text);
+			}
+		}
+		if (PL_U8(0x349) != 0 && PL_I32(0xbc) == 0) {
+			PL_I32(0xbc) = 1;
+			PL_VOICE(self, 0xd);
+		}
+		if (PL_U8(0x34a) != 0 && PL_I32(0x380) != 5) {
+			/* fallen in: lose a quarter of the score */
+			score = PL_I32(0x3a0);
+			PL_I32(0xbc) = 0;
+			if (g_GameState == 5) {
+				keep = (int)((1.0f - RW_VAR(float, 0x002b56c8)) * (float)score);
+				lost = score - keep;
+				PL_I32(0x3a0) = keep;
+				if (lost > 0) {
+					sprintf(text, "-%d", lost);
+					col = ra_CharacterColour[RA_CHARACTER(PL_I32(0x370))];
+					baAddExtraItem(*(struct BExtraSystem **)DAT_002f27c4, RW_VAR(void *, 0x0030f160),
+						0.0, -100.0, 0.0, (unsigned int)col[0] >> 2, (unsigned int)col[1] >> 2,
+						(unsigned int)col[2] >> 2, text);
+				}
+			}
+			PL_I32(0x380) = 5;
+			PL_I32(0x384) = 0;
+			PL_I32(0x388) = 0;
+			PL_U8(0x37c) = 0;
+			PL_I32(0x3bc) = 0;
+		}
+		if (PL_I32(0x380) == 5 && RW_VAR(float, 0x0030f4a0) * 60.0f < PL_F32(0x388)) {
+			/* respawn 200 above the start slot, then drop in */
+			i = PL_I32(0x378);
+			start[0] = RA_F32(g_RowWorld, 0x84 + i * 0x14);
+			start[1] = RA_F32(g_RowWorld, 0x88 + i * 0x14) + 200.0f;
+			start[2] = RA_F32(g_RowWorld, 0x8c + i * 0x14);
+			start[3] = RA_F32(g_RowWorld, 0x90 + i * 0x14);
+			heading = RA_F32(g_RowWorld, 0x94 + i * 0x14);
+			if (PL_I32(0x3bc) == 0) {
+				start[1] -= 200.0f;
+				DAT_00290e8c = RA_CHARACTER(PL_I32(0x370));
+				Debris_Add((struct DebrisType *)DAT_00291734, start, DAT_002ea478, 0, 0xffffffffu);
+				start[1] += 200.0f;
+				PL_I32(0x3bc) = 1;
+				FUN_001a7cf0(self, start, heading);
+			}
+			PL_U8(0x34b) = 1;
+			PL_F32(0x2b8) = start[1];
+			PL_F32(0x304) = 0.0f;
+			PL_F32(0x308) = 0.0f;
+			PL_F32(0x30c) = 0.0f;
+			if (RW_VAR(float, 0x002b56cc) * 60.0f < PL_F32(0x388)) {
+				PL_U8(0x34b) = 0;
+				RA_F32((void *)(uintptr_t)DAT_002ecfac, 0xb8 + PL_I32(0x370) * 4) = DAT_0029394c;
+				PL_I32(0x380) = 1;
+				PL_I32(0x384) = 0;
+				PL_I32(0x388) = 0;
+				PL_VOICE(self, 0xf);
+			}
+		}
+		break;
+	case 3: /* variant 4: distance; places by sinking order */
+		PL_F32(0x3e4) = PL_F32(0x3e4) + PL_F32(0x2bc);
+		if (PL_U8(0x349) != 0 && PL_I32(0xe8) == 0) {
+			best = 5;
+			for (i = 0; i < g_RowPlayers; i++)
+				if (RA_I32(g_RowPlayer(i), 0xe8) != 0 && RA_I32(g_RowPlayer(i), 0xe8) < best)
+					best = RA_I32(g_RowPlayer(i), 0xe8);
+			PL_I32(0xe8) = best - 1;
+			PL_I32(0x108) = PL_I32(0x39c);
+			PL_VOICE(self, 0xd);
+		}
+		if (PL_U8(0x34a) != 0) {
+			if (PL_U8(0x37c) != 0 && PL_I32(0xe8) >= 3)
+				CLSamples_PlayCommentary(0x37, RA_CHARACTER(PL_I32(0x370)), 0xff, 0, 0, NULL);
+			PL_U8(0x37c) = 0;
+		}
+		if (PL_U8(0x34a) != 0 || PL_U8(0x349) != 0) {
+			if (PL_F32(0x30c) > 0.0f)
+				PL_F32(0x30c) = 0.0f;
+			if (PL_F32(0x2bc) >= -1860.09998f)
+				PL_F32(0x2bc) = -1860.09998f;
+		}
+		if (PL_F32(0x2c8) < -3.1415925f) {
+			heading = PL_F32(0x2c8);
+			do
+				heading += 6.28318548f;
+			while (heading < -3.1415925f);
+			PL_F32(0x2c8) = heading;
+		}
+		if (PL_F32(0x2c8) >= 3.1415925f) {
+			heading = PL_F32(0x2c8);
+			do
+				heading -= 6.28318548f;
+			while (heading >= 3.1415925f);
+			PL_F32(0x2c8) = heading;
+		}
+		break;
+	}
+
+	FUN_001ab0c0(self, lx, ly, rx, ry, dt);
+	if (PL_I32(0xb8) != 0)
+		PL_I32(0xb8)--;
+	for (i = 0; i < 8; i++) {
+		PL_I32(0x1b4 + i * 0x20) = 0;
+		PL_I32(0x1b8 + i * 0x20) = 0;
+		PL_I32(0x1bc + i * 0x20) = 0;
+		PL_I32(0x1c0 + i * 0x20) = 0;
+	}
+	if (PL_U8(0x37c) != 0) {
+		dentA = FUN_001a8260(self);
+		dentB = FUN_001a7e40(self);
+		/* each dent spreads half into an undented neighbour */
+		for (i = 0; i < 8; i++)
+			s[i] = PL_F32(0x1b4 + i * 0x20);
+		for (i = 0; i < 8; i++) {
+			float prev = s[(i + 7) & 7], next = s[(i + 1) & 7];
+
+			if (next == 0.0f && s[i] < prev)
+				PL_F32(0x1b4 + i * 0x20) = prev * 0.5f;
+			if (PL_F32(0x1b4 + i * 0x20) < next && prev == 0.0f)
+				PL_F32(0x1b4 + i * 0x20) = next * 0.5f;
+		}
+		if ((dentA | dentB) != 0 && PL_I32(0xb8) == 0) {
+			max = PL_F32(0x1b4);
+			idx = 0;
+			for (i = 1; i < 8; i++) {
+				if (PL_F32(0x1b4 + i * 0x20) > max) {
+					max = PL_F32(0x1b4 + i * 0x20);
+					idx = i;
+				}
+			}
+			FUN_001a8830(self, RW_VAR(int, 0x002b58e0 + idx * 4), 0.2f);
+			if (PL_U8(0x34a) == 0 && PL_U8(0x349) == 0)
+				CLRumble_PlayNamed((int)(uintptr_t)DAT_002ed324, PL_I32(0x370), "JB_Collide");
+			if (max > 0.349999994f)
+				PL_VOICE(self, 2);
+			FUN_001b6ee0(0x13, RA_FP(self, 0x2b4), 0xff);
+			PL_I32(0xb8) = 0x1e;
+		}
+	}
+	for (i = 0; i < 8; i++) {
+		void *node = PL_PTR(0x1c4 + i * 0x20);
+
+		if (node != NULL)
+			baSetNodeTime((struct BActorInstance *)PL_PTR(0x358), (struct BActorNode *)node,
+				(int)((float)(PL_I32(0x40) - PL_I32(0x3c)) * PL_F32(0x1b4 + i * 0x20)) + PL_I32(0x3c), 1);
+	}
+	FUN_001a8600(self);
+	body = RA_P(self, 0x2a8);
+	FUN_001a5ad0(body);
+	FUN_001a5f00(body, dt);
+	FUN_001a6f50(body, 50.0f, PL_I32(0x3a4));
+	FUN_001a6500(body, RA_I32(g_RowWorld, 0x134), (unsigned char *)RA_PTRF(g_RowWorld, 0x138), 50.0f);
+	PL_F32(0x2b4) = PL_F32(0x2b4) + PL_F32(0x314);
+	PL_F32(0x2b8) = PL_F32(0x2b8) + PL_F32(0x318);
+	PL_F32(0x2bc) = PL_F32(0x2bc) + PL_F32(0x31c);
+	FUN_001ac560(self);
+	PL_I32(0x198) = lx;
+	PL_I32(0x1a4) = ry;
+	PL_I32(0x19c) = ly;
+	PL_I32(0x1a0) = rx;
+	if (PL_U8(0x34a) == 0 && g_RowWater != NULL && PL_F32(0x2b8) - PL_F32(0x344) < 50.0f)
+		RA_VFN(g_RowWater, 0x28, void (*)(void *, float, float, float, float, float))(g_RowWater,
+			PL_F32(0x2b4), PL_F32(0x2bc), -5.0f, 32.4410019f, 62.4410019f);
 }

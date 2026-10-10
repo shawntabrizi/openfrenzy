@@ -1196,13 +1196,13 @@ void FUN_001aaa30(void *self, float dt)
 		RW_VAR(float, 0x002b5814));
 }
 
-/* .rdata 0x002758a8: the debug colour (r, g, b) of each character */
-static const int ra_CharacterDebugColour[6][3] = {
+/* .rdata 0x002758a8: the colour (r, g, b) of each character (debug lines, trails, score text) */
+const int ra_CharacterColour[6][3] = {
 	{0x2e, 0xa7, 0x24}, {0xd2, 0x00, 0x00}, {0x20, 0x71, 0xcd},
 	{0xf8, 0xce, 0x00}, {0xf2, 0x82, 0x1e}, {0xec, 0x6b, 0xae},
 };
 
-#define RA_DEBUG_COLOUR(self) ra_CharacterDebugColour[RA_CHARACTER(RA_I32(self, 0x370))]
+#define RA_DEBUG_COLOUR(self) ra_CharacterColour[RA_CHARACTER(RA_I32(self, 0x370))]
 
 /* 0x001aab80  Rowing/CRowing_Player.cpp (bracketed)
 Draws the player. The driver (+0xc4) follows the boat's instance; with a single human

@@ -124,6 +124,8 @@ extern int DAT_002baed4[];            /* per player record of 10 ints (core): [i
 extern void *DAT_002f26c4;            /* the debug free camera (bumpercars_b) */
 /* classlib_fx.h declares int DAT_002bc48c (polygons drawn) */
 extern long long DAT_002cd7a0;        /* tick frequency (bkernel) */
+/* .rdata 0x002758a8 (rebuilt in Rowing/CRowing_Player.c): each character's colour (r, g, b) */
+extern const int ra_CharacterColour[6][3];
 extern unsigned char *DAT_002f27c4;   /* the floaty score system (bumpercars_b) */
 extern int DAT_002bae70;              /* the difficulty (core) */
 extern int DAT_00283ea4;              /* character colour set (core) */
