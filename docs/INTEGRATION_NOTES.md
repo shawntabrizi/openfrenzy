@@ -284,6 +284,38 @@ integration round 2 (921ec75); see below.
     `pc=cfb1f0b1d0b1cfb1` (pixel-like data as the return address: a smashed stack). Script:
     the 2-stage recipe, A every 3 s, plus START 1.5 s after each A from 700 s.
 
+## Integration round 4 (2026-10-10)
+
+- Clean build in `build/` (rm -rf, configure, build: 26 s) links with no errors; ctest 6/6.
+  No stubs had to be regenerated. The final link still has the 5 weak stubs of round 3
+  (FUN_00015270, FUN_000175c0, FUN_00018d90, FUN_00055c69, FUN_000bccbf); no run reached one.
+- Attract mode (window, no input, videos on, 200 s): boot logos, ATTRACT.bik twice, then the
+  RollerBall demo faulted at NULL + 0x78 (as in round 3). Fixed: CRollerBallGoal_Init
+  (0x001912e0) read the goal models from game +0x1440; the XBE computes
+  `[goal + 0x38 + 4i + (0x1440 - goal) + game]` = game +0x1478 + 4i (goal system +8,
+  goalsign.obe and goalsfx.obe). +0x1440 holds the player 1/2 "opt" character actors, which are
+  NULL in the demo (and wrong models in a direct launch). After the fix (420 s run): the RollerBall
+  demo plays, then a second demo, videos between; no fault. RollerBall direct launch v1-3
+  (75 s each, headless): no fault. The other "(0x.. - param_1)" pointer-delta sites in the
+  export (Hud 0x00078e00/0x000796c0, CarryOn 0x000bc3d0, Hopper 0x0013d9f0/0x00143240, Rowing
+  0x001b0c40) were checked: the port has the right absolute offsets.
+- With `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` the attract cycle never starts a demo (240 s on the
+  title); use videos on to test the demos.
+- Fixed (latent): meta puzzles FUN_001530c0, conditions CHAR_IN_CYLINDER (8) and
+  CAM_IN_CYLINDER (11): the original sscanf has one pointer fewer than conversions. On arm64 the
+  missing vararg is a stale stack word, so sscanf could write a float anywhere. No .lnd on the
+  disc uses these keywords. These were the only -Wformat-insufficient-args warnings in the build.
+- Host fault handler now also prints sp, fp, x0-x28 and the faulting thread.
+- Open, intermittent: the Meta stage load fault of round 3 (`pc = cfb1f0b1d0b1cfb1`, right after
+  `LoadSingleFile ... military_part_1.lnd`, empty sp scan). Reproduced 1 of 3 runs with the same
+  script (`build/run/input_mv.txt`: the 2-stage recipe, A every 3 s, plus START 1.5 s after each
+  A from 700 s; videos skipped). The other 2 runs passed the same point with the same stage order
+  (indust, then military) and no fault. The pc halves read as smooth signed 16-bit values
+  (-12367, -12111, -3919), like PCM samples or a height field. The WMA stream of the previous
+  screen is stopped and released just before the load.
+- Board runs (window, 760-900 s): Power Station (Tube Tremors, Bug Bash v2, Hopper, ...), the first
+  Meta stage and vote, Military Base minigames, the second Meta stage. Frame dumps look right.
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and
