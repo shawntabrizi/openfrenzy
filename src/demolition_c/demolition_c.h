@@ -202,4 +202,64 @@ OF_ASSERT_OFFSET(struct CDemolition_Lift, girderRing, 0x225c);
 OF_ASSERT_OFFSET(struct CDemolition_Lift, sound, 0x2314);
 OF_ASSERT_SIZE(struct CDemolition_Lift, 0x2330);
 
+/* ======================================================================== CDemolition_GasJets */
+
+/* a gas jet (vtable 0x0026b74c, 0x9c bytes): a DcGasSystem (CDemolition_Particle.c) and a
+   flame drawn as two beams */
+struct DcGasJet {
+	const void *const *vtable;  /* 0x00 */
+	float pos[4];               /* 0x04 */
+	char gas[0x68];             /* 0x14 DcGasSystem: active at +0x3c (0x50), emitting +0x3d (0x51) */
+	unsigned char enabled;      /* 0x7c */
+	unsigned char visible;      /* 0x7d */
+	unsigned char firing;       /* 0x7e burns players */
+	unsigned char pad7f;
+	float fireTime;             /* 0x80 */
+	unsigned char flameOn;      /* 0x84 growing */
+	unsigned char flameDraw;    /* 0x85 */
+	short pad86;
+	float flameHeight;          /* 0x88 */
+	float flameMax;             /* 0x8c */
+	float flameWidth;           /* 0x90 */
+	float flameJitter;          /* 0x94 */
+	int flameAlpha;             /* 0x98 */
+};
+OF_ASSERT_SIZE(struct DcGasJet, 0x9c);
+
+/* a light that follows the jets of a group (vtable 0x0026b748, 0x48 bytes) */
+struct DcJetLight {
+	const void *const *vtable;  /* 0x00 */
+	int unk04;                  /* 0x04 */
+	void *light;                /* 0x08 CDemolition_Light (demolition_a, 0x34 bytes) */
+	int mode;                   /* 0x0c 1 fading in, 2 fading out */
+	char timer[0x38];           /* 0x10 timer (demolition_a 0x000ec2f0) */
+};
+OF_ASSERT_SIZE(struct DcJetLight, 0x48);
+
+/* a row of jets from the outside to the centre (the centre jet is the last of every row) */
+struct DcJetGroup {
+	int count;                  /* 0x00 */
+	struct DcGasJet *jets[10];  /* 0x04 */
+};
+OF_ASSERT_SIZE(struct DcJetGroup, 0x2c);
+
+struct CDemolition_GasJets {
+	const void *const *vtable;      /* 0x000 vtable 0x0026b750 */
+	int unk004;                     /* 0x004 */
+	struct DcGasJet *jets[23];      /* 0x008 */
+	unsigned char unk064;           /* 0x064 */
+	unsigned char stopped;          /* 0x065 */
+	unsigned char active;           /* 0x066 a wave is running */
+	unsigned char pad067;
+	struct DcJetGroup groups[4];    /* 0x068 */
+	struct DcJetLight lights[4];    /* 0x118 */
+	int state;                      /* 0x238 0 wait, 1-2 outside in, 3-4 centre out */
+	float waitTime;                 /* 0x23c */
+	char timer[0x48];               /* 0x240 timer (demolition_a 0x000ec2f0) */
+};
+OF_ASSERT_OFFSET(struct CDemolition_GasJets, groups, 0x68);
+OF_ASSERT_OFFSET(struct CDemolition_GasJets, lights, 0x118);
+OF_ASSERT_OFFSET(struct CDemolition_GasJets, timer, 0x240);
+OF_ASSERT_SIZE(struct CDemolition_GasJets, 0x288);
+
 #endif

@@ -133,3 +133,31 @@
 001057d0 void DcDustSystem_Release(struct DcDustSystem *self);
 00105810 void DcDustSystem_Update(struct DcDustSystem *self, float dt);
 00105970 void DcDustSystem_Reset(struct DcDustSystem *self);
+
+# Demolition/CDemolition_GasJets.c
+000fe240 struct DcJetLight *DcJetLight_Construct(struct DcJetLight *self);
+000fe260 void DcJetLight_Destruct(struct DcJetLight *self);
+000fe270 void DcJetLight_Update(struct DcJetLight *self, float dt);
+000fe330 void DcGasJet_Destruct(struct DcGasJet *self);
+000fe340 void DcGasJet_DrawFlame(struct DcGasJet *self);
+000fe4d0 struct CDemolition_GasJets *CDemolition_GasJets_Construct(struct CDemolition_GasJets *self);
+000fe540 void CDemolition_GasJets_Destruct(struct CDemolition_GasJets *self);
+000fe5b0 void CDemolition_GasJets_Shutdown(struct CDemolition_GasJets *self);
+000fe620 void CDemolition_GasJets_StartOutside(struct CDemolition_GasJets *self);
+000fe700 void CDemolition_GasJets_WaitOutside(struct CDemolition_GasJets *self, float dt);
+000fe770 void CDemolition_GasJets_StartCentre(struct CDemolition_GasJets *self);
+000fe850 void CDemolition_GasJets_WaitCentre(struct CDemolition_GasJets *self, float dt);
+000fe8c0 void CDemolition_GasJets_ResetJets(struct CDemolition_GasJets *self);
+000fe930 struct DcJetLight *DcJetLight_DeletingDtor(struct DcJetLight *self, unsigned char flags);
+000fe950 int DcJetLight_Init(struct DcJetLight *self);
+000fea00 struct DcGasJet *DcGasJet_DeletingDtor(struct DcGasJet *self, unsigned char flags);
+000fea20 int DcGasJet_Init(struct DcGasJet *self);
+000feaa0 struct CDemolition_GasJets *CDemolition_GasJets_DeletingDtor(struct CDemolition_GasJets *self, unsigned char flags);
+000feac0 int CDemolition_GasJets_Initialise(struct CDemolition_GasJets *self);
+000fecf0 void CDemolition_GasJets_Stop(struct CDemolition_GasJets *self);
+000fed20 void CDemolition_GasJets_Wait(struct CDemolition_GasJets *self, float dt);
+000fedf0 void CDemolition_GasJets_SpreadIn(struct CDemolition_GasJets *self, float dt);
+000ff050 void CDemolition_GasJets_SpreadOut(struct CDemolition_GasJets *self, float dt);
+000ff200 void CDemolition_GasJets_Draw(struct CDemolition_GasJets *self);
+000ff240 void DcGasJet_Update(struct DcGasJet *self, float dt);
+000ff570 void CDemolition_GasJets_Update(struct CDemolition_GasJets *self, float dt);
