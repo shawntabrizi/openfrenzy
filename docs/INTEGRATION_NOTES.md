@@ -243,6 +243,14 @@ integration round 2 (921ec75); see below.
   music 10->9, vibration on->off, song sample -> Radio Waves, soundtrack stays (no custom
   soundtracks exist), Credits opens, B -> Options, B -> main menu, no fault.
 - Main menu -> Game Demos: XLaunchNewImage("D:\XDemos\XDemos.xbe") exits the game (host).
+  Fixed (fix-game-demos-menu, port-only): CGameMode_MainMenu_OnButton case 3 now logs
+  "main menu: Game Demos ... is not available in the port" and stays on the main menu. It skips
+  the XDemo package load, wait.bmp, D3DDevice_PersistDisplay, PrepareLaunch (stops sound and
+  streaming) and the launch, so nothing needs undoing. Why not more: XDemos.xbe is a separate
+  Xbox program (own menus, fonts, png and Bink trailers in D:\XDemos\); a port of it is out of
+  scope. Build with -DOPENFRENZY_ORIGINAL_XDEMOS_LAUNCH for the original path. Verified (window,
+  skip videos, BMP dumps every 60 frames): A on "game demos" logs the line, the menu stays and
+  takes input (DOWN wraps to tournament, A opens "game length"), no fault, no exit.
 - Audio (`OPENFRENZY_DSOUND_LOG=1`, 6-stage run): device opened (48 kHz stereo), WMA music
   decodes, mixer peak before the limiter over 2692 one-second reports: median 1.19, max
   2.75 (so the limiter acts most of the time). Nobody listened.

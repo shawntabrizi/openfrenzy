@@ -9,6 +9,8 @@ language/settings text refresh, Update) and the menu's BG_Effects text box subcl
 #include "xtl.h"
 
 #include "core_modes_b.h"
+/* PORT-ONLY: host log (src/runtime/platform.h, which clashes with xtl.h here) */
+void platform_log(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 static const char cmb_file_mainmenu[] = "C:\\BlitzParty\\Game\\Src\\Core\\CGameMode_MainMenu.cpp";
 
@@ -372,6 +374,19 @@ int CGameMode_MainMenu_OnButton(struct CGameMode_MainMenu *self, int button, int
 			CMB_PUSH_MODE(DAT_002b9c78, 1);
 			return 1;
 		case 3: /* the XDemos launcher */
+#ifndef OPENFRENZY_ORIGINAL_XDEMOS_LAUNCH
+			/*
+			 * PORT-ONLY: the original loads Packages\XDemo, draws wait.bmp, stops sound and
+			 * streaming (CGameMode_MainMenu_PrepareLaunch) and reboots into
+			 * D:\XDemos\XDemos.xbe, a separate Xbox program (its own menus, fonts and Bink
+			 * trailers of other games) that the port cannot run. The host XLaunchNewImageA
+			 * exits, and an error return would reach Sleep(100000). The port does none of
+			 * this: it keeps the item and stays on the main menu, so there is nothing to undo.
+			 * The select sample above still plays.
+			 */
+			platform_log("main menu: Game Demos (D:\\XDemos\\XDemos.xbe) is not available in the port");
+			return 0;
+#else
 			((void (*)(int, int, int, int))FUN_0004b870)(
 				((int (*)(int, const char *, int))FUN_0004db30)(0, "Packages\\XDemo", 0), -1, 0xdefa, 0);
 			image = CMB_RESOURCE4(0, "wait.bmp", 5, 0xdefa);
@@ -386,6 +401,7 @@ int CGameMode_MainMenu_OnButton(struct CGameMode_MainMenu *self, int button, int
 			CMB_DEBUG_PRINTF("\n\nXLaunchNewImage returned %d\n\n", result);
 			Sleep(100000);
 			break;
+#endif
 		}
 		break;
 	}
