@@ -1,0 +1,135 @@
+# src/demolition_c/demolition_c.decls - prototype overrides of the demolition_c module
+# (docs/ARCHITECTURE.md, section 11).   <addr> <prototype>;
+# thiscall/fastcall `this` is the first parameter.
+
+# Demolition/CDemolition_Lift.c
+000fcb70 void CDemolition_Lift_Destruct(struct CDemolition_Lift *self);
+000fcbc0 void CDemolition_Lift_Stop(struct CDemolition_Lift *self);
+000fcbd0 void CDemolition_Lift_ReleaseParts(struct CDemolition_Lift *self);
+000fcc20 void CDemolition_Lift_SpeedUp(struct CDemolition_Lift *self, float dt);
+000fcc80 void CDemolition_Lift_SlowDown(struct CDemolition_Lift *self, float dt);
+000fcd30 void CDemolition_Lift_ReleaseShaft(struct CDemolition_Lift *self);
+000fcd60 void CDemolition_Lift_UpdateShaft(struct CDemolition_Lift *self, float dt);
+000fce70 void CDemolition_Lift_DrawShaft(struct CDemolition_Lift *self);
+000fcf70 void CDemolition_Lift_ReleaseGirders(struct CDemolition_Lift *self);
+000fcfa0 void CDemolition_Lift_PlaceGirders(struct CDemolition_Lift *self, float dt);
+000fd040 void CDemolition_Lift_DrawGirders(struct CDemolition_Lift *self);
+000fd100 void CDemolition_Lift_MoveWorld(struct CDemolition_Lift *self, float dt);
+000fd1d0 struct CDemolition_Lift *CDemolition_Lift_Construct(struct CDemolition_Lift *self);
+000fd200 struct CDemolition_Lift *CDemolition_Lift_DeletingDestructor(struct CDemolition_Lift *self, unsigned char flags);
+000fd220 void CDemolition_Lift_ResetParts(struct CDemolition_Lift *self);
+000fd300 void CDemolition_Lift_Shutdown(struct CDemolition_Lift *self);
+000fd320 void CDemolition_Lift_UpdateParts(struct CDemolition_Lift *self, float dt);
+000fd570 void CDemolition_Lift_ResetShaft(struct CDemolition_Lift *self);
+000fd660 void CDemolition_Lift_ResetGirderRing(struct CDemolition_Lift *self);
+000fd710 void CDemolition_Lift_ScrollGirders(struct CDemolition_Lift *self, float dt);
+000fda10 int CDemolition_Lift_InitControlBox(struct CDemolition_Lift *self);
+000fdbf0 void CDemolition_Lift_UpdateControlBox(struct CDemolition_Lift *self, float dt);
+000fdd50 int CDemolition_Lift_InitParts(struct CDemolition_Lift *self, void *package);
+000fde10 void CDemolition_Lift_Update(struct CDemolition_Lift *self, float dt);
+000fde70 void CDemolition_Lift_InitGirders(struct CDemolition_Lift *self);
+000fe010 void CDemolition_Lift_Reset(struct CDemolition_Lift *self);
+000fe050 int CDemolition_Lift_InitShaft(struct CDemolition_Lift *self, void *package);
+000fe120 int CDemolition_Lift_CreateGirders(struct CDemolition_Lift *self, void *package);
+000fe180 int CDemolition_Lift_Initialise(struct CDemolition_Lift *self, void *package);
+
+# Demolition/unplaced.c: CGameMode_Demolition
+001019c0 struct CGameMode *CGameMode_Demolition_Construct(struct CGameMode *self);
+001019e0 void CGameMode_Demolition_Destruct(struct CGameMode *self);
+001019f0 void CGameMode_Demolition_Pushed(struct CGameMode *self);
+00101a10 void CGameMode_Demolition_Popped(struct CGameMode *self);
+00101a20 void CGameMode_Demolition_LoadingStarted(struct CGameMode *self);
+00101a30 void CGameMode_Demolition_Slot30(struct CGameMode *self);
+00101a40 void CGameMode_Demolition_Suspend(struct CGameMode *self);
+00101a50 void CGameMode_Demolition_Input(struct CGameMode *self, int active);
+00101a60 void CGameMode_Demolition_Update(struct CGameMode *self, int active);
+00101a70 void CGameMode_Demolition_Render(struct CGameMode *self, int active);
+00101a80 struct CGameMode *CGameMode_Demolition_DeletingDtor(struct CGameMode *self, unsigned char flags);
+
+# Demolition/unplaced.c: shapes and collision helpers
+00101aa0 struct DcShape *DcShape_Construct(struct DcShape *self);
+00101ac0 uint DcShape_Contains(struct DcShape *self, float *p);
+00101c20 float DcWorld_GroundHeight(float *p, float radius, void **tri, void **actor);
+00101f50 float Dc_TurnTowards(float from, float to, float maxStep);
+00101fd0 struct DcShape *DcShape_DeletingDtor(struct DcShape *self, unsigned char flags);
+00102000 void DcShape_SetPoints(struct DcShape *self, float (*points)[4], int count);
+00102120 int DcShape_Collide(struct DcShape *self, float *pos, float radius, float *out);
+00102310 int DcCollide_Ray(void *mesh, float *pos, float *dir, float *hit, float *normal);
+
+# Demolition/CDemolition_ASEImport.c
+001023f0 struct DcASEShape *DcASEShape_Construct(struct DcASEShape *self);
+00102410 void DcASEShape_Destruct(struct DcASEShape *self);
+00102420 struct DcASEShape *DcASEShape_DeletingDtor(struct DcASEShape *self, unsigned char flags);
+00102440 void DcASEShape_Read(struct DcASEShape *self, struct DcASEFile *file, const char *name);
+001025a0 struct DcASEFile *DcASEFile_Construct(struct DcASEFile *self);
+001025b0 void DcASEFile_Destruct(struct DcASEFile *self);
+001025c0 struct DcASEFile *DcASEFile_DeletingDtor(struct DcASEFile *self, unsigned char flags);
+
+# Demolition/CDemolition_Particle.c
+001025e0 void DcSparkSystem_Destruct(struct DcSparkSystem *self);
+001025f0 void DcSparkSystem_DefaultParams(struct DcSparkParams *p);
+00102660 void DcSparkSystem_Draw(struct DcSparkSystem *self);
+00102830 void DcSparkSystem_Reset(struct DcSparkSystem *self);
+00102870 void DcParticles_EmitAll(struct CPSHeader *self);
+001028a0 struct DcDebrisSystem *DcDebrisSystem_Construct(struct DcDebrisSystem *self);
+001028b0 void DcDebrisSystem_Destruct(struct DcDebrisSystem *self);
+001028c0 void DcDebrisSystem_Release(struct DcDebrisSystem *self);
+001028f0 void DcDebrisSystem_Draw(struct DcDebrisSystem *self);
+001029a0 void DcDebrisSystem_Reset(struct DcDebrisSystem *self);
+001029c0 struct DcRubbleSystem *DcRubbleSystem_Construct(struct DcRubbleSystem *self);
+001029d0 void DcRubbleSystem_Destruct(struct DcRubbleSystem *self);
+001029e0 void DcRubbleSystem_Release(struct DcRubbleSystem *self);
+00102a10 void DcRubbleSystem_Draw(struct DcRubbleSystem *self);
+00102ae0 void DcRubbleSystem_Reset(struct DcRubbleSystem *self);
+00102b00 struct DcFlashSparkSystem *DcFlashSparkSystem_Construct(struct DcFlashSparkSystem *self);
+00102b10 void DcFlashSparkSystem_Draw(struct DcFlashSparkSystem *self);
+00102d60 void DcFlashSparkSystem_Reset(struct DcFlashSparkSystem *self);
+00102d90 struct DcGasSystem *DcGasSystem_Construct(struct DcGasSystem *self);
+00102da0 void DcGasSystem_Destruct(struct DcGasSystem *self);
+00102db0 void DcGasSystem_Draw(struct DcGasSystem *self);
+00102f60 void DcGasSystem_Reset(struct DcGasSystem *self);
+00102f90 struct DcTrailSystem *DcTrailSystem_Construct(struct DcTrailSystem *self);
+00102fa0 void DcTrailSystem_Destruct(struct DcTrailSystem *self);
+00102fb0 void DcTrailSystem_Draw(struct DcTrailSystem *self);
+00103100 void DcTrailSystem_Reset(struct DcTrailSystem *self);
+00103110 void DcTrailSystem_SetColours(struct DcTrailSystem *self);
+001031b0 void DcTrailSystem_SetTexture(struct DcTrailSystem *self, int texture);
+001031c0 struct DcDustSystem *DcDustSystem_Construct(struct DcDustSystem *self);
+001031d0 void DcDustSystem_Draw(struct DcDustSystem *self);
+00103350 void DcDustSystem_SetShape(struct DcDustSystem *self, struct DcShape *shape);
+00103360 struct DcSparkSystem *DcSparkSystem_Construct(struct DcSparkSystem *self);
+00103370 struct DcSparkSystem *DcSparkSystem_DeletingDtor(struct DcSparkSystem *self, unsigned char flags);
+00103390 int DcSparkSystem_Init(struct DcSparkSystem *self, struct DcSparkParams *params, int maxParticles);
+00103430 void DcSparkSystem_Release(struct DcSparkSystem *self);
+00103470 void DcSparkSystem_Update(struct DcSparkSystem *self, float dt);
+00103580 struct DcDebrisSystem *DcDebrisSystem_DeletingDtor(struct DcDebrisSystem *self, unsigned char flags);
+001035a0 int DcDebrisSystem_Init(struct DcDebrisSystem *self, struct DcChunkParams *params, int unused);
+00103850 void DcDebrisSystem_EmitChunk(struct DcDebrisSystem *self, struct DcChunk *c);
+00103ae0 void DcDebrisSystem_Update(struct DcDebrisSystem *self, float dt);
+00103f10 void DcDebrisSystem_Explode(struct DcDebrisSystem *self);
+00103f40 struct DcRubbleSystem *DcRubbleSystem_DeletingDtor(struct DcRubbleSystem *self, unsigned char flags);
+00103f60 int DcRubbleSystem_Init(struct DcRubbleSystem *self, struct DcChunkParams *params, int unused);
+00104000 void DcRubbleSystem_EmitChunk(struct DcRubbleSystem *self, struct DcChunk *c);
+001042c0 void DcRubbleSystem_Update(struct DcRubbleSystem *self, float dt);
+00104700 void DcRubbleSystem_Explode(struct DcRubbleSystem *self);
+00104730 void DcRubbleSystem_SetDirection(struct DcRubbleSystem *self, float *dir);
+00104750 struct DcFlashSparkSystem *DcFlashSparkSystem_DeletingDtor(struct DcFlashSparkSystem *self, unsigned char flags);
+00104770 int DcFlashSparkSystem_Init(struct DcFlashSparkSystem *self, struct DcFlashSparkParams *params, int maxParticles);
+00104820 void DcFlashSparkSystem_Emit(struct DcFlashSparkSystem *self, struct CParticle *p);
+00104a30 void DcFlashSparkSystem_Release(struct DcFlashSparkSystem *self);
+00104a70 void DcFlashSparkSystem_Update(struct DcFlashSparkSystem *self, float dt);
+00104b80 struct DcGasSystem *DcGasSystem_DeletingDtor(struct DcGasSystem *self, unsigned char flags);
+00104ba0 int DcGasSystem_Init(struct DcGasSystem *self, struct DcGasParams *params, int maxParticles);
+00104c60 void DcGasSystem_Emit(struct DcGasSystem *self, struct CParticle *p);
+00104dc0 void DcGasSystem_Update(struct DcGasSystem *self, float dt);
+00104ed0 struct DcTrailSystem *DcTrailSystem_DeletingDtor(struct DcTrailSystem *self, unsigned char flags);
+00104ef0 int DcTrailSystem_Init(struct DcTrailSystem *self, struct DcTrailParams *params, int unused);
+00104ef9 int DcTrailSystem_InitTail(struct DcTrailSystem *self);
+00105130 void DcTrailSystem_Release(struct DcTrailSystem *self);
+001051c0 void DcTrailSystem_Update(struct DcTrailSystem *self, float dt);
+00105420 struct DcDustSystem *DcDustSystem_DeletingDtor(struct DcDustSystem *self, unsigned char flags);
+00105440 int DcDustSystem_Init(struct DcDustSystem *self, struct DcDustParams *params, int maxParticles);
+00105500 void DcDustSystem_Emit(struct DcDustSystem *self, struct CParticle *p);
+001057d0 void DcDustSystem_Release(struct DcDustSystem *self);
+00105810 void DcDustSystem_Update(struct DcDustSystem *self, float dt);
+00105970 void DcDustSystem_Reset(struct DcDustSystem *self);
