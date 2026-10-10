@@ -339,8 +339,12 @@ have_anim:
 Update callback (dt > 0): stages (a piece is deleted after stage 2), colour and size
 blends, gravity, drag (drag^frame time), movement with ground bounce or collision, speed
 limit, spin, animation, spin offset and trail pieces. */
-void FUN_00085a40(int system, int count, CActorDebris **items, float dt)
+void FUN_00085a40(int system, int count, CActorDebris **items, void *arg)
 {
+	/* baUpdateExtras passes the frame time as raw float bits in its pointer argument; a float
+	   parameter would read a float register on arm64 */
+	unsigned int dtBits = (unsigned int)(uintptr_t)arg;
+	float dt;
 	CActorDebris *item;
 	CDebrisParams *p;
 	CDebrisSpin *spin;
@@ -358,6 +362,8 @@ void FUN_00085a40(int system, int count, CActorDebris **items, float dt)
 	uint colour;
 	int st;
 	int i;
+
+	memcpy(&dt, &dtBits, sizeof dt);
 
 	if (DAT_002ed340 != 0 || !(0.0f < dt) || count < 1)
 		return;

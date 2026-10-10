@@ -124,7 +124,7 @@ extern unsigned char DAT_00290718[];
 #define co_Spawner_Delete ((void (*)(void *))FUN_000ceea0)
 #define co_Spawner_Update ((void (*)(void *, float, int))FUN_000ce7a0)
 #define co_Launcher_Ctor ((void (*)(void *))FUN_000ca730)
-#define co_Launcher_Init ((int (*)(void *, void *, float *, float, float, int))FUN_000ca740)
+#define co_Launcher_Init ((int (*)(void *, void *, float *, float, float, float))FUN_000ca740)
 #define co_Launcher_Delete ((void (*)(void *))FUN_000ca830)
 #define co_Launcher_Update ((void (*)(void *, float, void *))FUN_000cb150)
 #define co_Launcher_Draw ((void (*)(void *))FUN_000cacf0)
@@ -191,8 +191,15 @@ extern void *DAT_002ba9a0;
 #define co_Overlays_SetList ((void (*)(void *))FUN_00072720)
 #define co_PauseMenu_Update ((int (*)(void *))FUN_000772e0)
 
-/* bactor: baUpdateExtras takes the frame time */
-#define co_UpdateExtras ((void (*)(void *, float))FUN_0003c620)
+/* bactor: baUpdateExtras takes the frame time as raw float bits in its pointer argument
+   (the original pushes the float). A float argument would go in a float register on arm64. */
+static inline void co_UpdateExtras(void *system, float dt)
+{
+	unsigned int bits;
+
+	__builtin_memcpy(&bits, &dt, sizeof bits);
+	baUpdateExtras((struct BExtraSystem *)system, (void *)(uintptr_t)bits);
+}
 
 /* bumpercars_b: an extras system holder (0x90 bytes, [0] the extras, +4 a yaw) */
 #define co_ExtraFx_Init ((void (*)(void *, int))FUN_000a74d0)

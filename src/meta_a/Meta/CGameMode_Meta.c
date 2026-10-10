@@ -430,8 +430,8 @@ void FUN_0014ea80(void)
 	FUN_000af380();
 	CRayControl_UpdateAll();
 	FUN_000b8b60();
-	MA_DUAL(FUN_0003c620, void (*)(int, undefined4), void (*)(int, float),
-		(0, ma_fbits(DAT_0028fda8 * 0.016666668f)), (0, DAT_0028fda8 * 0.016666668f));
+	/* the frame time goes as raw float bits in baUpdateExtras' pointer argument */
+	baUpdateExtras(NULL, (void *)(uintptr_t)ma_fbits(DAT_0028fda8 * 0.016666668f));
 	FUN_0015ba80();
 	FUN_0015b730();
 	FUN_00043790();
@@ -763,8 +763,7 @@ void FUN_0014f670(int self)
 	RefBot_Create();
 	FUN_0015ff80();
 	FUN_0015f750();
-	MA_DUAL(FUN_000be6d0, void (*)(int, undefined4, undefined4, undefined4), void (*)(int, float, float, int),
-		(2, ma_fbits(1.1f), ma_fbits(4.0f), 0), (2, 1.1f, 4.0f, 0));
+	Shadows_Init(2, 1.1f, 4.0f, 0.0f);       /* pushes 0x3f8ccccd, 0x40800000, 0 */
 	if (MA_I32(self, 0x90) != 0) {
 		/* a resumed board: restart the clock and clear the tiles */
 		MA_F32(DAT_0030564c, 100) = DAT_002b057c;

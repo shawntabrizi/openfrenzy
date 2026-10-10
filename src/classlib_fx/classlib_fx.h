@@ -1086,6 +1086,6 @@ int FUN_00085230(int system, CActorDebris *item);
 void FUN_00085460(int system, int count, CActorDebris **items);
 void FUN_00085560(int system, int reason);
 void FUN_00085580(int system, CActorDebris *item, CDebrisArgs *args);
-void FUN_00085a40(int system, int count, CActorDebris **items, float dt);
+void FUN_00085a40(int system, int count, CActorDebris **items, void *arg);
 
 #endif

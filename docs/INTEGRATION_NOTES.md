@@ -164,6 +164,21 @@ integration round 2 (921ec75); see below.
 - New check: `python3 -I scripts/check_call_arity.py` lists FUN_<addr> casts whose parameter
   count differs from the owner's .decls (49 hits; "FEWER" ones and a leading `this` the owner
   lacks are bugs). Two of the round-2 faults were of this kind.
+- Float/dword audit (after 5ed610e). clang's conversion warnings over all game sources
+  (-Wfloat-conversion, -Wimplicit-float-conversion, -Wimplicit-int-float-conversion,
+  -Wliteral-conversion) and clang-query (implicit float<->int casts, integer literals made
+  float) find nothing left; the 664 explicit (int)/FTOL casts and 2095 (float) casts were
+  sampled against Ghidra (_ftol 0x001de998 / fild) and are the original conversions.
+  The bug class that remained is the arm64 ABI: a call cast to a type whose float slots
+  differ from the callee's makes the callee read a register the caller never set (s0 vs w0).
+  `python3 -I scripts/check_float_abi.py <build dir>` reads the IR guest_cc.py leaves and
+  lists such calls. It found, all fixed: baUpdateExtras given a float frame time (carryon_a,
+  demolition_a, meta_a; it takes the bits in `void *arg`), bdDrawPointSprites given the
+  point size as an int (classlib_ui CFireworks: garbage point size), CLFireworks_Init and
+  _Launch given floats for their bit parameters (core_modes_a GameWinner: the DUAL macro
+  chose the float branch), Shadows_Init and CFire_LaunchRack_Init given int 0 for a float,
+  and the extras update callback classlib_fx 0x00085a40 declared `float dt` (baUpdateExtras
+  passes `void *arg`). Not covered: calls through vtables and other function-pointer tables.
 - Direct launch, 75-90 s each, after the fixes: every minigame, variations 1-3, reaches PLAYING
   with no fault, except ScratchMatch 2 and 3: the round ends at once ("Creating WinnerText"),
   then assertions at CScratchmatch_Game.cpp(815) and (384), then a fault in bFixupNodeDefs <-

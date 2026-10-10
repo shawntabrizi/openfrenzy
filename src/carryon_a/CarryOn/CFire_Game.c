@@ -481,7 +481,7 @@ void CFire_Game_InitObjects(struct CFireGame *self)
 			co_Launcher_Ctor(mem);
 			self->launcher = mem;
 		}
-		co_Launcher_Init(self->launcher, self->fireworks, launcherPos, 1200.0f, 280.0f, 0);
+		co_Launcher_Init(self->launcher, self->fireworks, launcherPos, 1200.0f, 280.0f, 0.0f);
 		duration = DAT_002940f8;
 		break;
 	case 1:

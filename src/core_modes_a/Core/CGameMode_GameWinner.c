@@ -81,24 +81,18 @@ wchar16 DAT_002b9768[0x100];        /* the place text */
 static const char s_GameWinner_cpp[] = "C:\\BlitzParty\\Game\\Src\\Core\\CGameMode_GameWinner.cpp";
 
 /* classlib_ui CFireworks (thiscall): constructor, update, render, launch, explode */
+/* CLFireworks_Init and CLFireworks_Launch take their sizes, lives and speeds as raw float
+   bits (the original pushes 0x42480000 etc.); a float argument would go in a float register. */
 #define CMA_Fireworks_ctor(mem, count, tex1, size1, life, tex2, size2) \
-	CMA_DUAL(FUN_0007ffa0, \
-		undefined4 *(*)(undefined4 *, undefined4, undefined4, undefined4, undefined4, undefined4, undefined4), \
-		void *(*)(void *, int, int, float, int, int, float), \
-		((undefined4 *)(mem), (count), (tex1), cma_fbits(size1), (life), (tex2), cma_fbits(size2)), \
-		((mem), (count), (tex1), (size1), (life), (tex2), (size2)))
+	((void *)CLFireworks_Init((int *)(mem), (count), (uint)(tex1), (int)cma_fbits(size1), (life), \
+		(uint)(tex2), cma_fbits(size2)))
 #define CMA_Fireworks_Update(fw, dt) \
 	CMA_DUAL(FUN_0007fdc0, void (*)(int, undefined4), void (*)(void *, float), \
 		((int)(fw), cma_fbits(dt)), ((fw), (dt)))
 #define CMA_Fireworks_Render(fw) ((void (*)(void *))FUN_0007fe60)(fw)
 #define CMA_Fireworks_Launch(fw, pos, vel, life, r, g, b, n, size, speed) \
-	CMA_DUAL(FUN_0007fe80, \
-		undefined4 *(*)(int, undefined4 *, undefined4 *, undefined4, float, float, float, undefined4, \
-			undefined4, undefined4), \
-		void *(*)(void *, float *, float *, float, float, float, float, int, float, float), \
-		((int)(fw), (undefined4 *)(pos), (undefined4 *)(vel), cma_fbits(life), (r), (g), (b), (n), \
-			cma_fbits(size), cma_fbits(speed)), \
-		((fw), (pos), (vel), (life), (r), (g), (b), (n), (size), (speed)))
+	CLFireworks_Launch((int)(fw), (undefined4 *)(pos), (undefined4 *)(vel), cma_fbits(life), (r), (g), \
+		(b), (n), cma_fbits(size), cma_fbits(speed))
 #define CMA_Fireworks_Explode(fw, rocket) ((void (*)(void *, void *))FUN_0007fc30)((fw), (rocket))
 /* classlib_ui FUN_00072440: a fade (6 arguments) */
 #define CMA_Fade(a, b, c, d, e, f) FUN_00072440((a), (b), (c), (d), (e), (f))

@@ -581,7 +581,15 @@ extern const char *const DAT_00297820[DA_TEXTURE_COUNT]; /* spotfx\sprites\... *
 #define DA_SetPointLight(light, pos, range) ((void (*)(void *, const float *, float))FUN_000385a0)((light), (pos), (range))
 #define DA_SetSpotLight(light, pos, dir, inner, outer) \
 	((void (*)(void *, const float *, const float *, float, float))FUN_000385e0)((light), (pos), (dir), (inner), (outer))
-#define DA_UpdateExtras(sys, dt) ((void (*)(void *, float))FUN_0003c620)((sys), (dt))
+/* baUpdateExtras takes the frame time as raw float bits in its pointer argument (the original
+   pushes the float); a float argument would go in a float register on arm64 */
+static inline void DA_UpdateExtras(void *sys, float dt)
+{
+	unsigned int bits;
+
+	__builtin_memcpy(&bits, &dt, sizeof bits);
+	baUpdateExtras((struct BExtraSystem *)sys, (void *)(uintptr_t)bits);
+}
 #define DA_DrawExtras(sys, arg) ((void (*)(void *, void *))FUN_0003c690)((sys), (arg))
 #define DA_AddExtra ((void *(*)(void *, void *, double, double, double, int, int, int, const char *))FUN_0003c920)
 
