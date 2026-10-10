@@ -16,7 +16,7 @@ out = b x a.
 
 #define RENDER_FILE "C:\\Babel\\Xbox\\Src\\BDISPLAY\\xbRender.cpp"
 
-#define HALF_PI 1.5707964f /* 0x3fc90fda */
+#define HALF_PI 1.57079625f /* 0x3fc90fda (1.5707964f would be 0x3fc90fdb) */
 
 /* the world * view * projection matrix after a change of the projection */
 static void update_world_view_projection(void)
@@ -354,7 +354,8 @@ float bdProjectSize(float *pos, float width, float height, float *outWidth, floa
 {
 	float z = view_depth(pos);
 
-	if (!(z <= DAT_002be580) && !(z >= DAT_002be584))
+	/* as in the original: a NaN depth fails the far test (returns 0) */
+	if (!(z <= DAT_002be580) && z < DAT_002be584)
 	{
 		*outWidth = DAT_002be2b0[0] * width * (1.0f / z) * DAT_002be598;
 		*outHeight = DAT_002be2b0[5] * height * (1.0f / z) * DAT_002be59c;
@@ -368,7 +369,8 @@ float bdProjectWidth(float *pos, float width, float *outWidth)
 {
 	float z = view_depth(pos);
 
-	if (!(z <= DAT_002be580) && !(z >= DAT_002be584))
+	/* as in the original: a NaN depth fails the far test (returns 0) */
+	if (!(z <= DAT_002be580) && z < DAT_002be584)
 	{
 		*outWidth = ((DAT_002be2b0[0] * width) / z) * DAT_002be598;
 		return z;
