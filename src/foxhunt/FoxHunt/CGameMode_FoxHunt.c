@@ -1715,7 +1715,7 @@ finished:
 	if (GM_STATE(self) == 6) {
 		CLHud_DeleteWinnerText((int)(uintptr_t)DAT_002ecfac);
 		if (DAT_002bae98 != 2)
-			CGameModeStack_Pop((struct CGameModeStack *)DAT_002ba750, top);
+			CGameModeStack_Pop((struct CGameModeStack *)DAT_002ba750, 1);   /* the original passes 1, not `top` */
 	}
 }
 

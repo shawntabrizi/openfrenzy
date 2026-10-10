@@ -136,3 +136,6 @@
 001dab40 int TankAI_DropBox(void *self, void *entity, int event, int *data);
 001db5a0 int TankAI_NoFloor(void *self, void *entity, int event, int *data);
 001dba50 int TankAI_DropZone(void *self, void *entity, int event, int *data);
+001dbd20 int TankAI_Tank(void *self, void *entity, int event, int *data);
+001dcbd0 int TankAI_Layer(void *self, void *entity, int event, int *data);
+001dcde0 int TankAI_Hunter(void *self, void *entity, int event, int *data);
