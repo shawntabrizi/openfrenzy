@@ -697,7 +697,7 @@ undefined4 FUN_00152600(int *ai, int entered)
 
 	best = 0xffffffff;
 	best_turn = 1.5707963f;
-	MA_F32(ai, 0x1128) = 1.6022427f; /* 0x3fcd154a */
+	MA_F32(ai, 0x1128) = 1.6022122f; /* 0x3fcd154a */
 	if (entered != 0) {
 		FUN_000af690(ai[0xc], 0x10, 0, 0, 1.0f, 0.1f, 1);
 		MA_I16(ai, 0x1092) = 0;

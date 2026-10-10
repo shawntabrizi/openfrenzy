@@ -266,7 +266,7 @@ void ClustAI_Tails(int player, float *x, float *z)
 			*z = 0.0f;
 			return;
 		}
-		if ((g_ClVariant != 2 || Core_RandUnit() <= 0.85f ||
+		if ((g_ClVariant != 2 || (double)Core_RandUnit() <= 0.85 /* a double in the XBE */ ||
 				(target = ClustPods_FindRobbableHuman(player)) == NULL) &&
 			(target = ClustPods_FindRobbable(player)) == NULL) {
 			CL_I16(pl, 0x808) = 0;

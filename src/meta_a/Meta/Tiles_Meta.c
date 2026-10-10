@@ -82,7 +82,9 @@ int FUN_00159970(int type, uint colour, int frame)
 	}
 	MA_U32(platform, 0x230) = MA_U32(platform, 0x230) | 0x200;
 	MA_I32(platform, 0x234) = 0;
-	CLList_Insert((int *)DAT_002ea488, (int *)platform, 0);
+	/* the entity list at DAT_002ea488 + 0x18 (ECX at 0x00159b88), where the puzzles and
+	   tiles look for platforms */
+	CLList_Insert((int *)((char *)DAT_002ea488 + 0x18), (int *)platform, 0);
 	MA_I32(MA_PTR(platform, 0x454), 0x34) = platform;
 	MA_U32(platform, 0xf4) = *(unsigned int *)MA_META_ADDR(0x002b09dcu); /* tile y scale */
 	if (type == 2 || type == 3 || type == 4)

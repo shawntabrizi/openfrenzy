@@ -80,6 +80,9 @@ void ClustTokens_Collect(void)
 		pl = CL_PLAYER(player);
 		if (CL_I16(pl, PL_OUT) != 0)
 			continue;
+		/* the x86 code never advances the token pointer (it tests slot 0 fifty times);
+		   only slot 0 is ever active (one token at a time, ClustTokens_Add takes the
+		   first free slot), so testing every slot gives the same result */
 		for (i = 0; i < CL_TOKEN_COUNT; i++) {
 			token = CL_TOKEN(i);
 			if (CL_I16(token, 0x1c) == 0)

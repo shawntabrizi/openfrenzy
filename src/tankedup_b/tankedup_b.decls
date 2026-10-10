@@ -72,7 +72,10 @@
 001de140 void TankDecal_AddPoint(void *self, float *pos, float *normal, float *dir, float alpha);
 001de300 void TankDecal_Draw(void *self);
 
-# TankedUp/CTank_MoveQue.cpp
+# TankedUp/CTank_MoveQue.cpp (0x001de780 tagged; the rest trailing, inferred)
+001de780 void *TankMoveQue_Ctor(void *self, int count);
+001de7c0 void TankMoveQue_Get(void *self, float *a, float *b, float *c, float *d);
+001de890 void TankMoveQue_Put(void *self, float a, float b, float c, float d);
 001de940 void TankMoveQue_Free(void *self);
 
 # gap 0x001d4730-0x001d5790: CTank_Entities methods (file inferred)
@@ -129,3 +132,7 @@
 001d9b50 void TankEnts_GetTanks(void *self, float *positions, int *scores);
 001d9bb0 int TankAI_GetTokenSpawn(void *self, int *unused, float *pos, float *rot);
 001d9d30 int TankAI_TokenMaster(void *self, void *entity, int event, int *data);
+001da1c0 int TankAI_Token(void *self, void *entity, int event, int *data);
+001dab40 int TankAI_DropBox(void *self, void *entity, int event, int *data);
+001db5a0 int TankAI_NoFloor(void *self, void *entity, int event, int *data);
+001dba50 int TankAI_DropZone(void *self, void *entity, int event, int *data);

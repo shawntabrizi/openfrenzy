@@ -363,8 +363,8 @@ A ring of sparks at `pos` (an explosion). */
 void ClustArena_SparkRing(float *pos)
 {
 	Debris_AddRing((struct DebrisType *)CL_ADDR(0x00296c20), 7, pos, 1.6f, 1.6f, 1.2f, 0, 0xffffffff);
-	Debris_AddRing((struct DebrisType *)CL_ADDR(0x00296c4c), 7, pos, 0.04f, 3.2f, 2.0f, 0, 0xffffffff);
-	Debris_AddRing((struct DebrisType *)CL_ADDR(0x00296c20), 2, pos, 3.2f, 1.8f, 0.8f, 0, 0xffffffff);
+	Debris_AddRing((struct DebrisType *)CL_ADDR(0x00296c4c), 7, pos, 0.040000003f, 3.2f, 2.0f, 0, 0xffffffff);
+	Debris_AddRing((struct DebrisType *)CL_ADDR(0x00296c20), 2, pos, 3.2f, 1.8000001f, 0.8f, 0, 0xffffffff);
 	Debris_AddRing((struct DebrisType *)CL_ADDR(0x00296c4c), 2, pos, 2.4f, 1.6f, 1.2f, 0, 0xffffffff);
 }
 

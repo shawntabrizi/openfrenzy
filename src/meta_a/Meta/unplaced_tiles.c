@@ -358,8 +358,9 @@ void FUN_00159600(int group, int tile)
 	MA_F32(group, 0x2c) = t;
 	if (t <= 0.0f)
 		MA_I32(group, 0x24) = 1;
-	for (member = MA_NEXT(MA_PTR(group, 0x88), NULL); member != 0;
-		member = MA_NEXT(MA_PTR(group, 0x88), member))
+	/* the member list is the one at `tile`->+0x88 + 8 (ECX at 0x0015963c), not in `group` */
+	for (member = MA_NEXT(MA_ADDR(MA_PTR(tile, 0x88), 8), NULL); member != 0;
+		member = MA_NEXT(MA_ADDR(MA_PTR(tile, 0x88), 8), member))
 		MA_F32(member, 0x24) = MA_F32(member, 0x24) - (MA_F32(member, 0x28) / MA_F32(group, 0x30)) * DAT_0028fda8;
 	/* 0x002672b4 = 0.9 */
 	MA_F32(MA_PTR(tile, 0x34), 0xf0) = MA_F32(MA_PTR(tile, 0x34), 0xf0) - (0.9f / MA_F32(group, 0x30)) * DAT_0028fda8;

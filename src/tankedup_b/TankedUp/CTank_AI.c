@@ -993,3 +993,624 @@ int TankAI_TokenMaster(void *self, void *entity, int event, int *data)
 	}
 	return 1;
 }
+
+#define ENT_TOKEN_VALUE 0x97c   /* 1, 3, 5 points; -1 mine, -2 health, -3 speed-up, -4 protection,
+                                   -5 win switch, -6 fire-up */
+#define ENT_TOKEN_SLOT 0x984    /* the spawn point of a token */
+#define ENT_TOKEN_TAKER 0xf04   /* who took a speed-up token */
+
+/* a token's messages to the taker: type, then words (token, taker, 1, -, w4, slot) */
+static void tu_token_send(void *self, char *token, int type, int taker, int w4, float delay)
+{
+	TankEnts_SendDelayedMessage(self, type, TU_U32(token, ENT_ID), (unsigned int)taker, 1, 0,
+		(unsigned int)w4, TU_U32(token, ENT_TOKEN_SLOT), delay);
+}
+
+/* 0x001da1c0  TankedUp/CTank_AI.cpp
+AI 4, "TOKEN": a token in the arena. Point tokens get a spinning CToken; a tank that
+touches a token takes it: sparkles in its colour, maybe a voice, the token's message
+(score 0x11, triple shot 0x14, speed-up 0x12, protection 0x13, health 0xf, mine 0x10; the
+win switch picks 0x14 one time in three, else 0x13 for the leader and 0x12 for the rest),
+then the token tells the Token Master (0x11). A speed-up token waits (state 7) until the
+taker's boost wears off before it tells. */
+int TankAI_Token(void *self, void *entity, int event, int *data)
+{
+	char *ent = (char *)entity;
+	char *tank;
+	void **node;
+	void *p;
+	float vel[4];
+	unsigned int colour;
+	int player;
+	int type;
+	int w4;
+	int character;
+
+	if (event == 2) {
+		if (data[AI_TYPE] != 1)
+			return 0;
+		TU_I32(ent, ENT_AI_STATE) = 10;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		TU_DEBUG("Starting 'TOKEN' AI for %s\n", ent + ENT_NAME);
+		TU_I32(ent, ENT_AMBIENT) = 0x7f;
+		TU_I32(ent, ENT_AMBIENT + 4) = 0x7f;
+		TU_I32(ent, ENT_AMBIENT + 8) = 0x7f;
+		switch (TU_I32(ent, ENT_TOKEN_VALUE)) {
+		case 1:
+			p = bkHeapAlloc(0x290, TU_FILE_AI, 0x37d, 0x1001);
+			TU_PTR(ent, ENT_TOKEN) = p != NULL ? CToken_Init((struct CToken *)p, TU_FP(ent, ENT_POS), 0, 2.0f,
+				NULL) : NULL;
+			break;
+		case 3:
+			p = bkHeapAlloc(0x290, TU_FILE_AI, 0x37e, 0x1001);
+			TU_PTR(ent, ENT_TOKEN) = p != NULL ? CToken_Init((struct CToken *)p, TU_FP(ent, ENT_POS), 1, 2.0f,
+				NULL) : NULL;
+			break;
+		case 5:
+			p = bkHeapAlloc(0x290, TU_FILE_AI, 0x37f, 0x1001);
+			TU_PTR(ent, ENT_TOKEN) = p != NULL ? CToken_Init((struct CToken *)p, TU_FP(ent, ENT_POS), 2, 2.0f,
+				NULL) : NULL;
+			break;
+		}
+		if (TU_I32(ent, ENT_TOKEN_VALUE) < 1)
+			TU_F32(ent, ENT_POS + 4) = 220.0f; /* power-ups float */
+		CProjector_SpiralAt(TU_FP(ent, ENT_POS), -1);
+		return 1;
+	}
+	if (event == 7) {
+		if (data[AI_TYPE] != 0x1a)
+			return 0;
+		tu_send(self, 0x1a, TU_I32(ent, ENT_ID), TU_I32(ent, ENT_ID), 7, 1.0f);
+		tank = TA_GetEntity(self, TU_I32(ent, ENT_TOKEN_TAKER));
+		TU_DEBUG("waiting for boost to wareoff '%s' before resporning\n", tank + ENT_NAME);
+		if (tank == NULL) {
+			tu_token_send(self, ent, 0x11, TU_I32(ent, ENT_OWNER), TU_I32(ent, ENT_TOKEN_VALUE), 0.0f);
+			TU_I32(ent, ENT_RESPAWNING) = 0;
+			/* the original goes on to read the boost of the missing tank */
+			return 1;
+		}
+		TU_DEBUG("'%s' boost = %.6f\n", tank + ENT_NAME, (double)TU_F32(tank, ENT_SPEEDUP));
+		if (TU_F32(tank, ENT_SPEEDUP) == 0.0f) {
+			tu_token_send(self, ent, 0x11, TU_I32(ent, ENT_OWNER), TU_I32(ent, ENT_TOKEN_VALUE), 0.0f);
+			TU_I32(ent, ENT_RESPAWNING) = 0;
+		}
+		return 1;
+	}
+	if (event != 10 || data[AI_TYPE] != 3)
+		return 0;
+
+	if (TU_I32(ent, ENT_ANIM_DONE) != 0 && TU_PTR(ent, ENT_ANIM_SEG) != NULL)
+		baQueueAnimation((struct BActorInstance *)TU_PTR(ent, ENT_INST),
+			(struct BActorNode *)TU_PTR(TU_PTR(ent, ENT_INST), 0x134),
+			(struct BAnim *)TU_PTR(ent, ENT_ANIM_SEG), 0x400, -1, 0, (int (*)())FUN_001d7d60, ent);
+	for (node = (void **)TU_PTR(self, ENTS_LIST); node != NULL; node = (void **)node[1]) {
+		tank = (char *)node[0];
+		if (tank == ent || TU_I32(tank, ENT_DEAD) != 0 || TU_ENT_TYPE(tank) != 1)
+			continue;
+		if (tu_touching(ent, tank))
+			break;
+	}
+	if (node == NULL)
+		return 1;
+
+	/* taken by `tank` */
+	tank = (char *)node[0];
+	player = tu_ai_player(tank + ENT_NAME, 0);
+	character = DAT_002baed4[player * 10] * 0x60;
+	colour = ((unsigned int)DAT_00290718[character] << 16) | ((unsigned int)DAT_00290719[character] << 8) |
+		DAT_0029071a[character];
+	vel[0] = 0.0f;
+	vel[1] = 5.0f;
+	vel[2] = 0.0f;
+	vel[3] = 1.0f;
+	if (TU_I32(ent, ENT_TOKEN_VALUE) == 1)
+		TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), 3, TU_FP(tank, ENT_POS), vel, 0, colour);
+	else if (TU_I32(ent, ENT_TOKEN_VALUE) == 3)
+		TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), 4, TU_FP(tank, ENT_POS), vel, 0, colour);
+	else if (TU_I32(ent, ENT_TOKEN_VALUE) == 5)
+		TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), 5, TU_FP(tank, ENT_POS), vel, 0, colour);
+	w4 = 0;
+	switch (TU_I32(ent, ENT_TOKEN_VALUE)) {
+	case 5:
+		if (tu_rand() % 3 == 1)
+			CTankPlayers_PlayVoice(player, 4, (int)(intptr_t)TU_FP(ent, ENT_POS), 0xff);
+		/* fall through */
+	default:
+		w4 = TU_I32(ent, ENT_TOKEN_VALUE);
+		type = 0x11;
+		break;
+	case -6:
+		if (tu_rand() % 4 == 1)
+			CTankPlayers_PlayVoice(player, 5, (int)(intptr_t)TU_FP(ent, ENT_POS), 0xff);
+		type = 0x14;
+		break;
+	case -5:
+		if (tu_rand() % 4 == 1)
+			CTankPlayers_PlayVoice(player, 5, (int)(intptr_t)TU_FP(ent, ENT_POS), 0xff);
+		if (tu_rand() % 3 == 0)
+			type = 0x14;
+		else if (TU_CALL(FUN_001c83f0, int (*)(void *, int))(TU_PTR(self, ENTS_PLAYERS),
+			TU_I32(tank, ENT_ID)) == 0)
+			type = 0x12;
+		else
+			type = 0x13;
+		break;
+	case -4:
+		if (tu_rand() % 4 == 1)
+			CTankPlayers_PlayVoice(player, 5, (int)(intptr_t)TU_FP(ent, ENT_POS), 0xff);
+		type = 0x13;
+		break;
+	case -3:
+		if (tu_rand() % 4 == 1)
+			CTankPlayers_PlayVoice(player, 5, (int)(intptr_t)TU_FP(ent, ENT_POS), 0xff);
+		type = 0x12;
+		break;
+	case -2:
+		if (tu_rand() % 4 == 1)
+			CTankPlayers_PlayVoice(player, 5, (int)(intptr_t)TU_FP(ent, ENT_POS), 0xff);
+		type = 0xf;
+		break;
+	case -1:
+		if (tu_rand() % 4 == 1)
+			CTankPlayers_PlayVoice(player, 5, (int)(intptr_t)TU_FP(ent, ENT_POS), 0xff);
+		type = 0x10;
+		break;
+	}
+	tu_token_send(self, ent, type, TU_I32(tank, ENT_ID), w4, 0.0f);
+	TankSound_Play(TU_PTR(self, ENTS_SOUND), 0x10, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+	if (TU_I32(ent, ENT_TOKEN_VALUE) == -3) {
+		TU_I32(ent, ENT_TOKEN_TAKER) = TU_I32(tank, ENT_ID);
+		TU_I32(ent, ENT_DEAD) = 1;
+		TU_I32(ent, ENT_RESPAWNING) = 1;
+		tu_send(self, 0x1a, TU_I32(ent, ENT_ID), TU_I32(ent, ENT_ID), 7, 1.0f);
+		TU_I32(ent, ENT_AI_STATE) = 7;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		return 1;
+	}
+	tu_token_send(self, ent, 0x11, TU_I32(ent, ENT_OWNER), TU_I32(ent, ENT_TOKEN_VALUE), 1.0f);
+	TU_I32(ent, ENT_DEAD) = 1;
+	return 1;
+}
+
+#define ENT_SPOT 0x960          /* the tracking spot light of an entity (CTankLights) */
+#define ENT_HITS 0x940          /* what the world move hit this frame (bit 0: a wall) */
+#define ENT_PUSH_FORCE 0x988
+
+/* the crate's exit point in CTank_Entities: +0xd0 its position, +0xe0 its marker id */
+#define ENTS_EXIT_POS 0xd0
+#define ENTS_EXIT_ID 0xe0
+
+/* tankedup_a 0x001ce270: a new entity id (++0x00315398) */
+#define TA_NewEntityId(ents) TU_CALL(FUN_001ce270, int (*)(void *))(ents)
+
+/* a spot of the light system following an entity */
+static void tu_spot(void *self, char *ent, int r, int g, int b)
+{
+	CTankLights_SetSpot((struct TuLight *)TU_PTR(self, ENTS_LIGHTS), &TU_I32(ent, ENT_SPOT),
+		TU_FP(ent, ENT_POS), r, g, b);
+}
+
+/* 0x001dab40  TankedUp/CTank_AI.cpp (bracketed)
+AI 6, "DropBox": the crate of Drop Zone. States: 0xb new (appears at a random clear
+"DropPoint Enter", an "ExitPoint" marker at a random clear "DropPoint Exit"), 0xc on the
+ground (a tank that is not frozen picks it up), 0xd carried (follows its carrier; touching
+a drop zone (type 8) scores and resets it), 0xe thrown (from a frozen tank). */
+int TankAI_DropBox(void *self, void *entity, int event, int *data)
+{
+	char *ent = (char *)entity;
+	char *other;
+	char *carrier;
+	char *marker;
+	void **node;
+	float *point;
+	float rot[4];
+	float f;
+	int count;
+	int id;
+	int player;
+	int r;
+
+	if (event == 1) {
+		if (data[AI_TYPE] != 3)
+			return 0;
+		if (TU_I32(self, ENTS_VARIANT) > 4)
+			TU_I32(ent, ENT_DEAD) = 1;
+		if (TU_I32(ent, ENT_ANIM_DONE) != 0 && TU_PTR(ent, ENT_ANIM_SEG) != NULL) {
+			baQueueAnimation((struct BActorInstance *)TU_PTR(ent, ENT_INST),
+				(struct BActorNode *)TU_PTR(TU_PTR(ent, ENT_INST), 0x134),
+				(struct BAnim *)TU_PTR(ent, ENT_ANIM_SEG), 0x400, -1, 0, (int (*)())FUN_001d7d60, ent);
+			return 1;
+		}
+		return 1;
+	}
+	if (event == 2) {
+		if (data[AI_TYPE] != 1)
+			return 0;
+		TU_I32(ent, ENT_AI_STATE) = 0xb;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		TU_DEBUG("Starting 'DropBox' AI for %s\n", ent + ENT_NAME);
+		return 1;
+	}
+	if (event == 0xb) {
+		if (data[AI_TYPE] != 1)
+			return 0;
+		count = TA_SpawnGetCount(TU_PTR(self, ENTS_SPAWN), "DropPoint Enter");
+		carrier = TA_GetEntity(self, TU_I32(ent, ENT_OWNER));
+		if (carrier != NULL)
+			TU_I32(carrier, ENT_FLAG) = 0;
+		TU_I32(ent, ENT_OWNER) = 0;
+		TU_F32(ent, ENT_VEL) = 0.0f;
+		TU_F32(ent, ENT_VEL + 4) = 0.0f;
+		TU_F32(ent, ENT_VEL + 8) = 0.0f;
+		TU_F32(ent, ENT_VEL + 12) = 1.0f;
+		TU_F32(ent, ENT_ROT + 12) = 1.0f;
+		TU_F32(ent, ENT_ROT) = 0.0f;
+		TU_F32(ent, ENT_ROT + 4) = 0.0f;
+		TU_F32(ent, ENT_ROT + 8) = 0.0f;
+		TU_F32(ent, ENT_POS + 12) = 1.0f;
+		TU_F32(ent, ENT_POS) = 0.0f;
+		TU_F32(ent, ENT_POS + 4) = 0.0f;
+		TU_F32(ent, ENT_POS + 8) = 0.0f;
+		TU_I32(ent, ENT_AMBIENT) = -1;
+		TU_I32(ent, ENT_AMBIENT + 4) = -1;
+		TU_I32(ent, ENT_AMBIENT + 8) = -1;
+		TU_DEBUG("DropBox: restarting....\n");
+		TU_DEBUG("num = %d\n", count);
+		if (count == 0) {
+			TU_DEBUG("DropBox: no drop points\n");
+			TU_F32(ent, ENT_POS + 12) = 1.0f;
+			TU_F32(ent, ENT_POS) = 0.0f;
+			TU_F32(ent, ENT_POS + 4) = 1000.0f;
+			TU_F32(ent, ENT_POS + 8) = 0.0f;
+			TU_F32(self, ENTS_EXIT_POS + 12) = 1.0f;
+			TU_F32(self, ENTS_EXIT_POS) = 0.0f;
+			TU_F32(self, ENTS_EXIT_POS + 4) = 0.0f;
+			TU_F32(self, ENTS_EXIT_POS + 8) = 0.0f;
+			return 1;
+		}
+		tu_rand();
+		do {
+			do {
+				point = (float *)TA_SpawnFind(TU_PTR(self, ENTS_SPAWN), "DropPoint Exit", tu_rand() % count);
+			} while (point == NULL);
+			memcpy(TU_ADDR(self, ENTS_EXIT_POS), point, 16);
+		} while (TankAI_PositionClear(self, TU_FP(self, ENTS_EXIT_POS), ent) == 0);
+		rot[0] = 0.0f;
+		rot[1] = 0.0f;
+		rot[2] = 0.0f;
+		rot[3] = 1.0f;
+		id = TankEnts_CreateEntity(self, 0, "ExitPoint", TU_FP(self, ENTS_EXIT_POS), rot, 0.0f);
+		marker = TA_GetEntity(self, id);
+		id = TA_NewEntityId(self);
+		/* the original writes through a null marker when it was not made */
+		if (marker != NULL) {
+			TU_I32(marker, ENT_ID) = id;
+			TU_F32(marker, ENT_POS + 4) = 0.0f;
+		}
+		TU_I32(self, ENTS_EXIT_ID) = id;
+		do {
+			do {
+				point = (float *)TA_SpawnFind(TU_PTR(self, ENTS_SPAWN), "DropPoint Enter", tu_rand() % count);
+			} while (point == NULL);
+		} while (TankAI_PositionClear(self, point, ent) == 0);
+		Core_Vec4Copy(TU_FP(ent, ENT_POS), point);
+		TU_DEBUG("DropPoint Enter\n");
+		r = tu_rand() % 2;
+		if (r == 0)
+			TankSound_Play(TU_PTR(self, ENTS_SOUND), 0x11, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+		else if (r == 1)
+			TankSound_Play(TU_PTR(self, ENTS_SOUND), 0x12, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+		CProjector_SpiralAt(TU_FP(ent, ENT_POS), -1);
+		TU_I32(ent, ENT_AI_STATE) = 0xc;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		return 1;
+	}
+	if (event == 0xc) {
+		if (data[AI_TYPE] == 1) {
+			TU_F32(TU_PTR(ent, ENT_TEMPLATE), TPL_GRAVITY) = TA_WorldGravity(TU_PTR(self, ENTS_WORLD));
+			TU_I32(ent, ENT_AMBIENT) = -1;
+			TU_I32(ent, ENT_AMBIENT + 4) = -1;
+			TU_I32(ent, ENT_AMBIENT + 8) = -1;
+			carrier = TA_GetEntity(self, TU_I32(ent, ENT_OWNER));
+			if (carrier != NULL)
+				TU_I32(carrier, ENT_FLAG) = 0;
+			TU_I32(ent, ENT_OWNER) = 0;
+			return 1;
+		}
+		if (data[AI_TYPE] != 3)
+			return 0;
+		for (node = (void **)TU_PTR(self, ENTS_LIST); node != NULL; node = (void **)node[1]) {
+			other = (char *)node[0];
+			if (other == ent || TU_I32(other, ENT_DEAD) != 0 || TU_ENT_TYPE(other) != 1 ||
+				TU_I32(other, ENT_FLAG) != 0)
+				continue;
+			if (tu_touching(ent, other))
+				break;
+		}
+		if (node == NULL) {
+			tu_spot(self, ent, 0x7f, 0x7f, 0x7f);
+			return 1;
+		}
+		if (TU_I32(other, ENT_FROZEN) != 0) {
+			TU_I32(ent, ENT_AI_STATE) = 0xe;
+			TU_I32(ent, ENT_AI_CHANGED) = 1;
+			return 1;
+		}
+		TU_I32(ent, ENT_OWNER) = TU_I32(other, ENT_ID);
+		TU_DEBUG("picked up\n");
+		TankSound_Play(TU_PTR(self, ENTS_SOUND), 0x10, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+		TU_I32(other, ENT_FLAG) = TU_I32(ent, ENT_ID);
+		TU_I32(ent, ENT_AI_STATE) = 0xd;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		return 1;
+	}
+	if (event == 0xd) {
+		if (data[AI_TYPE] == 1) {
+			carrier = TA_GetEntity(self, TU_I32(ent, ENT_OWNER));
+			if (carrier != NULL && TU_I32(carrier, ENT_DEAD) == 0) {
+				TU_F32(TU_PTR(ent, ENT_TEMPLATE), TPL_GRAVITY) = 0.0f;
+				/* the original keeps the name pointer as the index when it is no player's */
+				player = tu_ai_player(carrier + ENT_NAME, 0);
+				tu_spot(self, ent, (int)tu_player_colour(player, 0), (int)tu_player_colour(player, 1),
+					(int)tu_player_colour(player, 2));
+				return 1;
+			}
+		} else {
+			if (data[AI_TYPE] != 3)
+				return 0;
+			carrier = TA_GetEntity(self, TU_I32(ent, ENT_OWNER));
+			if (carrier != NULL && TU_I32(carrier, ENT_DEAD) == 0) {
+				/* held 90 in front of the carrier */
+				Core_Vec4Copy(TU_FP(ent, ENT_POS), TU_FP(carrier, ENT_POS));
+				TU_F32(ent, ENT_POS + 8) = (float)sin((double)(-TU_F32(carrier, ENT_ROT + 4) - 1.57079625f)) *
+					90.0f + TU_F32(ent, ENT_POS + 8); /* 0x00255180 */
+				TU_F32(ent, ENT_POS) = (float)cos((double)(-TU_F32(carrier, ENT_ROT + 4) - 1.57079625f)) *
+					90.0f + TU_F32(ent, ENT_POS);
+				Core_Vec4Copy(TU_FP(ent, ENT_ROT), TU_FP(carrier, ENT_ROT));
+				Core_Vec4Copy(TU_FP(ent, ENT_VEL), TU_FP(carrier, ENT_VEL));
+				for (node = (void **)TU_PTR(self, ENTS_LIST); node != NULL; node = (void **)node[1]) {
+					other = (char *)node[0];
+					if (TU_ENT_TYPE(other) != 8 || !tu_touching(carrier, other))
+						continue;
+					/* delivered to a drop zone */
+					TankEnts_SendDelayedMessage(self, 0x11, TU_U32(ent, ENT_ID), TU_U32(ent, ENT_OWNER), 1, 0,
+						TU_U32(TU_PTR(ent, ENT_TEMPLATE), TPL_SCOREGIVE), 0, 0.0f);
+					TankSound_Play(TU_PTR(self, ENTS_SOUND), 0xf, TU_FP(other, ENT_POS), 0x80, 1, 0);
+					/* the original keeps the entity pointer as the index when the name is no
+					   player's */
+					player = tu_ai_player(carrier + ENT_NAME, 0);
+					if (tu_rand() % 4 == 1)
+						CTankPlayers_PlayVoice(player, 4, (int)(intptr_t)TU_FP(ent, ENT_POS), 0xff);
+					TankEnts_SendDelayedMessage(self, 0x1a, TU_U32(ent, ENT_ID), TU_U32(other, ENT_ID), 1, 0,
+						(unsigned int)player, 0, 0.0f);
+					TU_F32(other, ENT_POS + 4) = -1000.0f;
+					TU_I32(ent, ENT_AI_STATE) = 0xb;
+					TU_I32(ent, ENT_AI_CHANGED) = 1;
+				}
+				tu_spot(self, ent, -1, -1, -1);
+				return 1;
+			}
+		}
+		TU_I32(ent, ENT_AI_STATE) = 0xc;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		return 1;
+	}
+	if (event != 0xe)
+		return 0;
+	if (data[AI_TYPE] == 1) {
+		/* thrown out of a frozen tank's hands */
+		TU_F32(TU_PTR(ent, ENT_TEMPLATE), TPL_GRAVITY) = TA_WorldGravity(TU_PTR(self, ENTS_WORLD));
+		TU_I32(ent, ENT_AMBIENT) = -1;
+		TU_I32(ent, ENT_AMBIENT + 4) = -1;
+		TU_I32(ent, ENT_AMBIENT + 8) = -1;
+		TU_F32(ent, ENT_ROT) = 0.0f;
+		TU_F32(ent, ENT_ROT + 4) = 0.0f;
+		TU_F32(ent, ENT_ROT + 8) = 0.0f;
+		TU_F32(ent, ENT_ROT + 12) = 1.0f;
+		f = Core_RandUnit();
+		TU_F32(ent, ENT_VEL + 8) = (f + f) - 1.0f;
+		TU_F32(ent, ENT_VEL + 4) = Core_RandUnit() * 0.1f; /* 0x002536cc */
+		f = Core_RandUnit();
+		TU_F32(ent, ENT_VEL) = (f + f) - 1.0f;
+		TU_F32(ent, ENT_VEL + 12) = 1.0f;
+		cmb_vec3_scale(TU_FP(ent, ENT_VEL), TU_FP(ent, ENT_VEL), TU_F32(ent, ENT_PUSH_FORCE));
+		TU_I32(ent, ENT_RESTING) = 0;
+		tu_send(self, 0x1a, TU_I32(ent, ENT_ID), TU_I32(ent, ENT_ID), 0xe, 0.3f);
+		return 1;
+	}
+	if (data[AI_TYPE] == 0x1a) {
+		TU_I32(ent, ENT_AI_STATE) = 0xc;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		return 1;
+	}
+	if (data[AI_TYPE] != 3)
+		return 0;
+	tu_spot(self, ent, 0x7f, 0x7f, 0x7f);
+	return 1;
+}
+
+/* 0x001db5a0  TankedUp/CTank_AI.cpp (bracketed)
+AI 1, "NoFloor": a tank shell. It leaves a trail in its owner's colour, glides a fixed
+height (50) over the ground and sounds when it hits a wall; when it goes it sounds by what
+it hit (a protected tank, a tank, or anything else). */
+int TankAI_NoFloor(void *self, void *entity, int event, int *data)
+{
+	char *ent = (char *)entity;
+	char *owner;
+	float trail[4];
+	float zero[4];
+	float normal[4];
+	float speed;
+	float height;
+	float d;
+	float e;
+	float f;
+	unsigned int colour;
+	int player;
+	int i;
+
+	if (event == 1) {
+		if (data[AI_TYPE] != 2)
+			return 0;
+		if (TA_GetEntity(self, TU_I32(ent, ENT_TOUCHED)) == NULL) {
+			switch (tu_rand() % 3) {
+			case 0:
+				TankSound_Play(TU_PTR(self, ENTS_SOUND), 4, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+				return 1;
+			case 1:
+				TankSound_Play(TU_PTR(self, ENTS_SOUND), 5, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+				return 1;
+			case 2:
+				TankSound_Play(TU_PTR(self, ENTS_SOUND), 6, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+				return 1;
+			}
+		} else {
+			if (TU_I32(ent, ENT_PROTECTED) != 0) {
+				TankSound_Play(TU_PTR(self, ENTS_SOUND), 0x15, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+				return 1;
+			}
+			switch (tu_rand() % 3) {
+			case 0:
+				TankSound_Play(TU_PTR(self, ENTS_SOUND), 7, TU_FP(ent, ENT_POS), 200, 1, 0);
+				return 1;
+			case 1:
+				TankSound_Play(TU_PTR(self, ENTS_SOUND), 8, TU_FP(ent, ENT_POS), 200, 1, 0);
+				return 1;
+			case 2:
+				TankSound_Play(TU_PTR(self, ENTS_SOUND), 9, TU_FP(ent, ENT_POS), 200, 1, 0);
+				return 1;
+			}
+		}
+		return 1;
+	}
+	if (event == 2) {
+		if (data[AI_TYPE] != 1)
+			return 0;
+		TU_I32(ent, ENT_AI_STATE) = 3;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		TU_DEBUG("Starting 'NoFloor' AI for %s (for shell radius %d)\n", ent + ENT_NAME,
+			(double)TU_F32(ent, ENT_RADIUS));
+		TU_I32(ent, ENT_AMBIENT) = 0x7f;
+		TU_I32(ent, ENT_AMBIENT + 4) = 0x7f;
+		TU_I32(ent, ENT_AMBIENT + 8) = 0x7f;
+		TU_I32(ent, ENT_TOKEN_VALUE) = 0;
+		return 1;
+	}
+	if (event != 3 || data[AI_TYPE] != 3)
+		return 0;
+	owner = TA_GetEntity(self, TU_I32(ent, ENT_OWNER));
+	if (owner != NULL) {
+		/* the original keeps the name pointer as the index when it is no player's */
+		player = tu_ai_player(owner + ENT_NAME, 0);
+		colour = ((tu_player_colour(player, 0) << 8 | tu_player_colour(player, 1)) << 8) +
+			tu_player_colour(player, 2);
+		TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), 7, TU_FP(ent, ENT_POS), DAT_002ea478, 0, colour);
+		/* a second puff back along the velocity, past the frame's steps */
+		i = 0;
+		f = 0.0f;
+		while (f < TU_F32(self, ENTS_DT)) {
+			i++;
+			f = (float)i;
+		}
+		trail[3] = TU_F32(ent, ENT_VEL + 12);
+		f = (-1.0f / TU_F32(self, ENTS_DT)) * (float)(i + 1); /* 0x00253854 */
+		trail[0] = TU_F32(ent, ENT_VEL) * f + TU_F32(ent, ENT_POS);
+		trail[1] = TU_F32(ent, ENT_VEL + 4) * f + TU_F32(ent, ENT_POS + 4);
+		trail[2] = TU_F32(ent, ENT_VEL + 8) * f + TU_F32(ent, ENT_POS + 8);
+		TA_DebrisAdd(TU_PTR(self, ENTS_DEBRIS), 7, trail, DAT_002ea478, 0, colour);
+	}
+	TU_F32(ent, ENT_VEL + 4) = 0.0f;
+	height = TA_WorldGroundHeight(TU_PTR(self, ENTS_WORLD), TU_FP(ent, ENT_POS), TU_F32(ent, ENT_RADIUS),
+		normal);
+	zero[0] = 0.0f;
+	zero[1] = 0.0f;
+	zero[2] = 0.0f;
+	zero[3] = 1.0f;
+	speed = bmVectorDistance(TU_FP(ent, ENT_VEL), zero) * 3.0f; /* 0x0025384c */
+	d = 50.0f - height; /* 0x002559b8 */
+	if (speed < d)
+		d = speed;
+	e = d;
+	if (d < -speed) {
+		e = 0.0f;
+		if (-1000.0f < d)
+			e = -speed;
+	}
+	TU_F32(ent, ENT_POS + 4) = e + TU_F32(ent, ENT_POS + 4);
+	if ((TU_U8(ent, ENT_HITS) & 1) == 0)
+		return 1;
+	TankSound_Play(TU_PTR(self, ENTS_SOUND), 0x14, TU_FP(ent, ENT_POS), 0x80, 1, 0);
+	TU_DEBUG("shell hit a wall\n");
+	return 1;
+}
+
+/* 0x001dba50  TankedUp/CTank_AI.cpp (bracketed)
+AI 9, "DropZone": a drop zone (a particle goal); message 0x1a (a crate delivered by player
+data[4]) leaves a "test_temp" marker in the player's colour, bursts, hides the emitter and
+ends the zone (0x1c). */
+int TankAI_DropZone(void *self, void *entity, int event, int *data)
+{
+	char *ent = (char *)entity;
+	char *marker;
+	void *emitter;
+	float away[4];
+	int character;
+	int id;
+
+	if (event == 1) {
+		if (data[AI_TYPE] != 3)
+			return 0;
+		if (TU_I32(ent, ENT_ANIM_DONE) != 0 && TU_PTR(ent, ENT_ANIM_SEG) != NULL) {
+			baQueueAnimation((struct BActorInstance *)TU_PTR(ent, ENT_INST),
+				(struct BActorNode *)TU_PTR(TU_PTR(ent, ENT_INST), 0x134),
+				(struct BAnim *)TU_PTR(ent, ENT_ANIM_SEG), 0x400, -1, 0, (int (*)())FUN_001d7d60, ent);
+			return 1;
+		}
+		return 1;
+	}
+	if (event == 2) {
+		if (data[AI_TYPE] != 1)
+			return 0;
+		TU_I32(ent, ENT_AI_STATE) = 0xf;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		TU_DEBUG("AI:  Starting 'DropZone' AI for ent...%s\n", ent + ENT_NAME);
+		emitter = BCarGenericGoal_AddGoal((struct CParticleEffect *)TU_PTR(self, ENTS_EFFECTS),
+			TU_FP(ent, ENT_POS), 1.0f, 0);
+		TU_PTR(ent, ENT_EMITTER) = emitter;
+		TU_EmitterSetOn(emitter, 1);
+		return 1;
+	}
+	away[0] = 0.0f;
+	away[1] = -100000.0f; /* 0xc7c35000 */
+	away[2] = 0.0f;
+	away[3] = 1.0f;
+	if (event == 0xf) {
+		if (data[AI_TYPE] != 0x1a)
+			return 0;
+		TU_F32(ent, ENT_POS + 4) = 0.0f;
+		id = TankEnts_CreateEntity(self, TU_I32(ent, ENT_ID), "test_temp", TU_FP(ent, ENT_POS),
+			TU_FP(ent, ENT_ROT), 0.0f);
+		marker = TA_GetEntity(self, id);
+		if (marker != NULL) {
+			character = DAT_002baed4[data[AI_ARG] * 10] * 0x60;
+			TU_I32(marker, ENT_AMBIENT) = DAT_00290718[character];
+			TU_I32(marker, ENT_AMBIENT + 4) = DAT_00290719[character];
+			TU_I32(marker, ENT_AMBIENT + 8) = DAT_0029071a[character];
+			CParticleEffect_Burst((struct CParticleEffect *)TU_PTR(self, ENTS_EFFECTS),
+				(struct CParticleEmitter *)TU_PTR(ent, ENT_EMITTER), (short)DAT_00290718[character],
+				(short)DAT_00290719[character], (short)DAT_0029071a[character], 2, 4.5f);
+		}
+		CParticleEmitter_SetPosition((struct CParticleEmitter *)TU_PTR(ent, ENT_EMITTER), away);
+		tu_send(self, 0x1c, TU_I32(ent, ENT_ID), TU_I32(ent, ENT_ID), 0xc, 0.0f);
+		TU_I32(ent, ENT_DEAD) = 1;
+		TU_I32(ent, ENT_AI_STATE) = 0xc;
+		TU_I32(ent, ENT_AI_CHANGED) = 1;
+		return 1;
+	}
+	if (event == 0xc && data[AI_TYPE] == 0x1c) {
+		CParticleEmitter_SetPosition((struct CParticleEmitter *)TU_PTR(ent, ENT_EMITTER), away);
+		TU_I32(ent, ENT_DEAD) = 1;
+		return 1;
+	}
+	return 0;
+}

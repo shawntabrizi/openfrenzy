@@ -438,7 +438,7 @@ void FUN_0014ea80(void)
 	if (DAT_002f7a30 == 0) {
 		FUN_000d6e80(DAT_003055d4);
 		if (MA_I32(DAT_003055d4, 0x568) == 5)
-			bdSetFieldOfView(1.2216f, 0.0f); /* 0x3f9c61aa: 70 degrees */
+			bdSetFieldOfView(1.2217305f, 0.0f); /* 0x3f9c61aa: 70 degrees */
 	}
 	MA_I32(DAT_0030564c, 0x84) = MA_I32(DAT_0030564c, 0x84) + 1;
 }
@@ -1112,7 +1112,7 @@ void FUN_00150330(int *self)
 		FUN_0014df90((int)self);
 		self[0x1a] = 8;
 		MA_F32(self, 0x7c) = 60.0f;
-		bdSetFieldOfView(1.2216f, 0.0f); /* 0x3f9c61aa */
+		bdSetFieldOfView(1.2217305f, 0.0f); /* 0x3f9c61aa */
 		CGameModeStack_Find(MA_MODESTACK, "Root");
 		if (self[0x22] == 1 && DAT_002bae84 == 0 && DAT_002baeb8 == 0 &&
 			MA_I32(DAT_002ecfac, 0x88) == 0) {
