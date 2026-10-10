@@ -15,6 +15,7 @@ reported as inserted, so the game runs with no input devices.
 */
 
 #include "platform.h"
+#include "xkernel.h"
 #include "port_config.h"
 
 #include <stdio.h>
@@ -55,6 +56,88 @@ DWORD WINAPI XGetLanguage(void)
 		if (!strncmp(language, "it", 2)) return XC_LANGUAGE_ITALIAN;
 	}
 	return XC_LANGUAGE_ENGLISH;
+}
+
+/* openfrenzy: the console settings below come from the EEPROM on the Xbox
+(ExQueryNonVolatileSetting). The port reports a North American 4:3 NTSC
+console, which matches the USA disc. */
+
+/* 0x000309f9: XC_FACTORY_AV_REGION bits 8-15 */
+DWORD WINAPI XGetVideoStandard(void)
+{
+	return XC_VIDEO_STANDARD_NTSC_M;
+}
+
+/* 0x00030a22: XC_VIDEO_FLAGS bits 16-22 (masked 0x5f): no widescreen, HDTV
+or letterbox mode is enabled */
+DWORD WINAPI XGetVideoFlags(void)
+{
+	return 0;
+}
+
+/* 0x00030ab6: XC_FACTORY_GAME_REGION */
+DWORD WINAPI XGetGameRegion(void)
+{
+	return XC_GAME_REGION_NA;
+}
+
+/* 0x0003463a / 0x00034655: XBE sections that are not preloaded. The only
+caller (0x0004f930) asks for "sig", which this XBE does not have, so on the
+Xbox the call fails too and the game goes on. */
+void *WINAPI XLoadSection(LPCSTR section_name)
+{
+	(void)section_name;
+	SetLastError(ERROR_NOT_FOUND);
+	return NULL;
+}
+
+BOOL WINAPI XFreeSection(LPCSTR section_name)
+{
+	(void)section_name;
+	SetLastError(ERROR_NOT_FOUND);
+	return FALSE;
+}
+
+/* ---------- custom soundtracks (0x001e999e, 0x001e997f, 0x001e9a4d, 0x001e9c76)
+
+The Xbox dashboard lets the player rip CDs to the hard disk; the game can
+play them instead of its own music. The port has no such library, so there
+are no soundtracks (as on a console where none were ripped). */
+
+HANDLE WINAPI XFindFirstSoundtrack(PXSOUNDTRACK_DATA data)
+{
+	(void)data;
+	SetLastError(ERROR_NO_MORE_FILES);
+	return INVALID_HANDLE_VALUE;
+}
+
+BOOL WINAPI XFindNextSoundtrack(HANDLE find, PXSOUNDTRACK_DATA data)
+{
+	(void)find;
+	(void)data;
+	SetLastError(ERROR_NO_MORE_FILES);
+	return FALSE;
+}
+
+BOOL WINAPI XGetSoundtrackSongInfo(DWORD soundtrack_id, UINT index, PDWORD song_id,
+	PDWORD song_length, LPWSTR name, UINT name_count)
+{
+	(void)soundtrack_id;
+	(void)index;
+	(void)song_id;
+	(void)song_length;
+	(void)name;
+	(void)name_count;
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+}
+
+HANDLE WINAPI XOpenSoundtrackSong(DWORD song_id, BOOL asynchronous)
+{
+	(void)song_id;
+	(void)asynchronous;
+	SetLastError(ERROR_FILE_NOT_FOUND);
+	return INVALID_HANDLE_VALUE;
 }
 
 /* ---------- save games */

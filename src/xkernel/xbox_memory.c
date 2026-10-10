@@ -18,6 +18,7 @@ OpenCE original is removed; Fuzion Frenzy has no such maps.
 */
 
 #include "platform.h"
+#include "xkernel.h"
 #include "port_config.h"
 
 #include <errno.h>
@@ -200,6 +201,28 @@ LPVOID WINAPI XPhysicalAlloc(SIZE_T size, ULONG_PTR physical_address, ULONG_PTR 
 }
 
 VOID WINAPI XPhysicalFree(LPVOID address)
+{
+	platform_contiguous_free(address);
+}
+
+/* ---------- kernel exports (the XAPI wrappers above call these on the Xbox:
+XPhysicalAlloc 0x001e87e0 calls MmAllocateContiguousMemoryEx, XPhysicalFree
+0x001e8833 is MmFreeContiguousMemory) */
+
+void *NTAPI MmAllocateContiguousMemoryEx(ULONG size, ULONG_PTR lowest_address,
+	ULONG_PTR highest_address, ULONG alignment, ULONG protect)
+{
+	(void)lowest_address;
+	(void)highest_address;
+	return platform_contiguous_alloc(size, alignment, PLATFORM_ANY_PHYSICAL_ADDRESS, protect);
+}
+
+void *NTAPI MmAllocateContiguousMemory(ULONG size)
+{
+	return MmAllocateContiguousMemoryEx(size, 0, 0xffffffffUL, 0, PAGE_READWRITE);
+}
+
+VOID NTAPI MmFreeContiguousMemory(void *address)
 {
 	platform_contiguous_free(address);
 }

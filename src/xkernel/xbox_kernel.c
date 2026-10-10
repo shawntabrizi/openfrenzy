@@ -6,6 +6,7 @@ threads, asynchronous procedure calls, time, memory and debug output.
 */
 
 #include "platform.h"
+#include "xkernel.h"
 
 #include <errno.h>
 #include <sched.h>
@@ -159,7 +160,14 @@ BOOL WINAPI CloseHandle(HANDLE object)
 	return TRUE;
 }
 
-/* ---------- asynchronous procedure calls */
+/* ---------- asynchronous procedure calls
+
+openfrenzy: each thread has its own queue, reachable from its thread handle,
+so QueueUserAPC can target another thread (the game's loader thread runs the
+file-system requests the main thread queues to it). A queue lives as long as
+the process: a thread handle may outlive its thread, and an APC queued to an
+exited thread then never runs, as on the Xbox. An alertable wait on a handle
+registers that handle in its queue, so a new APC also wakes that wait. */
 
 struct platform_apc
 {
@@ -168,37 +176,108 @@ struct platform_apc
 	void *context[3];
 };
 
-static __thread struct platform_apc *platform_apc_head;
-static __thread struct platform_apc *platform_apc_tail;
+struct platform_apc_queue
+{
+	pthread_mutex_t lock;
+	pthread_cond_t condition;
+	struct platform_apc *head;
+	struct platform_apc *tail;
+	/* the handle an alertable WaitForSingleObjectEx of this thread waits on */
+	struct platform_handle *waiting_on;
+};
 
-void platform_queue_apc(platform_apc_routine routine, void *context0, void *context1, void *context2)
+static __thread struct platform_apc_queue *platform_current_apc_queue;
+
+static struct platform_apc_queue *apc_queue_new(void)
+{
+	struct platform_apc_queue *queue = calloc(1, sizeof(*queue));
+
+	if (!queue)
+		return NULL;
+	pthread_mutex_init(&queue->lock, NULL);
+	pthread_cond_init(&queue->condition, NULL);
+	return queue;
+}
+
+static struct platform_apc_queue *apc_queue_current(void)
+{
+	if (!platform_current_apc_queue)
+		platform_current_apc_queue = apc_queue_new();
+	return platform_current_apc_queue;
+}
+
+static BOOL apc_queue_push(struct platform_apc_queue *queue, platform_apc_routine routine,
+	void *context0, void *context1, void *context2)
 {
 	struct platform_apc *apc = calloc(1, sizeof(*apc));
+	struct platform_handle *waiting_on;
 
-	if (!apc)
-		return;
+	if (!apc || !queue)
+	{
+		free(apc);
+		return FALSE;
+	}
 	apc->routine = routine;
 	apc->context[0] = context0;
 	apc->context[1] = context1;
 	apc->context[2] = context2;
-	if (platform_apc_tail)
-		platform_apc_tail->next = apc;
+	pthread_mutex_lock(&queue->lock);
+	if (queue->tail)
+		queue->tail->next = apc;
 	else
-		platform_apc_head = apc;
-	platform_apc_tail = apc;
+		queue->head = apc;
+	queue->tail = apc;
+	waiting_on = queue->waiting_on;
+	pthread_cond_broadcast(&queue->condition);
+	pthread_mutex_unlock(&queue->lock);
+	if (waiting_on)
+	{
+		/* the waiter holds this lock from its queue check until it sleeps,
+		so the broadcast cannot fall between the two */
+		pthread_mutex_lock(&waiting_on->lock);
+		pthread_cond_broadcast(&waiting_on->condition);
+		pthread_mutex_unlock(&waiting_on->lock);
+	}
+	return TRUE;
+}
+
+static BOOL apc_queue_pending(struct platform_apc_queue *queue)
+{
+	BOOL pending;
+
+	pthread_mutex_lock(&queue->lock);
+	pending = queue->head != NULL;
+	pthread_mutex_unlock(&queue->lock);
+	return pending;
+}
+
+void platform_queue_apc(platform_apc_routine routine, void *context0, void *context1, void *context2)
+{
+	apc_queue_push(apc_queue_current(), routine, context0, context1, context2);
 }
 
 long platform_run_apcs(void)
 {
+	struct platform_apc_queue *queue = apc_queue_current();
 	long count = 0;
 
-	while (platform_apc_head)
+	if (!queue)
+		return 0;
+	for (;;)
 	{
-		struct platform_apc *apc = platform_apc_head;
+		struct platform_apc *apc;
 
-		platform_apc_head = apc->next;
-		if (!platform_apc_head)
-			platform_apc_tail = NULL;
+		pthread_mutex_lock(&queue->lock);
+		apc = queue->head;
+		if (apc)
+		{
+			queue->head = apc->next;
+			if (!queue->head)
+				queue->tail = NULL;
+		}
+		pthread_mutex_unlock(&queue->lock);
+		if (!apc)
+			break;
 		apc->routine(apc->context[0], apc->context[1], apc->context[2]);
 		free(apc);
 		count++;
@@ -243,6 +322,7 @@ DWORD WINAPI WaitForSingleObjectEx(HANDLE object, DWORD milliseconds, BOOL alert
 {
 	struct platform_handle *handle;
 	struct timespec deadline;
+	struct platform_apc_queue *queue;
 	DWORD result = WAIT_OBJECT_0;
 
 	if (alertable && platform_run_apcs())
@@ -261,10 +341,22 @@ DWORD WINAPI WaitForSingleObjectEx(HANDLE object, DWORD milliseconds, BOOL alert
 
 	if (milliseconds != INFINITE)
 		deadline_from_milliseconds(milliseconds, &deadline);
+	queue = alertable ? apc_queue_current() : NULL;
 
 	pthread_mutex_lock(&handle->lock);
+	if (queue)
+	{
+		pthread_mutex_lock(&queue->lock);
+		queue->waiting_on = handle;
+		pthread_mutex_unlock(&queue->lock);
+	}
 	while (!handle_try_acquire(handle))
 	{
+		if (queue && apc_queue_pending(queue))
+		{
+			result = WAIT_IO_COMPLETION;
+			break;
+		}
 		if (milliseconds == 0)
 		{
 			result = WAIT_TIMEOUT;
@@ -277,11 +369,19 @@ DWORD WINAPI WaitForSingleObjectEx(HANDLE object, DWORD milliseconds, BOOL alert
 		else if (pthread_cond_timedwait(&handle->condition, &handle->lock, &deadline) == ETIMEDOUT)
 		{
 			if (!handle_try_acquire(handle))
-				result = WAIT_TIMEOUT;
+				result = queue && apc_queue_pending(queue) ? WAIT_IO_COMPLETION : WAIT_TIMEOUT;
 			break;
 		}
 	}
+	if (queue)
+	{
+		pthread_mutex_lock(&queue->lock);
+		queue->waiting_on = NULL;
+		pthread_mutex_unlock(&queue->lock);
+	}
 	pthread_mutex_unlock(&handle->lock);
+	if (result == WAIT_IO_COMPLETION)
+		platform_run_apcs();
 	return result;
 }
 
@@ -466,6 +566,7 @@ struct platform_thread
 	BOOL closed;
 	BOOL finished;
 	pthread_t thread;
+	struct platform_apc_queue *apcs;
 };
 
 static void thread_release(struct platform_handle *handle)
@@ -494,6 +595,7 @@ static void *thread_main(void *context)
 	DWORD exit_code;
 	BOOL free_now;
 
+	platform_current_apc_queue = thread->apcs;
 	pthread_mutex_lock(&handle->lock);
 	while (thread->suspended)
 		pthread_cond_wait(&handle->condition, &handle->lock);
@@ -545,6 +647,14 @@ HANDLE WINAPI CreateThread(LPSECURITY_ATTRIBUTES attributes, DWORD stack_size,
 	thread->parameter = parameter;
 	thread->exit_code = STILL_ACTIVE;
 	thread->suspended = (flags & CREATE_SUSPENDED) != 0;
+	thread->apcs = apc_queue_new();
+	if (!thread->apcs)
+	{
+		free(thread);
+		free(handle);
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return NULL;
+	}
 
 	pthread_attr_init(&thread_attributes);
 	pthread_attr_setdetachstate(&thread_attributes, PTHREAD_CREATE_DETACHED);
@@ -603,6 +713,42 @@ BOOL WINAPI GetExitCodeThread(HANDLE object, LPDWORD exit_code)
 	return TRUE;
 }
 
+static void user_apc_trampoline(void *routine, void *data, void *unused)
+{
+	(void)unused;
+	((PAPCFUNC)routine)((ULONG_PTR)data);
+}
+
+/* 0x00034274 (XAPI) */
+DWORD WINAPI QueueUserAPC(PAPCFUNC routine, HANDLE thread_handle, ULONG_PTR data)
+{
+	struct platform_apc_queue *queue;
+
+	if (!routine)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return 0;
+	}
+	if (thread_handle == GetCurrentThread())
+	{
+		queue = apc_queue_current();
+	}
+	else
+	{
+		struct platform_handle *handle = platform_handle_get(thread_handle, _platform_handle_thread);
+
+		if (!handle)
+			return 0;
+		queue = ((struct platform_thread *)handle->data)->apcs;
+	}
+	if (!apc_queue_push(queue, user_apc_trampoline, (void *)routine, (void *)data, NULL))
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return 0;
+	}
+	return 1;
+}
+
 BOOL WINAPI SwitchToThread(void)
 {
 	sched_yield();
@@ -615,6 +761,30 @@ DWORD WINAPI SleepEx(DWORD milliseconds, BOOL alertable)
 
 	if (alertable && platform_run_apcs())
 		return WAIT_IO_COMPLETION;
+	if (alertable)
+	{
+		/* sleep until the time is up or an APC arrives */
+		struct platform_apc_queue *queue = apc_queue_current();
+		struct timespec deadline;
+
+		if (milliseconds == 0)
+			sched_yield();
+		else if (queue)
+		{
+			if (milliseconds != INFINITE)
+				deadline_from_milliseconds(milliseconds, &deadline);
+			pthread_mutex_lock(&queue->lock);
+			while (!queue->head)
+			{
+				if (milliseconds == INFINITE)
+					pthread_cond_wait(&queue->condition, &queue->lock);
+				else if (pthread_cond_timedwait(&queue->condition, &queue->lock, &deadline) == ETIMEDOUT)
+					break;
+			}
+			pthread_mutex_unlock(&queue->lock);
+		}
+		return platform_run_apcs() ? WAIT_IO_COMPLETION : 0;
+	}
 	if (milliseconds == 0)
 	{
 		sched_yield();
@@ -743,6 +913,37 @@ BOOL WINAPI SystemTimeToFileTime(CONST SYSTEMTIME *system_time, LPFILETIME file_
 	return TRUE;
 }
 
+/* 0x00030982 (kernel export): 100 ns units since 1601-01-01, UTC */
+VOID NTAPI KeQuerySystemTime(LARGE_INTEGER *current_time)
+{
+	struct timespec now;
+
+	clock_gettime(CLOCK_REALTIME, &now);
+	current_time->QuadPart = (LONGLONG)(((unsigned long long)now.tv_sec + FILETIME_UNIX_EPOCH_SECONDS) * 10000000ULL +
+		(unsigned long long)now.tv_nsec / 100);
+}
+
+/* 0x001e8de0 (XAPI): the Xbox subtracts the dashboard's time zone bias; the
+port uses the host's zone (UTC when the guest C library knows none) */
+VOID WINAPI GetLocalTime(LPSYSTEMTIME system_time)
+{
+	struct timespec now;
+	struct tm local;
+	time_t seconds;
+
+	clock_gettime(CLOCK_REALTIME, &now);
+	seconds = now.tv_sec;
+	localtime_r(&seconds, &local);
+	system_time->wYear = (WORD)(local.tm_year + 1900);
+	system_time->wMonth = (WORD)(local.tm_mon + 1);
+	system_time->wDayOfWeek = (WORD)local.tm_wday;
+	system_time->wDay = (WORD)local.tm_mday;
+	system_time->wHour = (WORD)local.tm_hour;
+	system_time->wMinute = (WORD)local.tm_min;
+	system_time->wSecond = (WORD)(local.tm_sec > 59 ? 59 : local.tm_sec);
+	system_time->wMilliseconds = (WORD)(now.tv_nsec / 1000000L);
+}
+
 VOID WINAPI GetSystemTime(LPSYSTEMTIME system_time)
 {
 	struct timespec now;
@@ -869,4 +1070,57 @@ VOID WINAPI OutputDebugStringA(LPCSTR string)
 {
 	if (string)
 		fputs(string, stderr);
+}
+
+/* 0x0003097d (kernel export). The game calls it after a failed assertion,
+which it has already printed. A native debugger is not attached, so log and
+continue, as a retail Xbox without a debugger does. */
+VOID NTAPI DbgBreakPoint(VOID)
+{
+	platform_log("DbgBreakPoint (the game hit a debug break; continuing)");
+}
+
+/* ---------- Win32 string helpers (XAPI) */
+
+/* 0x000310c1 */
+int WINAPI lstrlenA(LPCSTR string)
+{
+	return string ? (int)strlen(string) : 0;
+}
+
+/* 0x0003101e */
+LPSTR WINAPI lstrcpyA(LPSTR destination, LPCSTR source)
+{
+	return strcpy(destination, source);
+}
+
+/* 0x0003105c: copies at most count - 1 characters and always terminates
+(when count > 0) */
+LPSTR WINAPI lstrcpynA(LPSTR destination, LPCSTR source, int count)
+{
+	int index = 0;
+
+	if (count <= 0)
+		return destination;
+	while (index < count - 1 && source[index])
+	{
+		destination[index] = source[index];
+		index++;
+	}
+	destination[index] = '\0';
+	return destination;
+}
+
+/* 0x0003099f: Win32 wsprintfA writes at most 1024 characters */
+int wsprintfA(LPSTR buffer, LPCSTR format, ...)
+{
+	va_list arguments;
+	int result;
+
+	va_start(arguments, format);
+	result = vsnprintf(buffer, 1024, format, arguments);
+	va_end(arguments);
+	if (result > 1023)
+		result = 1023;
+	return result;
 }
