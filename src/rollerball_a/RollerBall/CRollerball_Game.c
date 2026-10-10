@@ -44,7 +44,7 @@ unsigned char *CRollerBallGame_Ctor(void *self)
 	CRollerBallVideo_Ctor(g + RB_GO_VIDEO);
 	CRollerBall2740_Ctor(g + RB_GO_2740);
 	CRollerBallShaders_Ctor(g + RB_GO_SHADERS);
-	CRollerBall2850_Ctor(g + RB_GO_2850);
+	CRollerBallFloaty_Ctor(g + RB_GO_FLOATY);
 	CRollerBallRumble_Ctor(g + RB_GO_RUMBLE);
 	CParticleSystemList_Construct((struct CParticleSystemList *)(g + RB_GO_PARTICLES));
 	RB_PTR(g, 0x18) = NULL;
@@ -60,7 +60,7 @@ void CRollerBallGame_Dtor(void *self)
 	*(const void *const **)g = vtable_00273a4c;
 	CParticleSystemList_Destruct((struct CParticleSystemList *)(g + RB_GO_PARTICLES));
 	CRollerBallRumble_Dtor(g + RB_GO_RUMBLE);
-	CRollerBall2850_Dtor(g + RB_GO_2850);
+	CRollerBallFloaty_Dtor(g + RB_GO_FLOATY);
 	CRollerBallShaders_Dtor(g + RB_GO_SHADERS);
 	CRollerBall2740_Dtor(g + RB_GO_2740);
 	CRollerBallVideo_Dtor(g + RB_GO_VIDEO);
@@ -138,7 +138,7 @@ static void rb_UpdateSystems(unsigned char *self, float dt, int goals)
 	FUN_001ec260(); /* empty (ECX = the sfx system, dt) */
 	rbb_WorldUpdate(self + RB_GO_WORLD, dt);
 	CRollerBallVideo_Update(self + RB_GO_VIDEO, dt);
-	CRollerBall2850_Update(self + RB_GO_2850, dt);
+	CRollerBallFloaty_Update(self + RB_GO_FLOATY, dt);
 	FUN_001ec260(); /* empty (ECX = the rumble system, dt) */
 	rbb_ShadowsUpdate(self + RB_GO_SHADOWS, dt);
 }
@@ -895,7 +895,7 @@ void CRollerBallGame_Shutdown(unsigned char *self)
 	CRollerBallInfo_Shutdown(self + RB_GO_INFO);
 	CRollerBallVideo_Shutdown(self + RB_GO_VIDEO);
 	CRollerBallShaders_Shutdown(self + RB_GO_SHADERS);
-	CRollerBall2850_Shutdown(self + RB_GO_2850);
+	CRollerBallFloaty_Shutdown(self + RB_GO_FLOATY);
 	CDemoRumble_Shutdown(self + RB_GO_RUMBLE);
 	rbb_ShadowsShutdown(self + RB_GO_SHADOWS);
 	var = RB_PTR(self, RB_GO_VAROBJ);
@@ -1087,7 +1087,7 @@ void FUN_001892e0(void *self, int draw)
 		bdSetRenderState(8, 0, 0);
 	CRollerBallGoals_Draw(g + RB_GO_GOALS);
 	CParticleSystemList_DrawAll((struct CParticleSystemList *)(g + RB_GO_PARTICLES));
-	CRollerBall2850_Draw(g + RB_GO_2850);
+	CRollerBallFloaty_Draw(g + RB_GO_FLOATY);
 	CRollerBallHud_Draw(g + RB_GO_HUD);
 	CRollerBallVideo_Draw(g + RB_GO_VIDEO);
 	rbb_CameraDraw(g + RB_GO_CAMERA);
@@ -2603,7 +2603,7 @@ void CRollerBallGame_Initialise(unsigned char *self)
 		bkPrintf("CRollerBall_Game::Initialise - input.Initialise FAILED!\n");
 	} else if (CRollerBallVideo_Init(self + RB_GO_VIDEO) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - videoScreenSystem.Initialise FAILED!\n");
-	} else if (CRollerBall2850_Init(self + RB_GO_2850, gen) == 0) {
+	} else if (CRollerBallFloaty_Init(self + RB_GO_FLOATY, gen) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - infoSystem.Initialise FAILED!\n");
 	} else {
 		if (CDemoRumble_Init(self + RB_GO_RUMBLE, gen) == 0)

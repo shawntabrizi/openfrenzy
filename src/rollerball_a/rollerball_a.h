@@ -162,8 +162,8 @@ extern unsigned char *DAT_0030ef04;
 #define RB_GO_VIDEO 0x2738        /* video screens (0x0018dfe0) */
 #define RB_GO_2740 0x2740         /* (0x0018ddb0) */
 #define RB_GO_SHADERS 0x2840      /* shader system (0x0018dcc0, CRollerball_Shader.cpp) */
-#define RB_GO_2850 0x2850         /* (0x0018dbf0) */
-#define RB_GO_RUMBLE 0x28f0       /* (0x0018dad0) */
+#define RB_GO_FLOATY 0x2850       /* floating score texts (0x0018dbf0) */
+#define RB_GO_RUMBLE 0x28f0       /* rumble (0x0018dad0) */
 #define RB_GO_SHADOWS 0x29d4      /* rollerball_b 0x00196900.. */
 #define RB_GO_PARTICLES 0x2ad8    /* CParticleSystemList (classlib_fx) */
 
@@ -231,6 +231,8 @@ extern unsigned char DAT_002ba750[]; /* core: the game mode stack */
 extern void *DAT_002ba9a0;          /* core: settings */
 extern unsigned char DAT_002ecd90[]; /* classlib_ui: the pause screen */
 extern unsigned char DAT_002b9968[]; /* core_modes_b: the score table (CScoreTable) */
+extern unsigned char DAT_002ed324[]; /* classlib_ui: the rumble manager */
+extern int DAT_002bc40c, DAT_002bc410; /* bdisplay: the screen width and height */
 
 /* the kernel debug break (xkernel HLE: logs and continues) */
 void DbgBreakPoint(void);
@@ -244,6 +246,7 @@ extern const void *const vtable_00273ac0[18];  /* variation: sumo */
 extern const void *const vtable_00273b08[18];  /* variation: race2 */
 extern const void *const vtable_00273b50[18];  /* variation: race */
 extern const void *const vtable_00273b98[18];  /* variation: drop */
+extern const void *const vtable_002744bc[1];   /* video screen system */
 
 /* ---------- functions of this module missing from of_functions.tsv */
 
