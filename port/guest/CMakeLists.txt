@@ -84,6 +84,9 @@ list(REMOVE_DUPLICATES _musl_sources)
 list(FILTER _musl_sources EXCLUDE REGEX
      "/src/(env/__stack_chk|env/__init_tls|env/__libc_start_main|env/__reset_tls|string/explicit_bzero)\\.c$")
 list(FILTER _musl_sources EXCLUDE REGEX "/src/malloc/oldmalloc/")
+# faster replacements (port/guest/libc/string)
+list(FILTER _musl_sources EXCLUDE REGEX "/src/string/memcmp\\.c$")
+list(APPEND _musl_sources "${R}/port/guest/libc/string/memcmp.c")
 
 add_library(guestc STATIC ${_musl_sources})
 add_dependencies(guestc guest_headers)

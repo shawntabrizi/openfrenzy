@@ -217,11 +217,41 @@ int host_sdl_gl_make_current(uint32_t window, uint32_t context) {
                           handle_get(context, _handle_context));
 }
 int host_sdl_gl_set_swap_interval(int interval) { return eglSwapInterval(metal_display, interval); }
+/* openfrenzy: frame pacing log. Every 10 s: frames presented, average fps, the
+ * worst frame time (swap to swap), frames over 20 ms and the average time spent
+ * in eglSwapBuffers. Always on: one line each 10 s. */
+static void pacing_frame(uint64_t start, uint64_t end) {
+    static uint64_t window_start, last, worst, swap_total;
+    static unsigned frames, slow;
+    if (last) {
+        uint64_t frame = start - last;
+        if (frame > worst)
+            worst = frame;
+        if (frame > 20000000)
+            slow++;
+        frames++;
+        swap_total += end - start;
+    } else
+        window_start = start;
+    last = start;
+    if (start - window_start >= UINT64_C(10000000000)) {
+        double seconds = (start - window_start) / 1e9;
+        host_logf(HOST_LOG_INFO,
+                  "frame pacing: %u frames in %.1f s, %.1f fps, worst %.1f ms, %u over 20 ms, swap %.2f ms avg",
+                  frames, seconds, frames / seconds, worst / 1e6, slow,
+                  frames ? swap_total / 1e6 / frames : 0.0);
+        window_start = start;
+        worst = swap_total = 0;
+        frames = slow = 0;
+    }
+}
 int host_sdl_gl_swap_window(uint32_t window) {
     (void)window;
     uint64_t start = SDL_GetTicksNS();
     int result = eglSwapBuffers(metal_display, metal_surface);
-    host_perf_frame((SDL_GetTicksNS() - start) / 1e6);
+    uint64_t end = SDL_GetTicksNS();
+    pacing_frame(start, end);
+    host_perf_frame((end - start) / 1e6);
     return result;
 }
 
