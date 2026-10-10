@@ -242,6 +242,11 @@ extern unsigned int DAT_002bc898[];
 extern unsigned int DAT_002bce18[];
 extern unsigned int DAT_002bd640[];
 extern unsigned int DAT_00285630;   /* bkernel: the game's inlined rand() seed */
+extern int DAT_002baf08;            /* core: the pad port of player 1 (g_PlayerPort(1)) */
+extern int DAT_002baeb8;            /* core: (g_MusicOn) the intro fades in while it is set */
+extern int DAT_002ba928;            /* core: screen width, height */
+extern int DAT_002ba92c;
+extern int DAT_002ecfac;            /* classlib_ui: the HUD (CLHud *) */
 extern int DAT_002bae98;            /* core: g_StartState (2: the end of a variation does not end the mode) */
 
 #include "tankedup_a_bcalls.h"

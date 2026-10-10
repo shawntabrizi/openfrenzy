@@ -27,10 +27,13 @@ Owner: tankedup_a.
 
 #define TUB_Debug_Initialise ((int (*)(void *))FUN_001d6d90)
 #define TUB_Debug_Free ((void (*)(void *))FUN_001d79d0)
-#define TUB_Debug_Update ((void (*)(void *))FUN_001d6d40)
+#define TUB_Debug_ReleaseInput ((void (*)(void *))FUN_001d6d40)
 /* 0x001d6820 / 0x001d6860  render states for the floor decals (no `this`) */
 #define TUB_Decal_BeginStates ((void (*)(void))FUN_001d6820)
 #define TUB_Decal_StencilOn ((void (*)(void))FUN_001d6860)
+/* 0x001d67c0  (no `this`) 1 when the debug "single player" option is on in a one-minigame
+   game (0x00283ef0, g_GameType 1); *player (may be NULL) gets the first present player */
+#define TUB_Debug_SinglePlayer ((int (*)(int *))FUN_001d67c0)
 /* 0x001d6960  draws a light's debug cone: (pos, target, angle, r, g, b) */
 #define TUB_Debug_DrawCone ((void (*)(float *, float *, float, int, int, int))FUN_001d6960)
 
@@ -50,6 +53,8 @@ Owner: tankedup_a.
 #define TUB_Entities_StateChange ((void (*)(void *, int, int))FUN_001d3e90)
 #define TUB_Entities_Draw ((void (*)(void *))FUN_001d0920)
 #define TUB_Entities_DrawLate ((void (*)(void *))FUN_001d14e0)
+/* 0x001d1770  the centre of the active tanks (and two more points the camera ignores) */
+#define TUB_Entities_GetCentre ((void (*)(void *, float *, float *, float *))FUN_001d1770)
 
 /* ---------- tankedup_b: the character system (CTank_Game +0xfd0) */
 

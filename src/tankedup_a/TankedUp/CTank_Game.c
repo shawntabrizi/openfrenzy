@@ -81,14 +81,14 @@ void CTankGame_Free(struct CTank_Game *self)
 }
 
 /* 0x001c1c60  TankedUp/CTank_Game.cpp (inferred)
-Once a frame after the update, while the game runs: the players, the debug object and
-the camera. */
-void CTankGame_Process(struct CTank_Game *self)
+Releases the input maps of the players, the debug object and the camera (while the game
+runs). */
+void CTankGame_ReleaseInput(struct CTank_Game *self)
 {
 	if (self->valid != 0 && self->started != 0) {
-		CTankPlayers_Process(TU_SYS(self, TG_PLAYERS));
-		TUB_Debug_Update(TU_ADDR(0x003150b0));
-		CTankCamera_Process(TU_SYS(self, TG_CAMERA));
+		CTankPlayers_ReleaseInput(TU_SYS(self, TG_PLAYERS));
+		TUB_Debug_ReleaseInput(TU_ADDR(0x003150b0));
+		CTankCamera_ReleaseInput(TU_SYS(self, TG_CAMERA));
 	}
 }
 
