@@ -70,14 +70,6 @@ void FUN_000514a0(float *out, const float *in)
 	}
 }
 
-/* 0x00051540: squared distance */
-float FUN_00051540(const float *a, const float *b)
-{
-	float dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
-
-	return dx * dx + dy * dy + dz * dz;
-}
-
 void *FUN_0004e390(int a, int b, int c, int d, int e, int f)
 {
 	(void)a; (void)b; (void)c; (void)d; (void)e; (void)f;

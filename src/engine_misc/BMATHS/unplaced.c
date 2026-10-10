@@ -17,6 +17,18 @@ where Ghidra shows 80-bit intermediates), so the last bits of results can differ
 #define EPS 0.001f    /* 0x00285644 */
 #define EPS2 0.002f   /* 0x0028564c */
 
+/* 0x00051540 (module bkernel): the squared distance of two points, returned in ST0.
+bkernel's port defines that address as an empty function (bmNothing2), which would leave
+the result undefined, so the same computation is done here. */
+static double dist_sq(const float *a, const float *b)
+{
+	double dx = (double)a[0] - b[0];
+	double dy = (double)a[1] - b[1];
+	double dz = (double)a[2] - b[2];
+
+	return dz * dz + dy * dy + dx * dx;
+}
+
 /* the sign bit of a float, as the original tests it */
 static unsigned int sign_bit(float f)
 {
@@ -540,7 +552,7 @@ int bmSweepSphereEdge(struct BSphere *sphere, struct BEdge *edge, float *delta, 
 	pb[0] = e[0] * t + edge->a[0];
 	pb[1] = e[1] * t + edge->a[1];
 	pb[2] = e[2] * t + edge->a[2];
-	d2 = em_bmVecDistSq(pb, pa);
+	d2 = dist_sq(pb, pa);
 	if ((double)r2 < d2)
 		goto too_far;
 	k = (float)sqrt((double)r2 - d2);

@@ -46,7 +46,6 @@ void FUN_0001e9d0(float *out, const float *a, const float *b);
 void FUN_0001ea00(float *out, const float *in, float s);
 void FUN_00036ac0(float *out, const float *a, const float *b);
 void FUN_000514a0(float *out, const float *in);
-float FUN_00051540(const float *a, const float *b);
 void *FUN_0004e390(int, int, int, int, int, int);
 
 #endif
