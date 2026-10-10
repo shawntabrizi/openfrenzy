@@ -1401,3 +1401,129 @@ create:
 	}
 	return result;
 }
+
+/* ---------- ground rings of the AI players */
+
+/* 0x002ecfd8  quad of the ground ring */
+#define clu_ring_quad CLU_ARR(struct CLQuadVertex, 0x002ecfd8)
+
+extern unsigned int DAT_002bc960;   /* bdisplay: alpha 0x?? colour component */
+extern unsigned int DAT_002bca94;   /* bdisplay: alpha colour component of the ring */
+
+/* 0x0007b6f0  ClassLib/Hud.cpp (inferred)
+Builds a textured quad of half size `size` lying on the plane with normal `normal`
+at `pos`, turned by `angle`, with grey level `brightness`. */
+void CLHud_BuildGroundQuad(struct CLQuadVertex *quad, float *pos, float *normal, float size, float angle,
+			   float brightness)
+{
+	float n[3];
+	float v[4];
+	float a[3];
+	float b[3];
+	double ax, bx, s1, s2, d1, d2;
+	float ay, by, az, bz, s3, d3;
+	int level;
+	unsigned int colour;
+
+	n[0] = normal[0];
+	n[1] = normal[1];
+	n[2] = normal[2];
+	v[0] = 1.0f;
+	v[1] = 0.0f;
+	v[2] = 0.0f;
+	FUN_00051170(v, v, angle);
+	a[0] = (float)((double)v[2] * (double)n[1] - (double)v[1] * (double)n[2]);
+	a[1] = (float)((double)v[0] * (double)n[2] - (double)v[2] * (double)n[0]);
+	a[2] = (float)((double)v[1] * (double)n[0] - (double)v[0] * (double)n[1]);
+	b[0] = (float)((double)a[1] * (double)n[2] - (double)a[2] * (double)n[1]);
+	b[1] = (float)((double)a[2] * (double)n[0] - (double)a[0] * (double)n[2]);
+	b[2] = (float)((double)a[0] * (double)n[1] - (double)a[1] * (double)n[0]);
+	FUN_000514a0(a, a);
+	FUN_000514a0(b, b);
+	bx = (double)b[0] * (double)size;
+	ax = (double)a[0] * (double)size;
+	s1 = ax + bx;
+	quad[0].x = (float)((double)pos[0] - s1);
+	by = (float)((double)b[1] * (double)size);
+	ay = (float)((double)a[1] * (double)size);
+	s2 = (double)a[1] * (double)size + (double)by;
+	quad[0].y = (float)((double)pos[1] - s2);
+	bz = (float)((double)b[2] * (double)size);
+	az = (float)((double)a[2] * (double)size);
+	s3 = (float)((double)a[2] * (double)size + (double)bz);
+	quad[0].z = (float)((double)pos[2] - (double)s3);
+	level = (int)brightness;
+	colour = DAT_002bd640[level] | DAT_002bc490[level] | DAT_002bc960 | DAT_002bce18[level];
+	quad[0].colour = colour;
+	quad[0].v = 1.0f;
+	quad[0].u = 0.0f;
+	quad[3].x = (float)(s1 + (double)pos[0]);
+	quad[3].y = (float)(s2 + (double)pos[1]);
+	quad[3].z = (float)((double)s3 + (double)pos[2]);
+	quad[3].colour = colour;
+	quad[3].u = 1.0f;
+	quad[3].v = 0.0f;
+	d1 = ax - bx;
+	quad[2].x = (float)(d1 + (double)pos[0]);
+	d2 = (double)ay - (double)by;
+	quad[2].y = (float)(d2 + (double)pos[1]);
+	d3 = (float)((double)az - (double)bz);
+	quad[2].z = (float)((double)d3 + (double)pos[2]);
+	quad[2].colour = colour;
+	quad[2].u = 1.0f;
+	quad[2].v = 1.0f;
+	quad[1].x = (float)((double)pos[0] - d1);
+	quad[1].y = (float)((double)pos[1] - d2);
+	quad[1].z = (float)((double)pos[2] - (double)d3);
+	quad[1].colour = colour;
+	quad[1].u = 0.0f;
+	quad[1].v = 0.0f;
+}
+
+/* 0x0007b970  ClassLib/Hud.cpp (inferred; the callee pops its arguments)
+Draws the ring of AI player `player` on the ground below `pos` (found with a ray down),
+pointing at `target` (a ring without arrow when target is NULL). */
+void CLHud_DrawAIRing(int player, float *pos, float *target)
+{
+	int saved_state[30];
+	float start[4];
+	float dir[4];
+	float hit[4];
+	float normal[4];
+	float angle;
+	const unsigned char *rgb;
+	unsigned int colour;
+
+	FUN_00046d40((undefined4 *)saved_state);
+	start[0] = pos[0];
+	start[1] = pos[1] + 100.0f;
+	start[2] = pos[2];
+	start[3] = pos[3];
+	dir[0] = (float)((double)0.0f * (double)1.4f);
+	dir[1] = (float)((((double)pos[1] - (double)2000.0f) - (double)start[1]) * (double)1.4f);
+	dir[2] = (float)((double)0.0f * (double)1.4f);
+	dir[3] = pos[3];
+	if (((float (*)(float *, float *, float *, float *))FUN_000b4bd0)(start, dir, hit, normal) == 0.0f)
+		return;
+	hit[1] = hit[1] + 10.0f;
+	if (target != NULL)
+		angle = (float)(CLU_FPATAN((double)target[0] - (double)pos[0], (double)target[2] - (double)pos[2]) +
+				(double)0.7853981f + (double)3.1415925f);
+	else
+		angle = 0.0f;
+	CLHud_BuildGroundQuad(clu_ring_quad, hit, normal, 96.0f, angle, 80.0f);
+	rgb = (const unsigned char *)&clu_characters[DAT_002baed4[player * 10]].colour;
+	colour = DAT_002bd640[rgb[2]] | DAT_002bc490[rgb[1]] | DAT_002bce18[rgb[0]] | DAT_002bca94;
+	clu_ring_quad[0].colour = colour;
+	clu_ring_quad[1].colour = colour;
+	clu_ring_quad[2].colour = colour;
+	clu_ring_quad[3].colour = colour;
+	FUN_000416c0(0, target != NULL ? clu_ai_ring : clu_ai_ring_nogoal);
+	FUN_00044b00(6, 1, 0);
+	FUN_00044b00(10, 1, 0);
+	FUN_00044b00(3, 0, 0);
+	FUN_00044b00(5, 0, 0);
+	FUN_00044b00(7, 2, 0);
+	FUN_0003f2d0(4, (int)clu_ring_quad, 4);
+	FUN_00046d60(saved_state);
+}

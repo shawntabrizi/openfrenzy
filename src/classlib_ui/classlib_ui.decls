@@ -121,6 +121,8 @@
 0007a550 int CLHud_ShowCountdown(int step);
 0007a900 int CLHud_UpdateCountdown(int self);
 0007ad50 int CLHud_CreateWinnerText(int self, int *scores, int with_game_type);
+0007b6f0 void CLHud_BuildGroundQuad(struct CLQuadVertex *quad, float *pos, float *normal, float size, float angle, float brightness);
+0007b970 void CLHud_DrawAIRing(int player, float *pos, float *target);
 0007cc00 void CLHud_Destroy(void);
 0007cc30 int CLIntroCam_Restart(void);
 0007cc70 float CLIntroCam_GetTime(void);

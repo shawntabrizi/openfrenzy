@@ -74,3 +74,5 @@ int DAT_002baeb4;                 /* core */
 int DAT_002bae98;                 /* core */
 int DAT_00293928;                 /* charlib (initialised data of its owner, 200) */
 unsigned int DAT_002ba4cc;        /* core */
+unsigned int DAT_002bc960;        /* bdisplay */
+unsigned int DAT_002bca94;        /* bdisplay */

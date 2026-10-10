@@ -68,6 +68,12 @@ OF_ASSERT_SIZE(struct CLQuadVertex, 0x24);
 extern char *DAT_002ba544;
 /* 0x002ba750  the game mode stack object (core; FUN_0002b5b0 is a method of it) */
 extern unsigned char DAT_002ba750[0x58];
+/* 0x002bc490 / 0x002bc898 / 0x002bce18 / 0x002bd640  colour component tables
+(bdisplay): green, alpha, red and blue component of a 0-255 value */
+extern unsigned int DAT_002bc490[256];
+extern unsigned int DAT_002bc898[256];
+extern unsigned int DAT_002bce18[256];
+extern unsigned int DAT_002bd640[256];
 /* 0x00283d74  Welsh commentary selected (core) */
 extern int DAT_00283d74;
 /* 0x00283e0c  commentator lines delay by their length (core .data, 0) */
