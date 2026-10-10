@@ -200,6 +200,7 @@ extern int DAT_002baeb8;              /* core: this game mode has no RefBot / sk
 extern int DAT_002baebc;              /* core: team game */
 extern int DAT_002baef4[];            /* core: the team of player i: [i * 10] */
 extern void *DAT_002db808;            /* engine_misc: the DirectSound object */
+extern float DAT_002ea478[4];         /* classlib_ui: a zero vector */
 extern int *DAT_002ea488;             /* classlib_ui: the CharLib actor list */
 extern unsigned char DAT_002ecd90[];  /* classlib_ui: the pause menu */
 extern unsigned char DAT_002ed324[];  /* classlib_ui: the rumble object */

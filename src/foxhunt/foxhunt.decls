@@ -31,6 +31,10 @@
 00129e50 void CGameMode_FoxHunt_Process(void *self, int top);
 0012a190 void CGameMode_FoxHunt_Draw(void *self, int top);
 0012a7c0 void CGameMode_FoxHunt_InitCooperation(void *self, void *package);
+0012b760 void CGameMode_FoxHunt_InitEnergyBall(void *self, void *package);
+0012c790 void CGameMode_FoxHunt_InitOddOneOut(void *self, void *package);
+0012d450 void CGameMode_FoxHunt_InitVictim(void *self, void *package);
+0012e020 void CGameMode_FoxHunt_Start(void *self);
 
 # ---- FoxHunt/CFHunt_GenericGoal.c
 00133530 void *CFHunt_GenericGoal_Ctor(void *self);
@@ -57,6 +61,7 @@
 
 # ---- FoxHunt/CFHunt_Throwable.c
 00134460 void *CFHunt_Throwable_Ctor(void *self, int type, float *pos, float size);
+00135840 void *FoxHunt_Button_Ctor(void *self, int id, float a, float b, int c, int d, float *pos, float heading);
 00135d80 void *FoxHunt_Shark_Ctor(void *self, float *pos, int index);
 
 # ---- FoxHunt/CFHunt_Flag.c
@@ -64,6 +69,8 @@
 
 # ---- FoxHunt/unplaced_level.c
 00137980 void *FoxHunt_Glass_Ctor(void *self, float *pos, int type);
+00137d00 void *FoxHunt_Escalator_Ctor(void *self, float *pos, int a, int b, int c);
+00138150 void *FoxHunt_Gate_Ctor(void *self, float *pos, float f, int a, int b, int c, int d);
 001386a0 void FoxHunt_TextReader_Ctor(void *self);
 001386b0 void FoxHunt_TextReader_Dtor(void *self);
 001386c0 char *FoxHunt_TextReader_ReadLine(void *self, char *buffer);

@@ -2239,3 +2239,785 @@ void CGameMode_FoxHunt_InitCooperation(void *self, void *package)
 		FoxHunt_Shark_Ctor(object, pos, 1);
 	FoxHunt_TextReader_Dtor(reader);
 }
+
+/* the respawn points of a level script (NOOFRESPAWNPOINTS); `line` follows the reads */
+static char *read_respawn_points(void *reader, char *buffer, char *line, int alloc_line)
+{
+	float pos[4];
+	char *object;
+	int count, i;
+
+	if (sscanf(line, "%*s%d", &count) != 1)
+		return line;
+	pos[0] = 0.0f;
+	pos[1] = 0.0f;
+	pos[2] = 0.0f;
+	pos[3] = 0.0f;
+	for (i = 0; i < count; i++) {
+		line = read_line(reader, buffer);
+		if (sscanf(line, "%*s%f%f%f", &pos[0], &pos[1], &pos[2]) == 3) {
+			object = (char *)FH_NEW(0x20, fh_GameModeFile, alloc_line);
+			if (object != NULL)
+				RespawnPoint_Init(object, pos, 0);
+		}
+	}
+	return line;
+}
+
+/* GAMETIME, CAMERASETUP, CAMERADISTANCE of a level script */
+static void read_camera_and_time(void *self, char *line)
+{
+	if (_strnicmp(line, "GAMETIME ", 9) == 0 && sscanf(line, "%*s%f", FH_AV(self, 0xac)) == 1) {
+		FH_AF(self, 0xac) = FH_AF(self, 0xac) * 60.0f;
+		FH_AF(self, 0x9c) = FH_AF(self, 0xac);
+	}
+	if (_strnicmp(line, "CAMERASETUP ", 0xc) == 0)
+		sscanf(line, "%*s%f%f%f", FH_AV(self, 0xfc), FH_AV(self, 0x100), FH_AV(self, 0x104));
+	if (_strnicmp(line, "CAMERADISTANCE ", 0xf) == 0)
+		sscanf(line, "%*s%f", FH_AV(self, 0x15c));
+}
+
+/* the goals of a level script (NOOFGOALS): each is three lines; the positions in the
+script are replaced by fixed ones (`a` and `b`); `line` follows the reads */
+static char *read_goals(void *self, void *reader, char *buffer, char *line, const float *a, const float *b)
+{
+	float ignored[3];
+	float gpos[4];
+	int n, i, id, x, y;
+
+	if (sscanf(line, "%*s%d", &n) != 1)
+		return line;
+	for (i = 0; i < n; i++) {
+		line = read_line(reader, buffer);
+		sscanf(line, "%*s%f%f%f", &ignored[0], &ignored[1], &ignored[2]);
+		line = read_line(reader, buffer);
+		sscanf(line, "%*s%f%f%f", &gpos[0], &gpos[1], &gpos[2]);
+		line = read_line(reader, buffer);
+		sscanf(line, "%*s%d%d%d", &id, &x, &y);
+		gpos[3] = 1.0f;   /* a stack word the original never sets */
+		if (i == 0) {
+			gpos[0] = a[0];
+			gpos[2] = a[2];
+			gpos[1] = a[1];
+			FH_P(0x00302194) = CFHunt_GenericGoal_AddGoal(FH_AP(self, 0x27c), gpos, 0.7f, 1);
+			CFHunt_GenericGoal_SetActive(FH_AP(self, 0x27c), GOAL_A(), 1);
+			CFHunt_GenericGoal_SetColour(FH_AP(self, 0x27c), GOAL_A(), 0x7f7f7f);
+		} else if (i == 1) {
+			gpos[0] = b[0];
+			gpos[2] = b[2];
+			gpos[1] = b[1];
+			FH_P(0x0030219c) = CFHunt_GenericGoal_AddGoal(FH_AP(self, 0x27c), gpos, 0.7f, 2);
+			CFHunt_GenericGoal_SetActive(FH_AP(self, 0x27c), GOAL_B(), 1);
+			CFHunt_GenericGoal_SetColour(FH_AP(self, 0x27c), GOAL_B(), 0x7f7f7f);
+		}
+	}
+	return line;
+}
+
+/* the chairs (throwables) of a level script (NOOFCHAIRS): position, type and size each */
+static void read_chairs(void *reader, char *buffer, char *line, int alloc_line)
+{
+	float pos[4];
+	float size;
+	char *object;
+	char *l;
+	int n, i, type;
+
+	pos[0] = 0.0f;
+	pos[1] = 0.0f;
+	pos[2] = 0.0f;
+	pos[3] = 0.0f;
+	if (sscanf(line, "%*s%d", &n) != 1)
+		return;
+	FoxHunt_LoadPropActors();
+	for (i = 0; i < n; i++) {
+		l = read_line(reader, buffer);
+		sscanf(l, "%*s%f%f%f", &pos[0], &pos[1], &pos[2]);
+		l = read_line(reader, buffer);
+		sscanf(l, "%*s%d", &type);
+		l = read_line(reader, buffer);
+		sscanf(l, "%*s%f", &size);
+		object = (char *)FH_NEW(0x50, fh_GameModeFile, alloc_line);
+		if (object != NULL)
+			object = (char *)CFHunt_Throwable_Ctor(object, type, pos, size);
+		FH_PV(0x003022d4)[i] = object;
+	}
+}
+
+/* 0x0012b760  CGameMode_FoxHunt.cpp: sets up variation 2 (Energy Ball, the town): reads
+destination.cfg (respawn points, game time, camera, goals, gates, chairs), loads the town,
+its route height maps, the ball (one flag), the players, the harbour water, the HUD, the
+intro, two glass panes, the sounds, the lightning sky, the boat and a shark */
+void CGameMode_FoxHunt_InitEnergyBall(void *self, void *package)
+{
+	static const float goal_a[3] = { -332.0f, 500.0f, 354.0f };
+	static const float goal_b[3] = { 458.0f, 0.0f, -432.0f };
+	unsigned char reader[0x214] __attribute__((aligned(4)));
+	char buffer[0x200];
+	char mapfile[0x200];
+	char *line;
+	char *actor;
+	char *object;
+	float pos[4];
+	float dir[4];
+	int i;
+
+	FoxHunt_TextReader_Ctor(reader);
+	open_script(reader, package, "destination.cfg", "Destination.cfg");
+	while (FH_AP(reader, 0x8) < FH_AP(reader, 0xc)) {
+		line = read_line(reader, buffer);
+		if (strncmp(line, "//", 2) == 0)
+			continue;
+		if (_strnicmp(line, "MAPFILE ", 8) == 0)
+			FoxHunt_ReadQuoted(line, mapfile, 0x1ff);
+		if (_strnicmp(line, "NOOFRESPAWNPOINTS ", 0x12) == 0)
+			line = read_respawn_points(reader, buffer, line, 0xbb4);
+		read_camera_and_time(self, line);
+		if (_strnicmp(line, "NOOFGOALS ", 10) == 0)
+			line = read_goals(self, reader, buffer, line, goal_a, goal_b);
+		if (_strnicmp(line, "NOOFGATES ", 10) == 0) {
+			int n;
+
+			FUN_00138090();
+			bkPrintf("Found No of Gates\n");
+			if (sscanf(line, "%*s%d", &n) == 1) {
+				for (i = 0; i < n; i++) {
+					float gate[4];
+					float f;
+					int a, b, c, d;
+					char *l;
+
+					l = read_line(reader, buffer);
+					sscanf(l, "%*s%f%f%f", &gate[0], &gate[1], &gate[2]);
+					l = read_line(reader, buffer);
+					sscanf(l, "%*s%f", &f);
+					l = read_line(reader, buffer);
+					sscanf(l, "%*s%d%d%d", &a, &b, &c);
+					line = read_line(reader, buffer);
+					sscanf(line, "%*s%d", &d);
+					object = (char *)FH_NEW(0x44, fh_GameModeFile, 0xc4a);
+					if (object != NULL)
+						FoxHunt_Gate_Ctor(object, gate, f, a, b, c, d);
+				}
+			}
+		}
+		if (_strnicmp(line, "NOOFCHAIRS ", 0xb) == 0)
+			read_chairs(reader, buffer, line, 0xc7f);
+	}
+	pos[0] = 0.0f;
+	pos[1] = 0.0f;
+	pos[2] = 0.0f;
+	pos[3] = 0.0f;
+	actor = (char *)Actor_LoadAny("obe\\tag1a4.obe", pos, 0, NULL, 0);
+	ACTOR_FLAGS(actor) |= 0x410000;
+	FH_AP(self, 0x78) = (char *)bLoadResource(NULL, "obe\\tag1_arenabg5.obe", 6, 0xdefa);
+	if (FH_AP(self, 0x78) == NULL)
+		bkPrintf("COULDNT LOAD THE SET U MUPPET\n");
+	FH_P(0x0030215c) = load_heights(package, "tag1a.hmp", 0xca0);
+	FH_P(0x00302188) = load_heights(package, "tag1b.hmp", 0xca3);
+	FH_P(0x00302158) = load_heights(package, "tag1c.hmp", 0xca6);
+	FH_P(0x00302154) = load_heights(package, "tag1d.hmp", 0xca9);
+	if (FH_P(0x0030215c) == NULL)
+		bkPrintf("NO HEIGHT MAP ---------------------------------------\n");
+	CLRoute_SetHeights((struct CLRouteHeights *)FH_P(0x0030215c));
+	/* the ball at a random place */
+	pos[0] = (float)(fh_rand() % 0x708 - 900);
+	pos[2] = (float)(fh_rand() % 0x708 - 900);
+	pos[1] = 3000.0f;
+	pos[3] = 0.0f;
+	FUN_00136440();
+	object = (char *)FH_NEW(0x54, fh_GameModeFile, 0xcc3);
+	if (object != NULL)
+		CFHunt_Flag_Ctor(object, pos, 1, 0);
+	pos[1] = 2000.0f;
+	load_player_models();
+	for (i = 0; i < DAT_002bae94; i++) {
+		object = (char *)FH_NEW(0x11fc, fh_GameModeFile, 0xcd4);
+		if (object != NULL)
+			object = (char *)FoxHunt_Player_Ctor(object, i, pos);
+		PL(i) = object;
+		DAT_002f289c[i] = object;
+		pos[0] = (float)(fh_rand() % 0xaf0 - 0x578);
+		pos[2] = (float)(fh_rand() % 0xaf0 - 0x578);
+	}
+	for (i = 0; i < DAT_002bae94; i++)
+		FUN_00133370((int)(uintptr_t)PL(i));
+	dir[0] = 1.0f;
+	dir[1] = -0.5f;
+	dir[2] = 1.0f;
+	dir[3] = 0.0f;
+	baSetDirectionalLight((struct BLight *)GM_LIGHT2(self), dir);
+	baEnableLight((struct BLight *)GM_LIGHT2(self), 0);
+	for (i = 0; i < DAT_002bae94; i++) {
+		FH_AI(PL(i), 0x11d0) = 0;
+		FH_AI(self, 0xc4 + i * 4) = 0;
+	}
+	{
+		static const unsigned int water[16] = {
+			0xc4fa0000u, 0xc3960000u, 0xc55ac000u,   /* corner (-2000, -300, -3500) */
+			0x45cb2000u, 0x45cb2000u,                /* size 6500 x 6500 */
+			0x5a, 0x5a,                              /* 90 x 90 cells */
+			0,                                       /* no wrap */
+			0x3f75c28fu, 0x3dcccccdu,                /* damping 0.96, tension 0.1 */
+			0x40800000u, 0x40800000u, 0x3dcccccdu,   /* height 4, normal 4, slope uv 0.1 */
+			0x4f016448u,                             /* colour */
+			0,                                       /* texture name (set by make_water) */
+			0x3f800000u,                             /* uv scale 1 */
+		};
+
+		make_water(water, 0xcf2, 0xcf6);
+	}
+	make_hud(self);
+	{
+		unsigned int size;
+		char *data;
+		int *map;
+
+		data = (char *)bkLoadFile((struct bkPackage *)package, "tag1.lom", NULL, &size, NULL, 0);
+		map = ParseMap_Load(data, 2, (int)size);
+		if (map == NULL)
+			bkPrintf("load tag1.lom failed \n");
+		CLIntroCam_Load((int)(uintptr_t)map, (undefined4)(uintptr_t)self);
+		ParseMap_Free(map);
+	}
+	/* two glass panes */
+	pos[0] = -942.0f;
+	pos[1] = 820.0f;
+	pos[2] = -550.0f;
+	object = (char *)FH_NEW(0x18, fh_GameModeFile, 0xd3a);
+	if (object != NULL)
+		FoxHunt_Glass_Ctor(object, pos, 1);
+	pos[0] = 300.0f;
+	pos[1] = 790.0f;
+	pos[2] = 941.0f;
+	object = (char *)FH_NEW(0x18, fh_GameModeFile, 0xd3f);
+	if (object != NULL)
+		FoxHunt_Glass_Ctor(object, pos, 2);
+	start_loops(0, 14);
+	FH_AI(self, 0xbc) = -1;
+	FH_AI(self, 0xb8) = -1;
+	FH_AI(self, 0xb4) = -1;
+	FH_AI(self, 0xb0) = -1;
+	/* the lightning sky and the boat */
+	pos[0] = 0.0f;
+	pos[1] = -20000.0f;
+	pos[2] = 0.0f;
+	*(char **)FH_ADDR(0x002ab2cc) = (char *)bLoadResource(NULL, FH_P(0x002ab2c8), 1, 0);
+	FH_AP(self, 0x80) = (char *)Actor_Create(FH_P(0x002ab2cc), pos, NULL, 4, 0, 1);
+	FH_AP(self, 0x84) = NULL;
+	pos[0] = 670.0f;
+	pos[1] = -330.0f;
+	pos[2] = -2687.0f;
+	*(char **)FH_ADDR(0x002ab2d4) = (char *)bLoadResource(NULL, FH_P(0x002ab2d0), 1, 0);
+	FH_AP(self, 0x84) = (char *)Actor_Create(FH_P(0x002ab2d4), pos, NULL, 4, 0, 1);
+	if (FH_AP(self, 0x84) == NULL)
+		bkPrintf("Couldnt load the BOAT!\n");
+	FH_AU(FH_AP(self, 0x84), 0x1e8) = 0x3f490fdau;   /* pi / 4 */
+	start_state(self);
+	/* a shark */
+	pos[0] = 1800.0f;
+	pos[1] = -390.0f;
+	pos[2] = 5200.0f;
+	FUN_00135f70();
+	object = (char *)FH_NEW(0x60, fh_GameModeFile, 0xd6a);
+	if (object != NULL)
+		FoxHunt_Shark_Ctor(object, pos, 1);
+	FoxHunt_TextReader_Dtor(reader);
+}
+
+/* three or one random flags (Odd One Out: 3; Victim: 1) at y 3000 */
+static void random_flag(float *pos, int line, int a, int b)
+{
+	char *object;
+
+	pos[0] = (float)(fh_rand() % 0x708 - 900);
+	pos[2] = (float)(fh_rand() % 0x708 - 900);
+	object = (char *)FH_NEW(0x54, fh_GameModeFile, line);
+	if (object != NULL)
+		CFHunt_Flag_Ctor(object, pos, a, b);
+}
+
+/* the players at random places (the first at `pos`), then their AI reset */
+static void make_players(float *pos, int line)
+{
+	char *object;
+	int i;
+
+	load_player_models();
+	for (i = 0; i < DAT_002bae94; i++) {
+		object = (char *)FH_NEW(0x11fc, fh_GameModeFile, line);
+		if (object != NULL)
+			object = (char *)FoxHunt_Player_Ctor(object, i, pos);
+		PL(i) = object;
+		DAT_002f289c[i] = object;
+		pos[0] = (float)(fh_rand() % 0xaf0 - 0x578);
+		pos[2] = (float)(fh_rand() % 0xaf0 - 0x578);
+	}
+}
+
+/* 0x0012c790  CGameMode_FoxHunt.cpp ("initTimeOut"): sets up variation 3 (Odd One Out,
+the beach): reads timeout.cfg (respawn points, game time, camera, chairs), loads the beach,
+its windows, one route height map, three flags, the players, two escalators, the pool,
+the big red button, the HUD (a 30 second clock), the intro, the sounds, the TV screen and a
+shark */
+void CGameMode_FoxHunt_InitOddOneOut(void *self, void *package)
+{
+	unsigned char reader[0x214] __attribute__((aligned(4)));
+	char buffer[0x200];
+	char mapfile[0x200];
+	char *line;
+	char *actor;
+	char *object;
+	char *data;
+	unsigned int size;
+	float pos[4];
+	int i;
+
+	FoxHunt_TextReader_Ctor(reader);
+	data = (char *)bkLoadFile((struct bkPackage *)package, "timeout.cfg", NULL, &size, NULL, 0);
+	if (data == NULL)
+		bkPrintf("CGameMode_FoxHunt::initTimeOut - Could Not Load FoxHunt.cfg\n");
+	BCarTextReader_Init((struct BCarTextReader *)reader, data, (int)size, "TimeOut.cfg");
+	while (FH_AP(reader, 0x8) < FH_AP(reader, 0xc)) {
+		line = read_line(reader, buffer);
+		if (strncmp(line, "//", 2) == 0)
+			continue;
+		if (_strnicmp(line, "MAPFILE ", 8) == 0)
+			FoxHunt_ReadQuoted(line, mapfile, 0x1ff);
+		if (_strnicmp(line, "NOOFRESPAWNPOINTS ", 0x12) == 0)
+			line = read_respawn_points(reader, buffer, line, 0xdb0);
+		read_camera_and_time(self, line);
+		if (_strnicmp(line, "NOOFCHAIRS ", 0xb) == 0)
+			read_chairs(reader, buffer, line, 0xe01);
+	}
+	pos[0] = 0.0f;
+	pos[1] = 0.0f;
+	pos[2] = 0.0f;
+	pos[3] = 0.0f;
+	actor = (char *)Actor_LoadAny("obe\\tagtimearena.obe", pos, 0, NULL, 0);
+	ACTOR_FLAGS(actor) |= 0x410000;
+	FH_AP(self, 0x78) = (char *)bLoadResource(NULL, "obe\\tagtimebg.obe", 6, 0xdefa);
+	FH_AP(self, 0x7c) = (char *)bLoadResource(NULL, "obe\\timewindows.obe", 6, 0xdefa);
+	if (FH_AP(self, 0x7c) == NULL)
+		bkPrintf("SET FAILED TO LOAD === tag2Glass ===\n");
+	FH_P(0x0030215c) = NULL;
+	FH_P(0x00302188) = NULL;
+	FH_P(0x00302158) = NULL;
+	FH_P(0x00302154) = NULL;
+	FH_P(0x0030215c) = load_heights(package, "tag2.hmp", 0xe2c);
+	CLRoute_SetHeights((struct CLRouteHeights *)FH_P(0x0030215c));
+	pos[1] = 3000.0f;
+	pos[3] = 0.0f;
+	pos[0] = (float)(fh_rand() % 0x708 - 900);
+	pos[2] = (float)(fh_rand() % 0x708 - 900);
+	FUN_00136440();
+	object = (char *)FH_NEW(0x54, fh_GameModeFile, 0xe3e);
+	if (object != NULL)
+		CFHunt_Flag_Ctor(object, pos, 1, 1);
+	random_flag(pos, 0xe43, 2, 2);
+	random_flag(pos, 0xe49, 3, 3);
+	pos[1] = 0.0f;
+	make_players(pos, 0xe5a);
+	bkPrintf("Init'd Characters\n");
+	for (i = 0; i < DAT_002bae94; i++)
+		FUN_00133370((int)(uintptr_t)PL(i));
+	FUN_001364c0();
+	for (i = 0; i < DAT_002bae94; i++) {
+		FH_AI(PL(i), 0x11d0) = 1;
+		FH_AI(self, 0xc4 + i * 4) = 1;
+	}
+	FUN_00137e40();
+	bkPrintf("\t\t\t\t\t\t\t\t\t\t\t\t\tCalled Escalator Init\n");
+	pos[0] = -1080.0f;
+	pos[1] = 0.0f;
+	pos[2] = -300.0f;
+	object = (char *)FH_NEW(0x20, fh_GameModeFile, 0xe79);
+	if (object != NULL)
+		FoxHunt_Escalator_Ctor(object, pos, 0, 0, 1);
+	bkPrintf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tnew Escalator created\n");
+	pos[0] = 1080.0f;
+	pos[1] = 0.0f;
+	pos[2] = -300.0f;
+	object = (char *)FH_NEW(0x20, fh_GameModeFile, 0xe7f);
+	if (object != NULL)
+		FoxHunt_Escalator_Ctor(object, pos, 1, 0, 2);
+	bkPrintf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tnew Escalator created\n");
+	{
+		char *water;
+		unsigned int *p;
+
+		water = (char *)FH_NEW(0x9090, fh_GameModeFile, 0xe84);
+		if (water == NULL)
+			FH_P(0x0030214c) = NULL;
+		else
+			FH_P(0x0030214c) = (char *)FoxHunt_CWaterField_Ctor(water);
+		p = (unsigned int *)FH_NEW(0x40, fh_GameModeFile, 0xe87);
+		p[0] = 0xc37f0000u;   /* corner (-255, -5, -755) */
+		p[1] = 0xc0a00000u;
+		p[2] = 0xc43cc000u;
+		p[3] = 0x43ff0000u;   /* size 510 x 510 */
+		p[4] = 0x43ff0000u;
+		p[5] = 0x20;          /* 32 x 32 cells */
+		p[6] = 0x20;
+		p[7] = 0;
+		p[8] = 0x3f70a3d7u;   /* damping 0.94 */
+		p[9] = 0x3e800000u;   /* tension 0.25 */
+		p[10] = 0;
+		p[11] = 0x40800000u;  /* normal 4 */
+		p[12] = 0x3dcccccdu;  /* slope uv 0.1 */
+		p[13] = 0x4f016448u;
+		p[14] = FH_WORD("textures\\water2.bmp");
+		p[15] = 0x3f800000u;
+		FH_VFN(WATER(), 0x4, int (*)(void *, void *))(WATER(), p);
+		bkHeapFree(p);
+	}
+	FUN_00135800();
+	/* the big red button (brb) */
+	pos[0] = 0.0f;
+	pos[1] = 570.0f;
+	pos[2] = 1185.0f;
+	object = (char *)FH_NEW(0x50, fh_GameModeFile, 0xeaa);
+	if (object != NULL)
+		FoxHunt_Button_Ctor(object, 1, 65000.0f, 6.28318548f, 1, 1, pos, 1.57079625f);
+	FH_AF(self, 0xa0) = 1800.0f;
+	CLHud_CreateScoreBoxes((int)(uintptr_t)DAT_002ecfac);
+	CLHud_CreateScoreTexts((int)(uintptr_t)DAT_002ecfac, (int *)((char *)self + 0xc4));
+	CLHud_CreateClock((int)(uintptr_t)DAT_002ecfac, FH_AF(self, 0xa0));
+	CLHud_CreateBars((int)(uintptr_t)DAT_002ecfac);
+	FoxHunt_CreateIcons();
+	{
+		int *map;
+
+		data = (char *)bkLoadFile((struct bkPackage *)package, "tag2.lom", NULL, &size, NULL, 0);
+		map = ParseMap_Load(data, 2, (int)size);
+		if (map == NULL)
+			bkPrintf("level instance NULL  \n");
+		CLIntroCam_Load((int)(uintptr_t)map, (undefined4)(uintptr_t)self);
+		ParseMap_Free(map);
+	}
+	start_loops(10, 16);
+	FH_AI(self, 0xd4) = 0;
+	FH_AI(self, 0xbc) = -1;
+	FH_AI(self, 0xb8) = -1;
+	FH_AI(self, 0xb4) = -1;
+	FH_AI(self, 0xb0) = -1;
+	start_state(self);
+	FH_AP(self, 0x210) = (char *)bLoadResource(NULL, "textures\\tvscreren.gif", 0, 0xdefa);
+	bdTextureSetFrame((struct bdTexture *)FH_AP(self, 0x210), 0);
+	/* a shark */
+	pos[0] = 1608.0f;
+	pos[1] = 450.0f;
+	pos[2] = -400.0f;
+	FUN_00135f70();
+	object = (char *)FH_NEW(0x60, fh_GameModeFile, 0xeeb);
+	if (object != NULL)
+		FoxHunt_Shark_Ctor(object, pos, 1);
+	FoxHunt_TextReader_Dtor(reader);
+}
+
+extern unsigned char DAT_002b9968[];   /* core_modes_b: the score table */
+extern int DAT_002b9c58[];             /* core_modes_b: the players by rank */
+
+/* 0x0012d450  CGameMode_FoxHunt.cpp ("initVictim"): sets up variation 4 (Victim, the
+beach): reads victim.cfg, loads the beach, its windows, one route height map, one flag,
+the players, picks the victim (random, or the last-placed player outside a tournament),
+two escalators, the big red button, the pool, the HUD, the intro, the sounds, the TV screen and
+a shark */
+void CGameMode_FoxHunt_InitVictim(void *self, void *package)
+{
+	unsigned char reader[0x214] __attribute__((aligned(4)));
+	char buffer[0x200];
+	char mapfile[0x200];
+	char *line;
+	char *actor;
+	char *object;
+	char *data;
+	unsigned int size;
+	float pos[4];
+	int i, victim;
+
+	FoxHunt_TextReader_Ctor(reader);
+	data = (char *)bkLoadFile((struct bkPackage *)package, "victim.cfg", NULL, &size, NULL, 0);
+	if (data == NULL)
+		bkPrintf("CGameMode_FoxHunt::initVictim - Could Not Load Victim.cfg\n");
+	BCarTextReader_Init((struct BCarTextReader *)reader, data, (int)size, "Victim.cfg");
+	while (FH_AP(reader, 0x8) < FH_AP(reader, 0xc)) {
+		line = read_line(reader, buffer);
+		if (strncmp(line, "//", 2) == 0)
+			continue;
+		if (_strnicmp(line, "MAPFILE ", 8) == 0)
+			FoxHunt_ReadQuoted(line, mapfile, 0x1ff);
+		if (_strnicmp(line, "NOOFRESPAWNPOINTS ", 0x12) == 0) {
+			bkPrintf("Found No of Respawn Points\n");
+			line = read_respawn_points(reader, buffer, line, 0xf34);
+		}
+		read_camera_and_time(self, line);
+		if (_strnicmp(line, "NOOFCHAIRS ", 0xb) == 0)
+			read_chairs(reader, buffer, line, 0xf82);
+	}
+	pos[0] = 0.0f;
+	pos[1] = 0.0f;
+	pos[2] = 0.0f;
+	pos[3] = 0.0f;
+	actor = (char *)Actor_LoadAny("obe\\tag2arena.obe", pos, 0, NULL, 0);
+	ACTOR_FLAGS(actor) |= 0x410000;
+	FH_AP(self, 0x78) = (char *)bLoadResource(NULL, "obe\\tag2arenabg.obe", 6, 0xdefa);
+	if (FH_AP(self, 0x78) == NULL)
+		bkPrintf("COULDNT LOAD THE SET U MUPPET\n");
+	FH_AP(self, 0x7c) = (char *)bLoadResource(NULL, "obe\\windows.obe", 6, 0xdefa);
+	if (FH_AP(self, 0x7c) == NULL)
+		bkPrintf("SET FAILED TO LOAD === tag2Glass ===\n");
+	FH_P(0x0030215c) = NULL;
+	FH_P(0x00302188) = NULL;
+	FH_P(0x00302158) = NULL;
+	FH_P(0x00302154) = NULL;
+	FH_P(0x0030215c) = load_heights(package, "tag2.hmp", 0xfb2);
+	CLRoute_SetHeights((struct CLRouteHeights *)FH_P(0x0030215c));
+	pos[1] = 3000.0f;
+	pos[3] = 0.0f;
+	pos[0] = (float)(fh_rand() % 0x708 - 900);
+	pos[2] = (float)(fh_rand() % 0x708 - 900);
+	FUN_00136440();
+	object = (char *)FH_NEW(0x54, fh_GameModeFile, 0xfc4);
+	if (object != NULL)
+		CFHunt_Flag_Ctor(object, pos, 1, 1);
+	pos[1] = 0.0f;
+	make_players(pos, 0xfd6);
+	for (i = 0; i < DAT_002bae94; i++)
+		FUN_00133370((int)(uintptr_t)PL(i));
+	bkPrintf("Spawned Characters\n");
+	for (i = 0; i < DAT_002bae94; i++) {
+		FH_AI(PL(i), 0x11d0) = 1;
+		FH_AI(self, 0xc4 + i * 4) = 1;
+	}
+	/* the victim */
+	victim = fh_rand() % 3;
+	if (DAT_002bae98 == 0) {
+		CScoreTable_Rank((struct CScoreTable *)DAT_002b9968);
+		victim = DAT_002b9c58[0];
+	}
+	FUN_00136b40(victim, 1);
+	FH_AI(PL(victim), 0x11cc) = 0;
+	FUN_00137e40();
+	bkPrintf("\t\t\t\t\t\t\t\t\t\t\t\t\tCalled Escalator Init\n");
+	pos[0] = -1080.0f;
+	pos[1] = 0.0f;
+	pos[2] = -300.0f;
+	object = (char *)FH_NEW(0x20, fh_GameModeFile, 0x1005);
+	if (object != NULL)
+		FoxHunt_Escalator_Ctor(object, pos, 0, 0, 1);
+	bkPrintf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tnew Escalator created\n");
+	pos[0] = 1080.0f;
+	pos[1] = 0.0f;
+	pos[2] = -300.0f;
+	object = (char *)FH_NEW(0x20, fh_GameModeFile, 0x100b);
+	if (object != NULL)
+		FoxHunt_Escalator_Ctor(object, pos, 1, 0, 2);
+	bkPrintf("\t\t\t\t\t\t\t\t\t\t\t\t\t\tnew Escalator created\n");
+	FUN_00135800();
+	/* the big red button (brb) */
+	pos[0] = 0.0f;
+	pos[1] = 570.0f;
+	pos[2] = 1185.0f;
+	object = (char *)FH_NEW(0x50, fh_GameModeFile, 0x1019);
+	if (object != NULL)
+		FoxHunt_Button_Ctor(object, 1, 65000.0f, 6.28318548f, 1, 1, pos, 1.57079625f);
+	FH_AI(self, 0xbc) = 1;
+	FH_AI(self, 0xb8) = 1;
+	FH_AI(self, 0xb4) = 1;
+	FH_AI(self, 0xb0) = 1;
+	{
+		char *water;
+		unsigned int *p;
+
+		water = (char *)FH_NEW(0x9090, fh_GameModeFile, 0x102e);
+		if (water == NULL)
+			FH_P(0x0030214c) = NULL;
+		else
+			FH_P(0x0030214c) = (char *)FoxHunt_CWaterField_Ctor(water);
+		p = (unsigned int *)FH_NEW(0x40, fh_GameModeFile, 0x1031);
+		p[5] = 0x20;          /* 32 x 32 cells */
+		p[6] = 0x20;
+		p[0] = 0xc37f0000u;   /* corner (-255, -10, -755) */
+		p[1] = 0xc1200000u;
+		p[2] = 0xc43cc000u;
+		p[3] = 0x43ff0000u;   /* size 510 x 510 */
+		p[4] = 0x43ff0000u;
+		p[7] = 0;
+		p[8] = 0x3f70a3d7u;   /* damping 0.94 */
+		p[9] = 0x3e4ccccdu;   /* tension 0.2 */
+		p[10] = 0;
+		p[11] = 0x40000000u;  /* normal 2 */
+		p[12] = 0x3dcccccdu;  /* slope uv 0.1 */
+		p[13] = 0x641b8da5u;
+		p[14] = FH_WORD("textures\\water2.bmp");
+		p[15] = 0x3f800000u;
+		FH_VFN(WATER(), 0x4, int (*)(void *, void *))(WATER(), p);
+		bkHeapFree(p);
+	}
+	FH_AF(self, 0xa0) = 1800.0f;
+	CLHud_CreateScoreBoxes((int)(uintptr_t)DAT_002ecfac);
+	CLHud_CreateScoreTexts((int)(uintptr_t)DAT_002ecfac, (int *)((char *)self + 0xc4));
+	CLHud_CreateClock((int)(uintptr_t)DAT_002ecfac, FH_AF(self, 0xa0) * (1.0f / 60.0f));
+	CLHud_CreateBars((int)(uintptr_t)DAT_002ecfac);
+	FoxHunt_CreateIcons();
+	{
+		int *map;
+
+		data = (char *)bkLoadFile((struct bkPackage *)package, "tag2.lom", NULL, &size, NULL, 0);
+		map = ParseMap_Load(data, 2, (int)size);
+		if (map == NULL)
+			bkPrintf("Level instance NULL \n");
+		CLIntroCam_Load((int)(uintptr_t)map, (undefined4)(uintptr_t)self);
+		ParseMap_Free(map);
+	}
+	start_loops(10, 16);
+	FH_AP(self, 0x210) = (char *)bLoadResource(NULL, "textures\\tvscreren.gif", 0, 0xdefa);
+	bdTextureSetFrame((struct bdTexture *)FH_AP(self, 0x210), 0);
+	start_state(self);
+	/* a shark */
+	pos[0] = -3300.0f;
+	pos[1] = 1000.0f;
+	pos[2] = 1400.0f;
+	FUN_00135f70();
+	object = (char *)FH_NEW(0x60, fh_GameModeFile, 0x1076);
+	if (object != NULL)
+		FoxHunt_Shark_Ctor(object, pos, 1);
+	FoxHunt_TextReader_Dtor(reader);
+}
+
+extern int DAT_00293e9c;               /* charlib: shadows are set up */
+
+/* a tweak menu (CTweakMenu, 0xe8 bytes) */
+static char *new_menu(const char *name, int line)
+{
+	char *menu = (char *)FH_NEW(0xe8, fh_GameModeFile, line);
+
+	if (menu != NULL)
+		menu = (char *)CTweakMenu_Ctor((struct CTweakMenu *)menu, name);
+	return menu;
+}
+
+#define MENU(a) ((struct CTweakMenu *)FH_P(a))
+
+/* 0x0012e020  CGameMode_FoxHunt.cpp: start: sets up the variation's level, the RefBot and
+the debris colours, the three tweak menus (FoxHunt Menu, FoxHunt AI Menu, FoxHunt Debug),
+the camera and its targets, the debug free camera, the rumble menu and the shadows */
+void CGameMode_FoxHunt_Start(void *self)
+{
+	unsigned int a;
+	int i;
+
+	FH_AU(self, 0x10) |= 1;
+	FUN_00072720((undefined4)(uintptr_t)DAT_003021ac);
+	if (GM_VARIATION(self) == 1) {
+		CGameMode_FoxHunt_InitCooperation(self, fh_VariationPackage);
+	} else if (GM_VARIATION(self) == 2) {
+		CGameMode_FoxHunt_InitEnergyBall(self, fh_VariationPackage);
+	} else if (GM_VARIATION(self) == 3) {
+		CGameMode_FoxHunt_InitOddOneOut(self, fh_VariationPackage);
+		FH_AF(self, 0x15c) = 1550.0f;
+	} else if (GM_VARIATION(self) == 4) {
+		CGameMode_FoxHunt_InitVictim(self, fh_VariationPackage);
+		FH_AF(self, 0x15c) = 1550.0f;
+	}
+	RefBot_Create();
+	FUN_0012edb0();
+	FH_P(0x00302140) = new_menu("FoxHunt Menu", 0x175);
+	CTweakMenu_AddFloat(MENU(0x00302140), "P1 Attak", FH_AV(PL(0), 0x10f4), 10.0f, 10.0f, 500.0f);
+	CTweakMenu_AddFloat(MENU(0x00302140), "P2 Attak", FH_AV(PL(1), 0x10f4), 10.0f, 10.0f, 500.0f);
+	CTweakMenu_AddFloat(MENU(0x00302140), "P3 Attak", FH_AV(PL(2), 0x10f4), 10.0f, 10.0f, 500.0f);
+	CTweakMenu_AddFloat(MENU(0x00302140), "P4 Attak", FH_AV(PL(3), 0x10f4), 10.0f, 10.0f, 500.0f);
+	CTweakMenu_AddFloat(MENU(0x00302140), "P1 Jump", FH_AV(PL(0), 0x1170), 1.0f, 0.0f, 100.0f);
+	CTweakMenu_AddFloat(MENU(0x00302140), "P2 Jump", FH_AV(PL(1), 0x1170), 1.0f, 0.0f, 100.0f);
+	CTweakMenu_AddFloat(MENU(0x00302140), "P3 Jump", FH_AV(PL(2), 0x1170), 1.0f, 0.0f, 100.0f);
+	CTweakMenu_AddFloat(MENU(0x00302140), "P4 Jump", FH_AV(PL(3), 0x1170), 1.0f, 0.0f, 100.0f);
+	CTweakMenu_AddInt(MENU(0x00302140), "P1 JumpStep", (int *)(PL(0) + 0x116c), 10, 0, 100, 0);
+	CTweakMenu_AddInt(MENU(0x00302140), "P2 JumpStep", (int *)(PL(1) + 0x116c), 10, 0, 100, 0);
+	CTweakMenu_AddInt(MENU(0x00302140), "P3 JumpStep", (int *)(PL(2) + 0x116c), 10, 0, 100, 0);
+	CTweakMenu_AddInt(MENU(0x00302140), "P4 JumpStep", (int *)(PL(3) + 0x116c), 10, 0, 100, 0);
+	if (GM_VARIATION(self) < 3) {
+		if (GM_VARIATION(self) < 3)
+			CTweakMenu_AddInt(MENU(0x00302140), "Rain", (int *)((char *)self + 0x194), 1, 0, 0x14, 0);
+	} else {
+		CTweakMenu_AddFloat(MENU(0x00302140), "Bubble", FH_AV(self, 0x190), 0.05f, 0.0f, 2.0f);
+	}
+	FH_P(0x00302148) = new_menu("FoxHunt AI Menu", 0x18e);
+	CTweakMenu_AddBool(MENU(0x00302148), "P1 Uman", &DAT_002baed8[0]);
+	CTweakMenu_AddBool(MENU(0x00302148), "P2 Uman", &DAT_002baed8[10]);
+	CTweakMenu_AddBool(MENU(0x00302148), "P3 Uman", &DAT_002baed8[20]);
+	CTweakMenu_AddBool(MENU(0x00302148), "P4 Uman", &DAT_002baed8[30]);
+	CTweakMenu_AddInt(MENU(0x00302148), "P1 AImode", (int *)(PL(0) + 0x14), 1, 0, 3, 0);
+	CTweakMenu_AddInt(MENU(0x00302148), "P2 AImode", (int *)(PL(1) + 0x14), 1, 0, 3, 0);
+	CTweakMenu_AddInt(MENU(0x00302148), "P3 AImode", (int *)(PL(2) + 0x14), 1, 0, 3, 0);
+	CTweakMenu_AddInt(MENU(0x00302148), "P4 AImode", (int *)(PL(3) + 0x14), 1, 0, 3, 0);
+	CTweakMenu_AddFloat(MENU(0x00302148), "P1 Vengence", FH_AV(PL(0), 0x1178), 0.1f, 0.0f, 1.0f);
+	CTweakMenu_AddFloat(MENU(0x00302148), "P2 Vengence", FH_AV(PL(1), 0x1178), 0.1f, 0.0f, 1.0f);
+	CTweakMenu_AddFloat(MENU(0x00302148), "P3 Vengence", FH_AV(PL(2), 0x1178), 0.1f, 0.0f, 1.0f);
+	CTweakMenu_AddFloat(MENU(0x00302148), "P4 Vengence", FH_AV(PL(3), 0x1178), 0.1f, 0.0f, 1.0f);
+	CTweakMenu_AddFloat(MENU(0x00302148), "P1 Agro", FH_AV(PL(0), 0x117c), 0.1f, 0.0f, 1.0f);
+	CTweakMenu_AddFloat(MENU(0x00302148), "P2 Agro", FH_AV(PL(1), 0x117c), 0.1f, 0.0f, 1.0f);
+	CTweakMenu_AddFloat(MENU(0x00302148), "P3 Agro", FH_AV(PL(2), 0x117c), 0.1f, 0.0f, 1.0f);
+	CTweakMenu_AddFloat(MENU(0x00302148), "P4 Agro", FH_AV(PL(3), 0x117c), 0.1f, 0.0f, 1.0f);
+	FH_P(0x00302184) = new_menu("FoxHunt Debug", 0x1a4);
+	CTweakMenu_AddBool(MENU(0x00302184), "Overlay", (int *)((char *)self + 0x1a4));
+	if (GM_VARIATION(self) < 3) {
+		CTweakMenu_AddBool(MENU(0x00302184), "Water", (int *)((char *)self + 0x1a8));
+		CTweakMenu_AddBool(MENU(0x00302184), "Goal Effect", (int *)((char *)self + 0x1c0));
+		CTweakMenu_AddBool(MENU(0x00302184), "1stPerson Cam", (int *)((char *)self + 0x1b0));
+		CTweakMenu_AddBool(MENU(0x00302184), "3 hit steal", FH_IV(0x00302160));
+	}
+	CTweakMenu_AddBool(MENU(0x00302184), "AIRoute", (int *)((char *)self + 0x1ac));
+	if (GM_VARIATION(self) > 2) {
+		if (GM_VARIATION(self) == 4)
+			CTweakMenu_AddBool(MENU(0x00302184), "Timer Type", (int *)((char *)self + 0x1c4));
+		CTweakMenu_AddFloat(MENU(0x00302184), "Smoke Speed", FH_FV(0x00302144), 0.05f, 0.0f, 10.0f);
+		CTweakMenu_AddInt(MENU(0x00302184), "Norm/Debug/Fish Cam", (int *)((char *)self + 0x1b0), 1, 0, 1, 0);
+		CTweakMenu_AddInt(MENU(0x00302184), "Fish Of Choice", (int *)((char *)self + 0x1c8), 1, 0, 0xe, 0);
+	}
+	CTweakMenu_AddBool(MENU(0x00302184), "Draw HeightMap", (int *)((char *)self + 0x1b4));
+	CTweakMenu_AddInt(MENU(0x00302184), " PlyrLight Level", (int *)((char *)self + 0x1b8), 1, 0, 0x101, 0);
+	CTweakMenu_AddInt(MENU(0x00302184), " WorldLight Level", (int *)((char *)self + 0x1bc), 1, 0, 0x101, 0);
+	CTweakMenu_AddBool(MENU(0x00302184), "Frame Counter", (int *)((char *)self + 0x1cc));
+	CTweakMenu_AddBool(MENU(0x00302184), "DrawShadows", (int *)((char *)self + 0x1d0));
+	CTweakMenu_AddBool(MENU(0x00302184), "Draw Debris", (int *)((char *)self + 0x1d4));
+	CTweakMenu_AddInt(MENU(0x00302184), "Draw Land", (int *)((char *)self + 0x1d8), 1, 0, 2, 0);
+	CTweakMenu_AddBool(MENU(0x00302184), "Objects On", (int *)((char *)self + 0x1dc));
+	CTweakMenu_AddBool(MENU(0x00302184), "Fog On", (int *)((char *)self + 0x1e0));
+	{
+		char *cam = (char *)FH_NEW(0x574, fh_GameModeFile, 0x1c5);
+
+		if (cam == NULL)
+			FH_P(0x00302198) = NULL;
+		else
+			FH_P(0x00302198) = (char *)CCamera_Ctor(cam, 5);
+	}
+	for (i = 0; i < DAT_002bae94; i++)
+		CCamera_AddTarget(FH_P(0x00302198), FH_AV(self, 0x38 + i * 0x10), 0, (float *)DAT_002ea478);
+	if (DAT_002ba56c != 0) {
+		char *free_cam = (char *)FH_NEW(0x26c, fh_GameModeFile, 0x1de);
+
+		if (free_cam != NULL)
+			BCarFreeCamera_Construct((struct BCarFreeCamera *)free_cam, 0, 20.0f, 0);
+		if (GM_VARIATION(self) < 3) {
+			for (a = 0x002ab2e8u; a < 0x002ab328u; a += 0x10)
+				BCarFreeCamera_AddPoint((struct BCarFreeCamera *)DAT_002f26c4, FH_FV(a));
+		}
+		if (GM_VARIATION(self) > 2) {
+			for (a = 0x002ab328u; a < 0x002ab368u; a += 0x10)
+				BCarFreeCamera_AddPoint((struct BCarFreeCamera *)DAT_002f26c4, FH_FV(a));
+		}
+	}
+	CLRumble_CreateMenu((int *)DAT_002ed324);
+	CCamera_AddTarget(FH_P(0x00302198), FH_AV(self, 0x224), 0, (float *)DAT_002ea478);
+	CCamera_AddTarget(FH_P(0x00302198), FH_AV(self, 0x234), 0, (float *)DAT_002ea478);
+	CCamera_AddTarget(FH_P(0x00302198), FH_AV(self, 0x244), 0, (float *)DAT_002ea478);
+	DAT_00293e9c = 0;
+	if (GM_VARIATION(self) < 3)
+		Shadows_Init(0, 878.0f, 840.0f, -882.0f);
+	else
+		Shadows_Init(0, 0.0f, 1100.0f, -800.0f);
+	DAT_00293e9c = 1;
+	Shadows_SetFov(0.7f, 1.2f);
+	CLHud_InitBarGeometry((int)(uintptr_t)DAT_002ecfac);
+}
