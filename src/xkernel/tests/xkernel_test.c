@@ -9,6 +9,9 @@ number of failed checks.
 
 #include "platform.h"
 #include "xkernel.h"
+#include "xkernel_libcalls.h"
+#include <float.h>
+#include <math.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -382,6 +385,47 @@ static void test_disc(void)
 	CloseHandle(file);
 }
 
+/* the vfs module's (src/vfs/vfs_files.h), declared here only to take their addresses */
+int __stdcall XMountUtilityDrive(int format_clean);
+int __stdcall GetFileInformationByHandle(void *file, void *information);
+
+/* every replacement in xkernel_libcalls.h links: the game can call each one */
+static void *const every_replacement[] =
+{
+	/* xapi */
+	XGetLaunchInfo, XLaunchNewImageA, CreateEventA, ResetEvent, CreateMutexA, ReleaseMutex,
+	WaitForSingleObject, Sleep, DbgBreakPoint, KeQuerySystemTime, wsprintfA, XGetLanguage,
+	XGetVideoStandard, XGetVideoFlags, XGetGameRegion, GlobalMemoryStatus, GetDiskFreeSpaceExA,
+	XMountUtilityDrive, lstrcpyA, lstrcpynA, lstrlenA, OutputDebugStringA, CloseHandle, QueueUserAPC,
+	CreateThread, XLoadSection, XFreeSection,
+	/* libc */
+	sprintf, atol, atoi, strtok, strstr, swprintf, qsort, _snwprintf, atexit, pow, sscanf, memmove,
+	fread, fclose, ftell, fseek, fopen, fwrite, strchr, _strlwr, vsprintf, _snprintf, _stricmp, acos,
+	asin, strncat, fputc, _clearfp, _controlfp, fmod, floor, fprintf, malloc, free, realloc, strrchr,
+	atof, strncmp, sin, atan2, cos, rand, XPhysicalAlloc, XPhysicalProtect, XPhysicalFree,
+	GetTickCount, GetLocalTime, QueryPerformanceCounter, QueryPerformanceFrequency, SetEndOfFile,
+	SetFilePointer, GetFileInformationByHandle, ReadFileEx, WriteFileEx, GetFileSize, CreateFileA,
+	FindFirstFileA, FindNextFileA, MoveFileA, DeleteFileA, XFindNextSoundtrack, XFindFirstSoundtrack,
+	XGetSoundtrackSongInfo, XOpenSoundtrackSong, XFindClose, _strnicmp, _itoa,
+	/* kernel exports named in the module scope */
+	MmAllocateContiguousMemory, MmAllocateContiguousMemoryEx, MmFreeContiguousMemory, SetEvent,
+};
+
+static void test_macros(void)
+{
+	char buffer[16];
+	unsigned index, missing = 0;
+
+	/* Ghidra-shaped calls compile to the replacements */
+	CHECK(FUN_001df0f0("abcdef", "cd") != NULL && FUN_000310c1("abc") == 3, "FUN_ macros map to C names");
+	FUN_001dee6e(buffer, "%d", 12);
+	CHECK(!strcmp(buffer, "12"), "FUN_001dee6e is sprintf");
+
+	for (index = 0; index < sizeof(every_replacement) / sizeof(every_replacement[0]); index++)
+		missing += every_replacement[index] == NULL;
+	CHECK(missing == 0, "every replacement is defined");
+}
+
 int main(void)
 {
 	const char *iso = getenv("OPENFRENZY_ISO");
@@ -396,6 +440,7 @@ int main(void)
 	test_time();
 	test_memory();
 	test_xapi();
+	test_macros();
 	if (iso && *iso)
 		test_disc();
 	else

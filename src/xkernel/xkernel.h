@@ -50,7 +50,7 @@ extern "C" {
 
 /* ---------- types missing from the shared headers */
 
-typedef VOID (NTAPI *PAPCFUNC)(ULONG_PTR data);
+/* PAPCFUNC and QueueUserAPC (0x00034274) are declared in xdk_win32.h */
 
 #define MAX_SOUNDTRACK_NAME 32
 #define MAX_SONG_NAME 32
@@ -67,7 +67,6 @@ typedef struct _XSOUNDTRACK_DATA
 
 VOID NTAPI DbgBreakPoint(VOID);
 VOID NTAPI KeQuerySystemTime(LARGE_INTEGER *current_time);
-DWORD WINAPI QueueUserAPC(PAPCFUNC routine, HANDLE thread, ULONG_PTR data);
 VOID WINAPI GetLocalTime(LPSYSTEMTIME system_time);
 
 void *NTAPI MmAllocateContiguousMemory(ULONG size);
