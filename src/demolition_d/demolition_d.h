@@ -10,8 +10,9 @@ Original sources: C:\BlitzParty\Game\Src\Demolition\ (and one ClassLib file)
   ClassLib/unplaced_token.c         (gap; ClassLib/CToken.cpp by content) token assets, halo
                                     pass, list walk (0x0010c080-0x0010c200, 0x0010ce90)
   Demolition/CDemolition_Event.c    the CharLib event queue (0x0010cec0-0x0010d1d0)
-  Demolition/CDemolition_CharLibAI.c (gap) the vcall thunks of the AI condition/state tables
+  Demolition/unplaced_charlibai.c   (gap) the vcall thunks of the AI condition/state tables
                                     and the CharLib AI base of the Demolition players
+                                    (vtable 0x0026bdc0)
   Demolition/CDemolition_Crate.c    crates (vtable 0x0026be9c)
   Demolition/CDemolition_Wall.c     brick walls that break into flying bricks (0x0010dba0-)
 
@@ -195,6 +196,31 @@ typedef struct DemoEventQueue {
 	unsigned short pad0e;
 } DemoEventQueue;
 OF_ASSERT_SIZE(DemoEventQueue, 0x10);
+
+/* ======================================================================== crates */
+
+/* a crate (vtable 0x0026be9c, 0x54 bytes): a CDemoPlatform (demolition_a, vtable 0x0026a7b0)
+   that falls and bounces onto the ground and is smashed by explosions */
+typedef struct DemoCrate {
+	const void *const *vtable; /* 0x00 */
+	void *next;                /* 0x04 next platform (demolition_a's platform list) */
+	float pos[4];              /* 0x08 (demolition_a calls it "colour"; it is the position) */
+	char *actor;               /* 0x18 the CharLib platform actor (0x470 bytes) */
+	unsigned char enabled;     /* 0x1c updated */
+	unsigned char visible;     /* 0x1d drawn */
+	unsigned char collides;    /* 0x1e explosions reach it */
+	unsigned char dirty;       /* 0x1f rebuild the collision */
+	float width;               /* 0x20 (140) */
+	float height;              /* 0x24 (200) */
+	unsigned char collision[0x14]; /* 0x28 animating collision (engine_misc) */
+	int state;                 /* 0x3c 0 resting, 1 falling */
+	float vel[4];              /* 0x40 */
+	float ground;              /* 0x50 the ground height under it */
+} DemoCrate;
+OF_ASSERT_OFFSET(DemoCrate, actor, 0x18);
+OF_ASSERT_OFFSET(DemoCrate, collision, 0x28);
+OF_ASSERT_OFFSET(DemoCrate, state, 0x3c);
+OF_ASSERT_SIZE(DemoCrate, 0x54);
 
 /* ======================================================================== walls */
 

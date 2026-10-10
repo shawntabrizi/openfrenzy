@@ -100,3 +100,101 @@
 
 # ---- ClassLib/unplaced_token.c (token helpers; ClassLib/CToken.cpp by content)
 0010c200 void *CToken_Next(void *token);
+
+# ---- Demolition/unplaced_charlibai.c (CharLib AI base, vtable 0x0026bdc0, and table thunks)
+0010d220 int DemoCLAI_Cond00(void *ai);
+0010d230 int DemoCLAI_Cond01(void *ai);
+0010d240 int DemoCLAI_Cond02(void *ai);
+0010d250 int DemoCLAI_Cond03(void *ai);
+0010d260 int DemoCLAI_Cond04(void *ai);
+0010d270 int DemoCLAI_Cond05(void *ai);
+0010d280 int DemoCLAI_Cond06(void *ai);
+0010d290 int DemoCLAI_Cond07(void *ai);
+0010d2a0 int DemoCLAI_Cond08(void *ai);
+0010d2b0 int DemoCLAI_Cond09(void *ai);
+0010d2c0 int DemoCLAI_Cond10(void *ai);
+0010d2d0 int DemoCLAI_Cond11(void *ai);
+0010d2e0 int DemoCLAI_Cond12(void *ai);
+0010d2f0 int DemoCLAI_Cond13(void *ai);
+0010d300 int DemoCLAI_Cond14(void *ai);
+0010d310 int DemoCLAI_Cond15(void *ai);
+0010d320 int DemoCLAI_Cond16(void *ai);
+0010d330 int DemoCLAI_Cond17(void *ai);
+0010d340 void DemoCLAI_State00(void *ai, int entered);
+0010d360 void DemoCLAI_State01(void *ai, int entered);
+0010d380 void DemoCLAI_State02(void *ai, int entered);
+0010d3a0 void DemoCLAI_State03(void *ai, int entered);
+0010d3c0 void DemoCLAI_State04(void *ai, int entered);
+0010d3e0 void DemoCLAI_State05(void *ai, int entered);
+0010d400 void DemoCLAI_State06(void *ai, int entered);
+0010d420 void DemoCLAI_State07(void *ai, int entered);
+0010d440 void DemoCLAI_State08(void *ai, int entered);
+0010d460 void DemoCLAI_State09(void *ai, int entered);
+0010d480 void DemoCLAI_State10(void *ai, int entered);
+0010d4a0 void DemoCLAI_State11(void *ai, int entered);
+0010d4c0 void DemoCLAI_State12(void *ai, int entered);
+0010d4e0 void DemoCLAI_State13(void *ai, int entered);
+0010d500 void DemoCLAI_State14(void *ai, int entered);
+0010d520 void DemoCLAI_State15(void *ai, int entered);
+0010d540 void DemoCLAI_State16(void *ai, int entered);
+0010d560 void DemoCLAI_State17(void *ai, int entered);
+0010d580 void *DemoCLAI_Ctor(void *self);
+0010d5a0 void DemoCLAI_Dtor(void *self);
+
+# ---- Demolition/CDemolition_Crate.c (crates, vtable 0x0026be9c)
+0010d5b0 void *DemoCLAI_DeletingDtor(void *self, unsigned int flags);
+0010d5d0 void *DemoCrate_Ctor(void *self);
+0010d5f0 void DemoCrate_Dtor(void *self);
+0010d600 void DemoCrate_Shutdown(void *self);
+0010d620 void DemoCrate_CheckGround(void *self, float dt);
+0010d680 void DemoCrate_Draw(void *self);
+0010d6a0 void DemoCrate_Reset(void *self);
+0010d6d0 void *DemoCrate_DeletingDtor(void *self, unsigned int flags);
+0010d6f0 void DemoCrate_Init(void *self);
+0010d830 void DemoCrate_Fall(void *self, float dt);
+0010d960 void DemoCrate_Damage(void *self, float *pos, float radius);
+0010db40 void DemoCrate_Update(void *self, float dt);
+
+# ---- ClassLib/unplaced_token.c (token assets, glow pass, list walk)
+0010c080 void CToken_DrawGlowSprites(void);
+0010c190 void CToken_LoadAssets(int shadowMode, void *shadowTexture);
+0010ce90 void CToken_UpdateAll(void);
+
+# ---- Demolition/CDemolition_EntityEvent.c (entity event queue, vtables 0x0026bc00 / 0x0026bc04)
+0010bd10 void *DemoEntityEvent_Ctor(void *event);
+0010bd20 void DemoEntityEvent_Dtor(void *event);
+0010bd30 void *DemoEntityEventSystem_Ctor(void *system);
+0010bd50 void DemoEntityEventSystem_Dtor(void *system);
+0010bd80 void DemoEntityEventSystem_InitQueue(int system, unsigned int size);
+0010be40 void *DemoEntityEvent_Delete(void *event, unsigned int flags);
+0010bea0 void DemoEntityEventSystem_Push(int system, int event);
+0010c030 void *DemoEntityEventSystem_Delete(void *system, unsigned int flags);
+
+# ---- Demolition/CDemolition_Event.c (CharLib event queue, vtables 0x0026bd20 / 0x0026bd24)
+0010cec0 void *DemoCharEvent_Ctor(void *event);
+0010ced0 void DemoCharEvent_Dtor(void *event);
+0010cee0 void *DemoCharEventSystem_Ctor(void *system);
+0010cf00 void DemoCharEventSystem_Dtor(void *system);
+0010cf30 void DemoCharEventSystem_InitQueue(int system, unsigned int size);
+0010cff0 void *DemoCharEvent_Delete(void *event, unsigned int flags);
+0010d050 void DemoCharEventSystem_Push(int system, int event);
+0010d1d0 void *DemoCharEventSystem_Delete(void *system, unsigned int flags);
+
+# ---- Demolition/CDemolition_Wall.c (walls, vtable 0x0026bef0; 0x0010db80/0x0010db90 are not in the table)
+0010dba0 void DemoWall_SetY(int self, float y);
+0010dbc0 void DemoWall_SetAngle(int self, float angle);
+0010dbe0 void DemoWall_SetTexture(int self, int texture);
+0010dbf0 void DemoWall_DrawFlying(struct DemoWall *self);
+0010dc60 void DemoWall_SetColours(struct DemoWall *self);
+0010dce0 void DemoWall_ResetBricks(struct DemoWall *self);
+0010ddb0 void DemoWall_UpdateFaces(struct DemoWall *self);
+0010dff0 struct DemoWall *DemoWall_Delete(struct DemoWall *self, unsigned int flags);
+0010e010 void DemoWall_Shutdown(int self);
+0010e050 void DemoWall_SetPosition(int self, float *pos);
+0010e080 void DemoWall_Draw(int self);
+0010e120 void DemoWall_Build(struct DemoWall *self, unsigned int flags);
+0010efd0 void DemoWall_Blast(int self, float *pos, float radius);
+0010f370 void DemoWall_UpdateFlying(struct DemoWall *self, float dt);
+0010f4c0 void DemoWall_Update(int self, float dt);
+0010f5b0 void DemoWall_Reset(int self);
+0010f5e0 int DemoWall_Init(int self, float width, float height, float depth, int rows, int cols);
