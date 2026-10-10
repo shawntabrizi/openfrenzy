@@ -363,7 +363,7 @@ void FUN_00156460(int ai, int force)
 		limit = 100;
 	roll = force == 0 ? ma_rand() % limit : 0;
 	if (roll <= *(int *)((char *)&DAT_0029073c + DAT_002baed4[MA_U16(MA_CHAR(ai), 0x230) * 10] * 0x60) &&
-		((int (*)(void *))(*(void ***)MA_PTR(ai, 0x1098))[5])((void *)ai) == 1) {
+		((int (*)(void *))((void **)MA_PTR(ai, 0x1098))[5])((void *)ai) == 1) { /* call [table + 0x14] */
 		/* 0x0025552c = 8 */
 		MA_F32(ai, 0x1144) = (DAT_002b0850 + 8.0f) - (float)(DAT_002bae70 * 8);
 		return;

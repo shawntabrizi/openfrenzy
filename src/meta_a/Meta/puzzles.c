@@ -811,7 +811,7 @@ void FUN_00154360(int action)
 		}
 		break;
 	case 0x16:
-		FUN_001630c0(MA_I16(action, 0x14), MA_U32(action, 0x3c), MA_U32(action, 0x40));
+		FUN_001630c0(MA_I16(action, 0x14), MA_F32(action, 0x3c), MA_F32(action, 0x40));
 		break;
 	case 0x17:
 		FUN_00161d00((undefined4)(int)MA_I16(action, 0x14));
@@ -1113,8 +1113,8 @@ void FUN_00154360(int action)
 	case 0x42:
 		bmVectorRotateXY(rotated, DAT_0028fdd8, MA_F32(action, 0x3c), MA_F32(action, 0x40));
 		FUN_000b72d0((undefined4)(int)MA_I16(action, 0x2c), (undefined4)(int)MA_I16(action, 0x2e),
-			(undefined4)(int)MA_I16(action, 0x30), MA_U32(action, 0x44), (undefined4)(int)rotated,
-			MA_U32(action, 0x18), 0);
+			(undefined4)(int)MA_I16(action, 0x30), MA_F32(action, 0x44), (undefined4)(int)rotated,
+			MA_F32(action, 0x18), 0);
 		break;
 	case 0x43:
 		break;
@@ -1125,7 +1125,9 @@ void FUN_00154360(int action)
 	case 0x45:
 		for (node = MA_NEXT(DAT_003090d8, NULL); node != 0; node = MA_NEXT(DAT_003090d8, node)) {
 			if (MA_I32(node, 0x5c) == MA_I16(action, 0x14))
-				FUN_001635e0((int)node, MA_U32(action, 0x18));
+				/* the rate is a float (pushed as raw bits); a U32 here became 1.06e9 and the
+				   emitter loop never ended (integration round 2: Meta hang) */
+				FUN_001635e0((struct CMetaEmitter *)(uintptr_t)node, MA_F32(action, 0x18));
 		}
 		break;
 	case 0x46:

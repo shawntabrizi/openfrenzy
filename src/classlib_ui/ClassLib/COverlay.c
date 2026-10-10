@@ -426,8 +426,8 @@ void COverlay_DrawText(int self, int shadow)
 		clu_text_scale_x = OV_F(self, 0x374);
 		clu_text_scale_y = OV_F(self, 0x37c);
 		if ((*(unsigned char *)(self + 0x2e8) & 2) != 0) {
-			FUN_000502a0((undefined4 *)scale_rotate, OV_U(self, 0x374), OV_U(self, 0x37c), OV_U(self, 0x384));
-			FUN_00050250((undefined4 *)translate, OV_U(self, 0x300), OV_U(self, 0x304), OV_U(self, 0x308));
+			FUN_000502a0((undefined4 *)scale_rotate, OV_F(self, 0x374), OV_F(self, 0x37c), OV_F(self, 0x384));
+			FUN_00050250((undefined4 *)translate, OV_F(self, 0x300), OV_F(self, 0x304), OV_F(self, 0x308));
 			/* the original picks 0x0004ff30 for unaligned matrices; both multiply */
 			FUN_00050150(world, translate, scale_rotate);
 			FUN_00043930((undefined4 *)world);
@@ -511,7 +511,7 @@ void COverlay_InitImage(int self, undefined4 *desc)
 		if (glow == 0)
 			glow = 0;
 		else
-			glow = FUN_00082f60(glow, self + 800, desc[0xa1], 0);
+			glow = FUN_00082f60(glow, self + 800, *(float *)&desc[0xa1], 0); /* the speed is a float */
 		OV_I(self, 0x5c) = glow;
 	}
 	if (OV_F(self, 0x364) == 0.0f || OV_F(self, 0x368) == 0.0f) {
@@ -803,7 +803,7 @@ void COverlay_DrawModel(int self)
 	saved_near = DAT_002be580;
 	saved_far = DAT_002be584;
 	CL_SetClipPlanes(45.0f, 50000.0f);
-	FUN_00043490(OV_U(self, 0x78), OV_U(self, 0x7c), OV_U(self, 0x80));
+	FUN_00043490(OV_F(self, 0x78), OV_F(self, 0x7c), OV_F(self, 0x80));
 	FUN_000434b0(OV_F(self, 0x88), OV_F(self, 0x8c), OV_F(self, 0x90), 0);
 	FUN_00043790();
 	actor = OV_I(self, 0x74);

@@ -189,11 +189,8 @@ void BCarWaypoint_LoadInformation(struct BCarTextReader *reader)
 		{
 			g_NumGates = g_NumGates + 1;
 			/* the third argument is the float POINT 2 x (stored as the goal's scale, +0x10);
-			A's prototype types it int, so its bit pattern is passed */
-			unsigned int bits;
-
-			memcpy(&bits, &wp->points[1][0], sizeof bits);
-			wp->goal = BCarGenericGoal_AddGoal(g_GenericGoals, wp->points[0], (int)bits, 0);
+			bumpercars_b.decls types it float now, so pass the value (integration round 2) */
+			wp->goal = BCarGenericGoal_AddGoal(g_GenericGoals, wp->points[0], wp->points[1][0], 0);
 			/* 0x000a8020 sets the goal's texture (+0x24) */
 			BCB_FN(FUN_000a8020, void, (void *, void *))(wp->goal, wp->texture);
 		}
