@@ -66,3 +66,11 @@ int DAT_002ed348;
 int DAT_002ed34c;
 int DAT_002ed44c;
 unsigned char DAT_00290ea8[0x40]; /* classlib_fx: debris effect object */
+int DAT_002baec4;                 /* core */
+int DAT_002baec8;                 /* core */
+int DAT_002baec0;                 /* core */
+int DAT_002baecc;                 /* core */
+int DAT_002baeb4;                 /* core */
+int DAT_002bae98;                 /* core */
+int DAT_00293928;                 /* charlib (initialised data of its owner, 200) */
+unsigned int DAT_002ba4cc;        /* core */

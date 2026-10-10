@@ -39,6 +39,9 @@ returns void) */
 #define CLU_Alloc(size, file, line, flags) \
 	((void *(*)(unsigned int, const char *, int, unsigned int))FUN_0004c480)((size), (file), (line), (flags))
 
+/* the engine's wide sprintf (bkernel 0x0004ae80; format and arguments UTF-16) */
+#define CL_WSprintf ((int (*)(unsigned short *, const unsigned short *, ...))FUN_0004ae80)
+
 /* MSVC rand(), inlined by the compiler into the game: holdrand is the C library's
 seed at 0x00285630 (initial value 1, owned by the C runtime). */
 extern unsigned int DAT_00285630;

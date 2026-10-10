@@ -75,7 +75,6 @@ The pause object (self) is a C++ object; offsets used here:
 
 /* wcscpy / wide sprintf of the engine (bkernel) */
 #define CL_WStrCpy(dst, src) FUN_0004b130((short *)(dst), (short *)(src))
-#define CL_WSprintf ((int (*)(unsigned short *, const unsigned short *, ...))FUN_0004ae80)
 
 /* the text drawer (bdisplay): font, text, length, box, r, g, b, a, callback, context */
 #define CL_DrawText(font, text, len, box, r, g, b, a) \

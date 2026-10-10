@@ -118,6 +118,9 @@
 0007a080 void CLHud_CreateBars(int self);
 0007a200 void CLHud_CreateScoreTexts(int self, int *scores);
 0007a360 void CLHud_CreateScoreLabels(int self, char *text, int flag);
+0007a550 int CLHud_ShowCountdown(int step);
+0007a900 int CLHud_UpdateCountdown(int self);
+0007ad50 int CLHud_CreateWinnerText(int self, int *scores, int with_game_type);
 0007cc00 void CLHud_Destroy(void);
 0007cc30 int CLIntroCam_Restart(void);
 0007cc70 float CLIntroCam_GetTime(void);

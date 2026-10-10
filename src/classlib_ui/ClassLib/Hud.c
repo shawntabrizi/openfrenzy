@@ -895,3 +895,509 @@ void CLHud_Destroy(void)
 		FUN_0004c110(clu_hud);
 	clu_hud = 0;
 }
+
+/* ---------- countdown */
+
+/* 0x00290d14  colour ramp of the countdown models (16 ints, CRumble.cpp's .data) */
+#define clu_trace_ramp CLU_ARR(int, 0x00290d14)
+#define CL_RAMP(addr) CLU_VAR(int, addr)
+
+/* 0x0007a550  ClassLib/Hud.cpp (inferred)
+Shows countdown model `step` (1 "3", 2 "2", 3 "1", 4 "go"; 0 nothing) and sets the
+colour ramp of its trace effect. Returns the overlay (0 for step 0). */
+int CLHud_ShowCountdown(int step)
+{
+	undefined4 desc[0xec];
+	float origin[4];
+	const char *name;
+	int overlay;
+
+	memset(desc, 0, sizeof(desc));
+	switch (step) {
+	case 0:
+		return 0;
+	case 1:
+		name = "trace_3.obe";
+		break;
+	case 2:
+		name = "trace_2.obe";
+		break;
+	case 3:
+		name = "trace_1.obe";
+		break;
+	case 4:
+		name = "trace_go.obe";
+		break;
+	default:
+		name = NULL;
+		break;
+	}
+	if (name != NULL)
+		sprintf((char *)desc + 0x2c4, "%s", name);
+	DESC_I(desc, 0x288) = 1;
+	DESC_F(desc, 0x2a4) = 0.0f;
+	DESC_F(desc, 0x2a8) = 0.0f;
+	DESC_F(desc, 0x2ac) = 50.0f;
+	DESC_I(desc, 0x1c) = 0;
+	DESC_I(desc, 0x20) = 0;
+	DESC_I(desc, 0x24) = 0;
+	DESC_I(desc, 0x2c) = 0;
+	DESC_I(desc, 0x30) = 0;
+	DESC_I(desc, 0x34) = 0;
+	DESC_F(desc, 0x318) = 0.1f;
+	DESC_F(desc, 0x320) = 0.1f;
+	DESC_F(desc, 0x328) = 0.1f;
+	DESC_I(desc, 0x28c) = 3;
+	DESC_I(desc, 0x298) = 4;
+	DESC_F(desc, 0x25c) = 0.0f;
+	DESC_F(desc, 0x250) = 127.0f;
+	DESC_F(desc, 0x254) = 127.0f;
+	DESC_F(desc, 0x258) = 127.0f;
+	overlay = COverlay_Create((int *)desc);
+	OV_S(overlay, 0x54) = 0;
+	switch (step) {
+	case 1:
+		CL_RAMP(0x002ecf64) = CL_RAMP(0x00290d18);
+		CL_RAMP(0x002ecf60) = CL_RAMP(0x00290d14);
+		CL_RAMP(0x002ecf6c) = CL_RAMP(0x00290d20);
+		CL_RAMP(0x002ecf68) = CL_RAMP(0x00290d1c);
+		CL_RAMP(0x002ecf84) = CL_RAMP(0x00290d28);
+		CL_RAMP(0x002ecf80) = CL_RAMP(0x00290d24);
+		CL_RAMP(0x002ecf8c) = CL_RAMP(0x00290d30);
+		CL_RAMP(0x002ecf88) = CL_RAMP(0x00290d2c);
+		CL_RAMP(0x002ecf30) = CL_RAMP(0x00290d38);
+		CL_RAMP(0x002ecf2c) = CL_RAMP(0x00290d34);
+		CL_RAMP(0x002ecf38) = CL_RAMP(0x00290d40);
+		CL_RAMP(0x002ecf34) = CL_RAMP(0x00290d3c);
+		CL_RAMP(0x002ecf1c) = CL_RAMP(0x00290d48);
+		CL_RAMP(0x002ecf18) = CL_RAMP(0x00290d44);
+		CL_RAMP(0x002ecf24) = CL_RAMP(0x00290d50);
+		CL_RAMP(0x002ecf20) = CL_RAMP(0x00290d4c);
+		CL_RAMP(0x00290d14) = 100;
+		CL_RAMP(0x00290d24) = 100;
+		CL_RAMP(0x00290d28) = 0;
+		CL_RAMP(0x00290d34) = 100;
+		CL_RAMP(0x00290d38) = 0;
+		CL_RAMP(0x00290d40) = 0x5a;
+		CL_RAMP(0x00290d44) = 0x1e;
+		CL_RAMP(0x00290d48) = 0;
+		break;
+	case 2:
+		CL_RAMP(0x00290d14) = 100;
+		CL_RAMP(0x00290d28) = 0x36;
+		CL_RAMP(0x00290d24) = 100;
+		CL_RAMP(0x00290d34) = 100;
+		CL_RAMP(0x00290d38) = 0x2c;
+		CL_RAMP(0x00290d44) = 0x32;
+		CL_RAMP(0x00290d48) = 0x18;
+		CL_RAMP(0x00290d40) = 100;
+		break;
+	case 3:
+		CL_RAMP(0x00290d14) = 100;
+		CL_RAMP(0x00290d24) = 100;
+		CL_RAMP(0x00290d28) = 100;
+		CL_RAMP(0x00290d34) = 100;
+		CL_RAMP(0x00290d38) = 100;
+		CL_RAMP(0x00290d40) = 100;
+		CL_RAMP(0x00290d44) = 0x28;
+		CL_RAMP(0x00290d48) = 0x28;
+		break;
+	case 4:
+		CL_RAMP(0x00290d28) = 0x56;
+		CL_RAMP(0x00290d14) = 0;
+		CL_RAMP(0x00290d24) = 0;
+		CL_RAMP(0x00290d34) = 0;
+		CL_RAMP(0x00290d38) = 0x56;
+		CL_RAMP(0x00290d44) = 0;
+		CL_RAMP(0x00290d48) = 0x28;
+		CL_RAMP(0x00290d40) = 100;
+		break;
+	default:
+		goto trace;
+	}
+	CL_RAMP(0x00290d30) = 100;
+	CL_RAMP(0x00290d20) = 100;
+	CL_RAMP(0x00290d1c) = 0;
+	CL_RAMP(0x00290d2c) = 0;
+	CL_RAMP(0x00290d3c) = 0;
+	CL_RAMP(0x00290d4c) = 0;
+	CL_RAMP(0x00290d50) = 0;
+	CL_RAMP(0x00290d18) = CL_RAMP(0x00290d28);
+trace:
+	origin[0] = 240.0f;
+	origin[1] = 60.0f;
+	origin[2] = 600.0f;
+	origin[3] = 1.0f;
+	FUN_000846c0(OV_I(overlay, 0x74), (undefined4)clu_trace_ramp, (undefined4)origin);
+	return overlay;
+}
+
+/* 0x002ecf3c  versus animation state (also above) */
+extern int DAT_002baec4;     /* core: the two teams' first players */
+extern int DAT_002baec8;
+
+/* restores the countdown colour ramp saved by CLHud_ShowCountdown */
+static void CLHud_RestoreRamp(void)
+{
+	CL_RAMP(0x00290d14) = CL_RAMP(0x002ecf60);
+	CL_RAMP(0x00290d18) = CL_RAMP(0x002ecf64);
+	CL_RAMP(0x00290d1c) = CL_RAMP(0x002ecf68);
+	CL_RAMP(0x00290d20) = CL_RAMP(0x002ecf6c);
+	CL_RAMP(0x00290d24) = CL_RAMP(0x002ecf80);
+	CL_RAMP(0x00290d28) = CL_RAMP(0x002ecf84);
+	CL_RAMP(0x00290d2c) = CL_RAMP(0x002ecf88);
+	CL_RAMP(0x00290d30) = CL_RAMP(0x002ecf8c);
+	CL_RAMP(0x00290d34) = CL_RAMP(0x002ecf2c);
+	CL_RAMP(0x00290d38) = CL_RAMP(0x002ecf30);
+	CL_RAMP(0x00290d3c) = CL_RAMP(0x002ecf34);
+	CL_RAMP(0x00290d40) = CL_RAMP(0x002ecf38);
+	CL_RAMP(0x00290d44) = CL_RAMP(0x002ecf18);
+	CL_RAMP(0x00290d48) = CL_RAMP(0x002ecf1c);
+	CL_RAMP(0x00290d4c) = CL_RAMP(0x002ecf20);
+	CL_RAMP(0x00290d50) = CL_RAMP(0x002ecf24);
+}
+
+/* 0x0007a900  ClassLib/Hud.cpp (inferred; thiscall)
+Runs the start countdown (states 0-4 show "3", "2", "1", "go" with the commentator;
+5 is playing). Returns 1 when the game may run. */
+int CLHud_UpdateCountdown(int self)
+{
+	double t;
+	int box_a, box_b;
+
+	if (DAT_002baeb8 != 0)
+		return 1;
+	if (clu_unplugged_time != 0)
+		return 0;
+	if (OV_I(self, 8) == 5) {
+		FUN_00084e20();
+		return 1;
+	}
+	t = (double)OV_F(self, 4) - (double)clu_time_scale;
+	OV_F(self, 4) = (float)t;
+	if (t < (double)OV_F(self, 0xc) && (double)clu_time_scale + t > (double)OV_F(self, 0xc)) {
+		if (OV_I(self, 8) != 0)
+			CLHud_FadeIn(OV_I(self, 0x10));
+		switch (OV_I(self, 8)) {
+		case 0:
+			CLSamples_PlayGeneric(0x18, 0x7f, 0, 0, NULL);
+			CLSamples_PlayCommentary(2, -1, 0xff, 0, 0, NULL);
+			break;
+		case 1:
+			CLSamples_PlayCommentary(0, 2, 0xff, 0, 0, NULL);
+			FUN_000848c0();
+			break;
+		case 2:
+			CLSamples_PlayCommentary(0, 1, 0xff, 0, 0, NULL);
+			break;
+		case 3:
+			CLSamples_PlayCommentary(0, 0, 0xff, 0, 0, NULL);
+			break;
+		case 4:
+			OV_S(OV_I(self, 0x180), 0x54) = 1;
+			OV_S(OV_I(self, 0x184), 0x54) = 1;
+			OV_S(OV_I(self, 0x188), 0x54) = 1;
+			OV_S(OV_I(self, 0x18c), 0x54) = 1;
+			CLSamples_PlayCommentary(1, -1, 0xff, 0, 0, NULL);
+			if (OV_I(self, 0x88) == 0)
+				CLMusic_PlayRandom(0x3ffff0, 0, 0xff, -0x14, 0x14, 0);
+			break;
+		}
+	}
+	if (DAT_002baebc != 0 && OV_F(OV_I(self, 0xd4), 0x374) == OV_F(OV_I(self, 0xd4), 0x38c) &&
+	    clu_versus_state == 0) {
+		clu_versus_state = 1;
+		box_a = OV_I(self, 0xf0 + DAT_002baec4 * 4);
+		box_b = OV_I(self, 0xf0 + DAT_002baec8 * 4);
+		OV_F(box_a, 0x2e0) = 1.0f;
+		OV_F(box_b, 0x2e0) = 1.0f;
+		OV_F(OV_I(self, 0xf0 + DAT_002baec4 * 4), 0x64) = OV_F(OV_I(self, 0xf0 + DAT_002baec4 * 4), 0x300) - 8.0f;
+		OV_F(OV_I(self, 0xf0 + DAT_002baec8 * 4), 0x64) = OV_F(OV_I(self, 0xf0 + DAT_002baec8 * 4), 0x300) + 8.0f;
+	}
+	if (OV_F(self, 4) < 0.0f) {
+		OV_U(self, 4) = OV_U(self, 0);
+		OV_I(self, 8) = OV_I(self, 8) + 1;
+		CLHud_RestoreRamp();
+		switch (OV_I(self, 8)) {
+		case 1:
+			if (DAT_002baebc != 0) {
+				OV_S(OV_I(self, 0xd4), 0x54) = 0;
+				OV_I(OV_I(self, 0xd4), 0x2f4) = 1;
+				OV_I(OV_I(self, 0xd4), 0x2f8) = 1;
+				OV_S(OV_I(self, 0xd8), 0x54) = 0;
+				OV_I(OV_I(self, 0xd8), 0x2f4) = 1;
+				OV_I(OV_I(self, 0xd8), 0x2f8) = 1;
+				CLSamples_Play(FUN_0004bb30(0, "scorebarping.wav", 2, 0xdefa), 0xff, 0, 0, NULL);
+			}
+			OV_I(self, 0x10) = CLHud_ShowCountdown(1);
+			OV_F(self, 0xc) = OV_F(self, 0) * 0.33333334f;
+			CLU_DebugPrintf("countdown 3\n");
+			return 0;
+		case 2:
+			CLHud_MakePopup(OV_I(self, 0x10));
+			OV_I(self, 0x10) = CLHud_ShowCountdown(2);
+			CLU_DebugPrintf("countdown 2\n");
+			break;
+		case 3:
+			CLHud_MakePopup(OV_I(self, 0x10));
+			OV_I(self, 0x10) = CLHud_ShowCountdown(3);
+			CLU_DebugPrintf("countdown 1\n");
+			return 0;
+		case 4:
+			CLHud_MakePopup(OV_I(self, 0x10));
+			OV_I(self, 0x10) = CLHud_ShowCountdown(4);
+			CLU_DebugPrintf("countdown GO....\n");
+			return 0;
+		case 5:
+			CLHud_MakePopup(OV_I(self, 0x10));
+			OV_I(self, 0x10) = 0;
+			CLU_DebugPrintf("countdown PLAYING....\n");
+			FUN_00084e20();
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/* ---------- results */
+
+/* 0x00290bf4  volume of the end whistle (generic sample 0) */
+#define clu_end_whistle_volume CLU_VAR(int, 0x00290bf4)
+/* 0x00290ca0  sound delays of the rank markers by rank (4 floats: 0, 20, 40, 60) */
+#define clu_rank_delays CLU_ARR(unsigned int, 0x00290ca0)
+/* 0x002ecf50  winners (player numbers 1-4, -1 ends the list) */
+#define clu_winners CLU_ARR(int, 0x002ecf50)
+/* 0x002ecf70  rank markers of the four players */
+#define clu_rank_markers CLU_ARR(int, 0x002ecf70)
+
+extern int DAT_002baec0;      /* core: team members */
+extern int DAT_002baecc;
+extern int DAT_002baeb4;      /* core: game type (commentator line offset) */
+extern int DAT_002bae98;      /* core */
+extern int DAT_00293928;      /* charlib: voice volume */
+extern unsigned int DAT_002ba4cc; /* core */
+
+/* 0x0007ad50  ClassLib/Hud.cpp (inferred; thiscall)
+CreateWinnerText: ends the game with the whistle, works out the winner(s) from the
+scores (teams in team games), shows "Player n wins" or "n and m draw" with the
+commentator, then the rank markers on the score boxes. Returns the winner (player
+index or team), -1 for a draw. */
+int CLHud_CreateWinnerText(int self, int *scores, int with_game_type)
+{
+	undefined4 desc[0xec];
+	char names[132];
+	char clock[16];
+	int count;
+	int best;
+	int result;
+	int channel;
+	int team_a, team_b;
+	int player;
+	int rank;
+	int character;
+	int marker;
+
+	memset(clock, 0, sizeof(clock));
+	memset(desc, 0, sizeof(desc));
+	memcpy(clock, "0:00", 5);
+	count = 0;
+	best = -1;
+	DAT_002ba4cc = DAT_002baea8 == 0;
+	result = -1;
+	CLRumble_StopAll((int)CLU_ADDR(0x002ed324));
+	memset(desc, 0, sizeof(desc));
+	DESC_I(desc, 0x288) = 2;
+	DESC_I(desc, 0x44) = OV_I(self, 0x20);
+	if (OV_I(self, 0x20) == 0)
+		CLU_DebugPrintf("Hud.cpp, CreateWinnerText(): couldn't find font handgotb.ttf.\n");
+	DESC_S(desc, 0x24c) = 1;
+	DESC_S(desc, 0x24e) = 1;
+	DESC_F(desc, 0x2a4) = 0.0f;
+	DESC_F(desc, 0x2a8) = 0.0f;
+	DESC_F(desc, 0x2ac) = 0.0f;
+	DESC_F(desc, 0x250) = 127.0f;
+	DESC_F(desc, 0x254) = 127.0f;
+	DESC_F(desc, 0x258) = 127.0f;
+	DESC_F(desc, 0x25c) = 127.0f;
+	DESC_U(desc, 0x290) = 0x400;
+	if (OV_I(self, 0x8c) != 0 && DAT_002baeb8 == 0) {
+		CLMusic_FadeOut(-10);
+		OV_I(self, 0x88) = 0;
+	}
+	channel = CLSamples_PlayGeneric(0, clu_end_whistle_volume, 0, 0, NULL);
+	if (DAT_002baebc != 0) {
+		team_a = scores[DAT_002baec0] + scores[DAT_002baec4];
+		team_b = scores[DAT_002baecc] + scores[DAT_002baec8];
+		if (team_a > team_b) {
+			CL_WSprintf((unsigned short *)((unsigned char *)desc + 0x48), CL_TEXT(0x1820), 1);
+			result = 0;
+			CLSamples_QueueLine(-1, channel, 0x39, 0, 0xff, 0, 0);
+		} else if (team_a < team_b) {
+			CL_WSprintf((unsigned short *)((unsigned char *)desc + 0x48), CL_TEXT(0x1820), 2);
+			result = 1;
+			CLSamples_QueueLine(-1, channel, 0x39, 1, 0xff, 0, 0);
+		} else {
+			CL_WSprintf((unsigned short *)((unsigned char *)desc + 0x48), CL_TEXT(0x1830));
+			CLSamples_QueueLine(-1, channel, 0x10, -1, 0xff, 0, 0);
+			result = -1;
+		}
+		goto create;
+	}
+	if (scores[0] == -1) {
+		clu_winners[0] = 1;
+		count = 1;
+	} else if (scores[0] > -1) {
+		clu_winners[0] = 1;
+		best = scores[0];
+		count = 1;
+	}
+	if (scores[1] == best) {
+		clu_winners[count] = 2;
+		count++;
+	} else if (scores[1] > best) {
+		clu_winners[0] = 2;
+		best = scores[1];
+		count = 1;
+	}
+	if (scores[2] == best) {
+		clu_winners[count] = 3;
+		count++;
+	} else if (scores[2] > best) {
+		clu_winners[0] = 3;
+		best = scores[2];
+		count = 1;
+	}
+	if (scores[3] == best) {
+		clu_winners[count] = 4;
+		count++;
+	} else if (scores[3] > best) {
+		count = 1;
+		clu_winners[0] = 4;
+	}
+	switch (count) {
+	case 1:
+		CL_WSprintf((unsigned short *)((unsigned char *)desc + 0x48), CL_TEXT(0x10e0), clu_winners[0]);
+		result = clu_winners[0] - 1;
+		character = DAT_002baed4[result * 10];
+		if (channel >= 0) {
+			if (with_game_type != 0) {
+				CLSamples_QueueLine(-1, channel, DAT_002baeb4 + 0x2f, character, 0xff, 0, 0);
+			} else {
+				CLSamples_QueueLine(-1, channel, character + 7, -1, 0xff, 0, 0);
+				if (DAT_002bae98 != 1)
+					break;
+			}
+			CLSamples_QueueLine(character, -channel, 9, -1, DAT_00293928, 0, 0);
+		} else if (with_game_type != 0) {
+			CLSamples_PlayCommentary(DAT_002baeb4 + 0x2f, DAT_002baeb4, character, 0, 0, NULL);
+		} else {
+			CLSamples_PlayCommentary(character + 7, -1, 0xff, 0, 0, NULL);
+		}
+		break;
+	case 2:
+		sprintf(names, "%d and %d", clu_winners[0], clu_winners[1]);
+		if (channel >= 0)
+			CLSamples_QueueLine(-1, channel, 0x10, -1, 0xff, 0, 0);
+		else
+			CLSamples_PlayCommentary(0x10, -1, 0xff, 0, 0, NULL);
+		break;
+	case 3:
+		sprintf(names, "%d, %d and %d", clu_winners[0], clu_winners[1], clu_winners[2]);
+		if (channel >= 0)
+			CLSamples_QueueLine(-1, channel, 0x11, -1, 0xff, 0, 0);
+		else
+			CLSamples_PlayCommentary(0x11, -1, 0xff, 0, 0, NULL);
+		break;
+	case 4:
+		sprintf(names, "%d, %d, %d and %d", clu_winners[0], clu_winners[1], clu_winners[2], clu_winners[3]);
+		if (channel >= 0)
+			CLSamples_QueueLine(-1, channel, 0x12, -1, 0xff, 0, 0);
+		else
+			CLSamples_PlayCommentary(0x12, -1, 0xff, 0, 0, NULL);
+		break;
+	}
+	if (count < 4)
+		clu_winners[count] = -1;
+	if (count > 1)
+		CL_WSprintf((unsigned short *)((unsigned char *)desc + 0x48), CL_TEXT(0x10f0), names);
+create:
+	DESC_U(desc, 0x290) = DESC_U(desc, 0x290) | 0x9000;
+	DESC_I(desc, 0x298) = 4;
+	CLU_DebugPrintf("Creating WinnerText\n");
+	OV_I(self, 0x38) = COverlay_Create((int *)desc);
+	OV_I(self, 0xcc) = 1;
+	OV_F(self, 0x90) = 0.0f;
+	if (OV_I(self, 0xd0) != 0)
+		FUN_0004a330((ushort *)(OV_I(self, 0xd0) + 0xa4), (byte *)clock);
+
+	memset(desc, 0, sizeof(desc));
+	rank = 3;
+	for (player = 0; player < 4; player++) {
+		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
+		DESC_I(desc, 0x288) = 0;
+		DESC_F(desc, 0x2b4) = 35.0f;
+		DESC_F(desc, 0x2b8) = 36.0f;
+		DESC_F(desc, 0x2bc) = 0.0f;
+		DESC_F(desc, 0x25c) = 0.0f;
+		DESC_F(desc, 0x308) = 32.0f;
+		DESC_F(desc, 0x30c) = 32.0f;
+		DESC_I(desc, 0x28c) = 3;
+		DESC_I(desc, 0x260) = 4;
+		DESC_I(desc, 0x268) = 0;
+		DESC_I(desc, 0x264) = 0x7f;
+		DESC_I(desc, 0x37c) = 0;
+		DESC_F(desc, 0x31c) = -0.8f;
+		DESC_F(desc, 0x324) = -0.8f;
+		DESC_F(desc, 0x32c) = -0.8f;
+		DESC_F(desc, 0x318) = 20.0f;
+		DESC_F(desc, 0x320) = 20.0f;
+		DESC_F(desc, 0x328) = 20.0f;
+		DESC_F(desc, 0x334) = 20.0f;
+		DESC_F(desc, 0x33c) = 20.0f;
+		DESC_F(desc, 0x344) = 20.0f;
+		DESC_F(desc, 0x330) = 1.0f;
+		DESC_F(desc, 0x338) = 1.0f;
+		DESC_F(desc, 0x340) = 1.0f;
+		if (DAT_002baebc != 0) {
+			team_a = scores[DAT_002baec0] + scores[DAT_002baec4];
+			team_b = scores[DAT_002baecc] + scores[DAT_002baec8];
+			if (DAT_002baed4[player * 10 + 8] == 0) {
+				rank = team_a < team_b ? 1 : 0;
+				DESC_I(desc, 4) = clu_position_textures[rank];
+			} else if (DAT_002baed4[player * 10 + 8] == 1) {
+				rank = team_b < team_a ? 1 : 0;
+				DESC_I(desc, 4) = clu_position_textures[rank];
+			}
+		} else {
+			rank = 3;
+			if (player != 0 && scores[player] >= scores[0])
+				rank = 2;
+			if (player != 1 && scores[player] >= scores[1])
+				rank--;
+			if (player != 2 && scores[player] >= scores[2])
+				rank--;
+			if (player != 3 && scores[player] >= scores[3])
+				rank--;
+			DESC_I(desc, 4) = clu_position_textures[rank];
+		}
+		if (DAT_002baed0 == 0) {
+			marker = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
+			clu_rank_markers[player] = marker;
+			OV_I(marker, 0x408) = FUN_0004bb30(0, "scorebarping.wav", 2, 0xdefa);
+			OV_U(clu_rank_markers[player], 0x3e4) = clu_rank_delays[rank];
+			OV_S(OV_I(self, 0xe0 + player * 4), 0x54) = 1;
+			OV_S(clu_rank_markers[player], 0x54) = 1;
+			rank = 3;
+		}
+	}
+	if (DAT_002baed0 == 0) {
+		for (player = 0; player < 4; player++) {
+			marker = clu_rank_markers[player];
+			OV_S(marker, 0x54) = 0;
+			OV_I(marker, 0x2f4) = 1;
+			OV_I(marker, 0x2f8) = 1;
+			OV_U(marker, 0x2ec) = OV_U(marker, 0x2ec) | 0x8000;
+		}
+	}
+	return result;
+}
