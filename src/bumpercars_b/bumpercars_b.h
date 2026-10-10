@@ -179,7 +179,7 @@ struct BCarEntity {
 	int lives;                        /* 0x030 */
 	int frozen;                       /* 0x034 */
 	float alpha;                      /* 0x038 */
-	float flash;                      /* 0x03c 1.0: normal */
+	float speedScale;                 /* 0x03c powerups: 1.0 normal (fades back to 1) */
 	int lap;                          /* 0x040 */
 	int team;                         /* 0x044 -1: none; 1 and 2: the goal it drives to */
 	int unk048;

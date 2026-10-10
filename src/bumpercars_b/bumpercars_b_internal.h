@@ -10,9 +10,9 @@ parameter). When bumpercars_a defines them, it must use these shapes (see the li
 final report of bumpercars_b), or the wrappers here must follow.
 
 Objects (thiscall `this`) inside the BumperCars block:
-  0x002ed470  debug switches (CBCar_Debug)      0x002ed4b4  flame effects (CBCar_Flame)
+  0x002ed470  debug switches (CBCar_Debug)      0x002ed4b4  debris effects
   0x002efa98  the camera (CBCar_Camera)         0x002f0778  sounds (CBCar_Sound)
-  0x002f0a5c  lights (CBCar_Light)              0x002f1380  goals (CBCar_Goal)
+  0x002f0a5c  lights (CBCar_Light)              0x002f1380  the flames (CBCar_Flame)
 */
 
 #ifndef OPENFRENZY_BUMPERCARS_B_INTERNAL_H
@@ -21,11 +21,14 @@ Objects (thiscall `this`) inside the BumperCars block:
 #include "bumpercars_b.h"
 
 #define BCB_DEBUG BCB_ADDR(0x002ed470)
-#define BCB_FLAMES BCB_ADDR(0x002ed4b4)
+#define BCB_EFFECTS BCB_ADDR(0x002ed4b4)
 #define BCB_CAMERA BCB_ADDR(0x002efa98)
 #define BCB_SOUND BCB_ADDR(0x002f0778)
 #define BCB_LIGHTS BCB_ADDR(0x002f0a5c)
-#define BCB_GOALS BCB_ADDR(0x002f1380)
+#define BCB_FLAME BCB_ADDR(0x002f1380)
+
+/* 0x002f138c  the floaty score texts (CBCar_FloatyScore) */
+#define g_FloatyScore BCB_VAR(struct BCarFloatyScore *, 0x002f138c)
 
 /* the engine sound range (set by bumpercars_a from its configuration) */
 #define g_EnginePitchMin BCB_VAR(int, 0x002f2048)
@@ -99,10 +102,10 @@ static inline void BCarLight_SetColour(void *lights, int light, int r, int g, in
 
 #define BCB_DEBUG_GET(fn) BCB_CALL(fn, int (*)(void *))(BCB_DEBUG)
 
-/* ---------- bumpercars_a: flame effects (this = 0x002ed4b4) */
+/* ---------- bumpercars_a: debris effects (this = 0x002ed4b4) */
 
 /* 0x0008cba0 */
-static inline void BCarFlame_Burst(void *flames, int type, float *pos, float *vel, int arg,
+static inline void BCarEffects_Burst(void *flames, int type, float *pos, float *vel, int arg,
 	int colour)
 {
 	BCB_CALL(FUN_0008cba0, void (*)(void *, int, float *, float *, int, int))(flames, type, pos,
@@ -110,7 +113,7 @@ static inline void BCarFlame_Burst(void *flames, int type, float *pos, float *ve
 }
 
 /* 0x0008cbd0 */
-static inline void BCarFlame_Spark(void *flames, int type, float *pos, float a, float b,
+static inline void BCarEffects_Spark(void *flames, int type, float *pos, float a, float b,
 	float c, int count)
 {
 	BCB_CALL(FUN_0008cbd0, void (*)(void *, int, float *, float, float, float, int))(flames,
@@ -118,7 +121,7 @@ static inline void BCarFlame_Spark(void *flames, int type, float *pos, float a, 
 }
 
 /* 0x0008cb80 */
-static inline void BCarFlame_Update(void *flames, float dt)
+static inline void BCarEffects_Update(void *flames, float dt)
 {
 	BCB_CALL(FUN_0008cb80, void (*)(void *, float))(flames, dt);
 }
@@ -143,41 +146,41 @@ static inline int BCarCamera_GetViewPlayer(void *camera, int *player)
 	return BCB_CALL(FUN_0009194d, int (*)(void *, int *))(camera, player);
 }
 
-/* ---------- bumpercars_a: goals (this = 0x002f1380) */
+/* ---------- bumpercars_a: the flames of the arena (CBCar_Flame.cpp, this = 0x002f1380) */
 
-static inline void BCarGoal_Draw(void *goals, int reflection, int pass)
+static inline void BCarFlame_Draw(void *flame, int reflection, int pass)
 {
-	BCB_CALL(FUN_000946d0, void (*)(void *, int, int))(goals, reflection, pass);
+	BCB_CALL(FUN_000946d0, void (*)(void *, int, int))(flame, reflection, pass);
 }
 
-static inline float BCarGoal_Test(void *goals, float *pos, float radius)
+static inline float BCarFlame_Hit(void *flame, float *pos, float radius)
 {
-	return BCB_CALL(FUN_00094880, float (*)(void *, float *, float))(goals, pos, radius);
+	return BCB_CALL(FUN_00094880, float (*)(void *, float *, float))(flame, pos, radius);
 }
 
-static inline void BCarGoal_Pause(void *goals)
+static inline void BCarFlame_Pause(void *flame)
 {
-	BCB_CALL(FUN_000948f0, void (*)(void *))(goals);
+	BCB_CALL(FUN_000948f0, void (*)(void *))(flame);
 }
 
-static inline void BCarGoal_Resume(void *goals)
+static inline void BCarFlame_Resume(void *flame)
 {
-	BCB_CALL(FUN_00094920, void (*)(void *))(goals);
+	BCB_CALL(FUN_00094920, void (*)(void *))(flame);
 }
 
-static inline void BCarGoal_Delete(void *goals)
+static inline void BCarFlame_Delete(void *flame)
 {
-	BCB_CALL(FUN_00094a00, void (*)(void *))(goals);
+	BCB_CALL(FUN_00094a00, void (*)(void *))(flame);
 }
 
-static inline void BCarGoal_Update(void *goals, float dt, int control)
+static inline void BCarFlame_Update(void *flame, float dt, int control)
 {
-	BCB_CALL(FUN_00094af0, void (*)(void *, float, int))(goals, dt, control);
+	BCB_CALL(FUN_00094af0, void (*)(void *, float, int))(flame, dt, control);
 }
 
-static inline int BCarGoal_Inside(void *goals, float *pos, float radius, float *out)
+static inline int BCarFlame_Inside(void *flame, float *pos, float radius, float *out)
 {
-	return BCB_CALL(FUN_00095150, int (*)(void *, float *, float, float *))(goals, pos, radius,
+	return BCB_CALL(FUN_00095150, int (*)(void *, float *, float, float *))(flame, pos, radius,
 		out);
 }
 

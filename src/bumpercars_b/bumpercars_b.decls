@@ -2,6 +2,9 @@
 # (docs/ARCHITECTURE.md, section 11).  <addr> <prototype>;
 # thiscall/fastcall `this` is the first parameter.
 
+# BumperCars/bcb_flame.c (gap)
+00096240 int BCarFlame_Initialise(void *self, struct bkPackage *package, const char *name);
+
 # BumperCars/bcb_timer.c (gap): the timer class
 00096320 void BCarTimer_Construct(struct BCarTimer *self);
 00096350 int BCarTimer_Reset(struct BCarTimer *self);
@@ -41,20 +44,42 @@
 0009abb0 void BCarPlayers_Shutdown(void);
 
 # BumperCars/CBCar_Entity.c
+0009acb0 struct BCarEntity *BCarEntity_Construct(struct BCarEntity *self);
+0009ad00 void BCarEntity_Destruct(struct BCarEntity *self);
 0009ad60 void BCarEntity_Turn(struct BCarEntity *self, float delta);
 0009adc0 void BCarEntity_SetHeading(struct BCarEntity *self, float heading);
+0009ae00 void BCarEntities_ClampScores(void);
 0009ae30 void BCarEntity_SetType(struct BCarEntity *self, int type);
+0009ae40 void BCarEntities_PauseTimers(void);
+0009ae90 void BCarEntities_ResumeTimers(void);
 0009aee0 void BCarEntity_AddScore(struct BCarEntity *self, int points);
 0009af70 struct BCarEntity *BCarEntity_Create(struct BActor *actor, struct BActor *extraActor, float scale, struct BCarEntityParams *params);
 0009b4c0 void BCarEntity_Thrust(struct BCarEntity *self, float amount, int force);
+0009b580 void BCarEntity_Kill(struct BCarEntity *self);
+0009b5e0 int BCarEntity_CollideEntities(struct BCarEntity *self);
+0009b850 int BCarEntity_CollideWorld(struct BCarEntity *self);
 0009b930 void BCarEntity_Respawn(struct BCarEntity *self);
+0009bc50 void BCarEntities_Draw(int shadow, int ghost);
+0009c170 int BCarEntities_GetCentre(float *out);
+0009c210 void BCarEntity_Spin(struct BCarEntity *self, float time);
+0009c2d0 void BCarEntities_DeleteAll(void);
+0009c360 void BCarEntity_Bounce(struct BCarEntity *self, int control);
+0009d100 void BCarEntities_Update(float dt, int control);
 
 # BumperCars/CBCar_World.c
 0009e5a0 float BCarWorld_GetMaxSpeed(void);
 0009e5c0 float BCarWorld_GetBoostValue(void);
 0009e5e0 float BCarWorld_GetEntitySpeed(void);
 0009e600 float BCarWorld_GetRestitution(void);
+0009f030 struct BCarSpawn *BCarWorld_FindSpawn(struct BCarEntity *entity);
 0009f6d0 float BCarWorld_GetGroundHeight(float *pos, float radius, float *normal);
+
+# BumperCars/CBCar_FloatyScore.c
+000a0b70 void BCarFloatyScore_Update(struct BCarFloatyScore *self, float dt, float arg);
+000a0ba0 void BCarFloatyScore_Draw(struct BCarFloatyScore *self);
+000a0bc0 void BCarFloatyScore_Add(struct BCarFloatyScore *self, float *pos, int points, int r, int g, int b);
+000a0c30 struct BCarFloatyScore *BCarFloatyScore_Construct(struct BCarFloatyScore *self, int maxItems, float scale);
+000a0c90 void BCarFloatyScore_Destruct(struct BCarFloatyScore *self);
 
 # BumperCars/CBCar_Puck.c, CBCar_Powerup.c, CBCar_Keepsake.c
 000a0cc0 int BCarPucks_Init(void);
@@ -90,3 +115,16 @@
 000a6b50 void BCarHeadlight_SetFade(struct BCarHeadlight *self, float fade);
 000a6bc0 struct BCarHeadlight *BCarHeadlight_Construct(struct BCarHeadlight *self, float *pos, float *rot, struct bdTexture *texture, float range, float width, int segments);
 000a6d60 void BCarHeadlight_Update(struct BCarHeadlight *self);
+
+# ---- agent B (0x000a0cc0-0x000a8250); A's lines above for this range are kept
+# BumperCars/CBCar_Puck.c
+000a11b0 void BCarPucks_Update(int playing);
+000a1390 void BCarPucks_Delete(void);
+000a13d0 void BCarPucks_Draw(int glow, int glowPass);
+# BumperCars/CBCar_Powerup.c
+000a1a70 void BCarPowerups_Delete(void);
+000a1ac0 void BCarPowerup_Respawn(struct BCarEntity *entity);
+000a1b60 void BCarPowerup_Hit(struct BCarEntity *car, struct BCarEntity *item);
+000a1d30 void BCarPowerups_Draw(int draw);
+000a2020 void BCarPowerups_Update(int playing, float dt);
+000a24c0 void BCarEntity_DropCarried(struct BCarEntity *self);

@@ -187,7 +187,7 @@ void BCarPlayers_CreateInputs(void)
 
 /* 0x00096c30  (gap; file inferred)
 The top speed of a player: ENTITYSPEED plus the catch-up bonus (WP_LAG_SPEED_OFFSET per
-waypoint behind, at most WP_LAG_MAX_OFFSET), times the entity's flash factor and, for the AI,
+waypoint behind, at most WP_LAG_MAX_OFFSET), times the entity's speed scale (powerups) and, for the AI,
 its speed scale. */
 float BCarPlayer_GetMaxSpeed(struct BCarPlayer *self)
 {
@@ -205,7 +205,7 @@ float BCarPlayer_GetMaxSpeed(struct BCarPlayer *self)
 	bonus = (float)lag * g_WpLagSpeedOffset;
 	if (DAT_00283e58 != 0)
 		bonus = bonus * 1.5f;                     /* 0x002538a0 */
-	speed = (bonus + speed) * self->entity->flash;
+	speed = (bonus + speed) * self->entity->speedScale;
 	if (self->human == 0)
 		speed = speed * g_AISpeedScale[index];
 	return speed;
@@ -698,7 +698,7 @@ void BCarPlayer_Brake(struct BCarPlayer *self)
 		BCarSound_Play(BCB_SOUND, (int)Core_Rand() % 2 + 10, BCB_FTOL(volume), 0, self->brakeChannel);
 	else
 		bsSetChannelVolume(self->brakeChannel, (unsigned short)BCB_FTOL(volume));
-	BCarFlame_Burst(BCB_FLAMES, 0, self->entity->groundPoint, DAT_002ea478, 0, -1);
+	BCarEffects_Burst(BCB_EFFECTS, 0, self->entity->groundPoint, DAT_002ea478, 0, -1);
 	if (self->skidPuffTime <= BCB_NOW())
 	{
 		entity = self->entity;
@@ -741,7 +741,7 @@ void BCarPlayer_Boost(struct BCarPlayer *self)
 		return;
 	BCarSound_Play(BCB_SOUND, bcb_rand() % 3 + 6, 0xff, 0, -1);
 	entity = self->entity;
-	BCarEntity_Thrust(entity, BCarWorld_GetBoostValue() * entity->flash, 1);
+	BCarEntity_Thrust(entity, BCarWorld_GetBoostValue() * entity->speedScale, 1);
 	self->boostReadyTime = BCB_NOW() + g_BoostRecharge;
 	self->boostCount++;
 	self->boostReady = 0;
@@ -959,7 +959,7 @@ void BCarPlayers_Update(float dt, int control)
 				pos[2] = entity->pos[2];
 				pos[3] = entity->pos[3];
 				pos[1] = entity->pos[1] + entity->drawOffset;
-				BCarFlame_Burst(BCB_FLAMES, 1, pos, DAT_002ea478, 0, -1);
+				BCarEffects_Burst(BCB_EFFECTS, 1, pos, DAT_002ea478, 0, -1);
 				if (hitIndex == -1)
 				{
 					if (bcb_rand() % 0x19 == 0)
