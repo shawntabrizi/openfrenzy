@@ -19,6 +19,8 @@ What the tests pin down, and why it matters to the game:
 - roach patrol points: in "Pied Pipers" a roach away from the far points goes to one of 6,
   8, 9, 10; the choice draws the shared random seed exactly as often as the original, for
   every kind of starting point (later random events depend on the sequence).
+- clear leader: a player is the clear leader (+0x460 of the arena) only with at least 300
+  points (the original constant 0x00254f14) and more than 1.2 x the second best; else -1.
 */
 
 #ifdef OPENFRENZY_MOUSEWHACK_TEST
@@ -244,12 +246,41 @@ static void test_roach_points(void)
 	mw_Variation = 0;
 }
 
+static void set_scores(unsigned char players[4][0x1410], int a, int b, int c, int d)
+{
+	MW_AI(players[0], 0x1400) = a;
+	MW_AI(players[1], 0x1400) = b;
+	MW_AI(players[2], 0x1400) = c;
+	MW_AI(players[3], 0x1400) = d;
+}
+
+static void test_clear_leader(void)
+{
+	static unsigned char players[4][0x1410];
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		memset(players[i], 0, sizeof players[i]);
+		mw_Players[i] = players[i];
+	}
+	set_scores(players, 0, 250, 0, 0);
+	CBbash_Arena_FindClearLeader(mw_Arena);
+	CHECK(MW_AS(mw_Arena, 0x460) == -1, "clear leader: 250 points alone is not enough (needs 300)");
+	set_scores(players, 100, 0, 400, 0);
+	CBbash_Arena_FindClearLeader(mw_Arena);
+	CHECK(MW_AS(mw_Arena, 0x460) == 2, "clear leader: 400 against 100");
+	set_scores(players, 350, 0, 400, 0);
+	CBbash_Arena_FindClearLeader(mw_Arena);
+	CHECK(MW_AS(mw_Arena, 0x460) == -1, "clear leader: 400 is not more than 1.2 x 350");
+}
+
 int main(void)
 {
 	test_splat_pool();
 	test_ground_clip();
 	test_tremor_hole();
 	test_roach_points();
+	test_clear_leader();
 	printf("mousewhack tests: %d checks, %d failures\n", checks, failures);
 	return failures != 0;
 }

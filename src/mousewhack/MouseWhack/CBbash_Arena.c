@@ -66,7 +66,7 @@ int CBbash_Arena_LoadLOMFile(void *self, void *package, const char *name)
 }
 
 /* 0x00170940  (gap): the clear leader (+0x460): the player with the highest score if it is
-at least 10 and more than 1.2 x the second best score, else -1 */
+at least 300 and more than 1.2 x the second best score, else -1 */
 void CBbash_Arena_FindClearLeader(void *self)
 {
 	float best, second, score;
@@ -82,7 +82,7 @@ void CBbash_Arena_FindClearLeader(void *self)
 			leader = i;
 		}
 	}
-	if (10.0f <= best) {
+	if (300.0f <= best) {	/* _DAT_00254f14 */
 		for (i = 0; i < 4; i++) {
 			score = (float)MW_AI(mw_Players[i], 0x1400);
 			if (second < score && i != leader)
