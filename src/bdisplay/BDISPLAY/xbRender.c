@@ -538,8 +538,8 @@ int bdUnlockRenderState(int state)
 }
 
 /* 0x00044b00  BDISPLAY/xbRender.cpp (inferred): sets a Babel render
-state (kept in DAT_002be600): 1 texture filter, 2 texture wrap (0 wrap,
-else clamp), 3 lighting, 4 cull mode, 5 Z write, 6 alpha blending, 7 Z
+state (kept in DAT_002be600): 1 texture filter, 2 texture wrap (bit 0
+wraps u, bit 1 wraps v, else clamp), 3 lighting, 4 cull mode, 5 Z write, 6 alpha blending, 7 Z
 compare, 8 fog, 9 the clear of bdFlip (no D3D state), 10 blend mode, 11
 colour writes, 12 world matrix (0 identity), 13 texture stage enable */
 void bdSetRenderState(int state, unsigned int value, unsigned int extra)
