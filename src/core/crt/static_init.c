@@ -58,7 +58,7 @@ unsigned char DAT_002ed418[0xc];  /* 0x002ed418 */
 unsigned char DAT_002ed424[0xc];  /* 0x002ed424 */
 unsigned char DAT_002ed430[0xc];  /* 0x002ed430 */
 unsigned char DAT_002ed43c[0xc];  /* 0x002ed43c */
-unsigned char DAT_002ed458[0x32d0];  /* 0x002ed458 */
+extern unsigned char DAT_002ed458[];  /* 0x002ed458 CBCar_Game (0x4bf0 bytes), owned by bumpercars_b */
 unsigned char DAT_002f27c8[0xc];  /* 0x002f27c8 */
 unsigned char DAT_002f6ba0[0x48];  /* 0x002f6ba0 */
 unsigned char DAT_002f7a5c[0x18];  /* 0x002f7a5c */
