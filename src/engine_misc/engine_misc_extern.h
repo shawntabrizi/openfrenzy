@@ -84,7 +84,8 @@ Owner: engine_misc. Other modules: do not rely on these names.
 #define em_bmMatRotXY ((void (*)(void *, float, float))FUN_00050840)
 #define em_bmMatRotXYZ ((void (*)(void *, float, float, float))FUN_00050d20)
 #define em_bmSqrt ((float (*)(float))FUN_00050f80)
-#define em_bmVecRotateByAngle ((void (*)(float *, int, float, float))FUN_00051220)
+/* 0x00051220: out = v rotated by two angles (out, v, a, b) */
+#define em_bmVecRotate ((void (*)(float *, const float *, float, float))FUN_00051220)
 #define em_bmVecNormalise ((void (*)(float *, const float *))FUN_000514a0)
 /* 0x00051540: squared distance */
 #define em_bmVecDistSq ((float (*)(const float *, const float *))FUN_00051540)
@@ -93,6 +94,19 @@ Owner: engine_misc. Other modules: do not rely on these names.
 /* ---------- bActor (module bactor) */
 
 #define em_baFindInstanceByCrc ((void *(*)(void *, int))FUN_00035b40)
+/* BACTOR camera.cpp: 0x0003c000 creates a camera (camera, flags, then two tag groups read
+by 0x0003bf20: tag 0/3 four doubles, 1 a word and a double, 2 two words and four doubles,
+4 three doubles and a word, 5 two words); 0x0003c0b0 sets one group; 0x0003c330 deletes;
+0x0003bf10 makes a camera current and returns the previous one (NULL: none). The groups
+are read from the stack like variadic arguments (floats pushed as doubles), so the calls
+here are variadic; module bactor must define them so. */
+#define em_baCreateCamera ((void *(*)(void *, int, ...))FUN_0003c000)
+#define em_baSetCamera ((void (*)(void *, ...))FUN_0003c0b0)
+#define em_baDeleteCamera ((void (*)(void *))FUN_0003c330)
+#define em_baSelectCamera ((void *(*)(void *))FUN_0003bf10)
+/* 0x00035cc0, 0x00034d50: actor render state and drawing */
+#define em_baSetRenderPass ((void (*)(void *, int, int, void *))FUN_00035cc0)
+#define em_baDrawActor ((int (*)(void *, int))FUN_00034d50)
 /* 0x00051f80, 0x00051fe0: count / fix up the shapes of a collision resource (bkernel) */
 #define em_bmCountShapes ((int (*)(void *))FUN_00051f80)
 #define em_bmFixupShapes ((void (*)(void *, void *))FUN_00051fe0)
@@ -116,5 +130,24 @@ Owner: engine_misc. Other modules: do not rely on these names.
 #define em_bdLockSurface ((void *(*)(int, int, int, int, int, int *))FUN_000425a0)
 /* 0x00043cf0: projects a world point to the screen (out, in, flags) */
 #define em_bdProjectPoint ((void (*)(float *, const float *, int))FUN_00043cf0)
+/* camera and render-target helpers (module bdisplay); float arguments as the original
+pushes floats */
+#define em_bdSetWorldMatrix ((void (*)(const void *))FUN_00043930)
+#define em_bdSetVertexMode ((void (*)(int, int, int))FUN_00046cb0)
+#define em_bdResetVertexMode ((void (*)(int))FUN_00046d00)
+#define em_bdDrawPrimitive ((void (*)(int, const void *, int))FUN_0003f2d0)
+#define em_bdSetRenderTarget ((int (*)(int, int, int, int, int, float, int))FUN_00045330)
+#define em_bdLookAt ((void (*)(float *, float *, float))FUN_000435f0)
+#define em_bdSetCameraPosition ((void (*)(float, float, float))FUN_00043490)
+#define em_bdSetFov ((void (*)(float, float))FUN_00044a00)
+#define em_bdSetClipPlanes ((void (*)(float, float))FUN_00044810)
+#define em_bdApplyCamera ((void (*)(void))FUN_00043790)
+#define em_bdCreateRenderTexture ((int (*)(int, int, int, int, unsigned int))FUN_00044e90)
+#define em_bdReleaseTexture ((void (*)(int))FUN_000458a0)
+#define em_bdSetTexture ((void (*)(int, int))FUN_000455a0)
+#define em_bdPushState ((int (*)(int))FUN_00044ac0)
+#define em_bdPopState ((int (*)(int))FUN_00044ae0)
+#define em_bdSetTextureStage ((void (*)(int, unsigned int, int))FUN_00044b00)
+#define em_bdSetStageTexture ((int (*)(int, int))FUN_000416c0)
 
 #endif

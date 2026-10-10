@@ -48,14 +48,14 @@ struct EmXMediaPacket {
 /* XMediaObject (the WMA decoder) */
 struct EmXMediaObject;
 struct EmXMediaObjectVtbl {
-	ULONG (__stdcall *AddRef)(struct EmXMediaObject *self);
-	ULONG (__stdcall *Release)(struct EmXMediaObject *self);
-	HRESULT (__stdcall *GetInfo)(struct EmXMediaObject *self, void *info);
-	HRESULT (__stdcall *GetStatus)(struct EmXMediaObject *self, DWORD *status);
-	HRESULT (__stdcall *Process)(struct EmXMediaObject *self, const struct EmXMediaPacket *in,
+	ULONG (*AddRef)(struct EmXMediaObject *self);
+	ULONG (*Release)(struct EmXMediaObject *self);
+	HRESULT (*GetInfo)(struct EmXMediaObject *self, void *info);
+	HRESULT (*GetStatus)(struct EmXMediaObject *self, DWORD *status);
+	HRESULT (*Process)(struct EmXMediaObject *self, const struct EmXMediaPacket *in,
 		const struct EmXMediaPacket *out);
-	HRESULT (__stdcall *Discontinuity)(struct EmXMediaObject *self);
-	HRESULT (__stdcall *Flush)(struct EmXMediaObject *self);
+	HRESULT (*Discontinuity)(struct EmXMediaObject *self);
+	HRESULT (*Flush)(struct EmXMediaObject *self);
 };
 struct EmXMediaObject {
 	const struct EmXMediaObjectVtbl *lpVtbl;
@@ -70,7 +70,7 @@ struct EmSoundtrackData {
 };
 
 /* WMA decoder callback: (context, byte offset, bytes wanted, &data); returns bytes */
-typedef int (__stdcall *EmWmaDataCallback)(void *context, DWORD offset, DWORD size, void **data);
+typedef int (*EmWmaDataCallback)(void *context, DWORD offset, DWORD size, void **data);
 
 /* DirectSound (DSOUND section, 3925): entry points the platform layer does not have
 yet (docs/LIBRARY_CALLS.md: MISSING) */

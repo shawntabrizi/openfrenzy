@@ -100,26 +100,26 @@ EM_WEAK HRESULT WINAPI IDirectSoundBuffer_SetNotificationPositions(LPDIRECTSOUND
 
 /* ---------- a WMA decoder that decodes nothing */
 
-static ULONG __stdcall silent_add_ref(struct EmXMediaObject *self)
+static ULONG silent_add_ref(struct EmXMediaObject *self)
 {
 	(void)self;
 	return 1;
 }
 
-static ULONG __stdcall silent_release(struct EmXMediaObject *self)
+static ULONG silent_release(struct EmXMediaObject *self)
 {
 	(void)self;
 	return 0;
 }
 
-static HRESULT __stdcall silent_get_info(struct EmXMediaObject *self, void *info)
+static HRESULT silent_get_info(struct EmXMediaObject *self, void *info)
 {
 	(void)self;
 	(void)info;
 	return DS_OK;
 }
 
-static HRESULT __stdcall silent_get_status(struct EmXMediaObject *self, DWORD *status)
+static HRESULT silent_get_status(struct EmXMediaObject *self, DWORD *status)
 {
 	(void)self;
 	if (status != NULL)
@@ -128,7 +128,7 @@ static HRESULT __stdcall silent_get_status(struct EmXMediaObject *self, DWORD *s
 }
 
 /* produces no bytes: the stream fills its buffer with silence and ends */
-static HRESULT __stdcall silent_process(struct EmXMediaObject *self, const struct EmXMediaPacket *in,
+static HRESULT silent_process(struct EmXMediaObject *self, const struct EmXMediaPacket *in,
 	const struct EmXMediaPacket *out)
 {
 	(void)self;
@@ -142,7 +142,7 @@ static HRESULT __stdcall silent_process(struct EmXMediaObject *self, const struc
 	return DS_OK;
 }
 
-static HRESULT __stdcall silent_discontinuity(struct EmXMediaObject *self)
+static HRESULT silent_discontinuity(struct EmXMediaObject *self)
 {
 	(void)self;
 	return DS_OK;

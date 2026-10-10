@@ -139,3 +139,40 @@
 00054420 int bmClosestLinePoints(float *a, float *b, float *s, float *t);
 00054590 float bmProjectFactor(float *a, float *b);
 000545d0 void bmVec2Divide(float *out, float *in, float s);
+
+# engine tail: 2D collision
+001ea360 int bmCircleSweepCircle(float *seg, float *circle, struct BHit2D *hit);
+001ea530 int bmSegmentSegment(float *a, float *b, struct BHit2D *hit);
+001ea9c0 int bmCircleSweepSegment(float *circle, float *seg, float *delta, struct BHit2D *hit);
+
+# engine tail: debug camera controller (this first)
+001ead50 struct BCamController *bCamController_Construct(struct BCamController *self);
+001eae00 void bCamController_Destruct(struct BCamController *self);
+001eae70 void bCamController_Setup(struct BCamController *self, float x, float y, float z, float angleA, float angleB, float angleC, float speed, unsigned int flags);
+001eaec0 void bCamController_BindInput(struct BCamController *self, int pad);
+001eb220 void bCamController_Update(struct BCamController *self, float speed);
+001eb3e0 struct BCamController *bCamController_Delete(struct BCamController *self, unsigned char flags);
+001eb400 void bCamControllerBase_Construct(struct BCamController *self);
+001eb410 void bCamControllerBase_Destruct(struct BCamController *self);
+001eb420 void bCamController_Select(struct BCamController *self);
+001eb430 struct BCamController *bCamControllerBase_Delete(struct BCamController *self, unsigned char flags);
+
+# engine tail: camera and texture projector (this first)
+001eb450 void bCamera_Destruct(struct BCamera *self);
+001eb460 void bCamera_BuildProjection(struct BCamera *self);
+001eb590 struct BCamera *bCamera_Construct(struct BCamera *self, int type, unsigned int flags);
+001eb660 struct BCamera *bCamera_Delete(struct BCamera *self, unsigned char flags);
+001eb680 void bCamera_UpdateMatrix(struct BCamera *self);
+001eb7c0 void bCamera_Attach(struct BCamera *self, unsigned char *object, float *offset, int follow);
+001eb890 void bCamera_SetAngles(struct BCamera *self, float x, float y, float z, float distance);
+001eb900 void bCamera_Update(struct BCamera *self);
+001eba70 void bCamera_SetFov(struct BCamera *self, float fovX, float fovY, float nearClip, float farClip);
+001ebb20 void bCamera_DrawFrustum(struct BCamera *self, float *matrix);
+001ebdb0 struct BCamera *bProjector_Construct(struct BCamera *self, int type, int w, int h, unsigned int flags);
+001ebe80 void bProjector_Destruct(struct BCamera *self);
+001ebee0 void bProjector_Render(struct BCamera *self, unsigned char *actor, int arg, unsigned char flags);
+001ec160 void bProjector_SetColour(struct BCamera *self, int colour);
+001ec180 struct BCamera *bProjector_Delete(struct BCamera *self, unsigned char flags);
+001ec1a0 void bProjector_Unapply(struct BCamera *self, int stage);
+001ec270 void bProjector_Apply(struct BCamera *self, int stage, int mode);
+001ec540 void bProjector_ApplyDefault(struct BCamera *self, int stage);
