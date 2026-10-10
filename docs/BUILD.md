@@ -88,12 +88,39 @@ Environment:
 | `OPENFRENZY_STUB_LOG=all` | log every call of a stub, not only the first |
 | `OPENFRENZY_<SECTION>_<KEY>` | a setting of `src/runtime/of_config.c`, e.g. `OPENFRENZY_DISPLAY_VSYNC=false` |
 | `OPENFRENZY_GAME=<name>` | start that minigame directly (BumperCars, Fireworks, Clusteroids, Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp); `src/runtime/of_launch.c` |
-| `OPENFRENZY_VARIATION=<n>` | its variation. Unset, each game starts its first variation. Each game reads the value itself (original code): Demolition and RollerBall take it 0-based (Demolition 0-3 = `demo-v1`..`v4`; 4 loads the missing `demo-v5` and faults), TankedUp, Drillers and BumperCars 1-based |
+| `OPENFRENZY_VARIATION=<n>` | its variation, 1-4 for every minigame (1 when not set); needs `OPENFRENZY_GAME`. A bad value stops the run before the game starts (exit 2). See "Direct launch variations" below |
 | `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
 | `OPENFRENZY_DEBUG_TEST_KEYS=<script>` | real SDL key and focus events for automated runs of the keyboard path; see "Scripted keys" below |
 | `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` | skip the Bink videos (boot logos, attract video), as builds without FFmpeg do. Boot reaches the title in a few seconds instead of about 75 s; use it for scripted runs whose presses assume the title at once (`START@6000`) |
 | `OPENFRENZY_DSOUND_CAPTURE=<path>` | write the final audio output (after the limiter) to a WAV file: 48 kHz, stereo, 16-bit. It works without an audio device too (sandbox). See "Audio capture" below |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
+
+### Direct launch variations
+
+`src/runtime/of_launch.c` takes `OPENFRENZY_VARIATION` 1-based for every minigame, the same as the
+board (`CGameMode_AskAgain` calls the game's start with variation + 1). It refuses a value that is
+not 1-4, a variation without `OPENFRENZY_GAME`, and an unknown game name (exit 2, with the valid
+names). For Meta the value goes in unchanged. The original code reads it like this (the port
+converts, the decompiled game code is not changed):
+
+| Game | Reads the "variation" setting | Variation packages on the disc | Cut (never played by the board) |
+|---|---|---|---|
+| BumperCars | again, 1-based (0x00087400) | `bump-v01`..`v04` | - |
+| Fireworks | start argument only (0x000b1aa0) | `carryon_v1`..`v4` | - |
+| Clusteroids | start argument only (0x000d9410) | `clust-v4` (1-3 use `Cluster`) | 3: warning |
+| Demolition | again, **0-based** (0x000e9530); the port writes n - 1 | `Demo-v1`..`v4` | - |
+| Drillers | again, 1-based (0x0010fe50) | `drill-v1`..`v4` | - |
+| Tag | start argument only (0x001253c0) | `Tag1`, `Tag3` | - |
+| Hopper | start argument only (0x0013b9f0) | `hop-v1`..`v4` | - |
+| MouseWhack | start argument only (0x0016cd40) | `bug-v1`..`v3` (variations 1 and 4 both opened `Bug-V1` in the test runs) | - |
+| RollerBall | again, **0-based** (0x00188cb0); the port writes n - 1 | `Roll-v1`..`v5` | 3: warning |
+| Jetboats | start argument only (0x0019d590) | `row_v1`..`v4` | - |
+| ScratchMatch | start argument only (0x001ba5c0) | `Scratch1`..`Scratch4` (`Scratch4` is an empty 4 KB package) | 4: **refused** (faults in `SMScenic_Load`) |
+| TankedUp | again, 1-based (0x001c1fb0) | `tank-v01`..`v04` | - |
+
+"Cut": the entry in the playable table at 0x002839e4 is 0, so the retail board never picks it.
+Checked headless, 60 s each, A every 3 s: variations 1 and 4 of every game, and Clusteroids 3,
+RollerBall 3, ScratchMatch 3, reach `countdown PLAYING` with no fault (ScratchMatch 4 is refused).
 
 ### Scripted input (automated runs)
 
