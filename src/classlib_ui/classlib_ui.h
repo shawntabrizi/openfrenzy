@@ -7,10 +7,11 @@ ParseMap, CFireworks, CRumble and the math helpers in front of them).
 
 Other modules may include this header. Only the classlib_ui agent edits it.
 
-Globals keep their Ghidra names (DAT_<addr>) where their purpose is not clear yet.
-Owned globals are defined in the module's .c files; globals of other modules are
-written here as tentative definitions (-fcommon merges them with the owner's
-definition, see docs/ARCHITECTURE.md section 12).
+The module's globals live in data blocks with the original layout
+(classlib_ui_data.h); other modules reach them by their Ghidra names (DAT_<addr>),
+which are aliases into the blocks. Globals of other modules that this module uses
+get tentative definitions in ClassLib/classlib_ui_extern.c (-fcommon merges them
+with the owner's definition, docs/ARCHITECTURE.md section 12).
 */
 
 #ifndef OPENFRENZY_CLASSLIB_UI_H
@@ -21,6 +22,8 @@ definition, see docs/ARCHITECTURE.md section 12).
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+
+#include "classlib_ui_data.h"
 
 /* ---------- helpers for decompiled code */
 
@@ -44,6 +47,12 @@ static inline int CLU_Rand(void)
 
 /* 0x002ba544  language folder name (char *), e.g. "Packages\English" (core) */
 extern char *DAT_002ba544;
+/* 0x002ba750  the game mode stack object (core; FUN_0002b5b0 is a method of it) */
+extern unsigned char DAT_002ba750[0x58];
+/* 0x00283d74  Welsh commentary selected (core) */
+extern int DAT_00283d74;
+/* 0x00283e0c  commentator lines delay by their length (core .data, 0) */
+extern int DAT_00283e0c;
 
 /* ---------- globals owned by classlib_ui that other modules use */
 
@@ -53,7 +62,7 @@ DAT_002906f8[0].portrait, DAT_00290718 is DAT_002906f8[0].colour, and so on
 (field address = 0x002906f8 + 0x60 * character + offset). */
 struct CLCharacterInfo {
 	const char *name;          /* 0x00 also the voice folder: "Dub" */
-	const char *initial;       /* 0x04 "D" */
+	const unsigned short *display_name; /* 0x04 u"Dub" (UTF-16) */
 	const char *portrait;      /* 0x08 "char_dub.bmp" */
 	const char *select_image;  /* 0x0c "selchar_dub.bmp" */
 	const char *bone_a;        /* 0x10 "lpalm" / "rpalm" */

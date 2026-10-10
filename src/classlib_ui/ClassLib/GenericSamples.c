@@ -54,122 +54,52 @@ struct CLMusicTrack {
 	unsigned int flags; /* 0x04 */
 };
 
-/* ---------- data (original .data) */
+/* ---------- globals (classlib_ui_data.h) */
 
-/* 0x0028fdec  commentator packages, one per screen */
-static const char *const DAT_0028fdec[CL_COMMENTATOR_SET_COUNT] = {
-	"com_frenzyintro", "com_ingame", "com_mapscreen", "com_scorescreen",
-	"com_teamscreen", "com_winscreen", "com_zonescorescreen",
-};
-
+/* 0x0028fda8  frame time scale */
+#define clu_time_scale CLU_VAR(float, 0x0028fda8)
 /* 0x0028fde8  commentator set loaded now (-1: none) */
-int DAT_0028fde8 = -1;
-
-/* 0x0028fe08  generic effects */
-static const char *const DAT_0028fe08[CL_GENERIC_SAMPLE_COUNT] = {
-	"horn.wav", "gen_token_01a.wav", "gen_token_02a.wav", "gen_token_03a.wav",
-	"gen_switch_01a.wav", "gen_respawn_01a.wav", "gen_tile_01a.wav", "frontend_02a.wav",
-	"frontend_02b.wav", "frontend_04b.wav", "frontend_04a.wav", "punchimpact1.wav",
-	"punchimpact2.wav", "kickimpact1.wav", "kickimpact2.wav", "punchswipe1.wav",
-	"punchswipe2.wav", "kickswipe1.wav", "kickswipe2.wav", "gen_token_02b.wav",
-	"goal_scored_06.wav", "refbotbleep2.wav", "refbotexit.wav", "refbotenter.wav",
-	"refbotturn.wav", "refbotlaser.wav",
-};
-
-/* 0x0028fe70  character voice kinds */
-static const char *const DAT_0028fe70[CL_VOICE_KIND_COUNT] = {
-	"jump", "land", "hurt", "knockovr", "score", "pickedup", "steal", "stolen",
-	"powerup", "first", "event", "taunt", "revenge", "fall", "bad", "respawn",
-	"comelast", "selected", "unselected",
-};
-
-/* 0x0028fec0  commentator kinds */
-static const char *const DAT_0028fec0[CL_COMMENTARY_KIND_COUNT] = {
-	"countdown", "go", "getready", "roundcomplete", "stop", "playerwins", "charname",
-	"char1wins", "char2wins", "char3wins", "char4wins", "char5wins", "char6wins",
-	"levelname", "zonename", "tiebreak", "draw_2way", "draw_3way", "draw_4way",
-	"playerleads", "charnameleads", "charnamemightwin", "charnamejoins",
-	"charnamegameover", "newchallenger", "charnameoverall", "newchampion", "almostover",
-	"ffintro", "fuzionfrenzy", "teamup", "char1good", "char2good", "char3good",
-	"char4good", "char5good", "char6good", "char1rubbish", "char2rubbish",
-	"char3rubbish", "char4rubbish", "char5rubbish", "char6rubbish", "selectroute",
-	"firststage", "endstage", "movestage", "outlandswrapup", "downtownwrapup",
-	"zonewrapup", "sector9wrapup", "waterfrontwrapup", "powerstwrapup",
-	"charnamewinsstage", "choosegame", "charnameout", "gamewrapup", "teamwins",
-};
-
-/* 0x0028ffa8 / 0x0028ffac  3D sample min / max distance */
-float DAT_0028ffa8 = 4000.0f;
-float DAT_0028ffac = 10000.0f;
-
-/* 0x0028ffb0  sample length -> commentator delay factor */
-static const float DAT_0028ffb0 = 1.75f;
-
+#define clu_commentator_set CLU_VAR(int, 0x0028fde8)
+/* 0x0028fdec  commentator packages, one per screen: "com_frenzyintro", "com_ingame" ... */
+#define clu_commentator_packages CLU_ARR(const char *, 0x0028fdec)
+/* 0x0028fe08  generic effects: "horn.wav", "gen_token_01a.wav" ... */
+#define clu_generic_names CLU_ARR(const char *, 0x0028fe08)
+/* 0x0028fe70  character voice kinds: "jump", "land", "hurt" ... */
+#define clu_voice_kinds CLU_ARR(const char *, 0x0028fe70)
+/* 0x0028fec0  commentator kinds: "countdown", "go", "getready" ... */
+#define clu_commentary_kinds CLU_ARR(const char *, 0x0028fec0)
+/* 0x0028ffa8 / 0x0028ffac  3D sample min / max distance (4000, 10000) */
+#define clu_sample_min_distance CLU_VAR(float, 0x0028ffa8)
+#define clu_sample_max_distance CLU_VAR(float, 0x0028ffac)
+/* 0x0028ffb0  sample length -> commentator delay factor (1.75) */
+#define clu_commentary_delay_scale CLU_VAR(float, 0x0028ffb0)
 /* 0x0028ffb4  channel of the commentator line that plays now (-1: none) */
-int DAT_0028ffb4 = -1;
-
-/* 0x0028ffb8  music track that plays now (-1: none) */
-int DAT_0028ffb8 = -1;
-
-/* 0x0028ffc0  music tracks (flags at 0x0028ffc4) */
-const struct CLMusicTrack DAT_0028ffc0[CL_MUSIC_TRACK_COUNT] = {
-	{ "dub", 0x00800000 },
-	{ "fly", 0x00800000 },
-	{ "geena", 0x00800000 },
-	{ "zak", 0x00800000 },
-	{ "jade", 0x00800000 },
-	{ "jet", 0x00800000 },
-	{ "blitz_cowboy", 0x003ffff0 },
-	{ "boom", 0x0040000c },
-	{ "chemical_brain", 0x003ffff0 },
-	{ "hey_fatty", 0x003ffff0 },
-	{ "hypnotise_her", 0x003ffff0 },
-	{ "money_jar", 0x003ffff0 },
-	{ "newyork1", 0x003ffff0 },
-	{ "sidewinder", 0x003ffff0 },
-	{ "wah_mix2", 0x003ffff0 },
-	{ "mash_it_up", 0x003ffff0 },
-	{ "atom_splitter", 0x003ffff0 },
-	{ "one_two", 0x003ffff0 },
-	{ "fuzionfrenzy", 0x00000002 },
-	{ "radio_waves", 0x003ffff0 },
-	{ "lullaby_for_broadmore", 0x003ffff0 },
-	{ "sharon_tate's_late", 0x003ffff0 },
-	{ "casino_royale", 0x003ffff0 },
-	{ "dum_dum_boy2", 0x003ffff0 },
-	{ "the_ease_of_tomorrow", 0x003ffff0 },
-	{ "nightclub", 0x00000000 },
-	{ "rok_yer_world", 0x003ffff0 },
-	{ "endofgame", 0x00800000 },
-};
-
-/* ---------- data (original .bss) */
+#define clu_commentary_channel CLU_VAR(int, 0x0028ffb4)
+/* 0x0028ffc0  music tracks */
+#define clu_music_tracks CLU_ARR(const struct CLMusicTrack, 0x0028ffc0)
+/* 0x002906f8  character table */
+#define clu_characters CLU_ARR(const struct CLCharacterInfo, 0x002906f8)
 
 /* 0x002ea490  generic effect samples */
-static int DAT_002ea490[CL_GENERIC_SAMPLE_COUNT];
+#define clu_generic_samples CLU_ARR(int, 0x002ea490)
 /* 0x002ea4f8  queued commentator/voice lines */
-static struct CLQueuedLine DAT_002ea4f8[5];
+#define clu_queue CLU_ARR(struct CLQueuedLine, 0x002ea4f8)
 /* 0x002ea588  commentator sample sets */
-static struct CLSampleSet DAT_002ea588[CL_COMMENTARY_KIND_COUNT];
-/* 0x002eb150  character voice sample sets */
-static struct CLSampleSet DAT_002eb150[CL_CHARACTER_COUNT][CL_VOICE_KIND_COUNT];
+#define clu_commentary_sets CLU_ARR(struct CLSampleSet, 0x002ea588)
+/* 0x002eb150  character voice sample sets [character][kind] */
+#define clu_voice_sets ((struct CLSampleSet (*)[CL_VOICE_KIND_COUNT])CLU_ADDR(0x002eb150))
 /* 0x002ec878  CharVoice package */
-static int DAT_002ec878;
+#define clu_charvoice_package CLU_VAR(int, 0x002ec878)
 /* 0x002ec87c  commentator package */
-static int DAT_002ec87c;
+#define clu_commentator_package CLU_VAR(int, 0x002ec87c)
 /* 0x002ec880  Packages\Welsh */
-static int DAT_002ec880;
+#define clu_welsh_package CLU_VAR(int, 0x002ec880)
 /* 0x002ec884  memory block that holds the largest commentator package */
-static int DAT_002ec884;
+#define clu_commentator_memory CLU_VAR(int, 0x002ec884)
 /* 0x002ec888  queued lines */
-static int DAT_002ec888;
+#define clu_queue_count CLU_VAR(int, 0x002ec888)
 /* 0x002ec890  music stream samples */
-int DAT_002ec890[CL_MUSIC_TRACK_COUNT];
-
-/* globals of other modules (tentative definitions) */
-int DAT_00283d74;            /* Welsh commentary selected (core) */
-int DAT_00283e0c;            /* commentator lines delay by their length (core data, 0) */
-unsigned char DAT_002ba750[0x58]; /* the game mode stack object (core, thiscall FUN_0002b5b0) */
+#define clu_music_samples CLU_ARR(int, 0x002ec890)
 
 /* ---------- character voices */
 
@@ -182,8 +112,8 @@ void CLSamples_ClearCharacter(int character)
 
 	for (kind = 0; kind < CL_VOICE_KIND_COUNT; kind++) {
 		for (i = 0; i < 10; i++)
-			DAT_002eb150[character][kind].samples[i] = 0;
-		DAT_002eb150[character][kind].count = 0;
+			clu_voice_sets[character][kind].samples[i] = 0;
+		clu_voice_sets[character][kind].count = 0;
 	}
 }
 
@@ -199,14 +129,14 @@ void CLSamples_LoadCharacter(int character)
 	int sample;
 
 	for (kind = 0; kind < CL_VOICE_KIND_COUNT; kind++) {
-		set = &DAT_002eb150[character][kind];
+		set = &clu_voice_sets[character][kind];
 		set->count = 0;
 		set->last = -1;
 		set->cooldown = 0.0f;
 		for (i = 0; i < 10; i++)
 			set->samples[i] = 0;
 		while (set->count < 10) {
-			sprintf(probe, "%s\\%s%02d.wav", DAT_002906f8[character].name, DAT_0028fe70[kind],
+			sprintf(probe, "%s\\%s%02d.wav", clu_characters[character].name, clu_voice_kinds[kind],
 				set->count);
 			_strlwr(probe);
 			if (FUN_0004bb30(0, probe, 2, 0xdefa) == 0)
@@ -217,7 +147,7 @@ void CLSamples_LoadCharacter(int character)
 			set->samples[i] = 0;
 		if (set->count != 0) {
 			for (i = 0; i < set->count; i++) {
-				sprintf(name, "%s\\%s%02d.wav", DAT_002906f8[character].name, DAT_0028fe70[kind], i);
+				sprintf(name, "%s\\%s%02d.wav", clu_characters[character].name, clu_voice_kinds[kind], i);
 				_strlwr(name);
 				set->samples[i] = FUN_0004bb30(0, name, 2, 0xdefa);
 			}
@@ -235,22 +165,22 @@ void CLSamples_LoadGeneric(void)
 	int kind;
 
 	for (i = 0; i < CL_GENERIC_SAMPLE_COUNT; i++) {
-		DAT_002ea490[i] = FUN_0004bb30(0, (char *)DAT_0028fe08[i], 2, 0xdefa);
-		if (DAT_002ea490[i] == 0)
-			CLU_DebugPrintf("Couldn't Load %s\n", DAT_0028fe08[i]);
+		clu_generic_samples[i] = FUN_0004bb30(0, (char *)clu_generic_names[i], 2, 0xdefa);
+		if (clu_generic_samples[i] == 0)
+			CLU_DebugPrintf("Couldn't Load %s\n", clu_generic_names[i]);
 	}
 	sprintf(path, "%s\\CharVoice", DAT_002ba544);
-	DAT_002ec878 = (int)FUN_0004fd50(0, path, 0);
-	if (DAT_002ec878 == 0) {
+	clu_charvoice_package = (int)FUN_0004fd50(0, path, 0);
+	if (clu_charvoice_package == 0) {
 		CLU_DebugPrintf(
 			"CGameMode_Root::Pushed *** Could not load package 'Packages\\Character Voice SFX' ***\n");
 		return;
 	}
-	FUN_0004b870(DAT_002ec878, 0xffffffff, 0xdefa, 0);
+	FUN_0004b870(clu_charvoice_package, 0xffffffff, 0xdefa, 0);
 	for (character = 0; character < CL_CHARACTER_COUNT; character++) {
 		for (kind = 0; kind < CL_VOICE_KIND_COUNT; kind++)
 			for (i = 0; i < 10; i++)
-				DAT_002eb150[character][kind].samples[i] = 0;
+				clu_voice_sets[character][kind].samples[i] = 0;
 		CLSamples_LoadCharacter(character);
 	}
 }
@@ -266,7 +196,7 @@ int CLSamples_Play(int sample, int volume, int arg3, unsigned int flags, float *
 		return -1;
 	if (pos == NULL)
 		return FUN_00054ba0(sample, volume, 0, arg3, flags);
-	return FUN_00054c30(sample, pos, volume, arg3, flags, DAT_0028ffa8, DAT_0028ffac);
+	return FUN_00054c30(sample, pos, volume, arg3, flags, clu_sample_min_distance, clu_sample_max_distance);
 }
 
 /* 0x00071400  ClassLib/GenericSamples.cpp (inferred)
@@ -280,25 +210,25 @@ void CLSamples_Shutdown(void)
 	for (character = 0; character < CL_CHARACTER_COUNT; character++) {
 		for (kind = 0; kind < CL_VOICE_KIND_COUNT; kind++) {
 			for (i = 0; i < 10; i++)
-				DAT_002eb150[character][kind].samples[i] = 0;
-			DAT_002eb150[character][kind].count = 0;
+				clu_voice_sets[character][kind].samples[i] = 0;
+			clu_voice_sets[character][kind].count = 0;
 		}
 	}
 	for (kind = 0; kind < CL_COMMENTARY_KIND_COUNT; kind++) {
 		for (i = 0; i < 10; i++)
-			DAT_002ea588[kind].samples[i] = 0;
-		DAT_002ea588[kind].count = 0;
+			clu_commentary_sets[kind].samples[i] = 0;
+		clu_commentary_sets[kind].count = 0;
 	}
-	if (DAT_002ec878 != 0)
-		FUN_0004fe80((int *)DAT_002ec878);
-	if (DAT_002ec87c != 0)
-		FUN_0004fe80((int *)DAT_002ec87c);
-	if (DAT_002ec884 != 0) {
-		FUN_0004c110(DAT_002ec884);
-		DAT_002ec884 = 0;
+	if (clu_charvoice_package != 0)
+		FUN_0004fe80((int *)clu_charvoice_package);
+	if (clu_commentator_package != 0)
+		FUN_0004fe80((int *)clu_commentator_package);
+	if (clu_commentator_memory != 0) {
+		FUN_0004c110(clu_commentator_memory);
+		clu_commentator_memory = 0;
 	}
-	if (DAT_002ec880 != 0)
-		FUN_0004fe80((int *)DAT_002ec880);
+	if (clu_welsh_package != 0)
+		FUN_0004fe80((int *)clu_welsh_package);
 }
 
 /* ---------- commentator */
@@ -313,15 +243,15 @@ void CLSamples_AllocCommentatorMemory(void)
 	int i;
 
 	largest = 0;
-	if (DAT_002ec884 != 0)
+	if (clu_commentator_memory != 0)
 		return;
 	for (i = 0; i < CL_COMMENTATOR_SET_COUNT; i++) {
-		sprintf(path, "%s\\%s", DAT_002ba544, DAT_0028fdec[i]);
+		sprintf(path, "%s\\%s", DAT_002ba544, clu_commentator_packages[i]);
 		size = ((int (*)(const char *, int))FUN_0004fef0)(path, 1);
 		if (largest < size)
 			largest = size;
 	}
-	DAT_002ec884 = (int)FUN_0004bf10(largest, "C:\\BlitzParty\\Game\\Src\\ClassLib\\GenericSamples.cpp",
+	clu_commentator_memory = (int)FUN_0004bf10(largest, "C:\\BlitzParty\\Game\\Src\\ClassLib\\GenericSamples.cpp",
 					 0x1d9, 0x2001, FUN_0004c280(), 0x80);
 }
 
@@ -336,13 +266,13 @@ void CLSamples_LoadCommentary(void)
 	int i;
 
 	for (kind = 0; kind < CL_COMMENTARY_KIND_COUNT; kind++) {
-		set = &DAT_002ea588[kind];
+		set = &clu_commentary_sets[kind];
 		set->count = 0;
 		set->last = -1;
 		for (i = 0; i < 10; i++)
 			set->samples[i] = 0;
 		while (set->count < 10) {
-			sprintf(probe, "%s%02d.wav", DAT_0028fec0[kind], set->count);
+			sprintf(probe, "%s%02d.wav", clu_commentary_kinds[kind], set->count);
 			_strlwr(probe);
 			if (FUN_0004bb30(0, probe, 2, 0xdefa) == 0)
 				break;
@@ -350,7 +280,7 @@ void CLSamples_LoadCommentary(void)
 		}
 		if (set->count != 0) {
 			for (i = 0; i < set->count; i++) {
-				sprintf(name, "%s%02d.wav", DAT_0028fec0[kind], i);
+				sprintf(name, "%s%02d.wav", clu_commentary_kinds[kind], i);
 				_strlwr(name);
 				set->samples[i] = FUN_0004bb30(0, name, 2, 0xdefa);
 			}
@@ -365,8 +295,8 @@ void CLSamples_QueueLine(int set, int wait_channel, int kind, int choice, int vo
 {
 	struct CLQueuedLine *line;
 
-	if (DAT_002ec888 < 5) {
-		line = &DAT_002ea4f8[DAT_002ec888];
+	if (clu_queue_count < 5) {
+		line = &clu_queue[clu_queue_count];
 		line->set = set;
 		line->kind = kind;
 		line->choice = choice;
@@ -374,25 +304,25 @@ void CLSamples_QueueLine(int set, int wait_channel, int kind, int choice, int vo
 		line->flags = flags;
 		line->allow_repeat = allow_repeat;
 		line->wait_channel = wait_channel;
-		DAT_002ec888 = DAT_002ec888 + 1;
+		clu_queue_count = clu_queue_count + 1;
 	}
 }
 
 /* 0x00071690  ClassLib/GenericSamples.cpp (inferred) */
 void CLSamples_ClearQueue(void)
 {
-	DAT_002ec888 = 0;
+	clu_queue_count = 0;
 }
 
 /* 0x000716a0  ClassLib/GenericSamples.cpp (inferred)
 Loads the Welsh commentary package (replaces the language commentary). */
 void CLSamples_LoadWelsh(void)
 {
-	if (DAT_002ec880 != 0)
-		FUN_0004fe80((int *)DAT_002ec880);
-	DAT_002ec880 = (int)FUN_0004fd50(0, "Packages\\Welsh", 0);
-	if (DAT_002ec880 != 0) {
-		FUN_0004b870(DAT_002ec880, 0xffffffff, 0xdefa, 0);
+	if (clu_welsh_package != 0)
+		FUN_0004fe80((int *)clu_welsh_package);
+	clu_welsh_package = (int)FUN_0004fd50(0, "Packages\\Welsh", 0);
+	if (clu_welsh_package != 0) {
+		FUN_0004b870(clu_welsh_package, 0xffffffff, 0xdefa, 0);
 		CLSamples_LoadCommentary();
 	}
 }
@@ -401,18 +331,18 @@ void CLSamples_LoadWelsh(void)
 1 when no commentator line is queued or playing. */
 int CLSamples_CommentaryIdle(void)
 {
-	if (DAT_002ec888 != 0)
+	if (clu_queue_count != 0)
 		return 0;
-	if (DAT_0028ffb4 != -1 && FUN_000548d0(DAT_0028ffb4) != 0)
+	if (clu_commentary_channel != -1 && FUN_000548d0(clu_commentary_channel) != 0)
 		return 0;
 	return 1;
 }
 
 /* 0x00071720  ClassLib/GenericSamples.cpp (inferred)
-Plays generic effect `index` (see DAT_0028fe08). */
+Plays generic effect `index` (see clu_generic_names). */
 int CLSamples_PlayGeneric(int index, int volume, int arg3, unsigned int flags, float *pos)
 {
-	int sample = DAT_002ea490[index];
+	int sample = clu_generic_samples[index];
 
 	if (sample == 0)
 		return -1;
@@ -431,9 +361,9 @@ int CLSamples_PlayFromSet(char set_index, int kind, float *pos, int volume, unsi
 	struct CLSampleSet *set;
 
 	if (set_index == 6)
-		set = &DAT_002ea588[kind];
+		set = &clu_commentary_sets[kind];
 	else
-		set = &DAT_002eb150[0][0] + (set_index * CL_VOICE_KIND_COUNT + kind);
+		set = &clu_voice_sets[0][0] + (set_index * CL_VOICE_KIND_COUNT + kind);
 	if (choice == -1) {
 		if (allow_repeat == 0 && 1 < set->count) {
 			do {
@@ -449,7 +379,7 @@ int CLSamples_PlayFromSet(char set_index, int kind, float *pos, int volume, unsi
 		set->last = choice;
 		if (DAT_00283e0c != 0) {
 			int sample = set->samples[choice];
-			return CLSamples_Play(sample, volume, (int)((double)*(int *)(sample + 0x20) * (double)DAT_0028ffb0),
+			return CLSamples_Play(sample, volume, (int)((double)*(int *)(sample + 0x20) * (double)clu_commentary_delay_scale),
 					      flags, pos);
 		}
 		return CLSamples_Play(set->samples[choice], volume, 0, flags, pos);
@@ -458,39 +388,39 @@ int CLSamples_PlayFromSet(char set_index, int kind, float *pos, int volume, unsi
 }
 
 /* 0x00071880  ClassLib/GenericSamples.cpp (inferred)
-Loads the commentator package of a screen (0-6, see DAT_0028fdec). With Welsh
+Loads the commentator package of a screen (0-6, see clu_commentator_packages). With Welsh
 commentary the Welsh package is used instead. */
 void CLSamples_LoadCommentatorSet(int set)
 {
 	char path[128];
 
 	if (DAT_00283d74 == 0) {
-		if (DAT_002ec880 != 0) {
-			FUN_0004fe80((int *)DAT_002ec880);
-			DAT_002ec880 = 0;
+		if (clu_welsh_package != 0) {
+			FUN_0004fe80((int *)clu_welsh_package);
+			clu_welsh_package = 0;
 			CLSamples_AllocCommentatorMemory();
 			CLSamples_LoadCommentary();
 		}
-		if (set < 0 || 6 < set || set == DAT_0028fde8)
+		if (set < 0 || 6 < set || set == clu_commentator_set)
 			return;
 	} else {
 		CLSamples_LoadWelsh();
 	}
 	CLSamples_AllocCommentatorMemory();
-	if (DAT_002ec87c != 0) {
-		FUN_0004e010(FUN_0004dce0((undefined4 *)DAT_002ec87c));
-		FUN_0004fe80((int *)DAT_002ec87c);
+	if (clu_commentator_package != 0) {
+		FUN_0004e010(FUN_0004dce0((undefined4 *)clu_commentator_package));
+		FUN_0004fe80((int *)clu_commentator_package);
 	}
-	sprintf(path, "%s\\%s", DAT_002ba544, DAT_0028fdec[set]);
-	DAT_002ec87c = (int)FUN_0004fd50(0, path, DAT_002ec884);
-	if (DAT_002ec87c == 0) {
-		CLU_DebugPrintf("LoadCommentatorSampleSet *** Could not load package *%s **\n", DAT_0028fdec[set]);
-		DAT_0028fde8 = -1;
+	sprintf(path, "%s\\%s", DAT_002ba544, clu_commentator_packages[set]);
+	clu_commentator_package = (int)FUN_0004fd50(0, path, clu_commentator_memory);
+	if (clu_commentator_package == 0) {
+		CLU_DebugPrintf("LoadCommentatorSampleSet *** Could not load package *%s **\n", clu_commentator_packages[set]);
+		clu_commentator_set = -1;
 		CLSamples_LoadCommentary();
 		return;
 	}
-	DAT_0028fde8 = set;
-	FUN_0004b870(DAT_002ec87c, 0xffffffff, 0xdefa, 0);
+	clu_commentator_set = set;
+	FUN_0004b870(clu_commentator_package, 0xffffffff, 0xdefa, 0);
 	CLSamples_LoadCommentary();
 }
 
@@ -511,7 +441,7 @@ down for `cooldown` frames. */
 int CLSamples_PlayVoice(char character, int kind, float *pos, int volume, float cooldown, unsigned int flags,
 			int choice, int allow_repeat)
 {
-	struct CLSampleSet *set = &DAT_002eb150[0][0] + (character * CL_VOICE_KIND_COUNT + kind);
+	struct CLSampleSet *set = &clu_voice_sets[0][0] + (character * CL_VOICE_KIND_COUNT + kind);
 
 	if (set->cooldown == 0.0f) {
 		set->cooldown = cooldown;
@@ -529,25 +459,25 @@ void CLSamples_UpdateQueue(void)
 	int channel;
 	int i;
 
-	if (DAT_002ec888 == 0 || FUN_000548d0(DAT_002ea4f8[0].wait_channel) != 0)
+	if (clu_queue_count == 0 || FUN_000548d0(clu_queue[0].wait_channel) != 0)
 		return;
-	if (DAT_002ea4f8[0].set == -1)
-		channel = CLSamples_PlayCommentary(DAT_002ea4f8[0].kind, DAT_002ea4f8[0].choice,
-						   DAT_002ea4f8[0].volume, DAT_002ea4f8[0].flags,
-						   DAT_002ea4f8[0].allow_repeat, NULL);
+	if (clu_queue[0].set == -1)
+		channel = CLSamples_PlayCommentary(clu_queue[0].kind, clu_queue[0].choice,
+						   clu_queue[0].volume, clu_queue[0].flags,
+						   clu_queue[0].allow_repeat, NULL);
 	else
-		channel = CLSamples_PlayFromSet(DAT_002ea4f8[0].set, DAT_002ea4f8[0].kind, NULL,
-						DAT_002ea4f8[0].volume, DAT_002ea4f8[0].flags,
-						DAT_002ea4f8[0].choice, DAT_002ea4f8[0].allow_repeat);
-	DAT_0028ffb4 = channel;
-	if (1 < DAT_002ec888) {
-		for (i = 1; i < DAT_002ec888; i++) {
-			if (DAT_002ea4f8[i].wait_channel == -DAT_002ea4f8[0].wait_channel)
-				DAT_002ea4f8[i].wait_channel = channel;
-			DAT_002ea4f8[i - 1] = DAT_002ea4f8[i];
+		channel = CLSamples_PlayFromSet(clu_queue[0].set, clu_queue[0].kind, NULL,
+						clu_queue[0].volume, clu_queue[0].flags,
+						clu_queue[0].choice, clu_queue[0].allow_repeat);
+	clu_commentary_channel = channel;
+	if (1 < clu_queue_count) {
+		for (i = 1; i < clu_queue_count; i++) {
+			if (clu_queue[i].wait_channel == -clu_queue[0].wait_channel)
+				clu_queue[i].wait_channel = channel;
+			clu_queue[i - 1] = clu_queue[i];
 		}
 	}
-	DAT_002ec888 = DAT_002ec888 + -1;
+	clu_queue_count = clu_queue_count + -1;
 }
 
 /* 0x00071b10  ClassLib/GenericSamples.cpp (inferred)
@@ -561,9 +491,9 @@ void CLSamples_Update(void)
 	CLSamples_UpdateQueue();
 	for (character = 0; character < CL_CHARACTER_COUNT; character++) {
 		for (kind = 0; kind < CL_VOICE_KIND_COUNT; kind++) {
-			set = &DAT_002eb150[character][kind];
+			set = &clu_voice_sets[character][kind];
 			if (set->cooldown != 0.0f) {
-				set->cooldown = set->cooldown - DAT_0028fda8;
+				set->cooldown = set->cooldown - clu_time_scale;
 				if (set->cooldown < 0.0f)
 					set->cooldown = 0.0f;
 			}
@@ -586,9 +516,9 @@ void InitMusic(void)
 	if (*(int *)(root + 0x4c) != 0) {
 		CLU_DebugPrintf("InitMusic() --------------------\n");
 		for (i = 0; i < CL_MUSIC_TRACK_COUNT; i++) {
-			CLU_DebugPrintf("%s\n", DAT_0028ffc0[i].name);
-			sprintf(name, "%s.wma", DAT_0028ffc0[i].name);
-			DAT_002ec890[i] = FUN_0004bb30(*(int *)(root + 0x4c), name, 9, 0xdefa);
+			CLU_DebugPrintf("%s\n", clu_music_tracks[i].name);
+			sprintf(name, "%s.wma", clu_music_tracks[i].name);
+			clu_music_samples[i] = FUN_0004bb30(*(int *)(root + 0x4c), name, 9, 0xdefa);
 		}
 		CLU_DebugPrintf("--------------------------------\n");
 	}
@@ -601,7 +531,7 @@ void CLMusic_Release(void)
 	int i;
 
 	for (i = 0; i < CL_MUSIC_TRACK_COUNT; i++) {
-		if (DAT_002ec890[i] != 0)
-			FUN_0004b6e0((int *)DAT_002ec890[i]);
+		if (clu_music_samples[i] != 0)
+			FUN_0004b6e0((int *)clu_music_samples[i]);
 	}
 }

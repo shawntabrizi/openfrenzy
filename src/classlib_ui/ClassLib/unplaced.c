@@ -11,39 +11,12 @@ the ground plane. Angles are radians.
 
 #include "classlib_ui.h"
 
-/* ---------- globals */
+/* ---------- globals (classlib_ui_data.h) */
 
-/* 0x0028fda8  frame time scale (1.0 at the nominal frame rate); used by many modules */
-float DAT_0028fda8 = 1.0f;
-
-/* 0x0028fdac  axis order of the Euler rotation built by FUN_00070c10: y, z, x */
-int DAT_0028fdac[3] = { 1, 2, 0 };
-
-/* 0x002906f8  the six playable characters (see classlib_ui.h) */
-const struct CLCharacterInfo DAT_002906f8[6] = {
-	{ "Dub", "D", "char_dub.bmp", "selchar_dub.bmp", "lpalm", "rpalm", "rshoulder", "malletdub.obe", 0x00125317,
-	  { 11.0f, 100.0f, 0.4f, 500.0f, 40.0f, 0.0f, 100.0f, 200.0f },
-	  { 20, 30, 30, 10, 10, 200, 0 } },
-	{ "Fly", "F", "char_fly.bmp", "selchar_fly.bmp", "rpalm", "lpalm", "lshoulder", "malletfly.obe", 0x00000069,
-	  { 11.0f, 100.0f, 0.4f, 500.0f, 50.0f, 0.0f, 100.0f, 200.0f },
-	  { 20, 30, 30, 10, 10, 200, 0 } },
-	{ "Geena", "G", "char_geena.bmp", "selchar_geena.bmp", "rpalm", "lpalm", "lshoulder", "malletgeena.obe", 0x00674210,
-	  { 11.0f, 100.0f, 0.4f, 500.0f, 60.0f, 0.0f, 100.0f, 200.0f },
-	  { 20, 30, 30, 10, 20, 200, 0 } },
-	{ "Zak", "Z", "char_gord.bmp", "selchar_gord.bmp", "rpalm", "lpalm", "lshoulder", "malletzak.obe", 0x00007b7d,
-	  { 11.0f, 100.0f, 0.4f, 500.0f, 50.0f, 0.0f, 100.0f, 200.0f },
-	  { 20, 30, 30, 10, 30, 200, 0 } },
-	{ "Jade", "J", "char_jade.bmp", "selchar_jade.bmp", "rpalm", "lpalm", "lshoulder", "malletjade.obe", 0x00103579,
-	  { 11.0f, 100.0f, 0.4f, 500.0f, 50.0f, 0.0f, 100.0f, 200.0f },
-	  { 20, 30, 30, 10, 40, 200, 0 } },
-	{ "Jet", "J", "char_jet.bmp", "selchar_jet.bmp", "rpalm", "lpalm", "lshoulder", "malletjet.obe", 0x00573a76,
-	  { 11.0f, 100.0f, 0.4f, 500.0f, 50.0f, 0.0f, 100.0f, 200.0f },
-	  { 20, 30, 30, 10, 10, 200, 0 } },
-};
-
-/* tentative definitions of globals owned by other modules */
-unsigned int DAT_00285630; /* C runtime rand() seed (holdrand) */
-char *DAT_002ba544;        /* language folder (core) */
+/* 0x0028fda8  frame time scale (1.0 at the nominal frame rate) */
+#define clu_time_scale CLU_VAR(float, 0x0028fda8)
+/* 0x0028fdac  axis order of the Euler rotation built by CLQuat_FromEuler: y, z, x */
+#define clu_euler_order CLU_ARR(int, 0x0028fdac)
 
 /* ---------- angles */
 
@@ -363,7 +336,7 @@ void CLVec3_Rotate(float *out, float *v, float *rotation)
 
 /* 0x00070c10  ClassLib (file unknown)
 Builds the quaternion q from Euler angles: euler[0] about X, y_reference -
-euler[1] about Y, euler[2] about Z, applied in the order of DAT_0028fdac
+euler[1] about Y, euler[2] about Z, applied in the order of clu_euler_order
 (Y first, then the non-zero ones of Z and X). */
 void CLQuat_FromEuler(float *q, float *euler, float y_reference)
 {
@@ -373,24 +346,24 @@ void CLQuat_FromEuler(float *q, float *euler, float y_reference)
 	int *order;
 	int axis;
 
-	if (DAT_0028fdac[0] == 0) {
+	if (clu_euler_order[0] == 0) {
 		axis_angle[1] = 0.0f;
 		axis_angle[0] = 1.0f;
 		axis_angle[2] = 0.0f;
 		axis_angle[3] = euler[0];
-	} else if (DAT_0028fdac[0] == 1) {
+	} else if (clu_euler_order[0] == 1) {
 		axis_angle[0] = 0.0f;
 		axis_angle[1] = 1.0f;
 		axis_angle[2] = 0.0f;
 		axis_angle[3] = y_reference - euler[1];
-	} else if (DAT_0028fdac[0] == 2) {
+	} else if (clu_euler_order[0] == 2) {
 		axis_angle[0] = 0.0f;
 		axis_angle[2] = 1.0f;
 		axis_angle[1] = 0.0f;
 		axis_angle[3] = euler[2];
 	}
 	FUN_00051df0(q, axis_angle);
-	for (order = &DAT_0028fdac[1]; order < &DAT_0028fdac[3]; order++) {
+	for (order = &clu_euler_order[1]; order < &clu_euler_order[3]; order++) {
 		axis = *order;
 		if (euler[axis] == 0.0f)
 			continue;
@@ -490,7 +463,7 @@ int CLVec3_MoveTowards(float *pos, float *target, float speed, float scale)
 	dist = sqrtf(delta[1] * delta[1] + delta[0] * delta[0] + delta[2] * delta[2]);
 	if (scale != 0.0f)
 		dist = dist / scale;
-	speed = DAT_0028fda8 * speed;
+	speed = clu_time_scale * speed;
 	if (dist <= speed) {
 		pos[0] = target[0];
 		pos[1] = target[1];
