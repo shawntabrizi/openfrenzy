@@ -21,9 +21,27 @@
 0016f920 void CGameMode_MouseWhack_Exit(void *self);
 0016fe50 void CGameMode_MouseWhack_Draw(void *self, int top);
 
+# ---- MouseWhack/CBbash_Arena.c
+001708b0 int CBbash_Arena_LoadLOMFile(void *self, void *package, const char *name);
+00170940 void CBbash_Arena_FindClearLeader(void *self);
+00170a00 void CBbash_Arena_FindLeaders(void *self);
+00170a80 void CBbash_Arena_FindLeadingTeam(void *self);
+00170b80 void CBbash_Arena_UpdateBugNumbers(void *self);
+00170c00 void CBbash_Arena_DrawDebug(void *self);
+00170ea0 void *CBbash_Arena_Ctor(void *self);
+00170eb0 void CBbash_Arena_Dtor(void *self);
+001725d0 short CBbash_Arena_ChoosePlayerToAttack(void *self);
+00172660 int CBbash_Arena_DecideBugType(void *self);
+
+# ---- MouseWhack/unplaced.c
+00176100 void *MW_Timer_Ctor(void *self);
+00176140 void MW_Timer_Dtor(void *self);
+00176150 int MW_Timer_Reset(void *self);
+001761a0 void MW_Timer_Update(void *self);
+00176230 void *MW_Timer_Destroy(void *self, unsigned char flags);
+
 # ---- provisional shapes (functions not written yet)
 00172b80 void FUN_00172b80(void *self, int unused);
-001761a0 void FUN_001761a0(void *self);
 00175b70 void FUN_00175b70(void *self);
 0017cf10 int FUN_0017cf10(unsigned int sound, int arg, int volume);
 0017ce90 void FUN_0017ce90(int arg);
@@ -34,7 +52,6 @@
 0017d330 void FUN_0017d330(void);
 00180720 void *FUN_00180720(void *self);
 00180c50 void FUN_00180c50(void *self);
-001708b0 int FUN_001708b0(void *self, void *package, const char *name);
 00182c10 void FUN_00182c10(void);
 00181520 void FUN_00181520(void *self);
 001817d0 void FUN_001817d0(void *self);
@@ -46,4 +63,3 @@
 00182ea0 void FUN_00182ea0(void);
 001853e0 void FUN_001853e0(void);
 00185110 void FUN_00185110(void);
-00170c00 void FUN_00170c00(void *self);

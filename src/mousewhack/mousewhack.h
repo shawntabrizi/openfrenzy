@@ -198,6 +198,9 @@ extern float DAT_002ea478[4];         /* classlib_ui: a zero vector */
 extern int DAT_002ecdec;              /* classlib_ui: the game is paused */
 extern void *DAT_002ecfac;            /* classlib_ui: the HUD object */
 extern void *DAT_002f289c[4];         /* charlib: the AI characters (one per player) */
+extern float DAT_00293920;            /* charlib: the global animation speed factor */
+extern float DAT_002ba990;            /* core: frames per second */
+extern unsigned char *DAT_002ea488;   /* classlib_ui: the actor list holder */
 
 /* ======================================================================== functions missing from the table
 (found through calls and vtables; exported with scripts/ExportAt.java; reported to the architect) */
