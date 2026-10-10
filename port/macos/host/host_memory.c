@@ -235,8 +235,9 @@ static void fault(int signal, siginfo_t *info, void *context) {
      * x29/x30 as 64-bit words in the arena). Symbolize with llvm-symbolizer. */
     fprintf(stderr, "  lr guest %x\n", (uint32_t)u->uc_mcontext->__ss.__lr);
     /* openfrenzy: registers (sp, fp and x0-x28), for faults without a usable frame chain */
-    fprintf(stderr, "  sp=%llx fp=%llx\n", (unsigned long long)u->uc_mcontext->__ss.__sp,
-            (unsigned long long)u->uc_mcontext->__ss.__fp);
+    fprintf(stderr, "  sp=%llx fp=%llx thread=%u%s\n", (unsigned long long)u->uc_mcontext->__ss.__sp,
+            (unsigned long long)u->uc_mcontext->__ss.__fp, (unsigned)pthread_mach_thread_np(pthread_self()),
+            pthread_main_np() ? " (main)" : "");
     for (int r = 0; r < 29; r++)
         fprintf(stderr, "  x%d=%llx%s", r, (unsigned long long)u->uc_mcontext->__ss.__x[r],
                 (r % 4 == 3 || r == 28) ? "\n" : "");
