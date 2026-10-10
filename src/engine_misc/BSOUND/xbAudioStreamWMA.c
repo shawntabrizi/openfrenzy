@@ -11,6 +11,8 @@ strings ("WMA:", "bStopAudioStreamWMA", ...) and their use of WMA-only fields.
 
 #include "engine_misc_sound.h"
 #include "engine_misc_extern.h"
+#include "bdisplay_types.h"
+#include "bdisplay_globals.h"
 
 static const char s_file[] = "C:\\Babel\\Xbox\\Src\\BSOUND\\xbAudioStreamWMA.cpp";
 
@@ -23,14 +25,12 @@ unsigned char DAT_002db830[0x100];
 long long DAT_002db930;
 /* 0x002db938 (.bss): which of bkernel's fixed heap blocks the next decoder gets */
 int DAT_002db938;
-/* 0x00285338 (.data, module bkernel; -1): the fixed heap block bkHeapAllocEx returns
-while it is not -1. Initialised by bkernel; a common symbol here. */
-int DAT_00285338;
+/* 0x00285338 (.data, module bkernel, initialised to -1 there): the fixed heap block
+bkHeapAllocEx returns while it is not -1 */
+extern int DAT_00285338;
 
-/* 0x002d0758 (.bss, module bkernel; a common symbol): the data path, "d:\\" or similar */
-char DAT_002d0758[0x100];
-
-/* bDisplay (common symbols): frames per second and the frame counter */
+/* bDisplay (bdisplay_globals.h; tentative definitions merged with bdisplay's): frames
+per second and the frame counter */
 float DAT_002be248;
 int DAT_002bc890;
 

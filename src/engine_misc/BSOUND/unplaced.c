@@ -9,6 +9,8 @@ IDirectSoundBuffer, panned and attenuated in software or positioned by DirectSou
 
 #include "engine_misc_sound.h"
 #include "engine_misc_extern.h"
+#include "bdisplay_types.h"
+#include "bdisplay_globals.h"
 
 /* ---------- globals */
 
@@ -37,10 +39,11 @@ microcode). It is not copied: the platform's IDirectSound_DownloadEffectsImage i
 the image. A zero block of the same size is passed. */
 static unsigned char s_dspImage[0x60f8];
 
-/* bDisplay's camera (.bss in module bdisplay; common symbols): the view matrix and
-the camera position, which is the listener */
+/* bDisplay's camera (module bdisplay, bdisplay_globals.h; tentative definitions merged
+with bdisplay's): the camera rotation and position, which are the listener's.
+DAT_002be574/578 are bdisplay's macros for DAT_002be570[1]/[2]. */
 float DAT_002be330[16];
-float DAT_002be570, DAT_002be574, DAT_002be578;
+float DAT_002be570[3];
 
 #define CHANNEL(i) (&DAT_002da308[i])
 #define VOLUME(v) (DAT_00285658[(v)])
@@ -211,7 +214,7 @@ void bsCalcVolumePan(float *pos, float minDist, float maxDist, int *pan, int *vo
 	float dx, dy, dz, dist, len, side, panRange, t;
 	float view[4];
 
-	dx = pos[0] - DAT_002be570;
+	dx = pos[0] - DAT_002be570[0];
 	dy = pos[1] - DAT_002be574;
 	dz = pos[2] - DAT_002be578;
 	dist = sqrtf(dx * dx + dy * dy + dz * dz);
@@ -801,7 +804,7 @@ void bsUpdateListener(void)
 	struct EmDS3DListener listener;
 	float in[4], out[4];
 
-	listener.vPosition[0] = DAT_002be570;
+	listener.vPosition[0] = DAT_002be570[0];
 	listener.vPosition[1] = DAT_002be574;
 	listener.dwSize = sizeof(listener);
 	listener.vPosition[2] = DAT_002be578;

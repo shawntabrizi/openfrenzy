@@ -11,6 +11,8 @@ function table gives them to module bdisplay.
 
 #include "engine_misc_gui.h"
 #include "engine_misc_extern.h"
+#include "bdisplay_types.h"
+#include "bdisplay_globals.h"
 
 /* ---------- globals */
 
@@ -73,12 +75,14 @@ BGUI_ALIAS(DAT_002cb568, 0x650);
 OF_ASSERT_OFFSET(struct BGuiGlobals, menus.next, 0x624);
 OF_ASSERT_OFFSET(struct BGuiGlobals, menus.prev, 0x628);
 
-/* bDisplay globals (module bdisplay; uninitialised there too, merged as common) */
-int DAT_002bc40c;   /* screen width (GUI pixels) */
-int DAT_002bc410;   /* screen height */
-int DAT_002bc46c;   /* horizontal pixel scale of the back buffer */
-int DAT_002bc470;   /* vertical pixel scale */
-int DAT_002bc480;   /* the back buffer surface */
+/* bDisplay globals (module bdisplay, src/bdisplay/bdisplay_globals.h): screen width
+and height, the back buffer's pixel scale and the back buffer. Tentative definitions,
+merged with bdisplay's (-fcommon), so the image links whichever module defines them. */
+int DAT_002bc40c;
+int DAT_002bc410;
+int DAT_002bc46c;
+int DAT_002bc470;
+void *DAT_002bc480;
 
 /* BINPUT: the map the GUI hands to the input system while it is active (module bkernel) */
 struct BInputMap *DAT_002cc1b4;
@@ -489,7 +493,7 @@ void bGuiLockScreen(void)
 {
 	int pitch;
 
-	g_bgui.bits = (unsigned int *)em_bdLockSurface(DAT_002bc480, 0, 0, 0, 0, &pitch);
+	g_bgui.bits = (unsigned int *)em_bdLockSurface((int)DAT_002bc480, 0, 0, 0, 0, &pitch);
 	if (g_bgui.bits == NULL) {
 		em_bkPrintf("bGuiLockScreen: Lock failure\n");
 		return;

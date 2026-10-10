@@ -18,6 +18,8 @@ Methods take this as their first parameter (the original passes it in ECX).
 #include "engine_misc_maths.h"
 #include "engine_misc_gui.h"
 #include "engine_misc_extern.h"
+#include "bdisplay_types.h"
+#include "bdisplay_globals.h"
 
 #define EPS 0.001f    /* 0x00285644 */
 #define TWO_PI 6.28318548f /* 0x00255930 */
@@ -526,13 +528,32 @@ static const void *const vtable_0027d2d0[] = {
 	(const void *)FUN_001ec1a0,
 };
 
-/* bDisplay's camera (.bss in module bdisplay; common symbols) */
-extern float DAT_002be330[16];
-extern float DAT_002be570, DAT_002be574, DAT_002be578;
-float DAT_002be270[16];       /* the current view matrix */
-int DAT_002be580, DAT_002be584, DAT_002be588, DAT_002be58c;
-int DAT_002bee80[4];          /* projected textures per stage */
-int DAT_002bcc94, DAT_002bda3c, DAT_002bc88c, DAT_002bd214; /* frustum colour parts */
+/* bDisplay's camera and state (module bdisplay, bdisplay_globals.h; tentative
+definitions merged with bdisplay's): the view matrix, the camera's rotation, position,
+clip planes and fields of view, and the count of projected textures per stage
+(0x002bee80, indexed by stage as the original does). The frustum colour parts
+DAT_002bcc94/DAT_002bda3c/DAT_002bc88c/DAT_002bd214 are bdisplay's macros. */
+float DAT_002be270[16];
+float DAT_002be330[16];
+float DAT_002be570[3];
+float DAT_002be580, DAT_002be584, DAT_002be588, DAT_002be58c;
+/* 0x002bee80-0x002bee8c: projected textures per texture stage. The original indexes
+0x002bee80 by stage; the port has a symbol per address (bactor uses DAT_002bee84). */
+int DAT_002bee80, DAT_002bee84, DAT_002bee88, DAT_002bee8c;
+
+static int *stage_projections(int stage)
+{
+	switch (stage) {
+	case 0:
+		return &DAT_002bee80;
+	case 1:
+		return &DAT_002bee84;
+	case 2:
+		return &DAT_002bee88;
+	default:
+		return &DAT_002bee8c;
+	}
+}
 
 /* 0x002da2c8 (.bss): the projection's template; nothing writes it, so it stays zero */
 static const float s_projectionTemplate[16];
@@ -872,7 +893,7 @@ void bProjector_Render(struct BCamera *self, unsigned char *actor, int arg, unsi
 {
 	int prev, saved140[3], saved150[3], i;
 	float savedPos[3], savedMatrix[16];
-	int saved580[4];
+	float saved580[4];
 
 	if (actor == NULL)
 		actor = self->attached;
@@ -883,7 +904,7 @@ void bProjector_Render(struct BCamera *self, unsigned char *actor, int arg, unsi
 	prev = (int)em_baSelectCamera(NULL);
 	if (prev == 0) {
 		savedPos[2] = DAT_002be578;
-		savedPos[0] = DAT_002be570;
+		savedPos[0] = DAT_002be570[0];
 		savedPos[1] = DAT_002be574;
 		memcpy(savedMatrix, DAT_002be330, 64);
 		saved580[2] = DAT_002be588;
@@ -916,7 +937,7 @@ void bProjector_Render(struct BCamera *self, unsigned char *actor, int arg, unsi
 		return;
 	}
 	DAT_002be574 = savedPos[1];
-	DAT_002be570 = savedPos[0];
+	DAT_002be570[0] = savedPos[0];
 	DAT_002be578 = savedPos[2];
 	memcpy(DAT_002be330, savedMatrix, 64);
 	DAT_002be588 = saved580[2];
@@ -967,7 +988,7 @@ void bProjector_Unapply(struct BCamera *self, int stage)
 	D3DDevice_SetTextureState_Deferred(stage, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
 	if (self->flags & 1)
 		D3DDevice_SetRenderState_StencilEnable(0);
-	DAT_002bee80[stage]--;
+	(*stage_projections(stage))--;
 }
 
 /* 0x001ec260  LIB:engine_tail
@@ -1018,7 +1039,7 @@ void bProjector_Apply(struct BCamera *self, int stage, int mode)
 	D3DDevice_SetTextureState_TexCoordIndex(stage, 0x20000);
 	em_bdSetTextureStage(0xd, stage, 0);
 	em_bdPushState(2);
-	DAT_002bee80[stage]++;
+	(*stage_projections(stage))++;
 }
 
 /* 0x001ec540  LIB:engine_tail (vtable 0x0027d2d0[1]) */
