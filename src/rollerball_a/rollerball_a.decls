@@ -133,8 +133,8 @@
 0018e3c0 int CRollerBallSfx_Init(void *self, void *package);
 0018e420 void CRollerBallSfx_Shutdown(void *self);
 0018e450 int CRollerBallSfx_Play(void *self, int sample, int volume, int pan, unsigned int frequency, float *flags);
-0018e490 void CRollerBallSfx_SetFrequency(void *self, int channel, int frequency);
-0018e4b0 void CRollerBallSfx_SetVolume(void *self, int channel, int volume);
+0018e490 void CRollerBallSfx_SetFrequency(int channel, int frequency);
+0018e4b0 void CRollerBallSfx_SetVolume(int channel, int volume);
 0018e4d0 void *CRollerBallSfx_DeletingDtor(void *self, unsigned int flags);
 0018e4f0 void CRollerBallDirect3D_Ctor(void *self);
 0018e500 void CRollerBallDirect3D_Dtor(void *self);
@@ -181,11 +181,28 @@
 0018f050 int CRollerBallPhysics_Resolve(void *self, unsigned char *e);
 0018f860 void CRollerBallPhysics_Step(void *self, float dt);
 0018f9f0 void CRollerBallPhysics_Update(void *self, float dt);
+
+# RollerBall/CRollerBall_Light.c
+0018fa10 void CRollerBallLight_SetColour(void *self, int r, int g, int b);
+0018fa30 void CRollerBallLight_SetRange(void *self, float range);
+0018fa40 int CRollerBallDirLight_Init(void *self);
+0018fa70 void CRollerBallPointLight_Ctor(void *self);
+0018fa80 void CRollerBallLight_Dtor(void *self);
+0018fa90 int CRollerBallPointLight_Init(void *self);
+0018fad0 void CRollerBallPointLight_Update(void *self, float dt);
+0018fb30 void CRollerBallPointLight_Enable(void *self, int on);
 0018fb90 void CRollerBallLights_Ctor(void *self);
 0018fba0 void CRollerBallLights_Dtor(void *self);
+0018fbb0 void CRollerBallLights_Add(void *self, void *light);
 0018fbe0 void CRollerBallLights_Shutdown(void *self);
-0018fcf0 int CRollerBallLights_Init(void *self);
 0018fc30 void CRollerBallLights_Update(void *self, float dt);
+0018fc60 void *CRollerBallLight_DeletingDtor(void *self, unsigned int flags);
+0018fc80 void CRollerBallLight_SetPosition(void *self, const float *pos);
+0018fcb0 void *CRollerBallLight_DerivedDeletingDtor(void *self, unsigned int flags);
+0018fcd0 void *CRollerBallLights_DeletingDtor(void *self, unsigned int flags);
+0018fcf0 int CRollerBallLights_Init(void *self);
+
+# RollerBall/unplaced_systems.c (continued)
 0018fe40 void *CRollerBallSpotFX_Ctor(void *self);
 0018fe70 void CRollerBallSpotFX_Dtor(void *self);
 0018fe90 void CRollerBallSpotFX_Shutdown(void *self);

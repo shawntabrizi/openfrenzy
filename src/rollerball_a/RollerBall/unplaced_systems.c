@@ -489,17 +489,17 @@ int CRollerBallSfx_Play(void *self, int sample, int volume, int pan, unsigned in
 	return -1;
 }
 
-/* 0x0018e490  RollerBall (gap): sets a channel's frequency (ECX unused) */
-void CRollerBallSfx_SetFrequency(void *self, int channel, int frequency)
+/* 0x0018e490  RollerBall (gap): sets a channel's frequency. The original is a method of the
+sound effect system (ret 8) that does not use ECX; the port drops `this`, so the table's
+two-argument shape (Demolition's callers) stays valid. */
+void CRollerBallSfx_SetFrequency(int channel, int frequency)
 {
-	(void)self;
 	bsSetChannelFrequency(channel, frequency);
 }
 
-/* 0x0018e4b0  RollerBall (gap): sets a channel's volume (ECX unused) */
-void CRollerBallSfx_SetVolume(void *self, int channel, int volume)
+/* 0x0018e4b0  RollerBall (gap): sets a channel's volume (ECX unused, as 0x0018e490) */
+void CRollerBallSfx_SetVolume(int channel, int volume)
 {
-	(void)self;
 	bsSetChannelVolume(channel, (unsigned short)volume);
 }
 
@@ -547,7 +547,8 @@ void *CRollerBallDirect3D_DeletingDtor(void *self, unsigned int flags)
 
 /* 0x0018e540  RollerBall (gap)
 Texture stage 1 modulates the texture factor's alpha (ALPHA << 24): colour op 14, alpha
-op from the factor, texture coordinates 3. Also used by Demolition. */
+op from the factor, texture coordinates 3. Also used by Demolition. A method of the
+Direct3D helper (game +0x26f4, ret 4) that does not use ECX: the port drops `this`. */
 void CRollerBall_SetFactorAlphaStage(int alpha)
 {
 	D3DDevice_SetRenderState_TextureFactor((unsigned long)alpha << 0x18);
