@@ -10,63 +10,8 @@ video player call.
 #include "core_modes_a.h"
 #include "core_modes_a_modes.h"
 
-/* ---------- globals */
+#include "core_modes_a_globals.h"
 
-extern int DAT_002ba9a4;            /* core: package being loaded in the background */
-extern int DAT_002ba9a8;            /* core: second package */
-extern int DAT_002ba9b0;            /* core: packages still loading */
-extern int DAT_002ba544;            /* core: language folder ("packages\english") */
-extern int DAT_002ba554;            /* core */
-extern int DAT_002ba564;            /* core: the first menu mode */
-extern int DAT_002baadc;            /* core: launched from the demo disc */
-extern int DAT_002baae8;            /* core */
-extern int DAT_002baaec;            /* core: last vertical blank count */
-extern float _DAT_002ba9c8;         /* core: demo timer (frames) */
-extern float _DAT_002ba98c;         /* core: refresh rate (50 or 60), picks the video */
-extern int DAT_002bae6c;            /* core */
-extern int DAT_002bae8c, DAT_002bae90, DAT_002bae98, DAT_002bae9c;
-extern int DAT_002baeac, DAT_002baeb0, DAT_002baeb8, DAT_002baebc;
-extern int DAT_002ba940, DAT_002ba944, DAT_002ba948, DAT_002ba94c; /* core: clear colour */
-extern int DAT_002844cc, DAT_002844d0, DAT_002844d4, DAT_002844d8; /* core: default clear colour */
-extern int DAT_00284408;            /* core */
-extern int PTR_s_packages_english_002839e0[]; /* core: [game * 4 + variation] (row 0: pointers) */
-extern int PTR_s_packages_english_002839e4[];
-
-extern int DAT_0028198c;            /* AskAgain answer: 1 yes, -1 no */
-extern int DAT_00281990;            /* the last game of the attract mode */
-extern int DAT_002838f4, DAT_002838f8; /* the game and variation to play again */
-extern float DAT_00283760;          /* attract mode timer */
-extern int DAT_00292c4c, DAT_00292c50, DAT_00292c78;
-extern int DAT_002d02ac;
-extern int DAT_002ba9ac;
-extern int DAT_002ecdec;            /* pause count */
-extern int DAT_002ecde8;
-extern void *DAT_002ecc74;          /* the text table */
-extern void *DAT_002ecfac;          /* classlib_ui: the intro camera */
-extern void *DAT_002db808;          /* engine_misc: the DirectSound object */
-extern char DAT_002d0758[];         /* bkernel: the disc root ("d:\") */
-
-extern int DAT_002b95ac;            /* the CharacterSel package finished loading */
-extern int DAT_002b95b0[6];         /* character voice packages to load */
-extern char DAT_002b95c8;           /* draw the fade overlay */
-extern char DAT_002b95d4;           /* bgeffects package requested */
-extern int DAT_002b9670;            /* the CharacterSel package */
-extern int DAT_00290754;            /* classlib_ui: the character table (6 x 0x60), voice packages */
-
-/* the character table entry i (name at +0, voice package at +0x5c) */
-#define CMA_CHAR_NAME(i) (*(const char **)((char *)&DAT_00290754 - 0x5c + (i) * 0x60))
-#define CMA_CHAR_VOICE(i) (*(int *)((char *)&DAT_00290754 + (i) * 0x60))
-
-/* the text with index ID in the text table */
-#define CMA_TEXT(id) (*(wchar16 **)(CMA_FIELD(int, DAT_002ecc74, 0x20) + (id) * 0x10))
-
-/* platform (XDK) functions */
-long IDirectSound_GetCaps(void *sound, void *caps);
-void D3DDevice_GetDisplayFieldStatus(void *status);
-
-/* other modules, with the prototypes of the x86 code */
-#define CMA_LoadPackageAsync(name, flags) ((int (*)(const char *, int))FUN_00071f90)((name), (flags))
-#define CMA_PlayBink(path, flags) ((int (*)(const char *, int, void *, int))FUN_000463c0)((path), (flags), 0, 0)
 /* classlib_ui: the intro camera (thiscall on DAT_002ecfac) */
 #define CMA_IntroCam_Reset() ((void (*)(void *))FUN_000796c0)(DAT_002ecfac)
 #define CMA_IntroCam_Set(p) ((void (*)(void *, void *))FUN_0007a200)(DAT_002ecfac, (p))

@@ -102,3 +102,39 @@
 00013a40 struct CGameMode *CGameMode_BootSequence_Delete(struct CGameMode *self, unsigned int flags);
 00013a60 int Core_PlayVideo(char *name, int flags);
 00013b60 void CGameMode_BootSequence_Resume(struct CGameMode *self);
+
+# ---------- Core (unplaced, before CGameMode_CharacterSelect.cpp: its helpers)
+00013bd0 struct CMA_CharSelPanel *CMA_CharSelPanel_ctor(struct CMA_CharSelPanel *self);
+00013bf0 void CGameMode_CharacterSelect_dtor(struct CGameMode_CharacterSelect *self);
+00013c80 void CGameMode_CharacterSelect_Pushed(struct CGameMode_CharacterSelect *self);
+00013d20 void CharSel_SlideOut(struct CGameMode_CharacterSelect *self, int player, int fromRight);
+00013da0 int CharSel_NextFreeCharacter(int c, int player);
+00013df0 int CharSel_PrevFreeCharacter(int c, int player);
+00013e50 void CharSel_HideMarkers(struct CGameMode_CharacterSelect *self);
+00013f30 void CharSel_RenderGroup(struct CBGEffectGroup *group);
+00013fb0 void CharSel_UpdateMenu(struct CGameMode_CharacterSelect *self);
+00014090 void CharSel_PlayerLeave(struct CGameMode_CharacterSelect *self, int player);
+00014170 void CharSel_PlayAnim(int actor, int anim, int loop, int keep, float speed, float blend, int track);
+00014250 void CharSel_Finish(struct CGameMode_CharacterSelect *self);
+000142c0 void COverlayMover_SetTarget(void *self, float x, float y, float z);
+000142f0 struct CGameMode_CharacterSelect *CGameMode_CharacterSelect_ctor(struct CGameMode_CharacterSelect *self);
+00014380 struct CGameMode_CharacterSelect *CGameMode_CharacterSelect_Delete(struct CGameMode_CharacterSelect *self, unsigned int flags);
+
+# ---------- Core/CGameMode_CharacterSelect.cpp
+000143a0 void CGameMode_CharacterSelect_Resume(struct CGameMode_CharacterSelect *self);
+00015000 void CharSel_Celebrate(struct CGameMode_CharacterSelect *self, int player);
+00015160 void CGameMode_CharacterSelect_Update(struct CGameMode_CharacterSelect *self, int active);
+000154d0 void CharSel_InitCamera(struct CGameMode_CharacterSelect *self);
+00015740 void CharSel_AllJoined(struct CGameMode_CharacterSelect *self);
+00015bf0 void CharSel_RenderCelebration(struct CGameMode_CharacterSelect *self);
+00015e50 int CharSel_UpdateCelebration(struct CGameMode_CharacterSelect *self);
+000160a0 void CharSel_ShowCharacter(struct CGameMode_CharacterSelect *self, int player, int character, int dir);
+00016330 void CGameMode_CharacterSelect_Suspend(struct CGameMode_CharacterSelect *self);
+00016440 void CharSel_Deselect(struct CGameMode_CharacterSelect *self, int player, int anim);
+00016650 void CharSel_Confirm(struct CGameMode_CharacterSelect *self, int player, int anim);
+000168f0 void CGameMode_CharacterSelect_Input(struct CGameMode_CharacterSelect *self, int active);
+00016b80 void CGameMode_CharacterSelect_Render(struct CGameMode_CharacterSelect *self, int active);
+00016d90 void CharSel_Join(struct CGameMode_CharacterSelect *self, int player, int fromPad);
+00016e90 void CharSel_StartCelebration(struct CGameMode_CharacterSelect *self);
+00017070 void CGameMode_CharacterSelect_LoadingStarted(struct CGameMode_CharacterSelect *self);
+00017580 int CGameMode_CharacterSelect_HandleButton(struct CGameMode_CharacterSelect *self, int button, int player);

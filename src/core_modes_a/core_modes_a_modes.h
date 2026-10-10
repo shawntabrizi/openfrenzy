@@ -93,12 +93,72 @@ struct CGameMode_BGEffects {
 	struct CBGEffectGroup group;    /* +0x64 */
 };                                  /* 0x84 */
 
+/* a player panel of the character select screen (0x44 bytes; ctor 0x00013bd0) */
+struct CMA_CharSelPanel {
+	void *overlay;                    /* +0x00 COverlay of the character model */
+	void *shown;                      /* +0x04 the overlay that slides out */
+	struct CBGTypeText *joinText;     /* +0x08 text 0x105 */
+	struct CBGTypeText *readyText;    /* +0x0c text 0x106 */
+	struct CBGTypeText *nameText;     /* +0x10 text 0x187 + player */
+	struct CBGTypeText *charText;     /* +0x14 the character's name */
+	struct CBGTypeTextBox *infoBox;   /* +0x18 */
+	struct CMA_List overlays;         /* +0x1c */
+	int unk28;                        /* +0x28 */
+	struct CBGEffectGroup *group;     /* +0x2c */
+	float x;                          /* +0x30 viewport position */
+	float y;                          /* +0x34 */
+	int unk38;                        /* +0x38 */
+	int unk3c;                        /* +0x3c */
+	float animDelay;                  /* +0x40 */
+};
+
+/* CGameMode_CharacterSelect (vtable 0x00253dc4) */
+struct CGameMode_CharacterSelect {
+	struct CGameModeMenu menu;        /* +0x000 */
+	void *tweakMenu;                  /* +0x098 CTweakMenu "CharSelect" (core) */
+	int camStage;                     /* +0x09c celebration camera: player 0-3, 4 group, 5 done */
+	int cheerStarted;                 /* +0x0a0 */
+	float cheerTimer;                 /* +0x0a4 */
+	float cheerVolume[5];             /* +0x0a8 */
+	int cheerVoice[5];                /* +0x0bc */
+	int lastCheer;                    /* +0x0d0 */
+	int actors[4];                    /* +0x0d4 the players' characters (celebration) */
+	int unke4;                        /* +0x0e4 */
+	void *charOverlay[6];             /* +0x0e8 character portraits */
+	void *charHighlight[6];           /* +0x100 */
+	float pulsePhase[6];              /* +0x118 */
+	void *marker[6][4];               /* +0x130 player markers on each portrait */
+	void *playerOverlay[4];           /* +0x190 */
+	struct CMA_List overlays;         /* +0x1a0 */
+	struct CBGTypeTextBox *menuText[4]; /* +0x1ac */
+	int inGame[4];                    /* +0x1bc */
+	int selection[4];                 /* +0x1cc */
+	int owner[6];                     /* +0x1dc the player that took each character, -1 */
+	int font1;                        /* +0x1f4 handgotb.ttf */
+	int font2;                        /* +0x1f8 handgotl.ttf */
+	struct CBGTypeTextBox *prompt;    /* +0x1fc */
+	int celebrate[4];                 /* +0x200 */
+	int arrowCount[4];                /* +0x210 */
+	int created;                      /* +0x220 */
+	int menuState;                    /* +0x224 */
+	int confirmed;                    /* +0x228 */
+	int quit;                         /* +0x22c */
+	struct CBGEffectGroup *group;     /* +0x230 */
+	unsigned char unk234[0x60];       /* +0x234 */
+	struct CMA_CharSelPanel panels[4];/* +0x294 */
+	unsigned char unk3a4[4];          /* +0x3a4 */
+	signed char stage;                /* +0x3a8 0 join, 1 choose, 2 markers, 3 celebrate, 4 menu, 5 */
+	unsigned char unk3a9[3];
+	int ready;                        /* +0x3ac */
+};
+
 extern const void *const vtable_002538a4[];
 extern const void *const vtable_00253928[];
 extern const void *const vtable_002539c0[];
 extern const void *const vtable_00253bac[];
 extern const void *const vtable_00253bc4[];
 extern const void *const vtable_00253c04[];
+extern const void *const vtable_00253dc4[];
 
 /* ---------- globals (core_modes_a_data.c) */
 

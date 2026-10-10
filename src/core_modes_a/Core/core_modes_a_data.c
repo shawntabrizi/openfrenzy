@@ -14,6 +14,7 @@ Globals the module uses, by their Ghidra names (docs/ARCHITECTURE.md section 12)
 */
 
 #include <stdint.h>
+#include "core_modes_a_globals.h"
 
 /* ---------- this module (.data) */
 
@@ -91,3 +92,120 @@ __attribute__((weak)) int PTR_s_packages_english_002839e0[56] = { CMA_VARIATION_
 __attribute__((weak)) int PTR_s_packages_english_002839e4[55] = { 1, 1, 1, 1, -2, -2, -1, -1,
 	2, 2, 2, 2, -1, -2, 0, -1, 2, 2, 1, 2, 1, 1, 1, 1, -3, -2, -1, -1, 1, 1, 1, 1, -2, -1, -1,
 	-1, 2, 2, 0, 1, 1, 1, 1, 1, -1, -1, -1, 0, -1, -1, -1, -1, 0, 0, 1 };
+
+/* ---------- this module: CGameMode_CharacterSelect.cpp (.data) */
+
+const char *PTR_s_p1_select_bmp_00281998[4] = {
+	"p1_select.bmp", "p2_select.bmp", "p3_select.bmp", "p4_select.bmp",
+};
+const char *PTR_s_p1_confirm_bmp_002819a8[4] = {
+	"p1_confirm.bmp", "p2_confirm.bmp", "p3_confirm.bmp", "p4_confirm.bmp",
+};
+float DAT_002819b8 = -4.0f;
+int DAT_002819bc[4] = { -1, -1, -1, -1 };
+float DAT_002819cc[6] = { 1.0f, 1.0f, 150.0f, 90.0f, 120.0f, 30.0f };
+float DAT_002819e4[2] = { 0.0f, 60.0f };
+float DAT_002819ec[2] = { 0.0f, 60.0f };
+const char *PTR_s_dub_on_bmp_002819f4[6] = {
+	"dub_on.bmp", "fly_on.bmp", "geena_on.bmp", "zak_on.bmp", "jade_on.bmp", "jet_on.bmp",
+};
+const char *PTR_s_dub_off_bmp_00281a0c[6] = {
+	"dub_off.bmp", "fly_off.bmp", "geena_off.bmp", "zak_off.bmp", "jade_off.bmp", "jet_off.bmp",
+};
+float DAT_00281a24 = -264.0f;
+float DAT_00281a28 = 40.0f;
+float DAT_00281a2c = 88.0f;
+int DAT_00281a30 = -110;
+int DAT_00281a34 = -60;
+float DAT_00281a38 = 3.0f;
+int DAT_00281a3c = 16;
+float DAT_00281a40[16] = {
+	-202.0f, 40.0f, 0.0f, 0.0f, -102.0f, 40.0f, 0.0f, 0.0f,
+	-2.0f, 40.0f, 0.0f, 0.0f, 98.0f, 40.0f, 0.0f, 0.0f,
+};
+float DAT_00281af0 = 0.0f;
+float DAT_00281af4 = -120.0f;
+float DAT_00281af8 = 400.0f;
+float DAT_00281afc = 1.0f;
+float DAT_00281b00 = 30.0f;
+int DAT_00281b04 = -110;
+int DAT_00281b08 = 25;
+/* the tweak menu "CharSelect" edits these (module core also names them) */
+int DAT_00281b0c = 0x3c;
+int DAT_00281b10 = 0x3c;
+int DAT_00281b14 = 0x3c;
+int DAT_00281b18 = 0xff;
+int DAT_00281b1c = 0xff;
+int DAT_00281b20 = 0xff;
+float DAT_00281b24 = 0.9f;
+float DAT_00281b28 = 0.5f;
+float DAT_00281b2c = -1.0f;
+float DAT_00281b38 = 0.1f;
+int DAT_00281b40 = 1;
+float DAT_00281b74 = 30.0f;
+float DAT_00281bd8[16] = {             /* 0x00281bd8 (Ghidra names it from 0x00281be0) */
+	-180.0f, 0.0f, 0.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f,
+	60.0f, 0.0f, 0.0f, 0.0f, 180.0f, 0.0f, 0.0f, 0.0f,
+};
+int DAT_00281c30 = 3;
+float DAT_00281c34 = 30.0f;
+float DAT_00281c38 = 180.0f;
+float DAT_00281c3c = 1.6f;
+
+/* ---------- this module: CGameMode_CharacterSelect.cpp (.bss) */
+
+unsigned char DAT_002b95e8[0x70] __attribute__((aligned(4)));
+float DAT_002b9658[6];
+int DAT_002b967c;
+struct CMA_Vertex DAT_002b9680[4];
+int DAT_002b9710;
+
+/* ---------- other modules */
+
+int DAT_002bc40c, DAT_002bc410;                      /* bdisplay: screen width, height */
+int DAT_002ecdec, DAT_002ecde8;                      /* classlib_ui .bss block */
+void *DAT_002ecc74, *DAT_002ecfac;
+
+/* 0x00292ca0: the animation table (39 entries and an empty one); owner unknown (charlib?) */
+__attribute__((weak)) struct CMA_AnimEntry DAT_00292ca0[40] = {
+	{ "idle_ready", 0.300000012f },
+	{ "walk", 0.159999996f },
+	{ "jump", 1.0f },
+	{ "attack_weapon_ready", 1.0f },
+	{ "attack_weapon", 1.0f },
+	{ "land", 1.79999995f },
+	{ "land", 1.0f },
+	{ "attack_1", 0.0f },
+	{ "attack_kick", 0.0f },
+	{ "hurt", 0.0f },
+	{ "fall", 1.0f },
+	{ "idle", 0.0f },
+	{ "score_goal", 1.0f },
+	{ "attack1", 1.0f },
+	{ "attack2", 1.0f },
+	{ "attack_knockout", 1.0f },
+	{ "attack_flying_kick", 1.0f },
+	{ "front_hurt", 1.0f },
+	{ "back_hurt", 1.0f },
+	{ "front_knockout", 1.0f },
+	{ "back_knockout", 1.0f },
+	{ "front_knockout_getup", 1.0f },
+	{ "back_knockout_getup", 1.0f },
+	{ "camera_pose", 1.0f },
+	{ "run", 0.100000001f },
+	{ "idle_additional1", 0.0f },
+	{ "idle_additional2", 0.0f },
+	{ "victory", 1.0f },
+	{ "defeat", 1.0f },
+	{ "select", 1.0f },
+	{ "deselect", 1.0f },
+	{ "drown", 1.0f },
+	{ "idle_charselect", 1.0f },
+	{ "psyched", 1.0f },
+	{ "intro", 1.0f },
+	{ "victory_idle", 1.0f },
+	{ "defeat_idle", 1.0f },
+	{ "head_idle_1", 1.0f },
+	{ "head_idle_2", 1.0f },
+	{ "", 0.0f },
+};
