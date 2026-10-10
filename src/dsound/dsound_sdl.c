@@ -2335,13 +2335,20 @@ ULONG WINAPI IDirectSoundBuffer_Release(LPDIRECTSOUNDBUFFER buffer)
 	return count;
 }
 
-/* the data plays in place; the play cursor goes back to its start */
+/* the data plays in place; new data puts the play cursor back to its start */
 HRESULT WINAPI IDirectSoundBuffer_SetBufferData(LPDIRECTSOUNDBUFFER buffer, LPVOID data, DWORD size)
 {
 	struct sdl_stream *stream = buffer_from_interface(buffer);
 	void *owned = NULL;
 
 	pthread_mutex_lock(&mixer_lock);
+	/* the same data again changes nothing, the cursor included (CDirectSoundBuffer_SetBufferData
+	0x00207736) */
+	if (data == stream->buffer.data && size == stream->buffer.size)
+	{
+		pthread_mutex_unlock(&mixer_lock);
+		return DS_OK;
+	}
 	if (stream->owns_data)
 		owned = (void *)stream->buffer.data;
 	stream->owns_data = FALSE;

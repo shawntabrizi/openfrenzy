@@ -91,6 +91,13 @@ static HRESULT CALLBACK music_read(LPVOID context, DWORD offset, DWORD bytes, LP
 	struct ring *ring = context;
 
 	ring->reads++;
+	/* the game joins a read across its ring's end in 0x100 bytes (0x002db830): a
+	larger read would overflow it, so the decoder must never ask for one */
+	if (bytes > 0x100)
+	{
+		printf("check music: a read of %lu bytes, over the game's 0x100\n", (unsigned long)bytes);
+		return E_FAIL;
+	}
 	if (offset >= ring->size || bytes > sizeof(ring->window))
 		return E_FAIL;
 	if (bytes > ring->size - offset)

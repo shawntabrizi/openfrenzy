@@ -47,13 +47,23 @@ static struct wma_xmo *xmo_from_interface(XMediaObject *object)
 	return (struct wma_xmo *)object;
 }
 
+/* the most the XBE's decoder asks of the callback at once (0x00234133, 0x00233d2d:
+reads of up to 0x80 bytes). The game's callback (0x00056780) depends on it: a read
+across the end of its 128 KB ring is joined in a 0x100-byte buffer (0x002db830),
+which a larger read overflows. file_read_exact asks again for the rest. */
+#define XMO_MAXIMUM_READ 0x80
+
 /* wma_read_proc on the game's callback, which returns the byte count (an XDK
 callback may return S_OK: all of them) */
 static int xmo_read(void *context, uint32_t offset, uint32_t size, const uint8_t **data)
 {
 	struct wma_xmo *xmo = context;
 	LPVOID pointer = NULL;
-	HRESULT result = xmo->callback(xmo->context, offset, size, &pointer);
+	HRESULT result;
+
+	if (size > XMO_MAXIMUM_READ)
+		size = XMO_MAXIMUM_READ;
+	result = xmo->callback(xmo->context, offset, size, &pointer);
 
 	if (result < 0 || !pointer)
 		return -1;
