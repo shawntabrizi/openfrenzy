@@ -128,3 +128,27 @@ __attribute__((weak)) int DAT_00292c50 = 0x18;
 __attribute__((weak)) int DAT_00292c78 = 0x240;
 __attribute__((weak)) int DAT_002838e4[3] = { 90, -25, -125 };
 __attribute__((weak)) int DAT_002838f0 = 30;
+
+/* used by CGameMode_MiniGameSelect */
+struct CMiniGameEntry DAT_002ba238[0x30];
+int DAT_002ba4dc;
+int DAT_002ba4d0;
+float _DAT_002ba4c0;
+int DAT_002ba4d4;
+int DAT_002ba4d8;
+int DAT_002ba4c4;
+int DAT_002ba230;
+float _DAT_002ba4c8;
+int _DAT_002ba4cc;
+int DAT_002ba4e4;
+void *DAT_002ba954[13];
+__attribute__((weak)) int DAT_002839f0[0x31] = {
+	1, -2, -2, -1, -1, 2, 2, 2, 2, -1, -2, 0, -1, 2, 2, 1, 2, 1, 1, 1, 1, -3, -2, -1, -1,
+	1, 1, 1, 1, -2, -1, -1, -1, 2, 2, 0, 1, 1, 1, 1, 1, -1, -1, -1, 0, -1, -1, -1, -1,
+};
+__attribute__((weak)) int DAT_002838f4 = -1;
+__attribute__((weak)) int DAT_002838f8 = -1;
+__attribute__((weak)) int _DAT_0028198c = -1;
+__attribute__((weak)) int DAT_00283984 = 5;
+__attribute__((weak)) float _DAT_00283988 = 0.15f;
+__attribute__((weak)) int DAT_0028452c[4] = { 0xff, 0xff, 0xff, 0xdc };

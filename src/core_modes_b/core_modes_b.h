@@ -421,6 +421,56 @@ extern int DAT_002838f0;                   /* fade frames */
 extern int _DAT_002ecd9c, _DAT_002ecda0, _DAT_002ecda4, _DAT_002ecda8; /* text ids for the pause menu */
 extern int _DAT_002ecde8;
 
+/* ---------- CGameMode_MiniGameSelect: the tournament's minigame carousel */
+
+/* one carousel entry (12 bytes, DAT_002ba238): game 1-12, variant 1-4, name text */
+struct CMiniGameEntry {
+	int game;
+	int variant;
+	int text;
+};
+OF_ASSERT_SIZE(struct CMiniGameEntry, 12);
+
+struct CGameMode_MiniGameSelect {
+	struct cmb_CGameMode base;
+	int leave;                  /* 0x098: back pressed: pop */
+	int field_9c;
+	void *items[0x36];          /* 0x0a0: one text per entry */
+	int up_texture;             /* 0x178 */
+	int down_texture;           /* 0x17c */
+	unsigned char pad_180[8];
+	void *up_glow;              /* 0x188 */
+	void *down_glow;            /* 0x18c */
+	void *up_arrow;             /* 0x190 */
+	void *down_arrow;           /* 0x194 */
+	void *heading_left;         /* 0x198 */
+	void *heading_right;        /* 0x19c */
+	unsigned char list[0xc];    /* 0x1a0: overlay list */
+	void *info;                 /* 0x1ac: the game info panel (core FUN_0002e0d0) */
+	int totals[4];              /* 0x1b0: tournament points per player */
+};
+OF_ASSERT_OFFSET(struct CGameMode_MiniGameSelect, items, 0xa0);
+OF_ASSERT_OFFSET(struct CGameMode_MiniGameSelect, list, 0x1a0);
+OF_ASSERT_OFFSET(struct CGameMode_MiniGameSelect, totals, 0x1b0);
+
+extern struct CMiniGameEntry DAT_002ba238[0x30]; /* the carousel entries, sorted by name */
+extern int DAT_002ba4dc;                  /* number of entries */
+extern int DAT_002ba4d0;                  /* scroll direction, 0 = still */
+extern float _DAT_002ba4c0;               /* scroll position 0..1 */
+extern int DAT_002ba4d4;                  /* first visible entry */
+extern int DAT_002ba4d8;                  /* selected entry */
+extern int DAT_002ba4c4, DAT_002ba230;    /* fonts */
+extern float _DAT_002ba4c8;               /* arrow offset */
+extern int _DAT_002ba4cc;                 /* scores to add when back from a game */
+extern int DAT_002ba4e4;                  /* fade in on the next render */
+extern int DAT_002839f0[0x31];            /* core: variant availability [game * 4 + variant - 4] */
+extern int DAT_002838f4, DAT_002838f8;    /* last game and variant */
+extern int _DAT_0028198c;
+extern int DAT_00283984;                  /* frames before input is accepted */
+extern float _DAT_00283988;               /* scroll speed */
+extern int DAT_0028452c[4];               /* heading colour */
+extern void *DAT_002ba954[13];            /* core: the module of each game */
+
 struct CGameMode_MetaVote {
 	struct cmb_CGameMode base;
 	int state;                  /* 0x098 */

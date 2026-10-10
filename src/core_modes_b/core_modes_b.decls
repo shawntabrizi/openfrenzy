@@ -103,3 +103,17 @@
 00023a00 void CGameMode_MiniGameIntro_CreateTexts(struct CGameMode_MiniGameIntro *self);
 000242d0 void CGameMode_MiniGameIntro_Enter(struct CGameMode_MiniGameIntro *self);
 00024510 void CGameMode_MiniGameIntro_Exit(struct CGameMode_MiniGameIntro *self);
+
+# Core/CGameMode_MiniGameSelect.c (0x00024620 and 0x000247b0 are unplaced in the table)
+00024620 struct CGameMode_MiniGameSelect *CGameMode_MiniGameSelect_ctor(struct CGameMode_MiniGameSelect *self);
+000247b0 void CGameMode_MiniGameSelect_dtor(struct CGameMode_MiniGameSelect *self);
+00024820 void CGameMode_MiniGameSelect_Enter(struct CGameMode_MiniGameSelect *self);
+00024880 void CGameMode_MiniGameSelect_Suspend(struct CGameMode_MiniGameSelect *self);
+000248f0 void CGameMode_MiniGameSelect_Buttons(struct CGameMode_MiniGameSelect *self, int active);
+00024940 void CGameMode_MiniGameSelect_Update(struct CGameMode_MiniGameSelect *self, int active);
+00024a00 void CGameMode_MiniGameSelect_Render(struct CGameMode_MiniGameSelect *self, int active);
+00024cc0 void CGameMode_MiniGameSelect_ShowGame(struct CGameMode_MiniGameSelect *self, int index, int from_below);
+00024d40 int CGameMode_MiniGameSelect_OnButton(struct CGameMode_MiniGameSelect *self, int button, int pad);
+00024fe0 void *CGameMode_MiniGameSelect_DeletingDtor(struct CGameMode_MiniGameSelect *self, unsigned char flags);
+00025000 void CGameMode_MiniGameSelect_Start(struct CGameMode_MiniGameSelect *self);
+00025290 void CGameMode_MiniGameSelect_Loaded(struct CGameMode_MiniGameSelect *self);
