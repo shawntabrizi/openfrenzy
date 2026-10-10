@@ -22,6 +22,37 @@ __attribute__((weak)) float DAT_002b05a8 = 1.5f;        /* knockout animation sp
 __attribute__((weak)) int DAT_00297520[60];             /* variation settings (demolition_a; zeros
                                                            here, the owner's values replace them) */
 
+/* ---------- CharLib / meta_a globals the player's states read (weak, XBE values) */
+__attribute__((weak)) float DAT_0028fdd8[4] = { 0.0f, 0.0f, 1.0f, 1.0f }; /* (0, 0, 1, 1) */
+__attribute__((weak)) char DAT_00290728[6 * 0x60 + 0x10]; /* the characters (classlib_ui; zeros here) */
+__attribute__((weak)) float DAT_00292c98 = 50.0f;      /* jump speed */
+__attribute__((weak)) float DAT_00293a38 = 1.5f;       /* reach scale with the power-up */
+__attribute__((weak)) float DAT_002b059c = 10.0f;      /* walk -> run speed */
+__attribute__((weak)) float DAT_002b05a0 = 8.0f;       /* run -> walk speed */
+__attribute__((weak)) float DAT_002b074c = 180.0f;     /* attack angle */
+__attribute__((weak)) float DAT_002b0750 = 0.2f;       /* velocity kept when stopping */
+__attribute__((weak)) float DAT_002b0768 = 200.0f;     /* stand -> idle time */
+__attribute__((weak)) float DAT_002b076c = 200.0f;     /* idle -> stand time */
+__attribute__((weak)) int DAT_002b0770 = 0x400;
+__attribute__((weak)) int DAT_002b0774 = 0x200;
+__attribute__((weak)) float DAT_002b0778 = 0.02f;
+__attribute__((weak)) float DAT_002b077c = -0.02f;
+__attribute__((weak)) int DAT_002b0780 = 0x14;
+__attribute__((weak)) float DAT_002b078c[4] = { 0.1f, 0.1f, 0.4f, 0.1f };  /* attack blend speeds */
+__attribute__((weak)) float DAT_002b079c[4] = { 1.7f, 1.7f, 1.7f, 1.0f };  /* attack animation speeds */
+__attribute__((weak)) float DAT_00293920 = 1.0f;      /* global animation speed factor */
+__attribute__((weak)) float DAT_002b0784 = 14.0f;      /* attack step speed */
+__attribute__((weak)) float DAT_002b0788 = 5.0f;       /* attack step time */
+__attribute__((weak)) float DAT_002b07ac = 12.0f;      /* jump attack speed */
+__attribute__((weak)) float DAT_002b07b0 = 350.0f;     /* jump attack range */
+__attribute__((weak)) float DAT_002b07bc = 20.0f;      /* knockout slide time */
+__attribute__((weak)) float DAT_002b07c0 = 5.0f;       /* knockout slide speed */
+__attribute__((weak)) int DAT_002ba56c;                /* the debug free camera is on */
+__attribute__((weak)) float DAT_00305654;
+__attribute__((weak)) float DAT_002f2890;
+__attribute__((weak)) float DAT_002f2894;
+__attribute__((weak)) int DAT_00305650;
+
 /* ---------- .bss (weak) */
 
 __attribute__((weak)) char *DAT_002ff85c;               /* the Demolition game (demolition_a) */
