@@ -89,6 +89,33 @@
 00181d50 void Bug_PaintTag(void *self, short player);
 00181fc0 void CBbash_Bug_Spawn(void *self, short type);
 
+# ---- MouseWhack/CBBash_Splat.c
+00182c10 void MW_Splat_Reset(void);
+00182ce0 int MW_Splat_ClipToGround(void *bug, float *out);
+00182ea0 void MW_Splat_DrawSwipes(void);
+00182f50 void MW_Splat_DrawRings(void);
+00183300 void MW_Splat_DrawSprayMarks(void);
+001836b0 void MW_Splat_DrawSplats(short index);
+001839b0 void MW_Splat_Init(void);
+00183a70 void MW_Splat_PlayerDrops(float *pos, short player);
+00183ca0 void MW_Splat_AddSwipe(float *pos, short player, float angle);
+00183e00 void MW_Splat_AddRing(float *pos, short player);
+00183ff0 void MW_Splat_SporeDrops(float *pos);
+00184150 void MW_Splat_SpitDrops(float *pos);
+001842b0 void MW_Splat_BugBits(void *bug, int amount);
+00184500 void MW_Splat_TremorBits(void *bug, int amount);
+00184760 void Splat_AddCrumbs(float *pos, int unused);
+00184930 void MW_Splat_AddSpray(float *pos, void *player, float angle);
+00184bb0 void *MW_Splat_AddBugSplat(void *bug);
+00184f40 void MW_Splat_AddSprayMark(float *pos, short player);
+00185110 void MW_Splat_DrawDebris(void);
+001853e0 void MW_Splat_DrawSprites(void);
+00185720 float MW_Splat_SegmentHit(float *start, float *dir, float *outPoint, void **outTri, void **outPlatform);
+00185d70 void MW_Splat_SporeExplosion(float *pos);
+00185e90 void MW_Splat_GroundUnder(float *start, float *dir, float *outPoint, float *outNormal);
+00185f00 void MW_Splat_AddGibSplat(float *pos);
+00186280 void MW_Splat_Update(void);
+
 # ---- MouseWhack/unplaced.c
 00176100 void *MW_Timer_Ctor(void *self);
 00176140 void MW_Timer_Dtor(void *self);
@@ -140,33 +167,15 @@
 0017d090 void MW_StopSound(int channel);
 0017d0b0 void MW_Player_PlayVoice(void *player, int kind, int volume, float cooldown, unsigned int flags, int choice, int allowRepeat);
 0017d100 void MW_Player_SmashHitProp(void *player);
+00186aa0 void MW_RenderPlayerShadows(void);
+00186b00 void MW_DrawPlayerShadows(void);
+00186bd0 int MW_AI_CondStop(void *self);
+00186c50 int MW_AI_CondMove(void *self);
+00186d00 int MW_AI_CondJump(void *self);
+00186d20 int MW_AI_CondLanded(void *self);
+00186d50 int MW_AI_StateLand(void *self, int entered);
+00186dc0 int MW_AI_CondAttack(void *self);
+00187080 int MW_AI_StateMove(void *self, int entered);
+001871a0 int MW_AI_StateJump(void *self, int entered);
+001872f0 int MW_AI_StateAttack(void *self, int entered);
 
-# ---- MouseWhack/CBBash_Splat.c
-00182c10 void MW_Splat_Reset(void);
-00182ce0 int MW_Splat_ClipToGround(void *bug, float *out);
-00182ea0 void MW_Splat_DrawSwipes(void);
-00182f50 void MW_Splat_DrawRings(void);
-00183300 void MW_Splat_DrawSprayMarks(void);
-001836b0 void MW_Splat_DrawSplats(short index);
-001839b0 void MW_Splat_Init(void);
-00183a70 void MW_Splat_PlayerDrops(float *pos, short player);
-00183ca0 void MW_Splat_AddSwipe(float *pos, short player, float angle);
-00183e00 void MW_Splat_AddRing(float *pos, short player);
-00183ff0 void MW_Splat_SporeDrops(float *pos);
-00184150 void MW_Splat_SpitDrops(float *pos);
-001842b0 void MW_Splat_BugBits(void *bug, int amount);
-00184500 void MW_Splat_TremorBits(void *bug, int amount);
-00184760 void Splat_AddCrumbs(float *pos, int unused);
-00184930 void MW_Splat_AddSpray(float *pos, void *player, float angle);
-00184bb0 void *MW_Splat_AddBugSplat(void *bug);
-00184f40 void MW_Splat_AddSprayMark(float *pos, short player);
-00185110 void MW_Splat_DrawDebris(void);
-001853e0 void MW_Splat_DrawSprites(void);
-00185720 float MW_Splat_SegmentHit(float *start, float *dir, float *outPoint, void **outTri, void **outPlatform);
-00185d70 void MW_Splat_SporeExplosion(float *pos);
-00185e90 void MW_Splat_GroundUnder(float *start, float *dir, float *outPoint, float *outNormal);
-00185f00 void MW_Splat_AddGibSplat(float *pos);
-00186280 void MW_Splat_Update(void);
-
-# ---- provisional shapes (functions not written yet)
-00186b00 void FUN_00186b00(void);

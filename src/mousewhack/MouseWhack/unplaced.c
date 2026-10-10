@@ -2324,3 +2324,356 @@ void MW_Player_SmashHitProp(void *player)
 		}
 	}
 }
+
+/* ======================================================================== after CBBash_Splat.cpp
+
+0x00186aa0-0x001872f0: gap functions linked after CBBash_Splat.cpp (file not known): the
+players' projected shadows and the CharLib AI state machine of a Bug Bash player. The
+player's AI tables are in the module data block: conditions 0x002b4b3c, states 0x002b4b60,
+priorities 0x002b4ae8 (see CBbash_Player.c).
+
+AI player fields used here (charlib_ai.h): +0x30 actor, +0x36 state, +0x44 float[3] the
+stick direction, +0x54 stick amount, +0x68 the jump button, +0x6c the action button,
++0x7c float[3] the push, +0x1084 short enemy, +0x1092 short, +0x10b0 float the top speed
+scale, +0x10e0 float skill, +0x10e4 int walking (not running), +0x10e8 float the stick
+amount that moves him.
+*/
+
+/* charlib (CharLibShadow.cpp, Actor.cpp): shadows on, the players' shadow projectors, the
+projector count, the jump speed, the highest player's height and its base */
+extern int DAT_00293e80;
+extern void *DAT_00293ea0[4];
+extern int DAT_00293f08;
+extern float DAT_00292c98;
+extern float DAT_002f2890;
+extern float DAT_002f2894;
+/* bdisplay: the horizontal and vertical field of view */
+extern float DAT_002be588;
+extern float DAT_002be58c;
+/* core: the player records (+4: a human plays) */
+extern int DAT_002baed8[];
+/* charlib: the voice volume */
+extern int DAT_00293928;
+
+#define AI_S(off) MW_AS(self, off)
+#define AI_I(off) MW_AI(self, off)
+#define AI_F(off) MW_AF(self, off)
+#define AI_ACT ((unsigned char *)MW_AP(self, 0x30))
+#define AI_ANIM_DONE (MW_AS(AI_ACT, 0x234) != 0)
+#define AI_ACTION (MW_AI(MW_AP(self, 0x6c), 0x14))
+
+/* 0x00186aa0  (gap): renders the players' shadow projectors: each player's mallet (its
+instance at +0x1140) and his actor */
+void MW_RenderPlayerShadows(void)
+{
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		bProjector_Render((struct BCamera *)DAT_00293ea0[i], (unsigned char *)mw_Players[i] + 0x1140, 1, 3);
+		bProjector_Render((struct BCamera *)DAT_00293ea0[i], (unsigned char *)MW_AP(mw_Players[i], 0x30) + 0x10, 1, 4);
+	}
+}
+
+/* 0x00186b00  (gap): draws the players' projected shadows (when shadows are on) */
+void MW_DrawPlayerShadows(void)
+{
+	float fovX, fovY;
+
+	if (DAT_00293e80 == 0 || DAT_00293f08 == 0)
+		return;
+	Shadows_SaveTransforms();
+	fovY = DAT_002be58c;
+	fovX = DAT_002be588;
+	bdPushRenderState(3, 0, 0);
+	bdPushRenderState(1, 2, 0);
+	MW_RenderPlayerShadows();
+	bdSetFieldOfView(fovX, fovY);
+	if (0 < Shadows_ApplyStages()) {
+		bdSetRenderState(4, 1, 0);
+		bdPushRenderState(5, 0, 0);
+		bdSetDepthOffset(-0.05f);
+		Actor_DrawShadowMeshes();
+		bdSetDepthOffset(0.0f);
+		bdPopRenderState(5);
+		Shadows_RestoreStages();
+	}
+	D3DDevice_SetTextureState_TexCoordIndex(1, 1);
+	bdPopRenderState(3);
+	bdPopRenderState(1);
+	Shadows_RestoreTransforms();
+}
+
+/* 0x00186bd0  (gap): AI condition 0, "stop": walking with the stick released, the gun
+let go ("Pied Pipers"), the stun over, or the animation of the state done */
+int MW_AI_CondStop(void *self)
+{
+	switch (AI_S(0x36)) {
+	case 1:
+		return AI_F(0x10e8) <= AI_F(0x54) ? 0 : 1;
+	case 4:
+		if (mw_Variation == 3)
+			return AI_ACTION != 0 ? 0 : 1;
+		break;
+	case 7:
+		if (AI_S(0x12f2) != 0)
+			return 0;
+		return AI_ANIM_DONE ? 1 : 0;
+	}
+	return AI_ANIM_DONE ? 1 : 0;
+}
+
+/* 0x00186c50  (gap): AI condition 1, "move": the stick pushed (and in most states the
+animation done; in "Pied Pipers" not while the gun is held) */
+int MW_AI_CondMove(void *self)
+{
+	switch (AI_S(0x36)) {
+	default:
+		if (AI_F(0x54) < AI_F(0x10e8))
+			return 0;
+		if (!AI_ANIM_DONE)
+			return 0;
+		break;
+	case 4:
+		if (mw_Variation != 3) {
+			if (AI_F(0x54) < AI_F(0x10e8))
+				return 0;
+			if (!AI_ANIM_DONE)
+				return 0;
+			return 1;
+		}
+		if (AI_ACTION != 0)
+			return 0;
+		/* fall through */
+	case 0:
+	case 3:
+	case 8:
+		if (AI_F(0x54) < AI_F(0x10e8))
+			return 0;
+		break;
+	}
+	return 1;
+}
+
+/* 0x00186d00  (gap): AI condition 2, "jump": the jump button */
+int MW_AI_CondJump(void *self)
+{
+	return MW_AI(MW_AP(self, 0x68), 0x14) != 0;
+}
+
+/* 0x00186d20  (gap): AI condition 3, "landed": on the ground, not rising */
+int MW_AI_CondLanded(void *self)
+{
+	if (MW_AI(AI_ACT, 0x214) != 0 && MW_AF(AI_ACT, 0x198) <= 0.0f)
+		return 1;
+	return 0;
+}
+
+/* 0x00186d50  (gap): AI state 3: lands (animation 5, a voice), stops */
+int MW_AI_StateLand(void *self, int entered)
+{
+	if (entered != 0) {
+		Actor_PlayAnim(AI_ACT, 5, 0, 0, 1.0f, 0.3f, 1);
+		MW_Player_PlayVoice(self, 1, DAT_00293928, 0.0f, 0, -1, 0);
+	}
+	AI_I(0x84) = 0;
+	AI_I(0x80) = 0;
+	AI_I(0x7c) = 0;
+	return 0;
+}
+
+/* 0x00186dc0  (gap): AI condition 4, "attack". "Pied Pipers": the gun: a held trigger
+fires a spray from the palm (a computer player only at a bug of another player within
+500), tags, cools down (30, or 30 + 5 x skill) and plays the shoulder's recoil; a human
+letting go after 25 frames of cool-down tags once more. Other games: the action button
+starts a swing (state 4). */
+int MW_AI_CondAttack(void *self)
+{
+	float spray[4], at[4];
+	float best;
+	unsigned char *node;
+	int me;
+
+	me = MW_AT(AI_ACT, 0x230, unsigned short);
+	if (mw_Variation == 3) {
+		if (AI_ACTION == 0) {
+			if (25.0f <= AI_F(0x12f8) && DAT_002baed8[me * 10] == 1)
+				MW_VFN(self, 0x48, int (*)(void *))(self);
+			return 0;
+		}
+		if (DAT_002baed8[me * 10] == 0) {
+			best = 100000.0f;
+			node = (unsigned char *)(uintptr_t)CLList_Next((unsigned int *)DAT_0030ee30, NULL);
+			if (node == NULL)
+				return 0;
+			do {
+				float dist = bmVectorDistance(MW_AV(AI_ACT, 0xd0), MW_AV(MW_AP(node, -8), 0xd0));
+
+				if (dist < best && (int)MW_AS(node, 0x1204) != (int)MW_AT(AI_ACT, 0x230, unsigned short))
+					best = dist;
+				node = (unsigned char *)(uintptr_t)CLList_Next((unsigned int *)DAT_0030ee30, (unsigned int *)node);
+			} while (node != NULL);
+			if (500.0f < best)
+				return 0;
+		}
+		if ((unsigned short)AI_S(0x36) < 2 && AI_F(0x12f8) <= 0.0f) {
+			spray[0] = 0.0f;
+			spray[1] = 0.0f;
+			spray[2] = 50.0f;
+			spray[3] = 0.0f;
+			baGetNodePosition((struct BActorInstance *)(AI_ACT + 0x10), (struct BActorNode *)MW_AP(self, 0x12b4), at);
+			bmVectorRotateY(spray, spray, MW_AF(AI_ACT, 0x1e8));
+			at[0] = at[0] + spray[0];
+			at[1] = at[1] + spray[1];
+			at[2] = at[2] + spray[2];
+			MW_Splat_AddSpray(at, self, MW_AF(AI_ACT, 0x1e8));
+			MW_VFN(self, 0x48, int (*)(void *))(self);
+			AI_F(0x12bc) = 5.0f;
+			if (AI_F(0x10e0) == 0.0f)
+				AI_F(0x12f8) = 30.0f;
+			else
+				AI_F(0x12f8) = AI_F(0x10e0) * 5.0f + 30.0f;
+			baFlushAnimations(AI_ACT + 0x10, (struct BActorNode *)MW_AP(self, 0x12b8), 1, 0);
+			baQueueAnimation((struct BActorInstance *)(AI_ACT + 0x10), (struct BActorNode *)MW_AP(self, 0x12b8),
+				(struct BAnim *)MW_AP(AI_ACT, 0x2a0), 0x800, -1, 0, NULL, NULL);
+			baQueueCopyAnimation((struct BActorInstance *)(AI_ACT + 0x10), (struct BActorNode *)MW_AP(self, 0x12b8),
+				(struct BActorNode *)MW_AP(AI_ACT, 0x144), 0.1f, 0, NULL, NULL);
+			return 0;
+		}
+		return 0;
+	}
+	if (AI_ACTION != 0 && AI_S(0x36) != 4) {
+		AI_S(0x1084) = -1;
+		MW_AF(AI_ACT, 0x1d8) = MW_AF(AI_ACT, 0x1e8);
+		AI_I(0x12e8) = 0;
+		AI_S(0x12ee) = 0;
+		AI_S(0x12ec) = 0;
+		return 1;
+	}
+	return 0;
+}
+
+/* 0x00187080  (gap): AI state 1: walks (animation 1) or runs (0x18) by the actor's
+speed (switching above 10 / below 8), the animation speed following it; pushed along the
+stick */
+int MW_AI_StateMove(void *self, int entered)
+{
+	unsigned char *actor;
+	float push;
+
+	if (entered != 0) {
+		AI_I(0x10e4) = 1;
+		Actor_PlayAnim(AI_ACT, 1, 1, 0, 0.0f, DAT_0028fda8 * 0.1f, 1);
+	}
+	if (AI_I(0x10e4) != 0) {
+		if (MW_F(0x002b4b84) < MW_AF(AI_ACT, 0x254)) {
+			Actor_SwitchAnim(AI_ACT, 0x18, 0.05f);
+			AI_I(0x10e4) = 0;
+		}
+	} else if (MW_AF(AI_ACT, 0x254) < MW_F(0x002b4b88)) {
+		Actor_SwitchAnim(AI_ACT, 1, 0.05f);
+		AI_I(0x10e4) = 1;
+	}
+	actor = AI_ACT;
+	if (AI_I(0x10e4) == 0)
+		MW_AF(actor, 0x23c) = MW_AF(MW_AP(actor, 0x324), 0x6a0) * MW_AF(actor, 0x254);
+	else
+		MW_AF(actor, 0x23c) = MW_AF(MW_AP(actor, 0x324), 0x84) * MW_AF(actor, 0x254);
+	push = AI_F(0x10b0) * AI_F(0x54);
+	AI_F(0x7c) = push * AI_F(0x44);
+	AI_F(0x80) = push * AI_F(0x48);
+	AI_F(0x84) = push * AI_F(0x4c);
+	MW_AF(AI_ACT, 0x1d8) = CLMath_HeadingXZ(MW_AV(self, 0x7c));
+	return 0;
+}
+
+/* 0x001871a0  (gap): AI state 2: jumps (from the ground, taking the platform's
+velocity; animation 2, a voice), steering at 0.59 of the walking push */
+int MW_AI_StateJump(void *self, int entered)
+{
+	unsigned char *actor, *platform;
+	float push;
+
+	if (entered != 0 && MW_AI(AI_ACT, 0x214) != 0) {
+		MW_AF(AI_ACT, 0x198) = DAT_00292c98;
+		actor = AI_ACT;
+		platform = (unsigned char *)MW_AP(MW_AP(actor, 0x18c), 0x1b0);
+		if (platform != NULL) {
+			MW_AF(actor, 0x194) = MW_AF(platform, 0x1a4) + MW_AF(actor, 0x194);
+			MW_AF(AI_ACT, 0x198) = MW_AF(MW_AP(MW_AP(AI_ACT, 0x18c), 0x1b0), 0x1a8) + MW_AF(AI_ACT, 0x198);
+			MW_AF(AI_ACT, 0x19c) = MW_AF(MW_AP(MW_AP(AI_ACT, 0x18c), 0x1b0), 0x1ac) + MW_AF(AI_ACT, 0x19c);
+		}
+		Actor_PlayAnim(AI_ACT, 2, 0, 0, 1.0f, 0.3f, 1);
+		if (AI_F(0x10e8) <= AI_F(0x54))
+			MW_AF(AI_ACT, 0x1d8) = CLMath_HeadingXZ(MW_AV(self, 0x7c));
+		if (MW_AS(AI_ACT, 0x230) == 0) {
+			DAT_002f2894 = MW_AF(AI_ACT, 0xd4);
+			DAT_002f2890 = 0.0f;
+		}
+		MW_Player_PlayVoice(self, 0, DAT_00293928, 0.0f, 0, -1, 0);
+	}
+	push = AI_F(0x10b0) * AI_F(0x54) * 0.58823526f;
+	AI_F(0x7c) = push * AI_F(0x44);
+	AI_F(0x80) = push * AI_F(0x48);
+	AI_F(0x84) = push * AI_F(0x4c);
+	return 0;
+}
+
+/* 0x001872f0  (gap): AI state 4: the attack. Other games: a smash or swipe swing
+(animation 13/14 at 4x after looking around), stopped on the ground; after 6 frames the
+swing lands once: a whoosh, the hit prop smashed, CBbash_Player_Strike (vtable +0x10).
+"Pied Pipers": fires a paint ball 80 up, 50 ahead every 15 frames with the recoil. */
+int MW_AI_StateAttack(void *self, int entered)
+{
+	float from[4], dir[4];
+	unsigned int sound;
+
+	if (mw_Variation != 3) {
+		if (MW_AI(AI_ACT, 0x214) != 0) {
+			AI_I(0x84) = 0;
+			AI_I(0x80) = 0;
+			AI_I(0x7c) = 0;
+		}
+		AI_F(0x12e8) = DAT_0028fda8 + AI_F(0x12e8);
+		if (entered != 0) {
+			CBbash_Player_LookAround(self);
+			if (MW_AI(AI_ACT, 0x214) == 0 && AI_S(0x38) == 2)
+				AI_S(0x12f4) = 0;
+			Actor_PlayAnim(AI_ACT, AI_S(0x12f4) == 0 ? 0xe : 0xd, 0, 0, 4.0f, 0.1f, 1);
+			AI_S(0x1092) = 0;
+		}
+		if (6.0f <= AI_F(0x12e8) && AI_S(0x12ec) == 0) {
+			AI_S(0x12ec) = 1;
+			if (AI_S(0x12f4) == 0)
+				sound = (unsigned int)((mw_rand() & 1) + 0x12);
+			else
+				sound = (unsigned int)((mw_rand() & 3) + 0x14);
+			MW_PlaySoundAt(sound, 0, MW_AV(AI_ACT, 0xd0));
+			MW_Player_SmashHitProp(self);
+			MW_VFN(self, 0x10, void (*)(void *))(self);
+		}
+		if (mw_Variation != 3)
+			return 0;
+	}
+	if (AI_F(0x12f8) <= 0.0f) {
+		dir[0] = 0.0f;
+		dir[1] = 0.0f;
+		dir[2] = 50.0f;
+		dir[3] = 0.0f;
+		from[0] = MW_AF(AI_ACT, 0xd0);
+		from[2] = MW_AF(AI_ACT, 0xd8);
+		from[1] = MW_AF(AI_ACT, 0xd4) + 80.0f;
+		from[3] = MW_AF(AI_ACT, 0xdc);
+		bmVectorRotateY(dir, dir, MW_AF(AI_ACT, 0x1e8));
+		from[0] = from[0] + dir[0];
+		from[1] = from[1] + dir[1];
+		from[2] = from[2] + dir[2];
+		CBbash_Bullets_Fire(mw_Bullets, from, dir, MW_AS(AI_ACT, 0x230));
+		AI_F(0x12f8) = 15.0f;
+		baFlushAnimations(AI_ACT + 0x10, (struct BActorNode *)MW_AP(self, 0x12b8), 1, 0);
+		baQueueAnimation((struct BActorInstance *)(AI_ACT + 0x10), (struct BActorNode *)MW_AP(self, 0x12b8),
+			(struct BAnim *)MW_AP(AI_ACT, 0x2a0), 0x800, -1, 0, NULL, NULL);
+		baQueueCopyAnimation((struct BActorInstance *)(AI_ACT + 0x10), (struct BActorNode *)MW_AP(self, 0x12b8),
+			(struct BActorNode *)MW_AP(AI_ACT, 0x144), 0.1f, 0, NULL, NULL);
+	}
+	return 0;
+}
