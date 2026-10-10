@@ -38,6 +38,7 @@ turns the reverb off; audio.enabled = false skips opening a device
 #include "sdl_platform.h"
 #include "port_config.h"
 #include "voice_audio.h"
+#include "dsound_xdk.h"
 
 #include <SDL3/SDL.h>
 #include <math.h>
@@ -46,6 +47,23 @@ turns the reverb off; audio.enabled = false skips opening a device
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+/* The platform build force-includes halo_math.h, whose macros send sin, cos, pow and
+the others to src/runtime/of_math.c's halo_* wrappers. Those currently call
+themselves and never return (reported to the runtime owner). Audio needs no
+cross-machine bit-exactness, so this file calls musl's own functions. */
+#undef sin
+#undef cos
+#undef tan
+#undef asin
+#undef acos
+#undef atan
+#undef atan2
+#undef exp
+#undef log
+#undef log2
+#undef log10
+#undef pow
 
 #define OUTPUT_RATE 48000
 #define OUTPUT_CHANNELS 2
@@ -144,6 +162,30 @@ struct sdl_stream
 	/* the direct path's low pass, for each channel, and the room send's */
 	float direct_lowpass[2];
 	float room_lowpass;
+
+	/* a DirectSound buffer (IDirectSoundBuffer_*) rather than a stream: it plays
+	the game's memory in place, as the Xbox did, because the game writes into
+	it while it plays (the WMA music's ring, 0x00056d20) */
+	BOOL is_buffer;
+	struct buffer_source
+	{
+		const unsigned char *data;
+		DWORD size;
+		DWORD bits;              /* 8 or 16 (PCM); 4 (Xbox ADPCM) */
+		DWORD block_align;       /* bytes of one block of frames */
+		DWORD block_frames;      /* frames in a block: 1 (PCM) or 64 (ADPCM) */
+		DWORD frames;            /* in data */
+		DWORD position;          /* the next frame the mixer takes */
+		DWORD loop_start, loop_length; /* bytes (SetLoopRegion); length 0: all */
+		BOOL playing;
+		BOOL looping;
+		/* the ADPCM block the mixer is in, decoded */
+		long cached_block;
+		short cache[XBOX_ADPCM_BLOCK_SAMPLES * 2];
+		DWORD flags;             /* DSBUFFERDESC.dwFlags */
+	} buffer;
+	/* the buffer's data was allocated here (DSBUFFERDESC.dwBufferBytes) */
+	BOOL owns_data;
 };
 
 static pthread_mutex_t mixer_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -259,13 +301,43 @@ first, and the nibbles code the 63 after it: the 64th nibble only pads the
 block (the maps' sounds always have 0 there), and decoding it in place of the
 header's sample put a wrong sample in every 64, a buzz at 344 Hz in 22 kHz
 sounds. */
+/* one block of `channels` channels into XBOX_ADPCM_BLOCK_SAMPLES interleaved frames */
+static void decode_adpcm_block(const unsigned char *data, unsigned long channels, short *output)
+{
+	unsigned long channel;
+
+	for (channel = 0; channel < channels; channel++)
+	{
+		const unsigned char *header = data + channel * 4;
+		int predictor = (short)(header[0] | (header[1] << 8));
+		int index = header[2] > 88 ? 88 : header[2];
+		unsigned long group, byte;
+
+		output[channel] = (short)predictor;
+		for (group = 0; group < 8; group++)
+		{
+			const unsigned char *nibbles = data + 4 * channels + (group * channels + channel) * 4;
+
+			for (byte = 0; byte < 4; byte++)
+			{
+				/* nibble n codes sample n + 1 */
+				unsigned long sample = group * 8 + byte * 2 + 1;
+
+				output[sample * channels + channel] = (short)ima_expand(nibbles[byte] & 0xf, &predictor, &index);
+				if (sample + 1 < XBOX_ADPCM_BLOCK_SAMPLES)
+					output[(sample + 1) * channels + channel] = (short)ima_expand(nibbles[byte] >> 4, &predictor, &index);
+			}
+		}
+	}
+}
+
 static short *decode_adpcm(const unsigned char *source, unsigned long size, unsigned long channels,
 	unsigned long *frame_count)
 {
 	unsigned long block_bytes = XBOX_ADPCM_BLOCK_BYTES * channels;
 	unsigned long blocks = size / block_bytes;
 	short *samples = malloc((blocks ? blocks : 1) * XBOX_ADPCM_BLOCK_SAMPLES * channels * sizeof(short));
-	unsigned long block, channel;
+	unsigned long block;
 
 	if (!samples)
 	{
@@ -273,34 +345,8 @@ static short *decode_adpcm(const unsigned char *source, unsigned long size, unsi
 		return NULL;
 	}
 	for (block = 0; block < blocks; block++)
-	{
-		const unsigned char *data = source + block * block_bytes;
-		short *output = samples + block * XBOX_ADPCM_BLOCK_SAMPLES * channels;
-
-		for (channel = 0; channel < channels; channel++)
-		{
-			const unsigned char *header = data + channel * 4;
-			int predictor = (short)(header[0] | (header[1] << 8));
-			int index = header[2] > 88 ? 88 : header[2];
-			unsigned long group, byte;
-
-			output[channel] = (short)predictor;
-			for (group = 0; group < 8; group++)
-			{
-				const unsigned char *nibbles = data + 4 * channels + (group * channels + channel) * 4;
-
-				for (byte = 0; byte < 4; byte++)
-				{
-					/* nibble n codes sample n + 1 */
-					unsigned long sample = group * 8 + byte * 2 + 1;
-
-					output[sample * channels + channel] = (short)ima_expand(nibbles[byte] & 0xf, &predictor, &index);
-					if (sample + 1 < XBOX_ADPCM_BLOCK_SAMPLES)
-						output[(sample + 1) * channels + channel] = (short)ima_expand(nibbles[byte] >> 4, &predictor, &index);
-				}
-			}
-		}
-	}
+		decode_adpcm_block(source + block * block_bytes, channels,
+			samples + block * XBOX_ADPCM_BLOCK_SAMPLES * channels);
 	*frame_count = blocks * XBOX_ADPCM_BLOCK_SAMPLES;
 	return samples;
 }
@@ -630,10 +676,14 @@ static float packet_sample(const struct voice_packet *packet, unsigned long fram
 	return packet->samples[frame * channels + channel] * (1.0f / 32768.0f);
 }
 
+static BOOL buffer_take_frame(struct sdl_stream *stream, float *frame);
+
 /* the voice's next frame, finishing the packets it passes; FALSE once they
 run out */
 static BOOL take_frame(struct sdl_stream *stream, float *frame)
 {
+	if (stream->is_buffer)
+		return buffer_take_frame(stream, frame);
 	for (;;)
 	{
 		struct voice_packet *packet = NULL;
@@ -669,6 +719,8 @@ static BOOL voice_has_frames(struct sdl_stream *stream)
 {
 	unsigned long position;
 
+	if (stream->is_buffer)
+		return stream->buffer.playing && stream->buffer.position < stream->buffer.frames;
 	for (position = 0; position < stream->packet_count; position++)
 	{
 		struct voice_packet *packet = &stream->packets[(stream->packet_head + position) % MAXIMUM_STREAM_PACKETS];
@@ -699,7 +751,9 @@ static void mix_voice(struct sdl_stream *stream, float *output, float *send, uns
 	/* (a stereo voice panned towards its sound: voice_gains) */
 	BOOL positioned = stream->channels == 2 && stream->stereo_positioned;
 
-	if (stream->paused || !stream->packet_count || !stream->sample_rate)
+	if (stream->paused || !stream->sample_rate)
+		return;
+	if (stream->is_buffer ? !stream->buffer.data : !stream->packet_count)
 		return;
 	step = (double)(stream->frequency ? stream->frequency : stream->sample_rate) / OUTPUT_RATE;
 	/* the low pass narrowed for a voice taking frames faster than the output
@@ -1973,26 +2027,209 @@ HRESULT WINAPI IDirectSoundStream_SetConeOutsideVolume(LPDIRECTSOUNDSTREAM strea
 
 /* ---------- buffers
 
-The game's only buffer is a silent looping one that keeps the voice
-processor busy; it needs no mixing. */
+OpenCE's Halo played everything through streams and had one silent buffer;
+this game plays everything through buffers (engine_misc, BSOUND):
 
-struct null_buffer
+- one-shot and looping samples, 2D (0x00055550) and 3D (0x000557d0): a buffer
+  per play over the sample's data in its package, released once GetStatus says
+  it stopped (0x00055720);
+- the WMA music (0x00056a70): a looping 256 KB buffer of 16-bit stereo PCM that
+  the game refills behind the play cursor (GetCurrentPosition, 0x00056d20);
+- the ADPCM streams (0x000575f0): a looping buffer of Xbox ADPCM, refilled the
+  same way.
+
+So a buffer is a voice (struct sdl_stream, is_buffer) whose frames come from
+the buffer's memory as the mixer reaches them, not from a copy: what the game
+writes ahead of the cursor plays. Formats: PCM 8 (unsigned) and 16 bits, mono
+or stereo, and Xbox ADPCM (decoded a 64-frame block at a time). The voice gets
+the streams' resampling, gains, 3D, I3DL2 and reverb. Cursors and positions are
+bytes of the buffer's data, as in DirectSound. */
+
+static struct sdl_stream *buffer_from_interface(LPDIRECTSOUNDBUFFER buffer)
 {
-	ULONG reference_count;
-	LPVOID data;
-	DWORD size;
-	BOOL playing;
-};
+	return (struct sdl_stream *)buffer;
+}
+
+/* with the lock held: the frames the data holds, and where a loop ends */
+static void buffer_layout(struct buffer_source *source)
+{
+	source->frames = source->block_align ? (source->size / source->block_align) * source->block_frames : 0;
+	if (source->position > source->frames)
+		source->position = 0;
+	source->cached_block = -1;
+}
+
+static DWORD buffer_frame_from_bytes(const struct buffer_source *source, DWORD bytes)
+{
+	return source->block_align ? (bytes / source->block_align) * source->block_frames : 0;
+}
+
+/* a frame's byte offset; within an ADPCM block, the block's (the bytes before it
+are all played) */
+static DWORD buffer_bytes_from_frame(const struct buffer_source *source, DWORD frame)
+{
+	return source->block_frames ? (frame / source->block_frames) * source->block_align : 0;
+}
+
+static void buffer_loop_frames(const struct buffer_source *source, DWORD *start, DWORD *end)
+{
+	*start = 0;
+	*end = source->frames;
+	if (source->loop_length)
+	{
+		DWORD loop_start = buffer_frame_from_bytes(source, source->loop_start);
+		DWORD loop_end = buffer_frame_from_bytes(source, source->loop_start + source->loop_length);
+
+		if (loop_start < loop_end && loop_end <= source->frames)
+		{
+			*start = loop_start;
+			*end = loop_end;
+		}
+	}
+}
+
+/* the mixer's next frame of a buffer (take_frame); FALSE once it stopped */
+static BOOL buffer_take_frame(struct sdl_stream *stream, float *frame)
+{
+	struct buffer_source *source = &stream->buffer;
+	DWORD position = source->position, loop_start, loop_end;
+	unsigned long channels = stream->channels;
+
+	if (!source->playing || !source->data)
+		return FALSE;
+	buffer_loop_frames(source, &loop_start, &loop_end);
+	if (position >= (source->looping ? loop_end : source->frames))
+	{
+		if (!source->looping || loop_start >= loop_end)
+		{
+			source->playing = FALSE;
+			return FALSE;
+		}
+		position = loop_start;
+	}
+	if (source->bits == 4)
+	{
+		long block = (long)(position / XBOX_ADPCM_BLOCK_SAMPLES);
+		const short *samples;
+
+		if (block != source->cached_block)
+		{
+			decode_adpcm_block(source->data + (DWORD)block * source->block_align, channels, source->cache);
+			source->cached_block = block;
+		}
+		samples = source->cache + (position % XBOX_ADPCM_BLOCK_SAMPLES) * channels;
+		frame[0] = samples[0] * (1.0f / 32768.0f);
+		frame[1] = samples[channels - 1] * (1.0f / 32768.0f);
+	}
+	else if (source->bits == 8)
+	{
+		const unsigned char *samples = source->data + position * channels;
+
+		frame[0] = ((int)samples[0] - 128) * (1.0f / 128.0f);
+		frame[1] = ((int)samples[channels - 1] - 128) * (1.0f / 128.0f);
+	}
+	else
+	{
+		const unsigned char *bytes = source->data + position * channels * 2;
+		short left = (short)(bytes[0] | (bytes[1] << 8));
+		short right = (short)(bytes[(channels - 1) * 2] | (bytes[(channels - 1) * 2 + 1] << 8));
+
+		frame[0] = left * (1.0f / 32768.0f);
+		frame[1] = right * (1.0f / 32768.0f);
+	}
+	position++;
+	/* a one-shot stops with its last frame (GetStatus says so from then on) */
+	if (!source->looping && position >= source->frames)
+		source->playing = FALSE;
+	else if (source->looping && position >= loop_end)
+		position = loop_start;
+	source->position = position;
+	return TRUE;
+}
+
+/* the buffer's format; FALSE for one the mixer cannot play (it stays silent) */
+static BOOL buffer_set_format(struct sdl_stream *stream, const WAVEFORMATEX *format)
+{
+	struct buffer_source *source = &stream->buffer;
+
+	stream->channels = 1;
+	stream->sample_rate = 0;
+	source->bits = 0;
+	source->block_align = 0;
+	source->block_frames = 1;
+	if (!format || (format->nChannels != 1 && format->nChannels != 2) || !format->nSamplesPerSec)
+		return FALSE;
+	stream->channels = format->nChannels;
+	if (format->wFormatTag == WAVE_FORMAT_XBOX_ADPCM)
+	{
+		source->bits = 4;
+		source->block_align = XBOX_ADPCM_BLOCK_BYTES * format->nChannels;
+		source->block_frames = XBOX_ADPCM_BLOCK_SAMPLES;
+	}
+	else if (format->wFormatTag == WAVE_FORMAT_PCM && (format->wBitsPerSample == 8 || format->wBitsPerSample == 16))
+	{
+		source->bits = format->wBitsPerSample;
+		source->block_align = format->nChannels * (format->wBitsPerSample / 8);
+	}
+	else
+		return FALSE;
+	stream->sample_rate = format->nSamplesPerSec;
+	stream->frequency = stream->sample_rate;
+	return TRUE;
+}
 
 HRESULT WINAPI DirectSoundCreateBuffer(LPCDSBUFFERDESC description, LPDIRECTSOUNDBUFFER *result)
 {
-	struct null_buffer *buffer = calloc(1, sizeof(*buffer));
+	struct sdl_stream *stream;
 
-	(void)description;
-	if (!buffer)
-		return E_OUTOFMEMORY;
-	buffer->reference_count = 1;
-	*result = (LPDIRECTSOUNDBUFFER)buffer;
+	if (!description || !result)
+		return DSERR_INVALIDCALL;
+	*result = NULL;
+	stream = calloc(1, sizeof(*stream));
+	if (!stream)
+		return DSERR_OUTOFMEMORY;
+	audio_start();
+	stream->is_buffer = TRUE;
+	stream->reference_count = 1;
+	stream->buffer.flags = description->dwFlags;
+	stream->buffer.cached_block = -1;
+	if (!buffer_set_format(stream, description->lpwfxFormat))
+		platform_log("dsound: buffer format %u (%u channels, %u bits) is not supported; it is silent",
+			description->lpwfxFormat ? description->lpwfxFormat->wFormatTag : 0,
+			description->lpwfxFormat ? description->lpwfxFormat->nChannels : 0,
+			description->lpwfxFormat ? description->lpwfxFormat->wBitsPerSample : 0);
+	stream->volume = 1.0f;
+	stream->mix_left = 1.0f;
+	stream->mix_right = 1.0f;
+	stream->has_3d = (description->dwFlags & DSBCAPS_CTRL3D) != 0;
+	stream->mode = DS3DMODE_NORMAL;
+	stream->minimum_distance = DS3D_DEFAULTMINDISTANCE;
+	stream->maximum_distance = DS3D_DEFAULTMAXDISTANCE;
+	resampler_reset(stream);
+	/* the mixer has nothing to take until it plays: it starts as a voice that
+	ran dry (mix_voice resets it when it has frames) */
+	stream->silence = (unsigned long)-1 / 2;
+	/* DirectSound allocates dwBufferBytes; the game passes 0 and gives the data
+	with SetBufferData */
+	if (description->dwBufferBytes)
+	{
+		void *data = calloc(1, description->dwBufferBytes);
+
+		if (!data)
+		{
+			free(stream);
+			return DSERR_OUTOFMEMORY;
+		}
+		stream->buffer.data = data;
+		stream->buffer.size = description->dwBufferBytes;
+		stream->owns_data = TRUE;
+		buffer_layout(&stream->buffer);
+	}
+	pthread_mutex_lock(&mixer_lock);
+	stream->next = streams;
+	streams = stream;
+	pthread_mutex_unlock(&mixer_lock);
+	*result = (LPDIRECTSOUNDBUFFER)stream;
 	return DS_OK;
 }
 
@@ -2004,41 +2241,279 @@ HRESULT WINAPI IDirectSound_CreateSoundBuffer(LPDIRECTSOUND sound, LPCDSBUFFERDE
 	return DirectSoundCreateBuffer(description, result);
 }
 
-ULONG WINAPI IDirectSoundBuffer_Release(LPDIRECTSOUNDBUFFER buffer)
+ULONG WINAPI IDirectSoundBuffer_AddRef(LPDIRECTSOUNDBUFFER buffer)
 {
-	struct null_buffer *record = (struct null_buffer *)buffer;
-	ULONG count = --record->reference_count;
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+	ULONG count;
 
-	if (!count)
-		free(record);
+	pthread_mutex_lock(&mixer_lock);
+	count = ++stream->reference_count;
+	pthread_mutex_unlock(&mixer_lock);
 	return count;
 }
 
+/* the game calls Release until it returns 0 (0x000556e0) */
+ULONG WINAPI IDirectSoundBuffer_Release(LPDIRECTSOUNDBUFFER buffer)
+{
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+	struct sdl_stream **link;
+	ULONG count;
+
+	if (!stream)
+		return 0;
+	pthread_mutex_lock(&mixer_lock);
+	count = stream->reference_count ? --stream->reference_count : 0;
+	if (!count)
+	{
+		for (link = &streams; *link; link = &(*link)->next)
+		{
+			if (*link == stream)
+			{
+				*link = stream->next;
+				break;
+			}
+		}
+	}
+	pthread_mutex_unlock(&mixer_lock);
+	if (!count)
+	{
+		if (stream->owns_data)
+			free((void *)stream->buffer.data);
+		free(stream);
+	}
+	return count;
+}
+
+/* the data plays in place; the play cursor goes back to its start */
 HRESULT WINAPI IDirectSoundBuffer_SetBufferData(LPDIRECTSOUNDBUFFER buffer, LPVOID data, DWORD size)
 {
-	struct null_buffer *record = (struct null_buffer *)buffer;
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+	void *owned = NULL;
 
-	record->data = data;
-	record->size = size;
+	pthread_mutex_lock(&mixer_lock);
+	if (stream->owns_data)
+		owned = (void *)stream->buffer.data;
+	stream->owns_data = FALSE;
+	stream->buffer.data = data;
+	stream->buffer.size = data ? size : 0;
+	stream->buffer.position = 0;
+	buffer_layout(&stream->buffer);
+	pthread_mutex_unlock(&mixer_lock);
+	free(owned);
 	return DS_OK;
 }
 
 HRESULT WINAPI IDirectSoundBuffer_Play(LPDIRECTSOUNDBUFFER buffer, DWORD reserved1, DWORD reserved2, DWORD flags)
 {
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+
 	(void)reserved1;
 	(void)reserved2;
-	(void)flags;
-	((struct null_buffer *)buffer)->playing = TRUE;
+	pthread_mutex_lock(&mixer_lock);
+	stream->buffer.looping = (flags & DSBPLAY_LOOPING) != 0;
+	/* a one-shot played to its end plays again from the start */
+	if (!stream->buffer.playing && stream->buffer.position >= stream->buffer.frames)
+		stream->buffer.position = 0;
+	stream->buffer.playing = stream->buffer.frames != 0;
+	pthread_mutex_unlock(&mixer_lock);
 	return DS_OK;
 }
 
+/* stops where it is (Play goes on from there) */
 HRESULT WINAPI IDirectSoundBuffer_Stop(LPDIRECTSOUNDBUFFER buffer)
 {
-	((struct null_buffer *)buffer)->playing = FALSE;
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+
+	pthread_mutex_lock(&mixer_lock);
+	stream->buffer.playing = FALSE;
+	pthread_mutex_unlock(&mixer_lock);
 	return DS_OK;
 }
 
-HRESULT WINAPI IDirectSoundBuffer_SetCurrentPosition(LPDIRECTSOUNDBUFFER buffer, DWORD play_cursor) { (void)buffer; (void)play_cursor; return DS_OK; }
-HRESULT WINAPI IDirectSoundBuffer_SetLoopRegion(LPDIRECTSOUNDBUFFER buffer, DWORD loop_start, DWORD loop_length) { (void)buffer; (void)loop_start; (void)loop_length; return DS_OK; }
-HRESULT WINAPI IDirectSoundBuffer_SetPitch(LPDIRECTSOUNDBUFFER buffer, LONG pitch) { (void)buffer; (void)pitch; return DS_OK; }
-HRESULT WINAPI IDirectSoundBuffer_SetVolume(LPDIRECTSOUNDBUFFER buffer, LONG volume) { (void)buffer; (void)volume; return DS_OK; }
+HRESULT WINAPI IDirectSoundBuffer_GetStatus(LPDIRECTSOUNDBUFFER buffer, LPDWORD status)
+{
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+
+	if (!status)
+		return DSERR_INVALIDCALL;
+	pthread_mutex_lock(&mixer_lock);
+	*status = 0;
+	if (stream->buffer.playing)
+		*status = DSBSTATUS_PLAYING | (stream->buffer.looping ? DSBSTATUS_LOOPING : 0);
+	pthread_mutex_unlock(&mixer_lock);
+	return DS_OK;
+}
+
+/* the frame the mixer takes next, in bytes; the write cursor is the same (the
+mixer reads the data as it goes, so everything from the play cursor on may
+still be written) */
+HRESULT WINAPI IDirectSoundBuffer_GetCurrentPosition(LPDIRECTSOUNDBUFFER buffer, LPDWORD play_cursor,
+	LPDWORD write_cursor)
+{
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+	DWORD bytes;
+
+	pthread_mutex_lock(&mixer_lock);
+	bytes = buffer_bytes_from_frame(&stream->buffer, stream->buffer.position);
+	pthread_mutex_unlock(&mixer_lock);
+	if (play_cursor)
+		*play_cursor = bytes;
+	if (write_cursor)
+		*write_cursor = bytes;
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetCurrentPosition(LPDIRECTSOUNDBUFFER buffer, DWORD play_cursor)
+{
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+
+	pthread_mutex_lock(&mixer_lock);
+	stream->buffer.position = buffer_frame_from_bytes(&stream->buffer, play_cursor);
+	if (stream->buffer.position > stream->buffer.frames)
+		stream->buffer.position = 0;
+	pthread_mutex_unlock(&mixer_lock);
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetLoopRegion(LPDIRECTSOUNDBUFFER buffer, DWORD loop_start, DWORD loop_length)
+{
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+
+	pthread_mutex_lock(&mixer_lock);
+	stream->buffer.loop_start = loop_start;
+	stream->buffer.loop_length = loop_length;
+	pthread_mutex_unlock(&mixer_lock);
+	return DS_OK;
+}
+
+/* the data is the game's, so the pointers are into it, split where the region
+wraps past the end */
+HRESULT WINAPI IDirectSoundBuffer_Lock(LPDIRECTSOUNDBUFFER buffer, DWORD offset, DWORD bytes,
+	LPVOID *audio1, LPDWORD bytes1, LPVOID *audio2, LPDWORD bytes2, DWORD flags)
+{
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+	unsigned char *data;
+	DWORD size;
+
+	pthread_mutex_lock(&mixer_lock);
+	data = (unsigned char *)stream->buffer.data;
+	size = stream->buffer.size;
+	if (flags & DSBLOCK_FROMWRITECURSOR)
+		offset = buffer_bytes_from_frame(&stream->buffer, stream->buffer.position);
+	pthread_mutex_unlock(&mixer_lock);
+	if (flags & DSBLOCK_ENTIREBUFFER)
+		bytes = size;
+	if (!data || !size || !audio1 || !bytes1 || offset >= size || bytes > size)
+		return DSERR_INVALIDCALL;
+	*audio1 = data + offset;
+	*bytes1 = bytes <= size - offset ? bytes : size - offset;
+	if (audio2)
+		*audio2 = bytes > *bytes1 ? data : NULL;
+	if (bytes2)
+		*bytes2 = bytes - *bytes1;
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectSoundBuffer_Unlock(LPDIRECTSOUNDBUFFER buffer, LPVOID audio1, DWORD bytes1,
+	LPVOID audio2, DWORD bytes2)
+{
+	(void)buffer;
+	(void)audio1;
+	(void)bytes1;
+	(void)audio2;
+	(void)bytes2;
+	return DS_OK;
+}
+
+#define BUFFER_SETTER(body) \
+	struct sdl_stream *record = buffer_from_interface(buffer); \
+	pthread_mutex_lock(&mixer_lock); \
+	body; \
+	pthread_mutex_unlock(&mixer_lock); \
+	return DS_OK;
+
+/* 0: the data's own rate */
+HRESULT WINAPI IDirectSoundBuffer_SetFrequency(LPDIRECTSOUNDBUFFER buffer, DWORD frequency)
+{
+	if (frequency && frequency < DSBFREQUENCY_MIN)
+		frequency = DSBFREQUENCY_MIN;
+	if (frequency > DSBFREQUENCY_MAX)
+		frequency = DSBFREQUENCY_MAX;
+	{
+		BUFFER_SETTER(record->frequency = frequency ? frequency : record->sample_rate)
+	}
+}
+
+/* pitch in 1/4096 octaves */
+HRESULT WINAPI IDirectSoundBuffer_SetPitch(LPDIRECTSOUNDBUFFER buffer, LONG pitch)
+{
+	BUFFER_SETTER(record->frequency = (DWORD)(record->sample_rate * powf(2.0f, (float)pitch / 4096.0f) + 0.5f))
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetVolume(LPDIRECTSOUNDBUFFER buffer, LONG volume)
+{
+	BUFFER_SETTER(record->volume = gain_from_millibels(volume))
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetMode(LPDIRECTSOUNDBUFFER buffer, DWORD mode, DWORD apply)
+{
+	(void)apply;
+	BUFFER_SETTER(record->mode = mode)
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetPosition(LPDIRECTSOUNDBUFFER buffer, FLOAT x, FLOAT y, FLOAT z, DWORD apply)
+{
+	(void)apply;
+	BUFFER_SETTER(record->position[0] = x; record->position[1] = y; record->position[2] = z)
+}
+
+/* Doppler is not modelled (as for streams) */
+HRESULT WINAPI IDirectSoundBuffer_SetVelocity(LPDIRECTSOUNDBUFFER buffer, FLOAT x, FLOAT y, FLOAT z, DWORD apply)
+{
+	(void)buffer;
+	(void)x;
+	(void)y;
+	(void)z;
+	(void)apply;
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetMinDistance(LPDIRECTSOUNDBUFFER buffer, FLOAT distance, DWORD apply)
+{
+	(void)apply;
+	BUFFER_SETTER(record->minimum_distance = distance)
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetMaxDistance(LPDIRECTSOUNDBUFFER buffer, FLOAT distance, DWORD apply)
+{
+	(void)apply;
+	BUFFER_SETTER(record->maximum_distance = distance)
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetMixBins(LPDIRECTSOUNDBUFFER buffer, DWORD mix_bin_mask)
+{
+	BUFFER_SETTER(
+		record->mix_left = (mix_bin_mask & DSMIXBIN_FRONT_LEFT) ? 1.0f : 0.0f;
+		record->mix_right = (mix_bin_mask & DSMIXBIN_FRONT_RIGHT) ? 1.0f : 0.0f)
+}
+
+HRESULT WINAPI IDirectSoundBuffer_SetI3DL2Source(LPDIRECTSOUNDBUFFER buffer, LPCDSI3DL2BUFFER source, DWORD apply)
+{
+	/* a buffer is a voice as a stream is (struct sdl_stream first member aside) */
+	return IDirectSoundStream_SetI3DL2Source((LPDIRECTSOUNDSTREAM)buffer, source, apply);
+}
+
+/* ---------- the listener's parameters at once */
+
+HRESULT WINAPI IDirectSound_SetAllParameters(LPDIRECTSOUND sound, LPCDS3DLISTENER parameters, DWORD apply)
+{
+	if (!parameters)
+		return DSERR_INVALIDCALL;
+	IDirectSound_SetPosition(sound, parameters->vPosition.x, parameters->vPosition.y, parameters->vPosition.z, apply);
+	IDirectSound_SetVelocity(sound, parameters->vVelocity.x, parameters->vVelocity.y, parameters->vVelocity.z, apply);
+	IDirectSound_SetOrientation(sound, parameters->vOrientFront.x, parameters->vOrientFront.y,
+		parameters->vOrientFront.z, parameters->vOrientTop.x, parameters->vOrientTop.y, parameters->vOrientTop.z, apply);
+	IDirectSound_SetDistanceFactor(sound, parameters->flDistanceFactor, apply);
+	IDirectSound_SetRolloffFactor(sound, parameters->flRolloffFactor, apply);
+	return DS_OK;
+}

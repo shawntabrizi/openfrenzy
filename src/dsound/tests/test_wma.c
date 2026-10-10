@@ -87,6 +87,7 @@ static int decode_stream(int index, const unsigned char *bytes, unsigned long si
 	struct wma_file *file;
 	FILE *pcm_out = NULL;
 	unsigned long long frames = 0;
+	unsigned int hash = 2166136261u;
 	double energy = 0;
 	int failed = 0;
 	uint32_t got;
@@ -110,6 +111,9 @@ static int decode_stream(int index, const unsigned char *bytes, unsigned long si
 
 		for (i = 0; i < got * 2; i++)
 			energy += (double)pcm[i] * pcm[i];
+		/* FNV-1a over the bytes (little-endian), as tests/test_dsound_guest.c */
+		for (i = 0; i < got * 4; i++)
+			hash = (hash ^ ((const unsigned char *)pcm)[i]) * 16777619u;
 		if (pcm_out)
 			fwrite(pcm, sizeof(int16_t) * 2, got, pcm_out);
 		frames += got;
@@ -162,9 +166,9 @@ static int decode_stream(int index, const unsigned char *bytes, unsigned long si
 		uint64_t first_continuation = 0;
 		uint32_t continuations = wma_file_continuations(file, &first_continuation);
 
-		printf("stream %2d: %s %7lu bytes, %4u packets, %8llu frames = %7.3f s (header %7.3f s), rms %6.0f, %lu reads, %u continuation superframes",
+		printf("stream %2d: %s %7lu bytes, %4u packets, %8llu frames = %7.3f s (header %7.3f s), rms %.3f, %lu reads, hash %08x, %u continuation superframes",
 			index, failed ? "FAIL" : "ok  ", size, format.packet_count, frames, decoded, seconds, rms,
-			source->requests, continuations);
+			source->requests, hash, continuations);
 		if (continuations)
 			printf(" (first at frame %llu)", (unsigned long long)first_continuation);
 		printf("\n");

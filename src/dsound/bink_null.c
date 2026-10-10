@@ -1,5 +1,17 @@
 /* Copied from ref/OpenCE (commit 231708d) port/linux/src/bink_null.c (CC0). The game calls BinkOpen
-   (0x000591c0) for the Blitz logos and the attract video; NULL makes it skip them. */
+   (0x000591c0) for the Blitz logos and the attract video; NULL makes it skip them.
+
+   openfrenzy: the XBE links RAD Bink statically (region LIB:bink 0x00057980-0x000703a0, 222
+   functions, its own DirectSound mixer at 0x00069df0 on). Game code calls three of them, all
+   from BDISPLAY's bdVideoPlayStream (0x000463c0) and its tail (0x00046b20):
+     0x0005a090  RADSetMemory(allocate, free): stores the two procedures that radmalloc
+                 (0x0005a0b0) and radfree (0x0005a120) use; XbSymbolDatabase calls it
+                 D3D_SetPushBufferSize, a false match on its two stores
+     0x000591c0  BinkOpen(name, flags) ("Not a Bink file.")
+     0x00059f80  BinkClose(bink): BinkClose's work (stops the sound tracks, frees the
+                 buffers, clears the 0x404-byte handle, frees it)
+   With BinkOpen NULL bdVideoPlayStream returns 6 at once and never reaches the others.
+   Declarations: dsound_xdk.h. */
 /*
 BINK_NULL.C
 
@@ -12,11 +24,9 @@ RADEXPLINK is __stdcall.
 */
 
 #include "platform.h"
+#include "dsound_xdk.h"
 
-typedef void *(__stdcall *rad_memory_allocate_proc)(unsigned long size);
-typedef void (__stdcall *rad_memory_free_proc)(void *memory);
 typedef void *(__stdcall *bink_sound_system_open_proc)(unsigned long param);
-typedef struct BINK *HBINK;
 
 void __stdcall RADSetMemory(rad_memory_allocate_proc allocate, rad_memory_free_proc release)
 {
