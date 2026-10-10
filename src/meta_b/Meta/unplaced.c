@@ -917,3 +917,69 @@ void MetaEmitters_UpdateAll(void)
 		e = MB_LIST_NEXT(&DAT_003090d8, e);
 	}
 }
+
+/* ---------- seagull helpers (0x0016bc70, 0x0016be60): methods of ClassLib's CSeagulls
+   (classlib_fx CSeagulls.c starts at 0x0016bea0) that the function table puts here */
+
+/* 0x0016bc70  Meta (file unknown; probably ClassLib/CSeagulls.cpp)
+Obstacle avoidance: when the gull (`gull`, position first) is inside the obstacle's box
+grown by its margin, steers it away from the box centre (stronger the deeper it is) and
+raises the weight. Returns 1 when inside. */
+int MbGull_Avoid(float *gull, float *box, void *params, float *steer, float *weight)
+{
+	float d;
+	float m;
+	float away[4];
+	float dir[4];
+
+	if (!(box[0] - box[8] <= gull[0] && gull[0] <= box[4] + box[8] &&
+		box[1] - box[8] <= gull[1] && gull[1] <= box[5] + box[8] &&
+		box[2] - box[8] <= gull[2] && gull[2] <= box[6] + box[8]))
+		return 0;
+	m = box[8];
+	d = gull[0] - (box[0] - box[8]);
+	if (d < m)
+		m = d;
+	d = (box[4] + box[8]) - gull[0];
+	if (d < m)
+		m = d;
+	d = gull[1] - (box[1] - box[8]);
+	if (d < m)
+		m = d;
+	d = (box[5] + box[8]) - gull[1];
+	if (d < m)
+		m = d;
+	d = gull[2] - (box[2] - box[8]);
+	if (d < m)
+		m = d;
+	d = (box[6] + box[8]) - gull[2];
+	if (d < m)
+		m = d;
+	m = m / box[8];
+	away[3] = 1.0f;
+	away[0] = gull[0] - (box[0] + box[4]) * 0.5f;
+	away[1] = gull[1] - (box[1] + box[5]) * 0.5f;
+	away[2] = gull[2] - (box[6] + box[2]) * 0.5f;
+	FUN_00051570(dir, away, 1.0f);
+	steer[0] = dir[0] * box[9] * m + steer[0];
+	steer[1] = dir[1] * box[9] * m + steer[1];
+	steer[2] = dir[2] * box[9] * m + steer[2];
+	if (*weight < box[10])
+		*weight = box[10];
+	return 1;
+}
+
+/* 0x0016be60  Meta (file unknown; probably ClassLib/CSeagulls.cpp)
+Draws the flock's gulls. */
+void CSeagulls_Draw(void *flock)
+{
+	char *gulls;
+	int i;
+
+	for (i = 0; i < MB_I32(flock, 0x10); i++)
+	{
+		gulls = (char *)MB_PTR(flock, 0x18);
+		baPrepActorInstance((struct BActorInstance *)MB_PTR(gulls + i * 0x68, 0x58), 1);
+		baDrawActorInstance((struct BActorInstance *)MB_PTR(gulls + i * 0x68, 0x58), 7);
+	}
+}

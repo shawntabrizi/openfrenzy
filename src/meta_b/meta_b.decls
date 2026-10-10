@@ -190,3 +190,13 @@
 001642c0 void MbSplash_DrawAll(void);
 001645f0 void CMetaRain_Init(struct CMetaRain *self, int count);
 00164730 void CMetaRain_UpdateLightning(struct CMetaRain *self);
+
+# Meta/CMeta_Seagulls.cpp
+00164990 void MetaSeagulls_Update(void);
+001649b0 void MetaSeagulls_Draw(void);
+001649d0 void MetaSeagulls_Init(void);
+00164b00 void MetaSeagulls_Delete(void);
+
+# Meta/unplaced.c: CSeagulls helpers
+0016bc70 int MbGull_Avoid(float *gull, float *box, void *params, float *steer, float *weight);
+0016be60 void CSeagulls_Draw(void *flock);
