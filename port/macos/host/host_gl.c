@@ -110,3 +110,22 @@ void host_gl_buffer_write(uint32_t target, uint32_t offset, uint32_t size, const
     memcpy(mapping, data, size);
     glUnmapBuffer(target);
 }
+
+/* Adapted from ref/OpenCE (231708d) port/android/host/host_gl.c (CC0).
+copies size bytes of a buffer object (the snapshots of the visibility
+tests' counters, d3d8_gl.c); ES has no glGetBufferSubData, and the mapping
+it offers instead is a host pointer. Binds GL_COPY_READ_BUFFER, which the
+renderer uses only for its copies, and leaves it unbound. */
+void host_gl_read_buffer(uint32_t buffer, uint32_t offset, uint32_t size, void *data) {
+    const void *mapping;
+
+    glBindBuffer(GL_COPY_READ_BUFFER, buffer);
+    mapping = glMapBufferRange(GL_COPY_READ_BUFFER, offset, size, GL_MAP_READ_BIT);
+    if (mapping) {
+        memcpy(data, mapping, size);
+        glUnmapBuffer(GL_COPY_READ_BUFFER);
+    } else {
+        memset(data, 0, size);
+    }
+    glBindBuffer(GL_COPY_READ_BUFFER, 0);
+}

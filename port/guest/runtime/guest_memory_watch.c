@@ -40,3 +40,9 @@ void memory_watch_forget(void *address, unsigned long size)
 {
 	host_memory_watch_forget((unsigned int)address, size);
 }
+
+/* openfrenzy: the OpenCE layer at 231708d also calls this once per frame */
+void memory_watch_begin_frame(void)
+{
+	host_memory_watch_begin_frame();
+}

@@ -411,3 +411,23 @@ int host_sdl_resume_audio_stream_device(uint32_t stream) {
 
     return object ? SDL_ResumeAudioStreamDevice(object) : 0;
 }
+
+/* ---------- openfrenzy additions (the OpenCE layer at 231708d calls these) */
+
+/* dsound_sdl.c destroys its stream when the output device changes. The audio
+ * binding owns a worker thread that waits for the stream's callback, so the
+ * stream is only paused here, and the binding stays (a small leak per device
+ * change). */
+void host_sdl_destroy_audio_stream(uint32_t stream) {
+    SDL_AudioStream *object = handle_get(stream, _handle_audio);
+
+    if (object)
+        SDL_PauseAudioStreamDevice(object);
+}
+
+int host_sdl_scancode_from_name(const char *name) { return (int)SDL_GetScancodeFromName(name); }
+
+void host_sdl_scancode_name(int scancode, char *buffer, uint32_t size) {
+    if (size)
+        SDL_strlcpy(buffer, SDL_GetScancodeName((SDL_Scancode)scancode), size);
+}

@@ -194,3 +194,25 @@ bool SDL_ResumeAudioStreamDevice(SDL_AudioStream *stream)
 {
 	return host_sdl_resume_audio_stream_device((unsigned int)stream) != 0;
 }
+
+/* ---------- openfrenzy additions (the OpenCE layer at 231708d calls these) */
+
+void SDL_DestroyAudioStream(SDL_AudioStream *stream)
+{
+	host_sdl_destroy_audio_stream((unsigned int)stream);
+}
+
+SDL_Scancode SDL_GetScancodeFromName(const char *name)
+{
+	return (SDL_Scancode)host_sdl_scancode_from_name(name);
+}
+
+const char *SDL_GetScancodeName(SDL_Scancode scancode)
+{
+	static __thread char names[4][64];
+	static __thread int next;
+	char *name = names[next++ & 3];
+
+	host_sdl_scancode_name((int)scancode, name, sizeof(names[0]));
+	return name;
+}

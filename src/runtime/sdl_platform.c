@@ -1,0 +1,367 @@
+/*
+SDL_PLATFORM.C
+
+openfrenzy runtime module: the SDL3 window, GLES context and event loop behind
+the XDK layer (the interface of sdl_platform.h, from OpenCE).
+
+Written for this port from the interface and from OpenCE port/linux/src/sdl_platform.c
+(commit 231708d, CC0), whose window/context set-up and swap are followed here. Left out:
+Halo's map extraction, internet-play invites, scoreboard pointer, menus' pointer,
+touch input, window icon, updater, rebinding UI. The guest calls SDL through
+port/guest/runtime/guest_sdl.c, so only the SDL functions listed there may be used.
+
+Settings (of_config.c): display.vsync. The host decides the window mode
+(OPENFRENZY_WINDOWED=1 for a window, else borderless fullscreen).
+*/
+
+#include "platform.h"
+#include "sdl_platform.h"
+#include "gl.h"
+#include "port_config.h"
+
+#include <SDL3/SDL.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* the Xbox picture: the game draws 640x480 (d3d8_gl.c scales it to the drawable) */
+#define XBOX_WIDTH 640
+#define XBOX_HEIGHT 480
+
+int gl_functions_load(void);
+
+static SDL_Window *platform_window;
+static SDL_GLContext platform_gl_context;
+static SDL_ThreadID platform_event_thread;
+static BOOL platform_sdl_started;
+
+static pthread_mutex_t input_lock = PTHREAD_MUTEX_INITIALIZER;
+static struct platform_input_state input_state;
+/* keys and buttons pressed since the last read: a press and release between
+two reads still counts */
+static unsigned char keys_pressed[SDL_SCANCODE_COUNT];
+static unsigned char mouse_buttons_pressed[PLATFORM_MOUSE_BUTTON_COUNT];
+static BOOL screenshot_requested;
+static BOOL menus_active;
+
+#define KEYSTROKE_QUEUE_SIZE 64
+static struct platform_keystroke keystroke_queue[KEYSTROKE_QUEUE_SIZE];
+static unsigned long keystroke_head, keystroke_count;
+
+BOOL platform_sdl_initialize(void)
+{
+	if (platform_sdl_started)
+		return TRUE;
+	SDL_SetHint(SDL_HINT_APP_NAME, "OpenFrenzy");
+	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS))
+	{
+		platform_log("SDL_Init failed: %s", SDL_GetError());
+		return FALSE;
+	}
+	platform_sdl_started = TRUE;
+	input_state.focused = TRUE;
+	return TRUE;
+}
+
+/* the game data is the player's disc image (vfs module); there is nothing to offer */
+BOOL platform_offer_game_data(const char *destination)
+{
+	(void)destination;
+	return FALSE;
+}
+
+/* the size the game draws at: the Xbox's */
+BOOL platform_screen_mode(long *width, long *height)
+{
+	*width = XBOX_WIDTH;
+	*height = XBOX_HEIGHT;
+	return TRUE;
+}
+
+int platform_display_resolutions(long *widths, long *heights, int maximum)
+{
+	(void)widths;
+	(void)heights;
+	(void)maximum;
+	return 0;
+}
+
+int platform_window_sizes(long *widths, long *heights, int maximum)
+{
+	(void)widths;
+	(void)heights;
+	(void)maximum;
+	return 0;
+}
+
+int platform_audio_devices(int recording, char (*names)[PLATFORM_AUDIO_DEVICE_NAME_SIZE], int maximum)
+{
+	(void)recording;
+	(void)names;
+	(void)maximum;
+	return 0;
+}
+
+/* the system's default device; the host owns device selection */
+SDL_AudioDeviceID platform_audio_device(int recording, const char *name)
+{
+	(void)name;
+	return recording ? SDL_AUDIO_DEVICE_DEFAULT_RECORDING : SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
+}
+
+BOOL platform_video_initialize(unsigned long width, unsigned long height)
+{
+	if (platform_window)
+		return TRUE;
+	if (!platform_sdl_initialize())
+		return FALSE;
+	/* ES 3.2 where the driver has it, otherwise 3.0 (ANGLE on Metal gives 3.0) */
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+	platform_window = SDL_CreateWindow("OpenFrenzy", (int)(width ? width * 2 : 1280),
+		(int)(height ? height * 2 : 960), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+	if (!platform_window)
+	{
+		platform_log("SDL_CreateWindow failed: %s", SDL_GetError());
+		return FALSE;
+	}
+	platform_gl_context = SDL_GL_CreateContext(platform_window);
+	if (!platform_gl_context)
+	{
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+		platform_gl_context = SDL_GL_CreateContext(platform_window);
+	}
+	if (!platform_gl_context)
+	{
+		platform_log("cannot create an OpenGL ES context: %s", SDL_GetError());
+		return FALSE;
+	}
+	SDL_GL_MakeCurrent(platform_window, platform_gl_context);
+	if (!gl_functions_load())
+		return FALSE;
+	SDL_GL_SetSwapInterval(config_boolean("display.vsync") ? 1 : 0);
+	platform_event_thread = SDL_GetCurrentThreadID();
+	platform_log("OpenGL %s on %s", (const char *)glGetString(GL_VERSION), (const char *)glGetString(GL_RENDERER));
+	return TRUE;
+}
+
+void platform_display_apply(void)
+{
+	if (platform_window)
+		SDL_GL_SetSwapInterval(config_boolean("display.vsync") ? 1 : 0);
+}
+
+void platform_video_drawable_size(int *width, int *height)
+{
+	SDL_GetWindowSizeInPixels(platform_window, width, height);
+}
+
+void platform_video_window_size(int *width, int *height)
+{
+	SDL_GetWindowSizeInPixels(platform_window, width, height);
+}
+
+void platform_video_swap(void)
+{
+	SDL_GL_SwapWindow(platform_window);
+}
+
+void platform_mouse_capture(BOOL capture)
+{
+	if (platform_window)
+		SDL_SetWindowRelativeMouseMode(platform_window, capture ? true : false);
+}
+
+/* ---------- keyboard queue (the XDK keyboard, XInputDebugGetKeystroke) */
+
+static CHAR ascii_from_key(SDL_Keycode key, SDL_Keymod modifiers)
+{
+	if (key >= 'a' && key <= 'z')
+		return (CHAR)((modifiers & SDL_KMOD_SHIFT) ? key - 'a' + 'A' : key);
+	if (key >= ' ' && key < 0x7f)
+		return (CHAR)key;
+	if (key == SDLK_RETURN)
+		return '\r';
+	if (key == SDLK_BACKSPACE)
+		return '\b';
+	if (key == SDLK_TAB)
+		return '\t';
+	if (key == SDLK_ESCAPE)
+		return 0x1b;
+	return 0;
+}
+
+static void queue_keystroke(const SDL_KeyboardEvent *event)
+{
+	struct platform_keystroke *keystroke;
+
+	if (keystroke_count >= KEYSTROKE_QUEUE_SIZE)
+		return;
+	keystroke = &keystroke_queue[(keystroke_head + keystroke_count) % KEYSTROKE_QUEUE_SIZE];
+	keystroke->virtual_key = (BYTE)(event->key < 0x80 ? event->key : 0);
+	keystroke->ascii = ascii_from_key(event->key, event->mod);
+	keystroke->flags = event->down ? 0 : 1;
+	keystroke_count++;
+}
+
+BOOL platform_next_keystroke(struct platform_keystroke *keystroke)
+{
+	BOOL found = FALSE;
+
+	pthread_mutex_lock(&input_lock);
+	if (keystroke_count)
+	{
+		*keystroke = keystroke_queue[keystroke_head];
+		keystroke_head = (keystroke_head + 1) % KEYSTROKE_QUEUE_SIZE;
+		keystroke_count--;
+		found = TRUE;
+	}
+	pthread_mutex_unlock(&input_lock);
+	return found;
+}
+
+/* ---------- events */
+
+void platform_pump_events(void)
+{
+	SDL_Event event;
+
+	if (!platform_sdl_started || (platform_event_thread && SDL_GetCurrentThreadID() != platform_event_thread))
+		return;
+	while (SDL_PollEvent(&event))
+	{
+		pthread_mutex_lock(&input_lock);
+		switch (event.type)
+		{
+		case SDL_EVENT_QUIT:
+			pthread_mutex_unlock(&input_lock);
+			platform_log("quit requested");
+			exit(EXIT_SUCCESS);
+		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_KEY_UP:
+			if (event.key.scancode < SDL_SCANCODE_COUNT)
+			{
+				input_state.keys[event.key.scancode] = event.key.down ? 1 : 0;
+				if (event.key.down)
+					keys_pressed[event.key.scancode] = 1;
+			}
+			queue_keystroke(&event.key);
+			break;
+		case SDL_EVENT_MOUSE_MOTION:
+			input_state.mouse_dx += event.motion.xrel;
+			input_state.mouse_dy += event.motion.yrel;
+			break;
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
+			if (event.button.button < PLATFORM_MOUSE_BUTTON_COUNT)
+			{
+				input_state.mouse_buttons[event.button.button] = event.button.down ? 1 : 0;
+				if (event.button.down)
+					mouse_buttons_pressed[event.button.button] = 1;
+			}
+			break;
+		case SDL_EVENT_MOUSE_WHEEL:
+			input_state.mouse_wheel += event.wheel.y;
+			break;
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
+			input_state.focused = TRUE;
+			break;
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
+			input_state.focused = FALSE;
+			memset(input_state.keys, 0, sizeof(input_state.keys));
+			memset(input_state.mouse_buttons, 0, sizeof(input_state.mouse_buttons));
+			break;
+		default:
+			break;
+		}
+		pthread_mutex_unlock(&input_lock);
+	}
+}
+
+void platform_input_read(struct platform_input_state *state, BOOL consume_motion)
+{
+	unsigned int index;
+
+	pthread_mutex_lock(&input_lock);
+	*state = input_state;
+	for (index = 0; index < SDL_SCANCODE_COUNT; index++)
+		state->keys[index] |= keys_pressed[index];
+	for (index = 0; index < PLATFORM_MOUSE_BUTTON_COUNT; index++)
+		state->mouse_buttons[index] |= mouse_buttons_pressed[index];
+	memset(keys_pressed, 0, sizeof(keys_pressed));
+	memset(mouse_buttons_pressed, 0, sizeof(mouse_buttons_pressed));
+	state->menus = menus_active;
+	if (consume_motion)
+	{
+		input_state.mouse_dx = 0.0f;
+		input_state.mouse_dy = 0.0f;
+		input_state.mouse_wheel = 0.0f;
+	}
+	pthread_mutex_unlock(&input_lock);
+}
+
+/* ---------- Halo's menus, pointer and scoreboard hooks: inert in this game */
+
+void platform_menus_set_active(BOOL active)
+{
+	menus_active = active;
+}
+
+void platform_binding_capture_begin(void)
+{
+}
+
+int platform_binding_capture_poll(int *input)
+{
+	(void)input;
+	return 3;
+}
+
+void platform_ui_pointer_set_active(BOOL active)
+{
+	(void)active;
+}
+
+BOOL platform_ui_pointer_read(struct platform_ui_pointer *pointer)
+{
+	memset(pointer, 0, sizeof(*pointer));
+	return FALSE;
+}
+
+BOOL platform_scoreboard_pointer(BOOL offered, struct platform_ui_pointer *pointer)
+{
+	(void)offered;
+	memset(pointer, 0, sizeof(*pointer));
+	return FALSE;
+}
+
+void platform_scoreboard_scroll(int open, long *notches, long *pages)
+{
+	(void)open;
+	*notches = 0;
+	*pages = 0;
+}
+
+void platform_screen_keyboard(BOOL show, BOOL password)
+{
+	(void)show;
+	(void)password;
+}
+
+void platform_screenshot_request(void)
+{
+	screenshot_requested = TRUE;
+}
+
+BOOL platform_screenshot_take_request(void)
+{
+	BOOL requested = screenshot_requested;
+
+	screenshot_requested = FALSE;
+	return requested;
+}

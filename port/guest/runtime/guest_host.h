@@ -47,6 +47,8 @@ unsigned int host_memory_watch_generation(unsigned int address, unsigned int siz
 unsigned int host_memory_watch_serial(void);
 void host_memory_watch_prepare_write(unsigned int address, unsigned int size);
 void host_memory_watch_forget(unsigned int address, unsigned int size);
+/* openfrenzy: memory_watch_begin_frame (src/runtime/platform.h) */
+void host_memory_watch_begin_frame(void);
 
 /* ---------- SDL (guest/runtime/guest_sdl.c)
 
@@ -79,6 +81,10 @@ called on the audio thread */
 unsigned int host_sdl_open_audio_stream(unsigned int device, const void *spec, unsigned int callback, unsigned int userdata);
 int host_sdl_put_audio_stream_data(unsigned int stream, const void *data, int length);
 int host_sdl_resume_audio_stream_device(unsigned int stream);
+/* openfrenzy additions (the OpenCE layer at 231708d uses them) */
+void host_sdl_destroy_audio_stream(unsigned int stream);
+int host_sdl_scancode_from_name(const char *name);
+void host_sdl_scancode_name(int scancode, char *buffer, unsigned int size);
 
 /* ---------- OpenGL ES */
 
@@ -90,6 +96,8 @@ int host_gl_has_extension(const char *name);
 unsigned int host_gl_read_buffer_word(unsigned int buffer, unsigned int offset);
 /* unsynchronized write into the buffer bound to target */
 void host_gl_buffer_write(unsigned int target, unsigned int offset, unsigned int size, const void *data);
+/* openfrenzy: copies size bytes of a buffer object (from OpenCE 231708d) */
+void host_gl_read_buffer(unsigned int buffer, unsigned int offset, unsigned int size, void *data);
 /* fences the GPU work queued so far as that of ring slot `slot`; waits for
 the GPU to finish the work last fenced for a slot */
 void host_gl_fence_frame(unsigned int slot);

@@ -5,6 +5,7 @@ Run:  python3 -I scripts/modules.py   (after scripts/map_sources.py)
 In:   export/source_map.json, export/functions.jsonl
 Out:  export/modules.json  {module: {kind, title, dir, functions: [addr...], bytes}}
       and a table on stdout. Exits non-zero if a function has no module or two.
+      Also records each function's resolved directory in export/modules.json["_resolved"].
 
 Gap resolution: a run of unresolved functions between directory A and directory B is
 split at ONE point k (MSVC links object files contiguously, so the run is A..A X.. B..B).
@@ -24,25 +25,28 @@ EXPORT = os.path.join(HERE, "..", "export")
 # Order = boot priority. Platform modules have no .text functions of their own except the
 # library regions they replace.
 MODULES = [
-    ("runtime", "platform", "Guest memory, XBE loader, function table, stubs, main()", []),
-    ("vfs", "platform", "XDVDFS ISO reader, drive letters, host save dir", []),
-    ("xapi", "platform", "Kernel + XAPI + LIBC replacements, threads, timing, guest heap",
+    ("runtime", "platform", "Boot (of_boot.c), stub runtime, sdl_platform, shared XDK headers, "
+     "msvc_crt, XDK entry-point table; links the game image", []),
+    ("vfs", "platform", "D: drive on the disc image (xiso_fs), xbox_files (CreateFile/ReadFile...), "
+     "save drive, utility drive", []),
+    ("xkernel", "platform", "Kernel + XAPI HLE (threads, events, timing, memory, "
+     "MmAllocateContiguousMemory); replaces XBE xapi + libc regions (not decompiled)",
      [("LIB:xapi", 0, 1 << 32), ("LIB:libc", 0, 1 << 32)]),
-    ("d3d8", "platform", "D3D8 + XGRAPHICS HLE on OpenGL 4.1", []),
-    ("dsound", "platform", "DirectSound HLE on SDL3 audio, WMA stub", []),
-    ("xinput", "platform", "XInput (XPP) on SDL3 gamepad, Bink video stub",
-     [("LIB:bink", 0, 1 << 32)]),
-    ("bkernel", "engine", "Babel bKernel: memory, files, packages, cache, events, bkg load, debug",
+    ("d3d8", "platform", "D3D8 + XGRAPHICS HLE on GLES 3 (ANGLE/Metal), NV2A shaders, swizzle", []),
+    ("dsound", "platform", "DirectSound HLE on SDL3 audio, WMA decoder (music), Bink null; "
+     "replaces XBE bink region (not decompiled)", [("LIB:bink", 0, 1 << 32)]),
+    ("input", "platform", "XInput (XPP) on SDL3 gamepad + keyboard", []),
+    ("core", "game", "Game Core: core.cpp main loop, CGameMode_Root/Scores, tweak menu, static init ($E)",
+     [("Core", 0x27540, 0x30500), ("LIB:crt_init", 0, 1 << 32), ("LIB:crt_exit", 0, 1 << 32)]),
+    ("bkernel", "engine", "Babel bKernel: memory, files, packages (.xbp), cache, events, bkg load, debug",
      [("bKernel", 0, 1 << 32)]),
     ("bdisplay", "engine", "Babel BDISPLAY: display, render, textures, fonts, drawprim",
      [("BDISPLAY", 0, 1 << 32)]),
-    ("core", "game", "Game Core: core.cpp main loop, CGameMode_Root/Scores, tweak menu, static init",
-     [("Core", 0x27540, 0x30500), ("LIB:crt_init", 0, 1 << 32)]),
-    ("binput_bgui", "engine", "Babel BINPUT + BGUI", [("BINPUT", 0, 1 << 32), ("BGUI", 0, 1 << 32)]),
+    ("engine_misc", "engine", "Babel BINPUT, BGUI, BMATHS, BSOUND (streams, playlists) + late engine tail",
+     [("BINPUT", 0, 1 << 32), ("BGUI", 0, 1 << 32), ("BMATHS", 0, 1 << 32), ("BSOUND", 0, 1 << 32),
+      ("LIB:engine_tail", 0, 1 << 32)]),
     ("bactor", "engine", "Babel BACTOR: actors, animation, lights, camera, shader selection",
      [("BACTOR", 0, 1 << 32)]),
-    ("bmaths_bsound", "engine", "Babel BMATHS + BSOUND (streams, playlists) + late engine tail",
-     [("BMATHS", 0, 1 << 32), ("BSOUND", 0, 1 << 32), ("LIB:engine_tail", 0, 1 << 32)]),
     ("core_modes", "game", "Game Core: front-end CGameMode_* screens (menus, select, intro, map)",
      [("Core", 0x11000, 0x27540)]),
     ("classlib_ui", "game", "ClassLib block 1: samples, overlay, HUD, intro cam, ParseMap, fireworks, rumble",
@@ -55,26 +59,58 @@ MODULES = [
      [("Meta", 0, 1 << 32)]),
     ("bumpercars", "game", "Minigame BumperCars", [("BumperCars", 0, 1 << 32)]),
     ("carryon", "game", "Minigame CarryOn (fireworks)", [("CarryOn", 0, 1 << 32)]),
-    ("clusteroids_mousewhack", "game", "Minigames Clusteroids + MouseWhack",
-     [("Clusteroids", 0, 1 << 32), ("MouseWhack", 0, 1 << 32)]),
+    ("clusteroids", "game", "Minigame Clusteroids", [("Clusteroids", 0, 1 << 32)]),
+    ("mousewhack", "game", "Minigame MouseWhack (BugBash)", [("MouseWhack", 0, 1 << 32)]),
     ("demolition", "game", "Minigame Demolition", [("Demolition", 0, 1 << 32)]),
-    ("drillers_foxhunt", "game", "Minigames Drillers + FoxHunt",
+    ("drillers_foxhunt", "game", "Minigames Drillers + FoxHunt (Tag)",
      [("Drillers", 0, 1 << 32), ("FoxHunt", 0, 1 << 32)]),
     ("hopper_scratchmatch", "game", "Minigames Hopper + ScratchMatch",
      [("Hopper", 0, 1 << 32), ("ScratchMatch", 0, 1 << 32)]),
     ("rollerball", "game", "Minigame RollerBall", [("RollerBall", 0, 1 << 32)]),
-    ("rowing", "game", "Minigame Rowing", [("Rowing", 0, 1 << 32)]),
+    ("rowing", "game", "Minigame Rowing (jet boats)", [("Rowing", 0, 1 << 32)]),
     ("tankedup", "game", "Minigame TankedUp", [("TankedUp", 0, 1 << 32)]),
 ]
+
+# Modules larger than one agent's task are split into N parts of about equal bytes. A cut is
+# only made where the source file changes, so one original file stays in one module.
+SPLIT = {"demolition": 3, "bumpercars": 2, "rollerball": 2, "carryon": 2, "meta": 2,
+         "rowing": 2, "tankedup": 2}
+
+
+def file_key(smap_entry, resolved_dir):
+    """The source file of a function, or its gap run, for split decisions."""
+    if smap_entry.get("file"):
+        return smap_entry["file"]
+    return "gap:%s:%s" % (resolved_dir, ",".join(smap_entry.get("candidates", [])))
+
+
+def split_module(fl, n, funcs, resolved):
+    """Partition the address-sorted list fl into n parts at file boundaries, by bytes."""
+    total = sum(funcs[a]["size"] for a in fl)
+    parts, cur, acc = [], [], 0
+    target = total / n
+    for i, a in enumerate(fl):
+        cur.append(a)
+        acc += funcs[a]["size"]
+        boundary = i + 1 < len(fl) and file_key(funcs[fl[i + 1]], resolved[fl[i + 1]]) != \
+            file_key(funcs[a], resolved[a])
+        if boundary and acc >= target * (len(parts) + 1) and len(parts) < n - 1:
+            parts.append(cur)
+            cur = []
+    parts.append(cur)
+    return parts
 
 
 def main():
     smap = json.load(open(os.path.join(EXPORT, "source_map.json")))
     meta = {}
-    for line in open(os.path.join(EXPORT, "functions.jsonl")):
-        f = json.loads(line)
-        if f["section"] == ".text":
-            meta[f["addr"]] = f
+    for name in ("functions.jsonl", "functions_extra.jsonl"):
+        if not os.path.exists(os.path.join(EXPORT, name)):
+            continue
+        for line in open(os.path.join(EXPORT, name)):
+            f = json.loads(line)
+            if f["section"] == ".text":
+                meta.setdefault(f["addr"], f)
     funcs = smap["functions"]
     addrs = sorted(funcs, key=lambda a: int(a, 16))
 
@@ -125,26 +161,44 @@ def main():
 
     out = OrderedDict()
     owner = {}
+    seen = set()
     for mid, kind, title, rules in MODULES:
         fl = []
         for a in addrs:
             ai = int(a, 16)
             if any(resolved[a] == d and lo <= ai < hi for d, lo, hi in rules):
-                if a in owner:
-                    print("ERROR %s in %s and %s" % (a, owner[a], mid))
+                if a in owner or a in seen:
+                    print("ERROR %s in two modules (%s)" % (a, mid))
                     sys.exit(1)
-                owner[a] = mid
+                seen.add(a)
                 fl.append(a)
-        out[mid] = {"kind": kind, "title": title, "dir": "src/%s" % mid,
-                    "function_count": len(fl), "bytes": sum(funcs[a]["size"] for a in fl),
-                    "functions": fl}
+        parts = split_module(fl, SPLIT[mid], funcs, resolved) if mid in SPLIT else [fl]
+        for pi, pl in enumerate(parts):
+            pid = mid if len(parts) == 1 else "%s_%s" % (mid, "abcdefgh"[pi])
+            ptitle = title if len(parts) == 1 else "%s (part %d of %d, 0x%s-0x%s)" % (
+                title, pi + 1, len(parts), pl[0], pl[-1])
+            files = []
+            for a in pl:
+                fk = funcs[a].get("file") or ("%s/(unplaced)" % resolved[a]
+                                              if not resolved[a].startswith("LIB:") else resolved[a])
+                if fk not in files:
+                    files.append(fk)
+            out[pid] = {"kind": kind, "title": ptitle, "dir": "src/%s" % pid,
+                        "function_count": len(pl), "bytes": sum(funcs[a]["size"] for a in pl),
+                        "lo": pl[0] if pl else None, "hi": pl[-1] if pl else None,
+                        "files": files, "functions": pl}
+            for a in pl:
+                owner[a] = pid
     missing = [a for a in addrs if a not in owner]
     for mid, rec in out.items():
+        if mid.startswith("_"):
+            continue
         print("%-24s %-8s %5d funcs %8d bytes" % (mid, rec["kind"], rec["function_count"], rec["bytes"]))
     print("total assigned %d of %d" % (len(owner), len(addrs)))
     if missing:
         print("UNASSIGNED:", len(missing), missing[:20])
         sys.exit(1)
+    out["_resolved"] = {a: resolved[a] for a in addrs}
     with open(os.path.join(EXPORT, "modules.json"), "w") as fh:
         json.dump(out, fh, indent=1)
 

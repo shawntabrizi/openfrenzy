@@ -127,7 +127,7 @@ ExternalProject_Add(guest_main
 # ---------- tests: run guest images in the host arena
 
 enable_testing()
-foreach(_case "skeleton;0" "probe;42")
+foreach(_case "skeleton;0" "probe;42" "platform_check;0" "guest;0")
   list(GET _case 0 _name)
   list(GET _case 1 _code)
   add_test(NAME guest_${_name}_runs

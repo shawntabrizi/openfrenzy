@@ -2,7 +2,7 @@
 """Map every .text function of default.xbe to its original source file.
 
 Run:  python3 -I scripts/map_sources.py [export_dir]
-In:   export/functions.jsonl (from scripts/ExportAll.java)
+In:   export/functions.jsonl (scripts/ExportAll.java) + export/functions_extra.jsonl (ExportAt.java)
 Out:  export/source_map.json, plus a coverage summary on stdout.
 
 Method
@@ -50,10 +50,12 @@ LIBRARY_REGIONS = [
      "MSVC LIBC string helpers (strnicmp, itoa, strncpy, memset, ...)."),
     ("eh_funclets", 0x001ECC20, 0x001F29F0, "lib",
      "Compiler-generated C++ EH unwind funclets (mov ecx,[ebp-x]; jmp dtor). Not real functions."),
-    ("libc", 0x001F29F0, 0x001F4E20, "lib", "LIBC FP init helper called by _cinit."),
-    ("crt_init", 0x001F4E20, 0x001F6000, "game",
-     "Compiler-generated static constructor/destructor thunks ($E functions, .CRT$XCU), "
-     "run by _cinit. They construct game/engine globals."),
+    ("crt_init", 0x001F29F0, 0x001F4E20, "game",
+     "Compiler-generated static constructors ($E functions), listed in the .CRT$XCA..XCZ table at "
+     "0x281750-0x2818a0 that _cinit (0x340f8) runs. Ghidra's analysis missed most of them; "
+     "scripts/ExportAt.java exports them to export/functions_extra.jsonl."),
+    ("crt_exit", 0x001F4E20, 0x001F6000, "game",
+     "Static destructors: the constructors register them with atexit (e.g. 0x1f2a10 -> 0x1f4e20)."),
 ]
 
 
@@ -163,12 +165,18 @@ def rebracket(funcs, out_funcs):
 
 def main():
     funcs = []
-    with open(os.path.join(EXPORT, "functions.jsonl")) as fh:
-        for line in fh:
-            f = json.loads(line)
-            if f["section"] == ".text":
-                f["a"] = int(f["addr"], 16)
-                funcs.append(f)
+    seen = set()
+    for name in ("functions.jsonl", "functions_extra.jsonl"):
+        path = os.path.join(EXPORT, name)
+        if not os.path.exists(path):
+            continue
+        with open(path) as fh:
+            for line in fh:
+                f = json.loads(line)
+                if f["section"] == ".text" and f["addr"] not in seen:
+                    seen.add(f["addr"])
+                    f["a"] = int(f["addr"], 16)
+                    funcs.append(f)
     funcs.sort(key=lambda f: f["a"])
 
     canon = {}  # lower-case short path -> first spelling seen

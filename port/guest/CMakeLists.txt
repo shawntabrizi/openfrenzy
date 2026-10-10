@@ -148,6 +148,8 @@ foreach(_m ${OPENFRENZY_PLATFORM_MODULES})
 endforeach()
 # the game's boot code is linked only into the game image
 list(FILTER _platform_sources EXCLUDE REGEX "/src/runtime/(of_boot|of_main)\\.c$")
+# the guest side of memory write tracking (calls the host) belongs with the layer
+list(APPEND _platform_sources "${RUNTIME_DIR}/guest_memory_watch.c")
 add_library(ofplatform STATIC ${_platform_sources})
 add_dependencies(ofplatform guest_headers)
 target_compile_options(ofplatform PRIVATE ${PLATFORM_FLAGS})
@@ -161,6 +163,15 @@ function(of_guest_image name)
   target_link_libraries(${name} PRIVATE ${_link_libs})
   set_target_properties(${name} PROPERTIES SUFFIX ".elf" LINK_DEPENDS "${OPENFRENZY_GUEST_LD_SCRIPT}")
 endfunction()
+
+# link check: every platform object linked whole, so a symbol the layer needs and nobody
+# defines fails the build now, not later when game code first calls into that file.
+add_executable(openfrenzy_platform_check "${R}/port/macos/tests/smoke/platform_check.c"
+  $<TARGET_OBJECTS:guest_runtime>)
+add_dependencies(openfrenzy_platform_check guest_runtime)
+target_compile_options(openfrenzy_platform_check PRIVATE ${PLATFORM_FLAGS})
+target_link_libraries(openfrenzy_platform_check PRIVATE "-whole-archive" ofplatform "-no-whole-archive" guestc)
+set_target_properties(openfrenzy_platform_check PROPERTIES SUFFIX ".elf")
 
 # smoke test: window + GLES + disc image read (port/macos/tests/smoke)
 of_guest_image(openfrenzy_smoke "${R}/port/macos/tests/smoke/smoke.c")
@@ -193,17 +204,30 @@ add_custom_command(OUTPUT "${GEN}/of_decls.h" "${GEN}/of_stubs.c" "${GEN}/of_crt
   COMMAND "${Python3_EXECUTABLE}" -I "${R}/port/macos/tools/gen_game_decls.py"
           --table "${_table}" --src "${SRC}" --out "${GEN}"
   DEPENDS "${R}/port/macos/tools/gen_game_decls.py" "${_table}" ${_decl_files}
+          "${SRC}/include/of_types.h"
   COMMENT "Game declarations and weak stubs")
 add_custom_target(game_decls DEPENDS "${GEN}/of_decls.h")
 
-set(GAME_FLAGS ${GUEST_CODE_FLAGS} -std=gnu11 -D_GNU_SOURCE -DOPENFRENZY_GUEST=1
-    -Wno-error -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration
-    -Wno-incompatible-function-pointer-types
+# Game/engine code: the platform flags (so a file may include "xtl.h" for XDK types) plus
+# of_game.h. Warnings stay on, except the ones that Ghidra-shaped code triggers everywhere.
+set(GAME_FLAGS ${GUEST_CODE_FLAGS} -std=gnu11 -D_GNU_SOURCE -DHALO_LINUX_PLATFORM_LAYER
+    -DHALO_ARM64_GUEST=1 -DOPENFRENZY_GUEST=1 -DOPENFRENZY_GAME=1
+    -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-incompatible-function-pointer-types
+    -Wno-pointer-sign -Wno-parentheses -Wno-unused-value -Wno-microsoft-anon-tag
+    -Wno-nonportable-include-path -Wno-ignored-pragmas
+    "SHELL:-include ${SRC}/runtime/include/linux/halo_linux_prefix.h"
+    "SHELL:-include ${GEN}/platform_msvc_semantics.h"
     "SHELL:-include ${SRC}/include/of_game.h"
     ${GAME_INCLUDES} ${PLATFORM_INCLUDES} ${LIBC_SYSTEM_INCLUDES})
 
-add_executable(openfrenzy_guest ${_game_sources} "${GEN}/of_stubs.c" "${GEN}/of_crt_init.c"
-  "${SRC}/runtime/of_boot.c" $<TARGET_OBJECTS:guest_runtime>)
+# The weak stubs see only of_types.h: their (void) parameter lists differ from the prototypes.
+add_library(game_stubs OBJECT "${GEN}/of_stubs.c")
+add_dependencies(game_stubs game_decls guest_headers)
+target_compile_options(game_stubs PRIVATE ${GUEST_CODE_FLAGS} -std=gnu11 -w -I${SRC}/include
+  ${LIBC_SYSTEM_INCLUDES})
+
+add_executable(openfrenzy_guest ${_game_sources} "${GEN}/of_crt_init.c"
+  "${SRC}/runtime/of_boot.c" $<TARGET_OBJECTS:game_stubs> $<TARGET_OBJECTS:guest_runtime>)
 add_dependencies(openfrenzy_guest guest_runtime game_decls guest_headers)
 target_compile_options(openfrenzy_guest PRIVATE ${GAME_FLAGS})
 target_link_libraries(openfrenzy_guest PRIVATE ${_link_libs})

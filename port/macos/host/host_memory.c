@@ -205,6 +205,9 @@ void host_memory_watch_prepare_write(uint32_t a, uint32_t n) {
         }
 }
 void host_memory_watch_forget(uint32_t a, uint32_t n) { host_memory_watch_prepare_write(a, n); }
+/* openfrenzy: the OpenCE layer (231708d) calls this each frame; this host
+ * tracks writes by page protection only (no page hashing), so nothing to do */
+void host_memory_watch_begin_frame(void) {}
 static void fault(int signal, siginfo_t *info, void *context) {
     uintptr_t address = (uintptr_t)info->si_addr;
     if (address >= OPENFRENZY_MACOS_BIAS && address < OPENFRENZY_MACOS_BIAS + UINT64_C(0x100000000)) {
