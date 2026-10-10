@@ -5,7 +5,7 @@ orig/
 *.xiso
 
 # Local tooling and Ghidra projects
-tools/
+/tools/
 ghidra/
 *.gpr
 *.rep/
