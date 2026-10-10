@@ -36,7 +36,7 @@ mkdir -p "$OPENFRENZY_DATA_ROOT" "$OPENFRENZY_SAVE_ROOT"
 [ -f "$ISO" ] && export OPENFRENZY_ISO="$ISO"
 
 if [ $# -gt 0 ]; then NAMES="$*"; else NAMES=$(cd "$T" && ls test_*.c | sed 's/\.c$//'); fi
-pass=0 fail=0
+pass=0 fail=0 xfail=0
 for name in $NAMES; do
 	obj=$OUT/$name.o image=$OUT/$name.elf log=$OUT/$name.log
 	if ! eval "$CC_LINE -I$T -o $obj -c $T/$name.c" > "$log" 2>&1; then
@@ -50,11 +50,19 @@ for name in $NAMES; do
 	"$B/openfrenzy" "$image" >> "$log" 2>&1
 	status=$?
 	set -e
+	known=$(grep -v '^#' "$T/known_failures.txt" 2>/dev/null | awk -v n="$name" '$1 == n { $1 = ""; print; exit }')
 	if [ $status -eq 0 ] && grep -q "Game exited (0)" "$log"; then
-		echo "ok   $name"; pass=$((pass + 1))
+		if [ -n "$known" ]; then
+			echo "XPASS $name: passes now; remove it from known_failures.txt"
+		else
+			echo "ok   $name"
+		fi
+		pass=$((pass + 1))
+	elif [ -n "$known" ]; then
+		echo "XFAIL $name (exit $status):$known"; xfail=$((xfail + 1))
 	else
 		echo "FAIL $name (exit $status, $log)"; tail -40 "$log"; fail=$((fail + 1))
 	fi
 done
-echo "run_tests: $pass passed, $fail failed (SDL_VIDEO_DRIVER=${SDL_VIDEO_DRIVER:-<real>})"
+echo "run_tests: $pass passed, $fail failed, $xfail known failures (SDL_VIDEO_DRIVER=${SDL_VIDEO_DRIVER:-<real>})"
 [ $fail -eq 0 ]

@@ -33,6 +33,9 @@ int gl_functions_load(void);
 
 static SDL_Window *platform_window;
 static SDL_GLContext platform_gl_context;
+/* platform_video_initialize: 0 not tried yet, 1 the window and context are up, -1 it failed
+(Direct3D then runs without a window; a second call does not retry) */
+static int platform_video_state;
 static SDL_ThreadID platform_event_thread;
 static BOOL platform_sdl_started;
 
@@ -110,10 +113,8 @@ SDL_AudioDeviceID platform_audio_device(int recording, const char *name)
 	return recording ? SDL_AUDIO_DEVICE_DEFAULT_RECORDING : SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
 }
 
-BOOL platform_video_initialize(unsigned long width, unsigned long height)
+static BOOL video_initialize(unsigned long width, unsigned long height)
 {
-	if (platform_window)
-		return TRUE;
 	if (!platform_sdl_initialize())
 		return FALSE;
 	/* ES 3.2 where the driver has it, otherwise 3.0 (ANGLE on Metal gives 3.0) */
@@ -150,6 +151,20 @@ BOOL platform_video_initialize(unsigned long width, unsigned long height)
 	return TRUE;
 }
 
+/* Direct3D_CreateDevice (d3d8_gl.c) calls this once, on the game's main thread (bStartDisplay,
+0x00042020, runs there: main 0x0002d540 calls core_init directly); that thread then pumps the
+events (D3DDevice_Present). width and height are the back buffer's (640x480). */
+BOOL platform_video_initialize(unsigned long width, unsigned long height)
+{
+	if (!platform_video_state)
+	{
+		platform_video_state = video_initialize(width, height) ? 1 : -1;
+		if (platform_video_state < 0)
+			platform_gl_context = NULL;
+	}
+	return platform_video_state > 0;
+}
+
 void platform_display_apply(void)
 {
 	if (platform_window)
@@ -161,6 +176,9 @@ void platform_video_drawable_size(int *width, int *height)
 	SDL_GetWindowSizeInPixels(platform_window, width, height);
 }
 
+/* Should be in window coordinates (points), which pointer events use; the guest runtime has
+only SDL_GetWindowSizeInPixels (port/guest/runtime/guest_sdl.c), so on a Retina display this
+is twice the points. Only d3d8_gl.c's menu pointer reads it, which this game does not use. */
 void platform_video_window_size(int *width, int *height)
 {
 	SDL_GetWindowSizeInPixels(platform_window, width, height);
@@ -177,15 +195,83 @@ void platform_mouse_capture(BOOL capture)
 		SDL_SetWindowRelativeMouseMode(platform_window, capture ? true : false);
 }
 
-/* ---------- keyboard queue (the XDK keyboard, XInputDebugGetKeystroke) */
+/* ---------- keyboard queue (the XDK debug keyboard, XInputDebugGetKeystroke)
+
+From OpenCE port/linux/src/sdl_platform.c (231708d, CC0): Windows virtual keys and
+XINPUT_DEBUG_KEYSTROKE_FLAG_* (xdk_xkbd.h: ctrl 0x01, shift 0x02, alt 0x04, key up 0x40). */
+
+/* Windows virtual key code for an SDL scancode (the Xbox debug keyboard
+reports virtual keys) */
+static BYTE virtual_key_from_scancode(SDL_Scancode scancode)
+{
+	if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z)
+		return (BYTE)('A' + (scancode - SDL_SCANCODE_A));
+	if (scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_9)
+		return (BYTE)('1' + (scancode - SDL_SCANCODE_1));
+	if (scancode >= SDL_SCANCODE_F1 && scancode <= SDL_SCANCODE_F12)
+		return (BYTE)(0x70 + (scancode - SDL_SCANCODE_F1));
+	if (scancode >= SDL_SCANCODE_KP_1 && scancode <= SDL_SCANCODE_KP_9)
+		return (BYTE)(0x61 + (scancode - SDL_SCANCODE_KP_1));
+	switch (scancode)
+	{
+	case SDL_SCANCODE_0: return '0';
+	case SDL_SCANCODE_KP_0: return 0x60;
+	case SDL_SCANCODE_RETURN: case SDL_SCANCODE_KP_ENTER: return 0x0d;
+	case SDL_SCANCODE_ESCAPE: return 0x1b;
+	case SDL_SCANCODE_BACKSPACE: return 0x08;
+	case SDL_SCANCODE_TAB: return 0x09;
+	case SDL_SCANCODE_SPACE: return 0x20;
+	case SDL_SCANCODE_MINUS: return 0xbd;
+	case SDL_SCANCODE_EQUALS: return 0xbb;
+	case SDL_SCANCODE_LEFTBRACKET: return 0xdb;
+	case SDL_SCANCODE_RIGHTBRACKET: return 0xdd;
+	case SDL_SCANCODE_BACKSLASH: return 0xdc;
+	case SDL_SCANCODE_SEMICOLON: return 0xba;
+	case SDL_SCANCODE_APOSTROPHE: return 0xde;
+	case SDL_SCANCODE_GRAVE: return 0xc0;
+	case SDL_SCANCODE_COMMA: return 0xbc;
+	case SDL_SCANCODE_PERIOD: return 0xbe;
+	case SDL_SCANCODE_SLASH: return 0xbf;
+	case SDL_SCANCODE_CAPSLOCK: return 0x14;
+	case SDL_SCANCODE_PRINTSCREEN: return 0x2c;
+	case SDL_SCANCODE_SCROLLLOCK: return 0x91;
+	case SDL_SCANCODE_PAUSE: return 0x13;
+	case SDL_SCANCODE_INSERT: return 0x2d;
+	case SDL_SCANCODE_HOME: return 0x24;
+	case SDL_SCANCODE_PAGEUP: return 0x21;
+	case SDL_SCANCODE_DELETE: return 0x2e;
+	case SDL_SCANCODE_END: return 0x23;
+	case SDL_SCANCODE_PAGEDOWN: return 0x22;
+	case SDL_SCANCODE_RIGHT: return 0x27;
+	case SDL_SCANCODE_LEFT: return 0x25;
+	case SDL_SCANCODE_DOWN: return 0x28;
+	case SDL_SCANCODE_UP: return 0x26;
+	case SDL_SCANCODE_NUMLOCKCLEAR: return 0x90;
+	case SDL_SCANCODE_KP_DIVIDE: return 0x6f;
+	case SDL_SCANCODE_KP_MULTIPLY: return 0x6a;
+	case SDL_SCANCODE_KP_MINUS: return 0x6d;
+	case SDL_SCANCODE_KP_PLUS: return 0x6b;
+	case SDL_SCANCODE_KP_PERIOD: return 0x6e;
+	case SDL_SCANCODE_LCTRL: return 0xa2;
+	case SDL_SCANCODE_RCTRL: return 0xa3;
+	case SDL_SCANCODE_LSHIFT: return 0xa0;
+	case SDL_SCANCODE_RSHIFT: return 0xa1;
+	case SDL_SCANCODE_LALT: return 0xa4;
+	case SDL_SCANCODE_RALT: return 0xa5;
+	default: return 0;
+	}
+}
 
 static CHAR ascii_from_key(SDL_Keycode key, SDL_Keymod modifiers)
 {
+	BOOL shift = (modifiers & SDL_KMOD_SHIFT) != 0;
+	static const char shifted_digits[] = ")!@#$%^&*(";
+
 	if (key >= 'a' && key <= 'z')
-		return (CHAR)((modifiers & SDL_KMOD_SHIFT) ? key - 'a' + 'A' : key);
-	if (key >= ' ' && key < 0x7f)
-		return (CHAR)key;
-	if (key == SDLK_RETURN)
+		return (CHAR)((shift ^ ((modifiers & SDL_KMOD_CAPS) != 0)) ? key - 32 : key);
+	if (key >= '0' && key <= '9')
+		return (CHAR)(shift ? shifted_digits[key - '0'] : key);
+	if (key == SDLK_RETURN || key == SDLK_KP_ENTER)
 		return '\r';
 	if (key == SDLK_BACKSPACE)
 		return '\b';
@@ -193,19 +279,51 @@ static CHAR ascii_from_key(SDL_Keycode key, SDL_Keymod modifiers)
 		return '\t';
 	if (key == SDLK_ESCAPE)
 		return 0x1b;
+	if (key >= 32 && key < 127)
+	{
+		if (!shift)
+			return (CHAR)key;
+		switch (key)
+		{
+		case '-': return '_';
+		case '=': return '+';
+		case '[': return '{';
+		case ']': return '}';
+		case '\\': return '|';
+		case ';': return ':';
+		case '\'': return '"';
+		case ',': return '<';
+		case '.': return '>';
+		case '/': return '?';
+		case '`': return '~';
+		default: return (CHAR)key;
+		}
+	}
 	return 0;
 }
 
+/* called with input_lock held; a full queue drops its oldest keystroke */
 static void queue_keystroke(const SDL_KeyboardEvent *event)
 {
 	struct platform_keystroke *keystroke;
+	BYTE flags = 0;
 
-	if (keystroke_count >= KEYSTROKE_QUEUE_SIZE)
-		return;
+	if (keystroke_count == KEYSTROKE_QUEUE_SIZE)
+	{
+		keystroke_head = (keystroke_head + 1) % KEYSTROKE_QUEUE_SIZE;
+		keystroke_count--;
+	}
 	keystroke = &keystroke_queue[(keystroke_head + keystroke_count) % KEYSTROKE_QUEUE_SIZE];
-	keystroke->virtual_key = (BYTE)(event->key < 0x80 ? event->key : 0);
-	keystroke->ascii = ascii_from_key(event->key, event->mod);
-	keystroke->flags = event->down ? 0 : 1;
+	if (event->mod & SDL_KMOD_CTRL) flags |= 0x01;
+	if (event->mod & SDL_KMOD_SHIFT) flags |= 0x02;
+	if (event->mod & SDL_KMOD_ALT) flags |= 0x04;
+	if (event->mod & SDL_KMOD_CAPS) flags |= 0x08;
+	if (event->mod & SDL_KMOD_NUM) flags |= 0x10;
+	if (!event->down) flags |= 0x40;
+	if (event->repeat) flags |= 0x80;
+	keystroke->virtual_key = virtual_key_from_scancode(event->scancode);
+	keystroke->ascii = event->down ? ascii_from_key(event->key, event->mod) : 0;
+	keystroke->flags = flags;
 	keystroke_count++;
 }
 
@@ -227,6 +345,59 @@ BOOL platform_next_keystroke(struct platform_keystroke *keystroke)
 
 /* ---------- events */
 
+/* one event into the input state (platform_pump_events; tests call it with made-up events) */
+void platform_handle_event(const SDL_Event *event)
+{
+	if (event->type == SDL_EVENT_QUIT)
+	{
+		platform_log("quit requested");
+		exit(EXIT_SUCCESS);
+	}
+	pthread_mutex_lock(&input_lock);
+	switch (event->type)
+	{
+	case SDL_EVENT_KEY_DOWN:
+	case SDL_EVENT_KEY_UP:
+		if (event->key.scancode < SDL_SCANCODE_COUNT)
+		{
+			input_state.keys[event->key.scancode] = event->key.down ? 1 : 0;
+			if (event->key.down)
+				keys_pressed[event->key.scancode] = 1;
+		}
+		queue_keystroke(&event->key);
+		break;
+	case SDL_EVENT_MOUSE_MOTION:
+		input_state.mouse_dx += event->motion.xrel;
+		input_state.mouse_dy += event->motion.yrel;
+		break;
+	case SDL_EVENT_MOUSE_BUTTON_DOWN:
+	case SDL_EVENT_MOUSE_BUTTON_UP:
+		if (event->button.button < PLATFORM_MOUSE_BUTTON_COUNT)
+		{
+			input_state.mouse_buttons[event->button.button] = event->button.down ? 1 : 0;
+			if (event->button.down)
+				mouse_buttons_pressed[event->button.button] = 1;
+		}
+		break;
+	case SDL_EVENT_MOUSE_WHEEL:
+		input_state.mouse_wheel += event->wheel.y;
+		break;
+	case SDL_EVENT_WINDOW_FOCUS_GAINED:
+		input_state.focused = TRUE;
+		break;
+	case SDL_EVENT_WINDOW_FOCUS_LOST:
+		/* no key stays held while another application has the keyboard */
+		input_state.focused = FALSE;
+		memset(input_state.keys, 0, sizeof(input_state.keys));
+		memset(input_state.mouse_buttons, 0, sizeof(input_state.mouse_buttons));
+		break;
+	default:
+		break;
+	}
+	pthread_mutex_unlock(&input_lock);
+}
+
+/* main thread only (the thread that made the window): macOS delivers window events there */
 void platform_pump_events(void)
 {
 	SDL_Event event;
@@ -234,53 +405,7 @@ void platform_pump_events(void)
 	if (!platform_sdl_started || (platform_event_thread && SDL_GetCurrentThreadID() != platform_event_thread))
 		return;
 	while (SDL_PollEvent(&event))
-	{
-		pthread_mutex_lock(&input_lock);
-		switch (event.type)
-		{
-		case SDL_EVENT_QUIT:
-			pthread_mutex_unlock(&input_lock);
-			platform_log("quit requested");
-			exit(EXIT_SUCCESS);
-		case SDL_EVENT_KEY_DOWN:
-		case SDL_EVENT_KEY_UP:
-			if (event.key.scancode < SDL_SCANCODE_COUNT)
-			{
-				input_state.keys[event.key.scancode] = event.key.down ? 1 : 0;
-				if (event.key.down)
-					keys_pressed[event.key.scancode] = 1;
-			}
-			queue_keystroke(&event.key);
-			break;
-		case SDL_EVENT_MOUSE_MOTION:
-			input_state.mouse_dx += event.motion.xrel;
-			input_state.mouse_dy += event.motion.yrel;
-			break;
-		case SDL_EVENT_MOUSE_BUTTON_DOWN:
-		case SDL_EVENT_MOUSE_BUTTON_UP:
-			if (event.button.button < PLATFORM_MOUSE_BUTTON_COUNT)
-			{
-				input_state.mouse_buttons[event.button.button] = event.button.down ? 1 : 0;
-				if (event.button.down)
-					mouse_buttons_pressed[event.button.button] = 1;
-			}
-			break;
-		case SDL_EVENT_MOUSE_WHEEL:
-			input_state.mouse_wheel += event.wheel.y;
-			break;
-		case SDL_EVENT_WINDOW_FOCUS_GAINED:
-			input_state.focused = TRUE;
-			break;
-		case SDL_EVENT_WINDOW_FOCUS_LOST:
-			input_state.focused = FALSE;
-			memset(input_state.keys, 0, sizeof(input_state.keys));
-			memset(input_state.mouse_buttons, 0, sizeof(input_state.mouse_buttons));
-			break;
-		default:
-			break;
-		}
-		pthread_mutex_unlock(&input_lock);
-	}
+		platform_handle_event(&event);
 }
 
 void platform_input_read(struct platform_input_state *state, BOOL consume_motion)

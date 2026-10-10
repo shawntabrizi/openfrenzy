@@ -94,6 +94,11 @@ void platform_mouse_capture(BOOL capture);
 elsewhere; on Android this is where finger events reach touch_input.c, which
 is why that module's state is only touched from the main thread */
 void platform_pump_events(void);
+#ifdef SDL_events_h_
+/* one event into the input state and keystroke queue, as platform_pump_events does for
+each polled event (src/runtime/tests use it to feed made-up events) */
+void platform_handle_event(const SDL_Event *event);
+#endif
 /* request a capture from the bound Screenshot action */
 void platform_screenshot_request(void);
 /* consume the request; call on the render thread with a completed frame */

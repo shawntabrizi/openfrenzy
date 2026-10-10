@@ -169,6 +169,11 @@ game_state_create_or_open_file passes 0xC0000000, 4 (OPEN_ALWAYS) and
 #define GENERIC_READ 0x80000000UL
 #define GENERIC_WRITE 0x40000000UL
 
+/* CreateFileA's share mode (learn.microsoft.com, CreateFileA) */
+#define FILE_SHARE_READ 0x00000001
+#define FILE_SHARE_WRITE 0x00000002
+#define FILE_SHARE_DELETE 0x00000004
+
 #define CREATE_NEW 1
 #define CREATE_ALWAYS 2
 #define OPEN_EXISTING 3
@@ -226,5 +231,14 @@ LONG WINAPI _InterlockedDecrement(LPLONG Addend);
 LONG WINAPI _InterlockedExchange(LPLONG Target, LONG Value);
 LONG WINAPI _InterlockedExchangeAdd(LPLONG Addend, LONG Value);
 LONG WINAPI _InterlockedCompareExchange(LPLONG Destination, LONG Exchange, LONG Comparand);
+
+/* Win32 types that Halo's PDB (xdk_pdb.h) does not record but this game's XDK
+calls use (learn.microsoft.com, "Windows Data Types") */
+typedef void *PVOID;
+
+/* User APCs (learn.microsoft.com, QueueUserAPC and PAPCFUNC); the game's XAPI
+copy is at 0x00034274, the definition in src/xkernel/xbox_kernel.c */
+typedef VOID (WINAPI *PAPCFUNC)(ULONG_PTR Parameter);
+DWORD WINAPI QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
 
 #endif
