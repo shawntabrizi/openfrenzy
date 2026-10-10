@@ -105,8 +105,6 @@ VOID WINAPI XGSetTextureHeader(UINT width, UINT height, UINT levels, DWORD usage
 		width = 1;
 	if (!height)
 		height = 1;
-	if (!levels)
-		levels = 1;
 	xgpu_texture_describe(((DWORD)format << D3DFORMAT_FORMAT_SHIFT) | (1 << D3DFORMAT_MIPMAP_SHIFT), 0, &description);
 	format_word = ((DWORD)format << D3DFORMAT_FORMAT_SHIFT) | (2 << D3DFORMAT_DIMENSION_SHIFT) |
 		D3DFORMAT_DMACHANNEL_A;
@@ -117,14 +115,22 @@ VOID WINAPI XGSetTextureHeader(UINT width, UINT height, UINT levels, DWORD usage
 	texture->Lock = 0;
 	if (description.linear)
 	{
+		/* (the library: levels 0 is 1; the default pitch is the row
+		rounded up to 64 bytes) */
+		if (!levels)
+			levels = 1;
 		if (!pitch)
-			pitch = width * (UINT)description.pitch;
-		texture->Format = format_word | (1 << D3DFORMAT_MIPMAP_SHIFT);
+			pitch = (width * (UINT)description.pitch + D3DTEXTURE_PITCH_ALIGNMENT - 1) &
+				~(UINT)(D3DTEXTURE_PITCH_ALIGNMENT - 1);
+		texture->Format = format_word | ((DWORD)levels << D3DFORMAT_MIPMAP_SHIFT);
 		texture->Size = (((pitch / D3DTEXTURE_PITCH_ALIGNMENT) - 1) << D3DSIZE_PITCH_SHIFT) |
 			((height - 1) << D3DSIZE_HEIGHT_SHIFT) | (width - 1);
 	}
 	else
 	{
+		/* (the library: levels 0 is the whole chain, down to 1 by 1) */
+		if (!levels)
+			levels = (UINT)(log2_floor(width > height ? width : height) + 1);
 		texture->Format = format_word | ((DWORD)levels << D3DFORMAT_MIPMAP_SHIFT) |
 			(log2_floor(width) << D3DFORMAT_USIZE_SHIFT) | (log2_floor(height) << D3DFORMAT_VSIZE_SHIFT);
 		texture->Size = 0;

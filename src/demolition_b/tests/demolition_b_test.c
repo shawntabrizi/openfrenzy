@@ -15,6 +15,16 @@ What the tests pin down, and why it matters to the game:
   so the newest explosions are never cut short.
 - remote bomb control: the AI may roll the bomb only while it is controllable and not
   growing or shrinking (phases 1 and 2).
+- object physics: ComputeForces divides gravity by the mass factor (+0x4404) and Integrate
+  multiplies by it, so a falling bomb gains gravity * dt whatever that factor is; a change in
+  either side changes how fast every bomb falls.
+- results camera: the winners (+0x116f) share the results time; with the timer at 0 the
+  index clamps to the last winner instead of running past the list.
+- explosion messages: the knock-up speed of a blown-away player falls off linearly with the
+  distance (120 at the centre, 0 at the edge of the blast), and one message is consumed per
+  frame from a ring buffer that wraps with its power-of-two capacity.
+- player damage: hits add up (+0x111c); crossing the character's limit knocks the player
+  out (from the front here) and empties the meter, so the next hit starts again from 0.
 */
 
 #ifdef OPENFRENZY_DEMOLITION_B_TEST
@@ -25,6 +35,9 @@ What the tests pin down, and why it matters to the game:
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/* 0x00290738  the characters' knockout limits (classlib_ui; a weak zero array here) */
+extern char DAT_00290738[];
 
 static int checks;
 static int failures;
@@ -184,12 +197,99 @@ static void test_remote_can_roll(void)
 		"no rolling without control");
 }
 
+static void test_object_physics(void)
+{
+	char *o = calloc(1, 0x4500);
+	float g = -2.0f;
+
+	DB_F32(o, 0x4404) = 4.0f;      /* the mass factor */
+	DB_F32(o, 0x4418) = g;         /* gravity (y) */
+	DB_F32(o, 0x4434) = 0.0f;      /* no drag */
+	CDemolition_Object_ComputeForces((struct CDemolition_Object *)o, 1.0f);
+	CHECK(DB_F32(o, 0x43d8) == g / 4.0f, "gravity is divided by the mass factor");
+	CDemolition_Object_Integrate((struct CDemolition_Object *)o, 0.5f);
+	CHECK(DB_F32(o, 0x43c8) == g * 0.5f, "a falling object gains gravity * dt");
+	DB_F32(o, 0x4428) = 3.0f;      /* an applied force (y) */
+	CDemolition_Object_ComputeForces((struct CDemolition_Object *)o, 1.0f);
+	CHECK(DB_F32(o, 0x43d8) == g / 4.0f + 3.0f, "the applied force adds to the acceleration");
+	CDemolition_Object_Stop((struct CDemolition_Object *)o);
+	CHECK(DB_F32(o, 0x4428) == 0.0f, "Stop clears the applied force");
+}
+
+static void test_results_player(void)
+{
+	char *camera = calloc(1, 0x100);
+
+	setup(3);
+	DB_U8(players[0], 0x116f) = 1;
+	DB_U8(players[1], 0x116f) = 0;
+	DB_U8(players[2], 0x116f) = 1;
+	DB_F32(camera, 0xd4) = 90.0f;
+	/* the timer (rollerball_a) is a stub returning 0 here: the full time is left */
+	CHECK(CDemolition_Camera_ResultsPlayer((struct CDemolition_Camera *)camera) == players[2],
+		"the index clamps to the last winner");
+	DB_U8(players[0], 0x116f) = 0;
+	DB_U8(players[2], 0x116f) = 0;
+	CHECK(CDemolition_Camera_ResultsPlayer((struct CDemolition_Camera *)camera) == NULL,
+		"no winner, no player");
+}
+
+static void test_hit_message(void)
+{
+	char *p;
+	char *queue = calloc(4, 0x24);
+	char *entry;
+
+	setup(1);
+	p = players[0];
+	DB_PTR(p, 0x30) = calloc(1, 0x400);
+	DB_I32(game, 0x28) = 2;        /* variation 2: nothing held to drop */
+	place(p, 50.0f, 0.0f);
+	DB_PTR(p, 0x1134) = queue;
+	DB_U16(p, 0x1138) = 4;
+	DB_U16(p, 0x113a) = 3;
+	DB_U16(p, 0x113c) = 2;
+	entry = queue + 3 * 0x24;
+	DB_U16(entry, 4) = 0;          /* an explosion hit at the origin */
+	DB_F32(entry, 0x20) = 200.0f;  /* power */
+	CDemolition_Player_HandleMessage((struct CDemolition_Player *)p, 1.0f);
+	CHECK(DB_F32(p, 0x11b8) == 120.0f * (1.0f - 50.0f / 200.0f), "knock-up falls off with distance");
+	CHECK(DB_U16(p, 0x113a) == 0 && DB_U16(p, 0x113c) == 1, "one message consumed, the head wraps");
+}
+
+static void test_player_damage(void)
+{
+	char *p;
+	char *actor;
+
+	setup(1);
+	p = players[0];
+	actor = calloc(1, 0x400);
+	DB_PTR(p, 0x30) = actor;
+	DB_U16(actor, 0x230) = 0;
+	DAT_002baed4[0] = 2;           /* character 2 */
+	*(float *)(DAT_00290738 + 2 * 0x60) = 100.0f;
+	DB_F32(p, 0x111c) = 0.0f;
+	DB_I32(p, 0x1120) = 0;
+	CDemolition_Player_Hit((struct CDemolition_Player *)p, DB_FP(p, 0x1144), 60.0f, 0);
+	CHECK(DB_F32(p, 0x111c) == 60.0f, "a hit below the limit adds up");
+	CHECK(DB_I32(p, 0x1120) == 0, "a hurt player is not knocked out");
+	CDemolition_Player_Hit((struct CDemolition_Player *)p, DB_FP(p, 0x1144), 60.0f, 0);
+	CHECK(DB_F32(p, 0x111c) == 0.0f, "a knockout empties the damage meter");
+	CHECK(DB_I32(p, 0x1120) == 1, "knocked out from the front");
+	DAT_002baed4[0] = 0;
+}
+
 int main(void)
 {
 	test_frag_scoring();
 	test_score_loss();
 	test_explosion_slots();
 	test_remote_can_roll();
+	test_object_physics();
+	test_results_player();
+	test_hit_message();
+	test_player_damage();
 	fprintf(stderr, "demolition_b tests: %d checks, %d failures\n", checks, failures);
 	return failures != 0;
 }

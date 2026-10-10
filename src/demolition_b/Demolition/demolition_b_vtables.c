@@ -178,19 +178,19 @@ const void *const vtable_0026b0d4[] = {
 	(const void *)FUN_001d5950, /* [4] +0x10 tankedup_b TankedUp */
 };
 
-/* (1 slot) */
+/* CDemolition_ObjectList (1 slot) */
 /* 0x0026b0e8 vtable */
 const void *const vtable_0026b0e8[] = {
 	(const void *)FUN_000f5710, /* [0] +0x00 demolition_b Demolition */
 };
 
-/* (1 slot) */
+/* CDemolition_Camera (1 slot) */
 /* 0x0026b0f0 vtable */
 const void *const vtable_0026b0f0[] = {
 	(const void *)FUN_000f59f0, /* [0] +0x00 demolition_b Demolition */
 };
 
-/* (1 slot) */
+/* CDemolition_World (1 slot) */
 /* 0x0026b0f8 vtable */
 const void *const vtable_0026b0f8[] = {
 	(const void *)FUN_000f77a0, /* [0] +0x00 demolition_b Demolition */
@@ -268,7 +268,7 @@ const void *const vtable_0026b3b4[] = {
 	(const void *)FUN_000f8c90, /* [0] +0x00 demolition_b Demolition */
 };
 
-/* (1 slot) */
+/* CDemolition_CharLibMgr (1 slot) */
 /* 0x0026b3b8 vtable */
 const void *const vtable_0026b3b8[] = {
 	(const void *)FUN_000f8da0, /* [0] +0x00 demolition_b Demolition */

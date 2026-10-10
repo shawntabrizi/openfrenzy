@@ -782,6 +782,17 @@ static void test_texture_header(void)
 	CHECK(!description.linear && description.width == 256 && description.height == 128 && description.levels == 3 &&
 		texture.Data == 0x1000 && !(texture.Format & D3DFORMAT_BORDERSOURCE_COLOR),
 		"swizzled header: %lux%lu levels %lu", description.width, description.height, description.levels);
+	/* the library (0x002283c9): levels 0 on a swizzled texture is the whole
+	chain, max(log2 width, log2 height) + 1; a level count of 1 would leave
+	the texture's smaller levels unread */
+	XGSetTextureHeader(256, 64, 0, 0, D3DFMT_A8R8G8B8, 0, &texture, 0, 0);
+	xgpu_texture_describe(texture.Format, texture.Size, &description);
+	CHECK(description.levels == 9, "levels 0 is the whole chain: %lu", description.levels);
+	/* the library: a linear texture's default pitch is the row rounded up
+	to 64 bytes (100 * 4 = 400 -> 448), not the bare row */
+	XGSetTextureHeader(100, 10, 1, 0, D3DFMT_LIN_X8R8G8B8, 0, &texture, 0, 0);
+	xgpu_texture_describe(texture.Format, texture.Size, &description);
+	CHECK(description.pitch == 448 && description.width == 100, "default linear pitch %lu", description.pitch);
 }
 
 /* ---------- GLSL dumps (OPENFRENZY_D3D8_TEST_GLSL: a directory)

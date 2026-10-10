@@ -10,10 +10,14 @@ Original sources: C:\BlitzParty\Game\Src\Demolition\
 
 Classes (vtables rebuilt in the .c files; sizes from the constructors):
   vtable 0x0026b0d4  CDemolition_Object      base of the bomb object (demolition_d base 0x0010bd30)
+  vtable 0x0026b0e8  CDemolition_ObjectList  the object list of the game (game +0x1398)
+  vtable 0x0026b0f0  CDemolition_Camera      the camera (game +0x1298; unplaced_camera.c)
+  vtable 0x0026b0f8  CDemolition_World       the level (game +0x110; CDemolition_World.c)
   vtable 0x0026ae18  CDemolition_Bomb        the bomb object (0x4670 bytes)
   vtable 0x0026b2c0  CDemolition_CharLib     CharLib character (secondary vtable at +0x1130)
+  vtable 0x0026b3b8  CDemolition_CharLibMgr  the character manager (game +0x64)
   vtable 0x0026ae30  CDemolition_BombChar    CharLib character carrying a bomb (secondary at +0x1130)
-  vtable 0x0026b448  CDemolition_Player      the player (secondary at +0x1130)
+  vtable 0x0026b448  CDemolition_Player      the player (secondary at +0x1130; 0x13e0 bytes)
   vtable 0x0026af2c  CDemolition_BombSystem  base of the bomb systems
   vtables 0x0026af48, 0x0026af6c, 0x0026af90, 0x0026afb4: the bomb systems of the variations
 

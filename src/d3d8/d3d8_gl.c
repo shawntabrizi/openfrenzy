@@ -4798,11 +4798,16 @@ void WINAPI D3DDevice_DrawVertices(D3DPRIMITIVETYPE primitive_type, UINT start_v
 	gl_check_errors("draw");
 }
 
-/* 0x00201390: draws from the caller's memory through stream 0, which is
-then unset (as Direct3D leaves it) */
+/* 0x00201390: draws from the caller's memory through stream 0. The Xbox
+library (and its CDevice_SetStateUP, 0x001fa000) never touches the stream
+sources, so the game's stream 0 is restored afterwards (unlike PC Direct3D,
+which unsets it) */
 void WINAPI D3DDevice_DrawVerticesUP(D3DPRIMITIVETYPE primitive_type, UINT vertex_count, CONST void *vertex_data,
 	UINT vertex_stride)
 {
+	DWORD saved_data = device.streams[0].data;
+	UINT saved_stride = device.streams[0].stride;
+
 	if (!vertex_data || !vertex_stride)
 		return;
 	device.user_stream = vertex_data;
@@ -4811,8 +4816,8 @@ void WINAPI D3DDevice_DrawVerticesUP(D3DPRIMITIVETYPE primitive_type, UINT verte
 	device.streams[0].stride = vertex_stride;
 	D3DDevice_DrawVertices(primitive_type, 0, vertex_count);
 	device.user_stream = NULL;
-	device.streams[0].data = 0;
-	device.streams[0].stride = 0;
+	device.streams[0].data = saved_data;
+	device.streams[0].stride = saved_stride;
 }
 
 void WINAPI D3DDevice_DrawIndexedVertices(D3DPRIMITIVETYPE primitive_type, UINT vertex_count, CONST WORD *index_data)
