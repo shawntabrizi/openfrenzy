@@ -1136,7 +1136,7 @@ void Bug_Tremor_Attack(void *self)
 		/* the spit leaves the head */
 		BG_S(0x1216) = 1;
 		baGetNodePosition((struct BActorInstance *)(BG_ACTOR + 0x10), (struct BActorNode *)MW_AP(self, 0x1018), node);
-		FUN_00180de0(node, MW_AV(MW_AP(mw_Players[BG_S(0x1204)], 0x30), 0xd0));
+		FUN_00180de0(mw_Bullets, node, MW_AV(MW_AP(mw_Players[BG_S(0x1204)], 0x30), 0xd0));
 	}
 	if (BG_S(0x1214) == 5 && 1.0f < BG_F(0x11f0) && BG_S(0x1216) == 0 &&
 	    (double)Actor_AnimProgress(BG_ACTOR + 0x10) > 0.54) {

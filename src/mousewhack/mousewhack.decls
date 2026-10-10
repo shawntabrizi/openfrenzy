@@ -117,12 +117,19 @@
 0017f000 int CBbash_Player_Steer(void *self);
 0017f8a0 void CBbash_Player_Strike(void *self);
 
+# ---- MouseWhack/CBbash_Bullets.c
+00180720 void *CBbash_Bullets_Ctor(void *self);
+001807c0 void *CBbash_Bullet_Ctor(void *self, float *pos, float *vel, short type);
+001808d0 void CBbash_Bullet_Update(void *self);
+00180c50 void CBbash_Bullets_Dtor(void *self);
+00180ce0 void CBbash_Bullets_Fire(void *self, float *from, float *dir, short player);
+00180de0 void CBbash_Bullets_Spit(void *self, float *from, float *to);
+00180f00 void CBbash_Bullets_Update(void *self);
+
 # ---- provisional shapes (functions not written yet)
 001839b0 void FUN_001839b0(void);
 00181770 void FUN_00181770(void);
 00181730 void *FUN_00181730(void *self);
-00180720 void *FUN_00180720(void *self);
-00180c50 void FUN_00180c50(void *self);
 00182c10 void FUN_00182c10(void);
 00181520 void FUN_00181520(void *self);
 001817d0 void FUN_001817d0(void *self);
@@ -144,5 +151,5 @@
 00181740 void FUN_00181740(void *self);
 00183a70 void FUN_00183a70(float *pos, short player);
 00186280 void FUN_00186280(void);
-00180f00 void FUN_00180f00(void *self);
 00184760 void Splat_AddCrumbs(float *pos, int unused);
+00181d50 void Bug_PaintTag(void *self, short player);
