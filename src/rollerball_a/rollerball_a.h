@@ -213,6 +213,7 @@ extern float DAT_0028fda8;          /* frame time factor (1.0 = 1/60 s) */
 extern float DAT_0028ffa8;          /* sound fall-off distances (classlib_ui) */
 extern float DAT_0028ffac;
 extern float DAT_00292c84;          /* gravity */
+extern int DAT_00293928;            /* classlib_ui: sample volume */
 extern int DAT_002ba940, DAT_002ba944, DAT_002ba948, DAT_002ba94c; /* core: fog */
 extern int DAT_002ba98c;
 extern int DAT_002bae70;

@@ -88,7 +88,7 @@ Owner: rollerball_a. Only rollerball_a edits this file.
 #define rbb_PlatformSet48(o, v) RB_CALL(FUN_00197540, void (*)(void *, float))(o, v)
 #define rbb_PlatformSetTime(o, v) RB_CALL(FUN_00197550, void (*)(void *, float))(o, v)
 #define rbb_PlatformSet74(o, v) RB_CALL(FUN_00197560, void (*)(void *, int))(o, v)
-#define rbb_PlatformSet50(o, v) RB_CALL(FUN_00197570, void (*)(void *, int))(o, v)
+#define rbb_PlatformSet50(o, v) RB_CALL(FUN_00197570, void (*)(void *, float))(o, v)
 #define rbb_Platform_197580(o) RB_CALL(FUN_00197580, void (*)(void *))(o)
 #define rbb_PlatformInit(o, pos, v) RB_CALL(FUN_001975b0, int (*)(void *, const float *, int))(o, pos, v)
 #define rbb_PlatformDelete(o) RB_CALL(FUN_001977d0, void (*)(void *))(o)
@@ -96,7 +96,7 @@ Owner: rollerball_a. Only rollerball_a edits this file.
 #define rbb_Platform_197fa0(o, v) RB_CALL(FUN_00197fa0, int (*)(void *, float))(o, v)
 /* 0x00196f70 / 0x00196fc0 / 0x00197150  sumo ring */
 #define rbb_Ring_196f70(o, a, b, c, d) \
-	RB_CALL(FUN_00196f70, void (*)(void *, const float *, float, int, int))(o, a, b, c, d)
+	RB_CALL(FUN_00196f70, void (*)(void *, const float *, float, float, float))(o, a, b, c, d)
 #define rbb_RingInit(o, pos, r, a, b) \
 	RB_CALL(FUN_00196fc0, int (*)(void *, const float *, float, int, int))(o, pos, r, a, b)
 #define rbb_RingSet(o, a, b) RB_CALL(FUN_00197150, void (*)(void *, float, float))(o, a, b)

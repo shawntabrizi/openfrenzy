@@ -2539,3 +2539,729 @@ CRollerBallDrop_Reset. */
 void CRollerBallDrop_ResetChunk(void)
 {
 }
+
+/* ======================================================================== game: initialise */
+
+/* 0x0018c220  RollerBall/CRollerball_Game.cpp
+Initialise: keeps the difficulty (core's DAT_002bae70 at +0x20), loads the package
+resources, initialises every sub-system in order (logging the first one that fails and
+skipping the rest), then creates the variation object for game +0x1c (0 base, 1 sumo,
+2 race2, 3 race, 4 drop) with its countdown (60 s, or 120 s for the races) and initialises
+it with the variation package. */
+void CRollerBallGame_Initialise(unsigned char *self)
+{
+	unsigned char *ents = self + RB_GO_ENTITIES;
+	unsigned char *input = self + RB_GO_INPUT;
+	void *gen;
+	void *var;
+
+	RB_I32(self, 0x20) = DAT_002bae70;
+	bLoadPackageResources(RB_PTR(self, RB_GO_PACKAGE), 1, 0xdefa, 0);
+	bLoadPackageResources(RB_PTR(self, RB_GO_GENPACKAGE), 1, 0xdefa, 0);
+	gen = RB_PTR(self, RB_GO_GENPACKAGE);
+	if (CRollerBallShaders_Init(self + RB_GO_SHADERS) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - shaderSystem.Initialise FAILED!\n");
+		goto variation;
+	}
+	if (CRollerBallTextures_Init(self + RB_GO_TEXTURES, gen) == 0)
+		bkPrintf("CRollerBall_Game::Initialise - textureSystem.Initialise FAILED!\n");
+	if (CRollerBallLights_Init(self + RB_GO_LIGHTS) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - lightSystem.Initialise FAILED!\n");
+	} else if (CDemolition_ObjectList_Init((struct CDemolition_ObjectList *)(self + RB_GO_PARTICLES),
+			gen) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - particleSystem.Initialise FAILED!\n");
+	} else if (CRollerBallSim_Init(self + RB_GO_SIM) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - timer.Initialise FAILED!\n");
+	} else if (CDemoCountdown_Init((int)(uintptr_t)(self + RB_GO_COUNTDOWN)) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - countdown.Initialise FAILED!\n");
+	} else if (RB_CALL(FUN_00191a50, int (*)(void *, void *))(self + RB_GO_GOALS, gen) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - goalSystem.Initialise FAILED!\n");
+	} else if (CRollerBallRespawn_Init(self + RB_GO_RESPAWN, gen) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - respawnSystem.Initialise FAILED!\n");
+	} else if (CRollerBallSpotFX_Init(self + RB_GO_SPOTFX, gen) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - spotFXSystem.Initialise FAILED!\n");
+	} else if (RB_CALL(FUN_001966a0, int (*)(void *, void *, const char *))(self + RB_GO_WORLD,
+			RB_PTR(self, RB_GO_PACKAGE),
+			RB_VAR(const char *, 0x002b4b90u + RB_I32(self, RB_GO_VARIATION) * 4)) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - world.Initialise FAILED!\n");
+	} else if (RB_CALL(FUN_001927e0, int (*)(void *, void *))(ents, gen) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - entitySystem.Initialise FAILED!\n");
+	} else if (RB_CALL(FUN_00192f40, int (*)(void *))(self + RB_GO_CAMERA) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - camera.Initialise FAILED!\n");
+	} else if (CRollerBallInput_Init(input) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - simulation.Initialise FAILED!\n");
+	} else if (RB_CALL(AI_CanMove, int (*)(void *, void *))(self + RB_GO_HUD, gen) == 0) {
+		/* 0x000b06c0 is a folded "return 1" (ret 4): the HUD's Initialise */
+		bkPrintf("CRollerBall_Game::Initialise - overlaySystem.Initialise FAILED!\n");
+	} else if (CDemoDebug_Init(self + RB_GO_DEBUG) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - debug.Initialise FAILED!\n");
+	} else if (CRollerBallDirect3D_Init(self + RB_GO_DIRECT3D) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - direct3D.Initialise FAILED!\n");
+	} else if (CRollerBallSfx_Init(self + RB_GO_SFX, gen) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - sfxSystem.Initialise FAILED!\n");
+	} else if (CRollerBallInfo_Init(self + RB_GO_INFO) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - input.Initialise FAILED!\n");
+	} else if (CRollerBallVideo_Init(self + RB_GO_VIDEO) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - videoScreenSystem.Initialise FAILED!\n");
+	} else if (CRollerBall2850_Init(self + RB_GO_2850, gen) == 0) {
+		bkPrintf("CRollerBall_Game::Initialise - infoSystem.Initialise FAILED!\n");
+	} else {
+		if (CDemoRumble_Init(self + RB_GO_RUMBLE, gen) == 0)
+			bkPrintf("CDemolition_Game::Initialise - rumbleSystem.Initialise FAILED!\n");
+		if (RB_CALL(FUN_00196900, int (*)(void *))(self + RB_GO_SHADOWS) == 0)
+			bkPrintf("CDemolition_Game::Initialise - shadowSystem.Initialise FAILED!\n");
+		CRollerBallInput_SetPlayers(input, rbb_Entities_192350(ents));
+	}
+variation:
+	switch (RB_I32(self, RB_GO_VARIATION)) {
+	case 0:
+		CRollerBallTimer_Set(self + RB_GO_COUNTDOWN, 60.0f);
+		var = RB_NEW(8, RB_FILE_GAME, 0x2cc);
+		if (var != NULL)
+			*(const void *const **)var = vtable_00273a78;
+		break;
+	case 1:
+		CRollerBallTimer_Set(self + RB_GO_COUNTDOWN, 60.0f);
+		var = RB_NEW(0x2a0, RB_FILE_GAME, 0x2d1);
+		if (var != NULL)
+			var = CRollerBallSumo_Ctor(var);
+		break;
+	case 2:
+		CRollerBallTimer_Set(self + RB_GO_COUNTDOWN, 120.0f);
+		var = RB_NEW(0x70, RB_FILE_GAME, 0x2d6);
+		if (var != NULL)
+			*(const void *const **)var = vtable_00273b08;
+		break;
+	case 3:
+		CRollerBallTimer_Set(self + RB_GO_COUNTDOWN, 120.0f);
+		var = RB_NEW(0xac, RB_FILE_GAME, 0x2db);
+		if (var != NULL)
+			*(const void *const **)var = vtable_00273b50;
+		break;
+	case 4:
+		CRollerBallTimer_Set(self + RB_GO_COUNTDOWN, 60.0f);
+		var = RB_NEW(0x210, RB_FILE_GAME, 0x2e0);
+		if (var != NULL)
+			var = CRollerBallDrop_Ctor(var);
+		break;
+	default:
+		goto init;
+	}
+	RB_PTR(self, RB_GO_VAROBJ) = var;
+init:
+	var = RB_PTR(self, RB_GO_VAROBJ);
+	if (RB_VFN(var, 0x00, int (*)(void *, void *))(var, RB_PTR(self, RB_GO_PACKAGE)) == 0)
+		bkPrintf("CRollerBall_Game::Initialise - variation.Initialise FAILED!\n");
+}
+
+/* ======================================================================== variation updates */
+
+/* 0x0018c720  RollerBall/CRollerball_Game.cpp
+Update (base): progress (+0x41ec) is the score relative to the best score; then the
+state: intro, play, results, leave. */
+void CRollerBallBase_Update(void *self, float dt)
+{
+	unsigned char *p, *first = RB_FIRST_PLAYER();
+	int best = 0;
+	float f;
+
+	(void)dt;
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (best < RB_I32(p, RB_PL_SCORE))
+			best = RB_I32(p, RB_PL_SCORE);
+	}
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		f = 0.0f;
+		if (best > 0)
+			f = (1.0f / (float)best) * (float)RB_I32(p, RB_PL_SCORE);
+		RB_F32(p, 0x41ec) = f;
+	}
+	switch (RB_I16(RB_GAME, RB_GO_STATE)) {
+	case 1:
+		CRollerBallBase_UpdateIntro(self);
+		return;
+	case 2:
+		CRollerBallBase_UpdatePlay(self);
+		return;
+	case 3:
+		CRollerBallVariation_UpdateResults();
+		return;
+	case 4:
+		rb_UpdateLeave();
+		return;
+	}
+}
+
+/* a player that fell off the platform (y - radius at or below LEVEL) in sumo: out of the
+round with the rank N (winner when N < 2), sounds, commentary with more than 2 left */
+static void rb_SumoFallOff(void *self, unsigned char *p, int n)
+{
+	RB_U8(p, RB_PL_WINNER) = n < 2;
+	RB_U8(p, RB_PL_1A) = 0;
+	RB_I32(p, 0x41e8) = 1;
+	RB_I32(p, RB_PL_41F0) = RB_I32(self, 0x40); /* the bits of the float height */
+	RB_U8(p, RB_PL_ACTIVE) = 0;
+	RB_U8(p, RB_PL_1D) = 0;
+	RB_I32(p, RB_PL_RANK) = n;
+	rbb_Ring_196f70((unsigned char *)self + 0xc0, RB_FP(p, RB_PL_POS), -6.0f, 200.0f,
+		RB_F32(p, 0x413c));
+	CRollerBallSfx_Play(RB_GAME + RB_GO_SFX, 0xc, 0x7f, 0, 0, NULL);
+	CRollerBallSfx_Play(RB_GAME + RB_GO_SFX, 8, 0x7f, 0, 0, NULL);
+	if (n > 2)
+		CLSamples_PlayCommentary(0x37, RB_I32(p, RB_PL_INDEX), 0xff, 0, 0, NULL);
+}
+
+/* the players' taunt timers (per slot at SELF + OFF): when a timer runs out and the player
+is near the edge (outside value A - 50) a new random time (SCALE) and a taunt sample */
+static void rb_UpdateTaunts(void *self, unsigned char *first, float dt, int off, float scale,
+	float edge)
+{
+	unsigned char *p;
+	float *t;
+
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) == 0)
+			continue;
+		t = RB_FP(self, off + RB_I32(p, RB_PL_SLOT) * 4);
+		*t = *t - dt;
+		if (*t < 0.0f) {
+			*t = 0.0f;
+			if (edge - 50.0f < sqrtf(RB_F32(p, RB_PL_POS) * RB_F32(p, RB_PL_POS) +
+					RB_F32(p, RB_PL_POS + 8) * RB_F32(p, RB_PL_POS + 8))) {
+				*t = ((float)rb_rand() * RB_RAND_SCALE + 0.5f) * scale;
+				CLSamples_PlayFromSet((char)RB_U8(p, RB_PL_INDEX), 0xe, RB_FP(p, RB_PL_POS),
+					DAT_00293928, 0, -1, 0);
+			}
+		}
+	}
+}
+
+/* 0x0018c800  RollerBall/CRollerball_Game.cpp
+Update (sumo): at 59.3 s left the arms retract (once) and the players may move; the arms
+animate; the ring updates; progress is the countdown; taunts; the five platforms rise in
+turn (state 0: waits for its time, 1: rising until the platform object stops, then the
+ring shrinks, 2: sinks with the timer's fraction, 3: done); players that fall below the
+ring are out (a second pass with 200 more when one fell); then the state. */
+void CRollerBallSumo_Update(void *self, float dt)
+{
+	unsigned char *s = self;
+	unsigned char *first, *p, **arm;
+	struct BActorInstance *inst;
+	float t, t2, v, frac, a[4], b[4], out[4], pos[4];
+	unsigned char *pf;
+	int i, n, fell;
+
+	first = RB_FIRST_PLAYER();
+	t = CRollerBallTimer_Remaining(RB_GAME + RB_GO_COUNTDOWN);
+	t2 = CRollerBallTimer_Remaining(RB_GAME + RB_GO_COUNTDOWN);
+	if (RB_U8(s, 0x260) == 0 && t2 <= rb_bitsf(0x426d3333u) /* 0x00274348: 59.3 */) {
+		arm = (unsigned char **)(s + 0x264);
+		for (i = 4; i != 0; i--, arm += 2) {
+			inst = RB_PTR(arm[0], 0x30);
+			baFlushAnimations(inst, RB_PTR(inst, 0x134), 1, 0);
+			inst = RB_PTR(arm[0], 0x30);
+			baQueueAnimation(inst, RB_PTR(inst, 0x134), (struct BAnim *)arm[1], 0x400, -1, 0,
+				NULL, NULL);
+		}
+		for (p = first; p != NULL; p = RB_NEXT(p))
+			RB_U8(p, RB_PL_1A) = 1;
+		RB_U8(RB_PTR(s, 0x284), 1) = 0;
+		RB_U8(RB_PTR(s, 0x284), 2) = 0;
+		RB_U8(s, 0x260) = 1;
+	}
+	arm = (unsigned char **)(s + 0x264);
+	for (i = 4; i != 0; i--, arm += 2) {
+		inst = RB_PTR(arm[0], 0x30);
+		baUpdateAnimations(inst, RB_PTR(inst, 0x134), dt, NULL);
+		baPrepActorInstance(RB_PTR(arm[0], 0x30), 1);
+	}
+	RB_CALL(FUN_00196e30, void (*)(void *, float))(s + 0xc0, dt);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) != 0)
+			RB_F32(p, 0x41ec) = 1.0f - t * 0.0166666675f;
+	}
+	v = RB_VFN(self, 0x24, float (*)(void *))(self);
+	rb_UpdateTaunts(self, first, dt, 0x288, 1200.0f, v);
+	CRollerBallTimer_Update(s + 0x08);
+	t = CRollerBallTimer_Remaining(s + 0x08);
+	for (i = 0; i < 5; i++) {
+		pf = s + 0x48 + i * 0x18;
+		rbb_Platform_197fa0(RB_PTR(pf, 0x14), dt);
+		switch (RB_I32(pf, 0)) {
+		case 0:
+			if (t2 < RB_F32(pf, 4)) {
+				rbb_PlatformSet50(RB_PTR(pf, 0x14),
+					(float)rb_rand() * RB_RAND_SCALE * 6.28318548f);
+				rbb_Platform_197f40(RB_PTR(pf, 0x14));
+				RB_I32(pf, 0) = 1;
+			}
+			break;
+		case 1:
+			if (RB_U8(RB_PTR(pf, 0x14), 0x78) == 0) {
+				RB_I32(pf, 0) = 2;
+				CRollerBallTimer_Set(s + 0x08, 1.0f);
+				CRollerBallTimer_Start(s + 0x08);
+				if (i - 1 >= 0)
+					RB_U8(RB_PTR(pf, -4), 0x79) = 0;
+				rbb_RingSet(s + 0xc0, RB_VAR(float, 0x002b4d1cu + i * 4) - 50.0f, 2030.0f);
+				pos[0] = 0.0f;
+				pos[1] = 0.0f;
+				pos[2] = 0.0f;
+				rbb_Ring_196f70(s + 0xc0, pos, -10.0f, RB_F32(pf, 8) - 50.0f, RB_F32(pf, 0xc));
+				CRollerBallSfx_Play(RB_GAME + RB_GO_SFX, 10, 0xff, 0, 0, NULL);
+				RB_U8(RB_PTR(pf, 0x10), 1) = 0;
+				RB_U8(RB_PTR(pf, 0x10), 2) = 0;
+			}
+			break;
+		case 2:
+			frac = RB_F32(s + 0x08, 0x34); /* 0x000965f0 (folded): the timer's fraction */
+			b[0] = 0.0f;
+			b[1] = 0.0f;
+			b[2] = 0.0f;
+			a[0] = 0.0f;
+			a[1] = -830.0f;
+			a[2] = 0.0f;
+			bmVectorLerp(out, b, a, frac);
+			bmMatrixTranslation(RB_FP(RB_PTR(pf, 0x10), 0x34), out[0], out[1], out[2]);
+			if (t <= 0.0f)
+				RB_I32(pf, 0) = 3;
+			break;
+		}
+	}
+	n = 0;
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) != 0)
+			n++;
+	}
+	fell = 0;
+	if (first != NULL) {
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			if (RB_U8(p, RB_PL_15) != 0 && RB_U8(p, RB_PL_ACTIVE) != 0 &&
+					RB_F32(p, RB_PL_POS + 4) - RB_F32(p, 0x413c) <= RB_F32(s, 0x40) &&
+					RB_I32(p, 0x41e8) != 1) {
+				rb_SumoFallOff(self, p, n);
+				fell = 1;
+			}
+		}
+		if (fell) {
+			n = 0;
+			for (p = first; p != NULL; p = RB_NEXT(p)) {
+				if (RB_U8(p, RB_PL_ACTIVE) != 0)
+					n++;
+			}
+			for (p = first; p != NULL; p = RB_NEXT(p)) {
+				if (RB_U8(p, RB_PL_15) != 0 && RB_U8(p, RB_PL_ACTIVE) != 0 &&
+						RB_F32(p, RB_PL_POS + 4) - RB_F32(p, 0x413c) <=
+						RB_F32(s, 0x40) + 200.0f &&
+						RB_I32(p, 0x41e8) != 1)
+					rb_SumoFallOff(self, p, n);
+			}
+		}
+	}
+	switch (RB_I16(RB_GAME, RB_GO_STATE)) {
+	case 1:
+		CRollerBallBase_UpdateIntro(self);
+		return;
+	case 2:
+		CRollerBallSumo_UpdatePlay(self);
+		return;
+	case 3:
+		CRollerBallSumo_UpdateResults(self);
+		return;
+	case 4:
+		rb_UpdateLeave();
+		return;
+	}
+}
+
+/* a player's race progress (+0x41ec) from its AI line index (AI object at +0x4204,
++0x4c): the distance along the race line POINTS / DIST of LENGTH, a third per lap (LAPS is
+the lap part); changes of more than 1/6 are ignored. RACE: progress 0 while the laps are
+negative. */
+static void rb_RaceProgress(unsigned char *p, const float *points, const float *dist,
+	int npoints, float length, float laps, int race)
+{
+	float dx, dz, d, prog;
+	int idx;
+
+	idx = RB_I32(RB_PTR(p, 0x4204), 0x4c);
+	if (idx < 1)
+		idx = npoints;
+	dx = RB_F32(p, RB_PL_POS) - points[(idx - 1) * 4];
+	dz = RB_F32(p, RB_PL_POS + 8) - points[(idx - 1) * 4 + 2];
+	d = sqrtf(dx * dx + dz * dz) + dist[idx - 1];
+	if (RB_I32(p, RB_PL_41F4) != 0)
+		d = 0.0f;
+	prog = (d / length) * 0.333333343f + laps;
+	if (prog <= 1.0f) {
+		if (prog < 0.0f)
+			prog = 0.0f;
+	} else {
+		prog = 1.0f;
+	}
+	if (fabsf(RB_F32(p, 0x41ec) - prog) < 0.166666672f) {
+		if (race && RB_I32(p, RB_PL_41F0) < 0)
+			RB_F32(p, 0x41ec) = 0.0f;
+		else
+			RB_F32(p, 0x41ec) = prog;
+	}
+}
+
+/* the AI line a player is on (AI object at +0x4204: +0x4c line index, +0x50 next index,
++0x3c the target point): the first line record that contains its position; the target is
+the next line's point of POINTS */
+static void rb_RaceFindLine(unsigned char *p, unsigned char *records, int nrecords,
+	const float *points)
+{
+	unsigned char *ai = RB_PTR(p, 0x4204);
+	float pos[4];
+	int i, next;
+
+	pos[0] = RB_F32(p, RB_PL_POS);
+	pos[2] = RB_F32(p, RB_PL_POS + 8);
+	pos[3] = RB_F32(p, RB_PL_POS + 12);
+	pos[1] = 0.0f; /* the original leaves this word of the stack unset */
+	for (i = 0; i < nrecords; i++) {
+		if (rbb_Path_1981e0(records + i * 0x30, pos) != 0) {
+			RB_I32(ai, 0x4c) = i;
+			next = RB_I32(records, i * 0x30 + 0x2c);
+			RB_I32(ai, 0x50) = next;
+			RB_F32(ai, 0x3c) = points[next * 4];
+			RB_F32(ai, 0x40) = points[next * 4 + 1];
+			RB_F32(ai, 0x44) = points[next * 4 + 2];
+			RB_F32(ai, 0x48) = points[next * 4 + 3];
+			break;
+		}
+	}
+}
+
+/* 0x0018cf10  RollerBall/CRollerball_Game.cpp
+Update (race2): players that fell (y < -1600) respawn at their last position; the AI line
+and the progress of the players (one lap); then the state. */
+void CRollerBallRace2_Update(void *self, float dt)
+{
+	unsigned char *s = self;
+	unsigned char *p;
+	int k = 0x30;
+
+	(void)dt;
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) == 0)
+			continue;
+		if (RB_F32(p, RB_PL_POS + 4) < -1600.0f)
+			CRollerBallRespawn_Respawn(RB_GAME + RB_GO_RESPAWN, p, RB_FP(s, k));
+		if (RB_I32(p, RB_PL_41F0) < 1)
+			rb_RaceFindLine(p, RB_PTR(s, 0x28), RB_I32(s, 0x2c), RB_PTR(s, 0x04));
+		rb_RaceProgress(p, RB_PTR(s, 0x04), RB_PTR(s, 0x0c), RB_I32(s, 0x08), RB_F32(s, 0x10),
+			(float)RB_I32(p, RB_PL_41F0), 0);
+		k += 0x10;
+	}
+	switch (RB_I16(RB_GAME, RB_GO_STATE)) {
+	case 2:
+		CRollerBallRace2_UpdatePlay(self);
+		return;
+	case 3:
+		CRollerBallVariation_UpdateResults();
+		return;
+	case 4:
+		rb_UpdateLeave();
+		return;
+	}
+}
+
+/* 0x0018d180  RollerBall/CRollerball_Game.cpp
+Update (race): a player is on the track (+0x1d) when it is above the track (840) and near
+an AI line; players below 780 respawn at their last position; the AI line (on the race
+line of the AI's lane +0x54) and the progress (three laps); then the state. */
+void CRollerBallRace_Update(void *self, float dt)
+{
+	unsigned char *s = self;
+	unsigned char *p, *rec, *ai;
+	float r, *pos;
+	int i, k = 0, on;
+
+	(void)dt;
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) == 0)
+			continue;
+		ai = RB_PTR(p, 0x4204);
+		r = RB_F32(p, 0x413c) + RB_F32(p, 0x413c);
+		pos = RB_FP(p, RB_PL_POS);
+		on = 0;
+		if (rb_bitsf(0x44520000u) /* 0x00274350: 840 */ < RB_F32(p, RB_PL_POS + 4) -
+				RB_F32(p, 0x413c)) {
+			for (i = 0; i < RB_I32(s, 0x38); i++) {
+				rec = (unsigned char *)RB_PTR(s, 0x34) + i * 0x30;
+				if (pos[0] - r <= RB_F32(rec, 0x14) && RB_F32(rec, 4) <= r + pos[0] &&
+						RB_F32(p, RB_PL_POS + 8) - r <= RB_F32(rec, 0x1c) &&
+						RB_F32(rec, 0xc) <= r + RB_F32(p, RB_PL_POS + 8) &&
+						(rbb_Path_1981e0(rec, pos) != 0 ||
+						rbb_PathNear(rec, pos, r, NULL) != 0)) {
+					on = 1;
+					break;
+				}
+			}
+		}
+		RB_U8(p, RB_PL_1D) = (unsigned char)on;
+		if (RB_F32(p, RB_PL_POS + 4) < rb_bitsf(0x44430000u) /* 0x0027434c: 780 */)
+			CRollerBallRespawn_Respawn(RB_GAME + RB_GO_RESPAWN, p, RB_FP(s, k + 0x3c));
+		if (RB_I32(p, RB_PL_41F0) < 3)
+			rb_RaceFindLine(p, RB_PTR(s, 0x34), RB_I32(s, 0x38),
+				RB_PTR(s, 4 + RB_I32(ai, 0x54) * 4));
+		rb_RaceProgress(p, RB_PTR(s, 0x04), RB_PTR(s, 0x18), RB_I32(s, 0x14), RB_F32(s, 0x1c),
+			(float)RB_I32(p, RB_PL_41F0) * 0.333333343f, 1);
+		k += 0x10;
+	}
+	switch (RB_I16(RB_GAME, RB_GO_STATE)) {
+	case 2:
+		CRollerBallRace_UpdatePlay(self);
+		return;
+	case 3:
+		CRollerBallVariation_UpdateResults();
+		return;
+	case 4:
+		rb_UpdateLeave();
+		return;
+	}
+}
+
+/* 0x0018d4f0  RollerBall/CRollerball_Game.cpp
+Update (drop): players out of the results are marked on the HUD (score box +0x54);
+progress is the countdown; taunts; the five platforms fall in turn (state 0: waits for its
+time, 1: shaking until the platform object stops, then it starts to fall with a random
+spin, 2: falls with gravity 3 and turns until below -10000, 3: gone); players that fall
+below the platform level (+0x40) are out (the last one wins); then the state. */
+void CRollerBallDrop_Update(void *self, float dt)
+{
+	unsigned char *s = self;
+	unsigned char *first, *p, *e;
+	float t, t2, v, vy;
+	float rot[16], trans[16];
+	int i, n;
+
+	first = RB_FIRST_PLAYER();
+	t = CRollerBallTimer_Remaining(RB_GAME + RB_GO_COUNTDOWN);
+	t2 = CRollerBallTimer_Remaining(RB_GAME + RB_GO_COUNTDOWN);
+	for (i = 0; i < 4; i++) {
+		if (DAT_002b9c48[i] != 0 && RB_PTR(DAT_002ecfac, 0x180 + i * 4) != NULL)
+			RB_I16(RB_PTR(DAT_002ecfac, 0x180 + i * 4), 0x54) = 1;
+	}
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) != 0)
+			RB_F32(p, 0x41ec) = 1.0f - t * 0.0166666675f;
+	}
+	v = RB_VFN(self, 0x38, float (*)(void *))(self);
+	rb_UpdateTaunts(self, first, dt, 0x200, 800.0f, v);
+	for (i = 0; i < 5; i++) {
+		e = s + 0x44 + i * 0x58;
+		rbb_Platform_197fa0(RB_PTR(e, 0x14), dt + dt);
+		switch (RB_I32(e, 0)) {
+		case 0:
+			if (t2 < RB_F32(e, 4)) {
+				rbb_PlatformSet50(RB_PTR(e, 0x14),
+					(float)rb_rand() * RB_RAND_SCALE * 6.28318548f);
+				rbb_Platform_197f40(RB_PTR(e, 0x14));
+				RB_I32(e, 0) = 1;
+			}
+			break;
+		case 1:
+			if (RB_U8(RB_PTR(e, 0x14), 0x78) == 0) {
+				RB_I32(e, 0) = 2;
+				RB_F32(e, 0x28) = 0.0f;
+				RB_F32(e, 0x2c) = 0.0f;
+				RB_F32(e, 0x30) = 0.0f;
+				RB_F32(e, 0x18) = 0.0f;
+				RB_F32(e, 0x1c) = 0.0f;
+				RB_F32(e, 0x20) = 0.0f;
+				RB_F32(e, 0x3c) = 0.0f;
+				RB_F32(e, 0x38) = (float)rb_rand() * RB_RAND_SCALE * 0.0349065848f -
+					0.0174532924f;
+				RB_F32(e, 0x48) = 0.0f;
+				RB_F32(e, 0x4c) = 0.0f;
+				RB_F32(e, 0x50) = 0.0f;
+				RB_F32(e, 0x40) = (float)rb_rand() * RB_RAND_SCALE * 0.0349065848f -
+					0.0174532924f;
+				if (i - 1 >= 0)
+					RB_U8(RB_PTR(e, -0x44), 0x79) = 0;
+				RB_U8(RB_PTR(e, 0x10), 1) = 0;
+				RB_U8(RB_PTR(e, 0x10), 2) = 0;
+			}
+			break;
+		case 2:
+			vy = RB_F32(e, 0x2c) - 3.0f;
+			RB_F32(e, 0x2c) = vy;
+			RB_F32(e, 0x18) = dt * RB_F32(e, 0x28) + RB_F32(e, 0x18);
+			RB_F32(e, 0x1c) = vy * dt + RB_F32(e, 0x1c);
+			RB_F32(e, 0x20) = dt * RB_F32(e, 0x30) + RB_F32(e, 0x20);
+			RB_F32(e, 0x48) = dt * RB_F32(e, 0x38) + RB_F32(e, 0x48);
+			RB_F32(e, 0x50) = dt * RB_F32(e, 0x40) + RB_F32(e, 0x50);
+			RB_F32(e, 0x38) = RB_F32(e, 0x38) * 0.99000001f;
+			RB_F32(e, 0x3c) = RB_F32(e, 0x3c) * 0.99000001f;
+			RB_F32(e, 0x40) = RB_F32(e, 0x40) * 0.99000001f;
+			bmMatrixRotationXZ(rot, RB_F32(e, 0x50), RB_F32(e, 0x48));
+			bmMatrixTranslation(trans, RB_F32(e, 0x18), RB_F32(e, 0x1c), RB_F32(e, 0x20));
+			if ((((uintptr_t)RB_P(RB_PTR(e, 0x10), 4) | (uintptr_t)trans | (uintptr_t)rot) &
+					0xf) == 0)
+				bmMatrixMultiplyCopy(RB_FP(RB_PTR(e, 0x10), 0x34), trans, rot);
+			else
+				bmMatrixMultiply(RB_FP(RB_PTR(e, 0x10), 0x34), trans, rot);
+			if (RB_F32(e, 0x1c) < -10000.0f) {
+				RB_I32(e, 0) = 3;
+				RB_U8(RB_PTR(e, 0x10), 0) = 0;
+			}
+			break;
+		}
+	}
+	n = 0;
+	if (first != NULL) {
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			if (RB_U8(p, RB_PL_ACTIVE) != 0)
+				n++;
+		}
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			if (RB_U8(p, RB_PL_15) == 0 || RB_U8(p, RB_PL_ACTIVE) == 0 ||
+					!(RB_F32(p, RB_PL_POS + 4) - RB_F32(p, 0x413c) <= RB_F32(s, 0x40)) ||
+					RB_I32(p, 0x41e8) == 2)
+				continue;
+			if (n < 2) {
+				RB_I32(p, RB_PL_41F0) = 0;
+			} else {
+				RB_U8(p, RB_PL_WINNER) = 0;
+				RB_U8(p, RB_PL_1A) = 0;
+				RB_I32(p, 0x41e8) = 2;
+				RB_U8(p, RB_PL_ACTIVE) = 0;
+				RB_U8(p, RB_PL_1D) = 0;
+				RB_I32(p, RB_PL_41F0) = n;
+				CRollerBallSfx_Play(RB_GAME + RB_GO_SFX, 8, 0xff, 0, 0, NULL);
+				CLSamples_PlayFromSet((char)RB_U8(p, RB_PL_INDEX), 0xd, RB_FP(p, RB_PL_POS),
+					DAT_00293928, 0, -1, 0);
+				if (n > 2)
+					CLSamples_PlayCommentary(0x37, RB_I32(p, RB_PL_INDEX), 0xff, 0, 0, NULL);
+				n--;
+			}
+		}
+	}
+	switch (RB_I16(RB_GAME, RB_GO_STATE)) {
+	case 2:
+		CRollerBallDrop_UpdatePlay(self);
+		return;
+	case 3:
+		CRollerBallVariation_UpdateResults();
+		return;
+	case 4:
+		rb_UpdateLeave();
+		return;
+	}
+}
+
+/* ======================================================================== variation vtables */
+
+/* 0x00273a78  base (goals) */
+const void *const vtable_00273a78[18] = {
+	(const void *)CRollerBallBase_Init,              /* +0x00 */
+	(const void *)FUN_001d5950,                      /* +0x04 Shutdown (empty) */
+	(const void *)CRollerBallVariation_Start,        /* +0x08 */
+	(const void *)CRollerBallBase_Update,            /* +0x0c */
+	(const void *)FUN_001d5950,                      /* +0x10 Draw (empty) */
+	(const void *)CRollerBallVariation_Reset,        /* +0x14 */
+	(const void *)CRollerBallVariation_SetScores,    /* +0x18 */
+	(const void *)FUN_00151650,                      /* +0x1c (returns 0) */
+	(const void *)CRollerBallVariation_Zero,         /* +0x20 */
+	(const void *)CRollerBallVariation_Zero,         /* +0x24 */
+	(const void *)CRollerBallVariation_Zero,         /* +0x28 */
+	(const void *)CRollerBallVariation_Zero,         /* +0x2c */
+	(const void *)FUN_00151650,                      /* +0x30 */
+	(const void *)FUN_00151650,                      /* +0x34 */
+	(const void *)CRollerBallVariation_Zero,         /* +0x38 */
+	(const void *)CRollerBallVariation_Zero,         /* +0x3c */
+	(const void *)CRollerBallVariation_Zero,         /* +0x40 */
+	(const void *)CRollerBallBase_DeletingDtor,      /* +0x44 */
+};
+
+/* 0x00273ac0  sumo */
+const void *const vtable_00273ac0[18] = {
+	(const void *)CRollerBallSumo_Init,
+	(const void *)CRollerBallSumo_Shutdown,
+	(const void *)CRollerBallSumo_Start,
+	(const void *)CRollerBallSumo_Update,
+	(const void *)CRollerBallSumo_Draw,
+	(const void *)CRollerBallSumo_Reset,
+	(const void *)CRollerBallSumo_SetScores,
+	(const void *)CRollerBallVariation_Get4,
+	(const void *)CRollerBallVariation_TimerFraction,
+	(const void *)CRollerBallSumo_GetValueA,
+	(const void *)CRollerBallSumo_GetValueB,
+	(const void *)CRollerBallSumo_GetTime,
+	(const void *)FUN_00151650,
+	(const void *)FUN_00151650,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallSumo_DeletingDtor,
+};
+
+/* 0x00273b08  race2 */
+const void *const vtable_00273b08[18] = {
+	(const void *)CRollerBallRace2_Init,
+	(const void *)CRollerBallRace2_Shutdown,
+	(const void *)CRollerBallRace2_Start,
+	(const void *)CRollerBallRace2_Update,
+	(const void *)FUN_001d5950,
+	(const void *)CRollerBallRace2_Reset,
+	(const void *)CRollerBallRace2_SetScores,
+	(const void *)FUN_00151650,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallRace2_Get28,
+	(const void *)CRollerBallRace2_Get2c,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallRace2_DeletingDtor,
+};
+
+/* 0x00273b50  race */
+const void *const vtable_00273b50[18] = {
+	(const void *)CRollerBallRace_Init,
+	(const void *)CRollerBallRace_Shutdown,
+	(const void *)CRollerBallVariation_Start,
+	(const void *)CRollerBallRace_Update,
+	(const void *)FUN_001d5950,
+	(const void *)CRollerBallRace_Reset,
+	(const void *)CRollerBallRace_SetScores,
+	(const void *)FUN_00151650,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallRace_Get34,
+	(const void *)CRollerBallRace_Get38,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallRace_DeletingDtor,
+};
+
+/* 0x00273b98  drop */
+const void *const vtable_00273b98[18] = {
+	(const void *)CRollerBallDrop_Init,
+	(const void *)CRollerBallDrop_Shutdown,
+	(const void *)CRollerBallDrop_Start,
+	(const void *)CRollerBallDrop_Update,
+	(const void *)CRollerBallDrop_Draw,
+	(const void *)CRollerBallDrop_Reset,
+	(const void *)CRollerBallDrop_SetScores,
+	(const void *)CRollerBallVariation_Get4,
+	(const void *)CRollerBallVariation_TimerFraction,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)CRollerBallVariation_Zero,
+	(const void *)FUN_00151650,
+	(const void *)FUN_00151650,
+	(const void *)CRollerBallDrop_GetValueA,
+	(const void *)CRollerBallDrop_GetValueB,
+	(const void *)CRollerBallDrop_GetTime,
+	(const void *)CRollerBallDrop_DeletingDtor,
+};
