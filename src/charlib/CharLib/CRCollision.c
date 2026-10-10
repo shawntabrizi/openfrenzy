@@ -895,3 +895,923 @@ void CRColl_BuildMeshFrom(void *actor, void *inst)
 		CHL_FIELD(int, mesh, MESH_COUNT), NULL, NULL, 0x10000);
 	CRColl_PrepareMesh(actor, 1, 1);
 }
+
+/* ---------- after the CRCollision.cpp tags (inferred: same file) */
+
+/* 0x002f6b40  depth of CRColl_Recheck calls in one move */
+#define coll_recheck_level CHL_VAR(int, 0x002f6b40)
+/* 0x002f6b48  the total push of the last collision step (float[4]) */
+#define coll_total_push CHL_ARR(float, 0x002f6b48)
+
+/* 0x0029395c / 0x00293960 / 0x00293964  ledge climbing: time per unit of height (2),
+highest and lowest ledge (200, 5) */
+#define climb_time_factor CHL_VAR(float, 0x0029395c)
+#define climb_max_height CHL_VAR(float, 0x00293960)
+#define climb_min_height CHL_VAR(float, 0x00293964)
+
+/* the CharLib world object (chl_actor_list): actors at +0x00, platforms at +0x18 */
+#define coll_platform_list ((void *)((char *)chl_actor_list + 0x18))
+
+/* 0x000b3e40  CharLib (CRCollision.cpp, inferred)
+Refreshes the triangles of a collision mesh from its instance (the collision instance of
+the actor if it has one, else its own). `actor` NULL means the actor embedded in
+`platform` (+0x10). For a platform, the edges are recomputed only when it turned. */
+void CRColl_RefreshMesh(void *platform, void *actor)
+{
+	void *coll;
+	int turned;
+
+	if (actor == NULL)
+		actor = (char *)platform + 0x10;
+	chl_PrepInstance(ACT_INST(actor), 1);
+	coll = CHL_PTR(actor, ACT_COLL_INST);
+	if (coll == NULL) {
+		chl_GetActorVertices(ACT_INST(actor), CHL_PTR(actor, ACT_NODE), 0, NULL,
+			CHL_FIELD(int, CHL_PTR(actor, ACT_COLLMESH), MESH_COUNT), NULL, *(void **)CHL_PTR(actor, ACT_COLLMESH),
+			0x10000);
+	} else {
+		memcpy(CHL_FIELD(char, coll, 0xc0), CHL_FIELD(char, actor, ACT_POS), 0x10);
+		coll = CHL_PTR(actor, ACT_COLL_INST);
+		memcpy(CHL_FIELD(char, coll, 0xe0), CHL_FIELD(char, actor, ACT_ORIENT), 0x10);
+		chl_PrepInstance(CHL_PTR(actor, ACT_COLL_INST), 1);
+		chl_GetActorVertices(CHL_PTR(actor, ACT_COLL_INST), CHL_PTR(CHL_PTR(actor, ACT_COLL_INST), 0x134), 0,
+			NULL, CHL_FIELD(int, CHL_PTR(actor, ACT_COLLMESH), MESH_COUNT), NULL,
+			*(void **)CHL_PTR(actor, ACT_COLLMESH), 0x10000);
+	}
+	if (platform != NULL) {
+		if (CHL_I32(platform, 0x464) == 0 && CHL_F32(platform, 0x1f4) == CHL_F32(platform, 0x380) &&
+		    CHL_F32(platform, 0x1f8) == CHL_F32(platform, 0x384) &&
+		    CHL_F32(platform, 0x1fc) == CHL_F32(platform, 0x388))
+			turned = 0;
+		else
+			turned = 1;
+		CRColl_PrepareMesh(actor, 0, turned);
+		memcpy(CHL_FIELD(char, platform, 0x380), CHL_FIELD(char, platform, 0x1f4), 0x10);
+		CHL_U8(platform, 0x3d4) = 0;
+		return;
+	}
+	CRColl_PrepareMesh(actor, 0, 1);
+}
+
+/* the height of the plane of tri under (x, z), as y - plane y */
+static float coll_height_above(const float *tri, float x, float y, float z)
+{
+	return y - (((tri[0] - x) * tri[12] + (tri[2] - z) * tri[14]) / tri[13] + tri[1]);
+}
+
+/* 0x000b3ff0  CharLib (CRCollision.cpp, inferred)
+How far below pos the nearest ground is (CHL_NO_HEIGHT: none): the triangles of the
+scenery actors (type 0, and type 9 when mode != 0) and of the platforms under the circle
+of `radius` around pos. Returns the triangle and the platform found. With mode > 0, a
+ground that belongs to a type 9 actor counts as none. Moving platforms are refreshed
+first. */
+float CLColl_GroundProbe(float *pos, float radius, void **tri_out, void **platform_out, int mode)
+{
+	float p[4];
+	float best = 1e6f;
+	float h;
+	int on_type9 = 0;
+	void *actor;
+	void *mesh;
+	float *tri;
+	int i;
+
+	p[0] = pos[0];
+	p[1] = pos[1];
+	p[2] = pos[2];
+	p[3] = pos[3];
+	if (tri_out != NULL)
+		*tri_out = NULL;
+	if (platform_out != NULL)
+		*platform_out = NULL;
+	for (actor = chl_ListNext(chl_actor_list, NULL); actor != NULL; actor = chl_ListNext(chl_actor_list, actor)) {
+		if (!(CHL_I32(actor, ACT_TYPE) == 0 || (mode != 0 && CHL_I32(actor, ACT_TYPE) == 9)))
+			continue;
+		mesh = CHL_PTR(actor, ACT_COLLMESH);
+		if (!(CHL_F32(mesh, MESH_MIN + 0x0) <= p[0] + radius && p[0] - radius <= CHL_F32(mesh, MESH_MAX + 0x0) &&
+		      CHL_F32(mesh, MESH_MIN + 0x8) <= p[2] + radius && p[2] - radius <= CHL_F32(mesh, MESH_MAX + 0x8)))
+			continue;
+		if (mode != 0 && (CHL_U8(actor, ACT_FLAGS) & 0x80) != 0)
+			continue;
+		for (i = 0; i < CHL_I32(mesh, MESH_COUNT); i++) {
+			tri = *(float **)mesh + i * TRI_FLOATS;
+			if (p[0] - radius <= tri[17] && tri[16] <= p[0] + radius && p[2] - radius <= tri[21] &&
+			    tri[20] <= p[2] + radius && CRColl_PointOverTriXZ(tri, p) != 0 &&
+			    (h = coll_height_above(tri, p[0], p[1], p[2])) < best) {
+				on_type9 = CHL_I32(actor, ACT_TYPE) == 9;
+				best = h;
+				if (tri_out != NULL)
+					*tri_out = tri;
+			}
+			mesh = CHL_PTR(actor, ACT_COLLMESH);
+		}
+	}
+	for (actor = chl_ListNext(coll_platform_list, NULL); actor != NULL; actor = chl_ListNext(coll_platform_list, actor)) {
+		void *platform = actor;
+
+		if (CHL_U8(platform, 0x3d4) != 0 && CHL_PTR(platform, 0x1a0) != NULL)
+			CRColl_RefreshMesh(platform, NULL);
+		if ((CHL_U32(platform, 0x230) & 0x20) != 0 || (CHL_U32(platform, 0x450) & 0x8000) != 0)
+			continue;
+		mesh = CHL_PTR(platform, 0x1a0);
+		if (mesh == NULL || !(CHL_F32(mesh, MESH_MIN + 0x0) <= p[0] + radius && p[0] - radius <= CHL_F32(mesh, MESH_MAX + 0x0) &&
+				      CHL_F32(mesh, MESH_MIN + 0x8) <= p[2] + radius))
+			continue;
+		if (!(p[2] - radius <= CHL_F32(mesh, MESH_MAX + 0x8)))
+			continue;
+		if (mode != 0 && (CHL_U8(platform, 0x230) & 0x80) != 0)
+			continue;
+		for (i = 0; i < CHL_I32(mesh, MESH_COUNT); i++) {
+			tri = *(float **)mesh + i * TRI_FLOATS;
+			if (p[0] - radius <= tri[17] && tri[16] <= p[0] + radius && p[2] - radius <= tri[21] &&
+			    tri[20] <= p[2] + radius && 0.001 < (double)tri[13] && CRColl_PointOverTriXZ(tri, p) != 0 &&
+			    (h = coll_height_above(tri, p[0], p[1], p[2])) < best) {
+				on_type9 = 0;
+				if (tri_out != NULL)
+					*tri_out = tri;
+				best = h;
+				if (platform_out != NULL)
+					*platform_out = platform;
+			}
+			mesh = CHL_PTR(platform, 0x1a0);
+		}
+	}
+	if (on_type9 && 0 < mode)
+		return 1e6f;
+	return best;
+}
+
+/* the segment test of CRColl_RayCast against one triangle; returns the fraction t (from
+the end towards the start) when the segment crosses the triangle from the front */
+static int coll_ray_tri(float *tri, float *start, float *end, float *a, float *t_out)
+{
+	float de;
+	float ds;
+	float t;
+
+	de = end[0] * tri[12] + end[1] * tri[13] + end[2] * tri[14];
+	ds = de - FUN_00036b00(tri + 12, start);
+	if (ds == 0.0f || !(FUN_00036b00(tri + 12, a) < 0.0f))
+		return 0;
+	t = (de - tri[40]) / ds;
+	if (!(0.0f < t && t < 1.0f))
+		return 0;
+	*t_out = t;
+	return 1;
+}
+
+/* 0x000b43e0  CharLib (CRCollision.cpp, inferred)
+Casts the segment start -> start + delta against the scenery (type 0) and platform
+meshes; the hit nearest to start goes to hit (and its triangle and platform). Returns
+the fraction of the segment before the hit, or 0 when nothing was hit. */
+float CRColl_RayCast(float *start, float *delta, float *hit, float **tri_out, void **platform_out)
+{
+	float end[4];
+	float lo[3];
+	float hi[3];
+	float point[4];
+	float best = 0.0f;
+	float t;
+	void *actor;
+	void *mesh;
+	float *tri;
+	int i;
+
+	end[0] = start[0] + delta[0];
+	end[1] = delta[1] + start[1];
+	end[2] = delta[2] + start[2];
+	lo[0] = end[0];
+	if (start[0] < end[0])
+		lo[0] = start[0];
+	lo[1] = end[1];
+	if (start[1] < end[1])
+		lo[1] = start[1];
+	lo[2] = end[2];
+	if (start[2] < end[2])
+		lo[2] = start[2];
+	hi[0] = end[0];
+	if (end[0] < start[0])
+		hi[0] = start[0];
+	hi[1] = end[1];
+	if (end[1] < start[1])
+		hi[1] = start[1];
+	hi[2] = end[2];
+	if (end[2] < start[2])
+		hi[2] = start[2];
+	point[3] = 1.0f; /* the platform pass copies w without setting it (stack garbage) */
+	for (actor = chl_ListNext(chl_actor_list, NULL); actor != NULL; actor = chl_ListNext(chl_actor_list, actor)) {
+		mesh = CHL_PTR(actor, ACT_COLLMESH);
+		if (CHL_I32(actor, ACT_TYPE) != 0 || mesh == NULL)
+			continue;
+		if (!(CHL_F32(mesh, MESH_MIN + 0x4) <= hi[1] && lo[1] <= CHL_F32(mesh, MESH_MAX + 0x4) &&
+		      CHL_F32(mesh, MESH_MIN + 0x0) <= hi[0] && lo[0] <= CHL_F32(mesh, MESH_MAX + 0x0) &&
+		      CHL_F32(mesh, MESH_MIN + 0x8) <= hi[2] && lo[2] <= CHL_F32(mesh, MESH_MAX + 0x8)))
+			continue;
+		for (i = 0; i < CHL_I32(mesh, MESH_COUNT); i++) {
+			tri = *(float **)mesh + i * TRI_FLOATS;
+			if (lo[0] <= tri[17] && tri[16] <= hi[0] && lo[1] <= tri[19] && tri[18] <= hi[1] &&
+			    lo[2] <= tri[21] && tri[20] <= hi[2] && coll_ray_tri(tri, start, end, delta, &t)) {
+				FUN_00050ff0(point, start, t, end, 1.0f - t);
+				point[3] = 1.0f;
+				if (CRColl_PointInTri(tri, point) != 0 && best < t) {
+					if (tri_out != NULL)
+						*tri_out = tri;
+					hit[0] = point[0];
+					hit[1] = point[1];
+					hit[2] = point[2];
+					hit[3] = 1.0f;
+					best = t;
+				}
+			}
+			mesh = CHL_PTR(actor, ACT_COLLMESH);
+		}
+	}
+	for (actor = chl_ListNext(coll_platform_list, NULL); actor != NULL; actor = chl_ListNext(coll_platform_list, actor)) {
+		void *platform = actor;
+
+		if (CHL_U8(platform, 0x3d4) != 0 && CHL_PTR(platform, 0x1a0) != NULL)
+			CRColl_RefreshMesh(platform, NULL);
+		mesh = CHL_PTR(platform, 0x1a0);
+		if ((CHL_U8(platform, 0x230) & 0x20) != 0 || (CHL_U32(platform, 0x450) & 0x8000) != 0 || mesh == NULL)
+			continue;
+		if (!(CHL_F32(mesh, MESH_MIN + 0x0) <= hi[0] && lo[0] <= CHL_F32(mesh, MESH_MAX + 0x0) &&
+		      CHL_F32(mesh, MESH_MIN + 0x4) <= hi[1] && lo[1] <= CHL_F32(mesh, MESH_MAX + 0x4) &&
+		      CHL_F32(mesh, MESH_MIN + 0x8) <= hi[2] && lo[2] <= CHL_F32(mesh, MESH_MAX + 0x8)))
+			continue;
+		for (i = 0; i < CHL_I32(mesh, MESH_COUNT); i++) {
+			tri = *(float **)mesh + i * TRI_FLOATS;
+			if (lo[0] <= tri[17] && tri[16] <= hi[0] && lo[1] <= tri[19] && tri[18] <= hi[1] &&
+			    lo[2] <= tri[21] && tri[20] <= hi[2] && coll_ray_tri(tri, start, end, delta, &t)) {
+				/* the original passes a null start point here (EBX = 0 at 0x000b4942):
+				kept as in the original */
+				FUN_00050ff0(point, NULL, t, end, 1.0f - t);
+				if (CRColl_PointInTri(tri, point) != 0 && best < t) {
+					if (tri_out != NULL)
+						*tri_out = tri;
+					if (platform_out != NULL)
+						*platform_out = platform;
+					hit[0] = point[0];
+					hit[1] = point[1];
+					hit[2] = point[2];
+					hit[3] = point[3];
+					best = t;
+				}
+			}
+			mesh = CHL_PTR(platform, 0x1a0);
+		}
+	}
+	if (0.0f < best)
+		return 1.0f - best;
+	return 0.0f;
+}
+
+/* 0x000b4a20  CharLib (CRCollision.cpp, inferred)
+Adds the contacts of one sphere of `actor` with the collision mesh of `owner` (a scenery
+actor, or the actor embedded in `platform`). */
+void CRColl_SphereVsMesh(void *actor, float *centre, float radius, void *owner, void *platform, int sphere,
+	int tag)
+{
+	float x = centre[0];
+	float y = centre[1];
+	float z = centre[2];
+	void *mesh;
+	float *tri;
+	int i;
+
+	if (platform != NULL && CHL_U8(platform, 0x3d4) != 0 && CHL_PTR(platform, 0x1a0) != NULL)
+		CRColl_RefreshMesh(platform, NULL);
+	mesh = CHL_PTR(owner, ACT_COLLMESH);
+	if (!(CHL_F32(mesh, MESH_MIN + 0x0) <= radius + centre[0] && centre[0] - radius <= CHL_F32(mesh, MESH_MAX + 0x0) &&
+	      CHL_F32(mesh, MESH_MIN + 0x4) <= radius + centre[1] && centre[1] - radius <= CHL_F32(mesh, MESH_MAX + 0x4) &&
+	      CHL_F32(mesh, MESH_MIN + 0x8) <= radius + centre[2] && centre[2] - radius <= CHL_F32(mesh, MESH_MAX + 0x8)))
+		return;
+	for (i = 0; i < CHL_I32(mesh, MESH_COUNT); i++) {
+		tri = *(float **)mesh + i * TRI_FLOATS;
+		if (x - radius <= tri[17] && tri[16] <= radius + x && z - radius <= tri[21] && tri[20] <= radius + z &&
+		    y - radius <= tri[19] && tri[18] <= radius + y)
+			CRColl_AddContact(tri, actor, centre, radius, platform, sphere, tag);
+		mesh = CHL_PTR(owner, ACT_COLLMESH);
+	}
+}
+
+/* 0x000b4bd0  CharLib (CRCollision.cpp, inferred)
+CRColl_RayCast without the platform result; normal_out gets the normal of the triangle
+hit (w = 1 in any case). */
+void CRColl_RayCastNormal(float *start, float *delta, float *hit, float *normal_out)
+{
+	float *tri;
+
+	if (0.0f < CRColl_RayCast(start, delta, hit, &tri, NULL)) {
+		memcpy(normal_out, tri + 12, 0x10);
+		normal_out[3] = 1.0f;
+		return;
+	}
+	normal_out[3] = 1.0f;
+}
+
+/* 0x000b4c40  CharLib (CRCollision.cpp, inferred)
+Collects the contacts of every sphere of an actor (centres, radii) with the scenery
+(type 0 actors; type 0xf actors only collide with type 0xe actors) and the platforms. */
+void CRColl_GatherContacts(void *actor, float *centres, float *radii)
+{
+	void *other;
+	int tag = 0;
+	int s;
+
+	for (other = chl_ListNext(chl_actor_list, NULL); other != NULL; other = chl_ListNext(chl_actor_list, other)) {
+		if (CHL_I32(other, ACT_TYPE) == 0xe && CHL_I32(actor, ACT_TYPE) == 0xf) {
+			for (s = 0; s < (int)CHL_U8(ACT_CD(actor), CD_SPHERE_COUNT); s++)
+				CRColl_SphereVsMesh(actor, centres + s * 4, radii[s], other, NULL, s, tag++);
+		} else if (CHL_I32(other, ACT_TYPE) == 0 && CHL_I32(actor, ACT_TYPE) != 0xf) {
+			for (s = 0; s < (int)CHL_U8(ACT_CD(actor), CD_SPHERE_COUNT); s++)
+				CRColl_SphereVsMesh(actor, centres + s * 4, radii[s], other, NULL, s, tag++);
+		}
+	}
+	for (other = chl_ListNext(coll_platform_list, NULL); other != NULL; other = chl_ListNext(coll_platform_list, other)) {
+		if ((CHL_U8(other, 0x230) & 0x20) != 0)
+			continue;
+		for (s = 0; s < (int)CHL_U8(ACT_CD(actor), CD_SPHERE_COUNT); s++)
+			CRColl_SphereVsMesh(actor, centres + s * 4, radii[s], (char *)other + 0x10, other, s, tag++);
+	}
+}
+
+/* 0x000b4dd0  CharLib (CRCollision.cpp, inferred)
+One collision step of an actor against the scenery and the platforms: gathers and merges
+the contacts, resolves them into push vectors, balances pushes that work against each
+other, keeps the actor on the floor found, moves it by the total push, lets a player
+climb onto a ledge it walks into (flag 0x40), and takes the velocity into the walls
+(bounce factor at block 0x188 + 0x24). Counts the frames on the ground (0x214) and
+against steep walls (0x218). */
+void CRColl_Step(void *actor)
+{
+	unsigned char *cd = ACT_CD(actor);
+	float sum[4];
+	float n[4];
+	float v[4];
+	float edge[4];
+	float speed;
+	float dot;
+	float inv;
+	float a;
+	float b;
+	float f;
+	float r;
+	float d;
+	int count;
+	int k;
+	int i;
+	int j;
+	short best_edge;
+
+	coll_on_ground = 0;
+	coll_steep = 0;
+	coll_push_count = 0;
+	coll_floor_contact = 0;
+	coll_floor_height = 0.0f;
+	for (i = CHL_U8(cd, CD_SPHERE_COUNT); i != 0; i--) {
+		float *offset = CHL_FIELD(float, ACT_CD(actor), CD_SPHERES + (i - 1) * 0x2c);
+
+		coll_sphere_centres[i - 1][0] = CHL_F32(actor, ACT_POS + 0x0) + offset[0];
+		coll_sphere_centres[i - 1][1] = offset[1] + CHL_F32(actor, ACT_POS + 0x4);
+		coll_sphere_centres[i - 1][2] = offset[2] + CHL_F32(actor, ACT_POS + 0x8);
+		coll_sphere_radii[i - 1] = CHL_F32(ACT_CD(actor), CD_SPHERES + (i - 1) * 0x2c + 0x20);
+	}
+	coll_contact_count = 0;
+	CRColl_GatherContacts(actor, coll_sphere_centres[0], coll_sphere_radii);
+	best_edge = (short)CRColl_MergeEdgeContacts();
+	count = coll_contact_count;
+	CHL_I16(ACT_CD(actor), CD_FLOOR_PLANE) = -1;
+	if (0 < count) {
+		CRColl_ResolveContacts(actor);
+		coll_total_push[0] = 0.0f;
+		coll_total_push[1] = 0.0f;
+		coll_total_push[2] = 0.0f;
+		coll_total_push[3] = 1.0f;
+		sum[0] = 0.0f;
+		sum[1] = 0.0f;
+		sum[2] = 0.0f;
+		sum[3] = 1.0f;
+		k = coll_push_count;
+		if (0 < k) {
+			/* two pushes against walls that meet at an angle: scale them so that their
+			sum gets the actor out of both */
+			for (i = 0; i < k; i++) {
+				if (!(1e-4 <= (double)coll_push_length[i]) || !(i + 1 < k))
+					continue;
+				for (j = i + 1; j < k; j++) {
+					float *ni = CHL_FIELD(float, coll_contacts[coll_push_contact[i]].tri, TRI_NORMAL);
+					float *nj = CHL_FIELD(float, coll_contacts[coll_push_contact[j]].tri, TRI_NORMAL);
+
+					if (!(0.001 <= (double)coll_push_length[j]))
+						continue;
+					dot = nj[0] * ni[0] + nj[2] * ni[2];
+					if (!(dot < 0.0f) || !(-0.95 < (double)dot))
+						continue;
+					inv = 1.0f / (1.0f - dot * dot);
+					a = (1.0f - (coll_push_length[j] / coll_push_length[i]) * dot) * inv;
+					b = (1.0f - (coll_push_length[i] / coll_push_length[j]) * dot) * inv;
+					if (a < 0.0f || b < 0.0f) {
+						chl_Printf("ERROR stop\n");
+						k = coll_push_count;
+					}
+					if (3.0f <= a)
+						a = 3.0f;
+					if (3.0f <= b)
+						b = 3.0f;
+					coll_pushes[i][0] = a * coll_pushes[i][0];
+					coll_pushes[i][2] = a * coll_pushes[i][2];
+					coll_pushes[j][0] = b * coll_pushes[j][0];
+					coll_pushes[j][2] = b * coll_pushes[j][2];
+				}
+			}
+			/* pushes down while on a floor: keep them out of the floor sphere's ring */
+			for (i = 0; i < k; i++) {
+				struct CRContact *c;
+				unsigned char *cdi;
+
+				if (!(1e-4f <= coll_push_length[i]) || !(0.0f < coll_floor_height) || !(coll_pushes[i][1] < 0.0f))
+					continue;
+				c = &coll_contacts[coll_push_contact[i]];
+				cdi = ACT_CD(actor);
+				f = c->pos[1] - (coll_floor_height + coll_sphere_centres[(unsigned short)c->sphere][1]);
+				if (0.0f <= f) {
+					r = sqrtf(CHL_F32(cdi, 0x9c) * CHL_F32(cdi, 0x9c) - f * f);
+					if (0.0f < CHL_F32(cdi, 0xa0) && CHL_F32(cdi, 0xa0) < r)
+						r = CHL_F32(cdi, 0xa0);
+					d = r - sqrtf(FUN_00070db0(c->pos, coll_sphere_centres[(unsigned short)c->sphere]));
+					k = coll_push_count;
+					if (0.0f < d) {
+						CLVec3_MinLengthXZ(coll_pushes[i], d);
+						k = coll_push_count;
+					}
+				} else {
+					if (CHL_F32(cdi, 0xa0) <= 0.0f)
+						r = CHL_F32(cdi, 0x9c);
+					else
+						r = CHL_F32(cdi, 0xa0);
+					CLVec3_MinLengthXZ(coll_pushes[i],
+						r - FUN_00070db0(c->pos, coll_sphere_centres[(unsigned short)c->sphere]));
+					k = coll_push_count;
+				}
+			}
+			for (i = 0; i < k; i++) {
+				sum[0] = sum[0] + coll_pushes[i][0];
+				sum[1] = sum[1] + coll_pushes[i][1];
+				sum[2] = sum[2] + coll_pushes[i][2];
+			}
+			if (1 < k) {
+				f = 1.0f;
+				if (0.01f < coll_push_length[0])
+					f = (coll_pushes[0][0] * sum[0] + coll_pushes[0][1] * sum[1] + coll_pushes[0][2] * sum[2]) /
+						coll_push_length[0];
+				if (0.01 < (double)f) {
+					f = coll_push_length[0] / f;
+					sum[0] = sum[0] * f;
+					sum[1] = sum[1] * f;
+					sum[2] = f * sum[2];
+				}
+				for (i = 1; i < k; i++) {
+					if (0.001f <= coll_push_length[i] &&
+					    (f = (sum[0] * coll_pushes[i][0] + sum[1] * coll_pushes[i][1] + sum[2] * coll_pushes[i][2]) /
+						 coll_push_length[i], 0.0f <= f) &&
+					    0.05f < f && f * f < coll_push_length[i] * coll_push_length[i]) {
+						f = coll_push_length[i] / f;
+						sum[0] = sum[0] * f;
+						sum[1] = sum[1] * f;
+						sum[2] = f * sum[2];
+					}
+				}
+			}
+		}
+		/* stay on the floor */
+		if (sum[1] < coll_floor_height && 0.0f < coll_floor_height) {
+			coll_push_length[k] = coll_floor_height;
+			sum[1] = coll_floor_height;
+			coll_push_contact[k] = coll_floor_contact;
+			coll_pushes[k][3] = 1.0f;
+			coll_pushes[k][0] = 0.0f;
+			coll_push_count = k + 1;
+			coll_pushes[k][1] = coll_floor_height;
+			coll_pushes[k][2] = 0.0f;
+		}
+		coll_sphere_centres[0][0] = coll_sphere_centres[0][0] + sum[0];
+		coll_total_push[0] = sum[0];
+		coll_total_push[1] = sum[1];
+		coll_sphere_centres[0][1] = coll_sphere_centres[0][1] + sum[1];
+		coll_total_push[2] = sum[2];
+		coll_total_push[3] = sum[3];
+		coll_sphere_centres[0][2] = coll_sphere_centres[0][2] + sum[2];
+		cd = ACT_CD(actor);
+		CHL_F32(actor, ACT_POS + 0x0) = coll_sphere_centres[0][0] - CHL_F32(cd, CD_SPHERES + 0x0);
+		CHL_F32(actor, ACT_POS + 0x4) = coll_sphere_centres[0][1] - CHL_F32(cd, CD_SPHERES + 0x4);
+		CHL_F32(actor, ACT_POS + 0x8) = coll_sphere_centres[0][2] - CHL_F32(cd, CD_SPHERES + 0x8);
+
+		/* a player walking into a ledge climbs onto it */
+		if ((CHL_U8(actor, ACT_FLAGS) & 0x40) != 0 && CHL_F32(ACT_CD(actor), CD_STUN_TIME) <= 0.0f && -1 < best_edge) {
+			struct CRContact *c = &coll_contacts[best_edge];
+			void *ai = CHL_ARR(void *, 0x002f289c)[CHL_U16(actor, ACT_PLAYER)];
+			float angle;
+			float diff;
+			float limit;
+
+			FUN_00070580(edge, c->pos, CHL_FIELD(float, actor, ACT_POS));
+			angle = FUN_000703a0((float)CHL_FPATAN(edge[0], edge[2]));
+			if (0.3f <= CHL_F32(ai, 0x54) || CHL_F32(ai, 0x1128) != 0.0f) {
+				float ref = CHL_F32(ai, 0x1128) == 0.0f ? CHL_F32(ai, 0x58) : CHL_F32(actor, ACT_HEADING);
+
+				diff = FUN_00070670(angle, ref);
+			} else {
+				diff = 999.0f;
+			}
+			limit = 1.25663698f;
+			if (limit < CHL_F32(CHL_ARR(void *, 0x002f289c)[CHL_U16(actor, ACT_PLAYER)], 0x1128))
+				limit = CHL_F32(CHL_ARR(void *, 0x002f289c)[CHL_U16(actor, ACT_PLAYER)], 0x1128);
+			if (diff < limit) {
+				float reach;
+
+				cd = ACT_CD(actor);
+				coll_sphere_centres[0][0] = CHL_F32(actor, ACT_POS + 0x0) + CHL_F32(cd, CD_SPHERES + 0x0);
+				coll_sphere_centres[0][1] = CHL_F32(cd, CD_SPHERES + 0x4) + CHL_F32(actor, ACT_POS + 0x4);
+				coll_sphere_centres[0][2] = CHL_F32(cd, CD_SPHERES + 0x8) + CHL_F32(actor, ACT_POS + 0x8);
+				reach = coll_sphere_radii[(unsigned short)c->sphere] + coll_sphere_radii[(unsigned short)c->sphere];
+				if (0.0f < CRColl_NearestEdgePoint(coll_sphere_centres[0], c->tri, reach, edge)) {
+					edge[0] = edge[0] - coll_sphere_centres[0][0];
+					edge[2] = edge[2] - coll_sphere_centres[0][2];
+					edge[1] = (edge[1] - coll_sphere_centres[0][1]) + coll_sphere_radii[(unsigned short)c->sphere];
+					if (edge[1] < climb_max_height && climb_min_height < edge[1]) {
+						cd = ACT_CD(actor);
+						CHL_F32(cd, CD_STUN_TARGET + 0x0) = edge[0] + CHL_F32(actor, ACT_POS + 0x0);
+						CHL_F32(cd, CD_STUN_TARGET + 0x4) = edge[1] + CHL_F32(actor, ACT_POS + 0x4);
+						CHL_F32(cd, CD_STUN_TARGET + 0x8) = edge[2] + CHL_F32(actor, ACT_POS + 0x8);
+						CHL_F32(ACT_CD(actor), CD_STUN_TIME) = climb_time_factor * edge[1];
+						Actor_UpdateKnockback(actor);
+					}
+				}
+			}
+		}
+
+		/* take the velocity into the surfaces */
+		v[2] = CHL_F32(actor, ACT_VEL + 0x8);
+		v[1] = CHL_F32(actor, ACT_VEL + 0x4);
+		v[0] = CHL_F32(actor, ACT_VEL + 0x0);
+		speed = sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+		FUN_000514a0(n, coll_total_push);
+		if (0.0f <= CHL_F32(CHL_PTR(actor, ACT_BLOCK188), 0x24)) {
+			float bounce = CHL_F32(CHL_PTR(actor, ACT_BLOCK188), 0x24);
+
+			if (0.01 < (double)speed) {
+				inv = 1.0f / speed;
+				v[0] = v[0] * inv;
+				v[1] = v[1] * inv;
+				v[2] = inv * v[2];
+			}
+			dot = v[0] * n[0] + v[1] * n[1] + v[2] * n[2];
+			if (dot < 0.0f) {
+				dot = dot * speed;
+				CHL_F32(actor, ACT_VEL + 0x0) = CHL_F32(actor, ACT_VEL + 0x0) - (bounce + 1.0f) * dot * n[0];
+				CHL_F32(actor, ACT_VEL + 0x4) = CHL_F32(actor, ACT_VEL + 0x4) - (bounce + 1.0f) * dot * n[1];
+				CHL_F32(actor, ACT_VEL + 0x8) = CHL_F32(actor, ACT_VEL + 0x8) - (bounce + 1.0f) * dot * n[2];
+			}
+		}
+	}
+	if (coll_on_ground == 0)
+		CHL_I32(actor, 0x214) = 0;
+	else
+		CHL_I32(actor, 0x214) = CHL_I32(actor, 0x214) + 1;
+	if (coll_steep == 0) {
+		CHL_I32(actor, 0x218) = 0;
+		return;
+	}
+	CHL_I32(actor, 0x218) = CHL_I32(actor, 0x218) + 1;
+}
+
+/* 0x000b5900  CharLib (CRCollision.cpp, inferred)
+A collision step for actors with collision (flag 0x10), then pushes the actors it touched
+(0x160, count 0x199) when `push`; clears that list. */
+void CRColl_StepAndPush(void *actor, int push)
+{
+	unsigned char *cd;
+	int i;
+
+	if ((CHL_U8(actor, ACT_FLAGS) & 0x10) != 0)
+		CRColl_Step(actor);
+	cd = ACT_CD(actor);
+	if (CHL_U8(cd, 0x199) == 0)
+		return;
+	for (i = 0; i < (int)CHL_U8(cd, 0x199); i++) {
+		if (push != 0)
+			CRColl_PushApart(actor, CHL_PTR(cd, 0x160 + i * 4));
+		cd = ACT_CD(actor);
+	}
+	CHL_U8(ACT_CD(actor), 0x199) = 0;
+}
+
+/* 0x000b5980  CharLib (CRCollision.cpp, inferred)
+Re-runs the collision of an actor that was pushed: in steps of 0.7 x its radius along the
+movement since the last frame (at most 5 levels deep). */
+void CRColl_Recheck(void *actor)
+{
+	float d[3];
+	float dist2;
+	float step;
+	float dist;
+	float inv;
+	int steps;
+	int i;
+
+	if (4 < coll_recheck_level) {
+		chl_Printf("collisionRecheckLevel = %d!!\n", coll_recheck_level);
+		return;
+	}
+	d[0] = CHL_F32(actor, ACT_POS + 0x0) - CHL_F32(actor, ACT_POS_PREV + 0x0);
+	coll_recheck_level = coll_recheck_level + 1;
+	d[1] = CHL_F32(actor, ACT_POS + 0x4) - CHL_F32(actor, ACT_POS_PREV + 0x4);
+	d[2] = CHL_F32(actor, ACT_POS + 0x8) - CHL_F32(actor, ACT_POS_PREV + 0x8);
+	dist2 = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+	step = CHL_F32(ACT_CD(actor), 0x9c) * 0.7f;
+	if (!(dist2 > step * step) && dist2 == dist2) {
+		CRColl_StepAndPush(actor, 0);
+		return;
+	}
+	dist = sqrtf(dist2);
+	if (dist != 0.0f) {
+		inv = 1.0f / dist;
+		d[0] = d[0] * inv;
+		d[1] = d[1] * inv;
+		d[2] = inv * d[2];
+	}
+	steps = CHL_FTOL(dist / step);
+	memcpy(CHL_FIELD(char, actor, ACT_POS), CHL_FIELD(char, actor, ACT_POS_PREV), 0x10);
+	for (i = steps; 0 < i; i--) {
+		FUN_00070550(CHL_FIELD(float, actor, ACT_POS), d, step);
+		CRColl_StepAndPush(actor, 1);
+	}
+	FUN_00070550(CHL_FIELD(float, actor, ACT_POS), d, dist - (float)steps * step);
+	CRColl_StepAndPush(actor, 0);
+}
+
+/* 0x000b5af0  CharLib (CRCollision.cpp, inferred)
+Collides an actor with the other actors that collide with actors (flag 8, not types 0
+and 2, with a mass): sphere against sphere (the other actor's spheres all at its first
+sphere's offset, as in the original), exchanging momentum by mass and pushing both apart
+by mass; both remember the contact (0x160 / 0x17c lists, 7 entries) and the other actor is
+re-collided. Flags 0x6000 mark the other actor (0x8000). */
+void CRColl_ActorVsActors(void *actor)
+{
+	float pa[5][4];
+	float pb[5][4];
+	unsigned char *cd = ACT_CD(actor);
+	unsigned char *cdo;
+	unsigned char count;
+	void *other;
+	float dx;
+	float dy;
+	float dz;
+	float dxz2;
+	float d2;
+	float reach;
+	float h;
+	float d;
+	float inv;
+	float nx = 0.0f; /* not set when the centres meet (stack values in the original) */
+	float ny = 0.0f;
+	float nz = 0.0f;
+	float limit;
+	float push;
+	float share;
+	float impulse;
+	float rel[4];
+	float imp[4];
+	float out[4];
+	int i;
+	int j;
+
+	for (i = 0; i < (int)CHL_U8(cd, CD_SPHERE_COUNT); i++) {
+		pa[i][0] = CHL_F32(cd, CD_SPHERES + i * 0x2c + 0x0) + CHL_F32(actor, ACT_POS + 0x0);
+		pa[i][1] = CHL_F32(cd, CD_SPHERES + i * 0x2c + 0x4) + CHL_F32(actor, ACT_POS + 0x4);
+		pa[i][2] = CHL_F32(actor, ACT_POS + 0x8) + CHL_F32(cd, CD_SPHERES + i * 0x2c + 0x8);
+	}
+	for (other = chl_ListNext(chl_actor_list, NULL); other != NULL; other = chl_ListNext(chl_actor_list, other)) {
+		if ((CHL_U8(other, ACT_FLAGS) & 8) == 0 || CHL_I32(other, ACT_TYPE) == 0 || CHL_I32(other, ACT_TYPE) == 2 ||
+		    CHL_PTR(other, ACT_BLOCK188) == NULL || *(float *)CHL_PTR(other, ACT_BLOCK188) == 0.0f ||
+		    actor == other)
+			continue;
+		for (i = 0; i < (int)CHL_U8(ACT_CD(actor), CD_SPHERE_COUNT); i++) {
+			for (j = 0; j < (int)CHL_U8(ACT_CD(other), CD_SPHERE_COUNT); j++) {
+				float rb;
+				float hb;
+				unsigned char *cda;
+
+				cdo = ACT_CD(other);
+				rb = CHL_F32(cdo, CD_SPHERES + j * 0x2c + 0x20);
+				hb = CHL_F32(cdo, CD_SPHERES + j * 0x2c + 0x24);
+				pb[j][0] = CHL_F32(other, ACT_POS + 0x0) + CHL_F32(cdo, CD_SPHERES + 0x0);
+				pb[j][1] = CHL_F32(other, ACT_POS + 0x4) + CHL_F32(cdo, CD_SPHERES + 0x4);
+				pb[j][2] = CHL_F32(other, ACT_POS + 0x8) + CHL_F32(cdo, CD_SPHERES + 0x8);
+				dx = pa[i][0] - pb[j][0];
+				dy = pa[i][1] - pb[j][1];
+				dz = pa[i][2] - pb[j][2];
+				cda = ACT_CD(actor);
+				dxz2 = dx * dx + dz * dz;
+				d2 = dy * dy + dxz2;
+				reach = rb + CHL_F32(cda, CD_SPHERES + i * 0x2c + 0x20);
+				if (!(d2 <= reach * reach))
+					continue;
+				if (CHL_F32(cda, CD_SPHERES + i * 0x2c + 0x24) <= 0.0f)
+					h = 0.0f;
+				else
+					h = CHL_F32(cda, CD_SPHERES + i * 0x2c + 0x24);
+				if (hb <= 0.0f) {
+					if (0.0f < h) {
+						h = h + rb;
+						if (0.0f < h && h * h < dxz2)
+							continue;
+					}
+				} else {
+					if (h == 0.0f)
+						h = CHL_F32(cda, CD_SPHERES + i * 0x2c + 0x20);
+					h = h + hb;
+					if (0.0f < h && h * h < dxz2)
+						continue;
+				}
+				d = sqrtf(d2);
+				if (0.0f < d) {
+					inv = 1.0f / d;
+					nx = dx * inv;
+					ny = dy * inv;
+					nz = inv * dz;
+				}
+				/* momentum along the normal, shared by mass */
+				rel[0] = CHL_F32(actor, ACT_VEL + 0x0) - CHL_F32(other, ACT_VEL + 0x0);
+				rel[1] = CHL_F32(actor, ACT_VEL + 0x4) - CHL_F32(other, ACT_VEL + 0x4);
+				rel[2] = CHL_F32(actor, ACT_VEL + 0x8) - CHL_F32(other, ACT_VEL + 0x8);
+				share = 1.0f / (*(float *)CHL_PTR(other, ACT_BLOCK188) + *(float *)CHL_PTR(actor, ACT_BLOCK188));
+				impulse = (rel[0] * nx + rel[1] * ny + rel[2] * nz) * *(float *)CHL_PTR(actor, ACT_BLOCK188);
+				impulse = (impulse + impulse) * share;
+				if (impulse < 0.0f) {
+					imp[0] = nx * impulse;
+					imp[1] = ny * impulse;
+					imp[2] = nz * impulse;
+					FUN_00050ff0(out, rel, 1.0f, imp,
+						-(*(float *)CHL_PTR(other, ACT_BLOCK188) / *(float *)CHL_PTR(actor, ACT_BLOCK188)));
+					CHL_F32(actor, ACT_VEL + 0x0) = out[0] + CHL_F32(other, ACT_VEL + 0x0);
+					CHL_F32(actor, ACT_VEL + 0x4) = out[1] + CHL_F32(other, ACT_VEL + 0x4);
+					CHL_F32(actor, ACT_VEL + 0x8) = out[2] + CHL_F32(other, ACT_VEL + 0x8);
+					CHL_F32(other, ACT_VEL + 0x0) = imp[0] + CHL_F32(other, ACT_VEL + 0x0);
+					CHL_F32(other, ACT_VEL + 0x4) = imp[1] + CHL_F32(other, ACT_VEL + 0x4);
+					CHL_F32(other, ACT_VEL + 0x8) = imp[2] + CHL_F32(other, ACT_VEL + 0x8);
+				}
+				/* push apart, the lighter one more */
+				limit = 9999999.0f;
+				if (0.0f < h && (nx != 0.0f || nz != 0.0f))
+					limit = h / (nx * nx + nz * nz);
+				push = CHL_F32(ACT_CD(actor), CD_SPHERES + i * 0x2c + 0x20) +
+					CHL_F32(ACT_CD(other), CD_SPHERES + j * 0x2c + 0x20);
+				if (limit < push)
+					push = limit;
+				push = push - d;
+				nx = nx * push;
+				ny = ny * push;
+				nz = nz * push;
+				CHL_F32(other, ACT_POS + 0x0) = -(share * *(float *)CHL_PTR(actor, ACT_BLOCK188)) * nx +
+					CHL_F32(other, ACT_POS + 0x0);
+				CHL_F32(other, ACT_POS + 0x4) = -(share * *(float *)CHL_PTR(actor, ACT_BLOCK188)) * ny +
+					CHL_F32(other, ACT_POS + 0x4);
+				CHL_F32(other, ACT_POS + 0x8) = -(share * *(float *)CHL_PTR(actor, ACT_BLOCK188)) * nz +
+					CHL_F32(other, ACT_POS + 0x8);
+				CHL_F32(actor, ACT_POS + 0x0) = share * *(float *)CHL_PTR(other, ACT_BLOCK188) * nx +
+					CHL_F32(actor, ACT_POS + 0x0);
+				CHL_F32(actor, ACT_POS + 0x4) = share * *(float *)CHL_PTR(other, ACT_BLOCK188) * ny +
+					CHL_F32(actor, ACT_POS + 0x4);
+				CHL_F32(actor, ACT_POS + 0x8) = share * *(float *)CHL_PTR(other, ACT_BLOCK188) * nz +
+					CHL_F32(actor, ACT_POS + 0x8);
+				count = CHL_U8(ACT_CD(actor), 0x199);
+				if (count < 7) {
+					CHL_PTR(ACT_CD(actor), 0x160 + count * 4) = other;
+					CHL_U8(ACT_CD(actor), 0x199) = (unsigned char)(CHL_U8(ACT_CD(actor), 0x199) + 1);
+				}
+				count = CHL_U8(ACT_CD(other), 0x199);
+				if (count < 7) {
+					CHL_PTR(ACT_CD(other), 0x160 + count * 4) = actor;
+					CHL_U8(ACT_CD(other), 0x199) = (unsigned char)(CHL_U8(ACT_CD(other), 0x199) + 1);
+				}
+				count = CHL_U8(ACT_CD(actor), 0x198);
+				if (count < 7) {
+					CHL_PTR(ACT_CD(actor), 0x17c + count * 4) = other;
+					CHL_U8(ACT_CD(actor), 0x198) = (unsigned char)(CHL_U8(ACT_CD(actor), 0x198) + 1);
+				}
+				count = CHL_U8(ACT_CD(other), 0x198);
+				if (count < 7) {
+					CHL_PTR(ACT_CD(other), 0x17c + count * 4) = actor;
+					CHL_U8(ACT_CD(other), 0x198) = (unsigned char)(CHL_U8(ACT_CD(other), 0x198) + 1);
+				}
+				if ((CHL_U32(actor, ACT_FLAGS) & 0x6000) != 0)
+					CHL_U32(other, ACT_FLAGS) = CHL_U32(other, ACT_FLAGS) | 0x8000;
+				if ((CHL_U32(other, ACT_FLAGS) & 0x6000) != 0)
+					CHL_U32(actor, ACT_FLAGS) = CHL_U32(actor, ACT_FLAGS) | 0x8000;
+				CRColl_Recheck(other);
+			}
+		}
+	}
+}
+
+/* 0x000b61c0  CharLib (CRCollision.cpp, inferred)
+The collision of one actor at its current position: with the other actors (flag 8),
+with the scenery (flag 0x10), then (when `push`) pushes the actors it touched and
+re-collides those that moved. */
+void CRColl_Collide(void *actor, int push)
+{
+	unsigned char *cd;
+	int i;
+
+	if ((CHL_U8(actor, ACT_FLAGS) & 8) != 0) {
+		CHL_U8(ACT_CD(actor), 0x198) = 0;
+		CRColl_ActorVsActors(actor);
+	}
+	if ((CHL_U8(actor, ACT_FLAGS) & 0x10) != 0)
+		CRColl_Step(actor);
+	cd = ACT_CD(actor);
+	if (CHL_U8(cd, 0x199) == 0)
+		return;
+	for (i = 0; i < (int)CHL_U8(cd, 0x199); i++) {
+		if (push != 0 && CRColl_PushApart(actor, CHL_PTR(cd, 0x160 + i * 4)) != 0)
+			CRColl_Recheck(CHL_PTR(ACT_CD(actor), 0x160 + i * 4));
+		cd = ACT_CD(actor);
+	}
+	CHL_U8(ACT_CD(actor), 0x199) = 0;
+}
+
+/* 0x000b6270  CharLib (CRCollision.cpp, inferred)
+Moves an actor from its last position to its new one with collision: in steps shorter
+than 0.85 x its radius (velocity split over the steps and summed back). An actor stopped
+by a platform (flag 0x100) only loses half its x/z speed. */
+void CRColl_MoveActor(void *actor)
+{
+	float d[3];
+	float dist2;
+	float r;
+	float dist;
+	float inv;
+	float step;
+	float scale;
+	float vel[3];
+	float sum[3];
+	int steps;
+
+	CHL_U8(ACT_CD(actor), 0x199) = 0;
+	CHL_PTR(ACT_CD(actor), CD_PLATFORM_PREV) = CHL_PTR(ACT_CD(actor), CD_PLATFORM);
+	CHL_PTR(ACT_CD(actor), CD_PLATFORM) = NULL;
+	CHL_I32(ACT_CD(actor), CD_TOUCHED_COUNT) = 0;
+	CHL_PTR(ACT_CD(actor), CD_PLATFORM) = NULL;
+	coll_recheck_level = 0;
+	if ((CHL_U32(actor, ACT_FLAGS) & 0x100) != 0) {
+		CHL_F32(actor, ACT_VEL + 0x0) = CHL_F32(actor, ACT_VEL + 0x0) * 0.5f;
+		CHL_F32(actor, ACT_VEL + 0x8) = CHL_F32(actor, ACT_VEL + 0x8) * 0.5f;
+		return;
+	}
+	d[0] = CHL_F32(actor, ACT_POS + 0x0) - CHL_F32(actor, ACT_POS_PREV + 0x0);
+	d[1] = CHL_F32(actor, ACT_POS + 0x4) - CHL_F32(actor, ACT_POS_PREV + 0x4);
+	d[2] = CHL_F32(actor, ACT_POS + 0x8) - CHL_F32(actor, ACT_POS_PREV + 0x8);
+	dist2 = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+	if (CHL_F32(ACT_CD(actor), 0xa0) <= 0.0f)
+		r = CHL_F32(ACT_CD(actor), 0x9c);
+	else
+		r = CHL_F32(ACT_CD(actor), 0xa0);
+	r = r * 0.85f;
+	if (!(r * r < dist2)) {
+		CRColl_Collide(actor, 0);
+		return;
+	}
+	dist = sqrtf(dist2);
+	if (dist != 0.0f) {
+		inv = 1.0f / dist;
+		d[0] = d[0] * inv;
+		d[1] = d[1] * inv;
+		d[2] = inv * d[2];
+	}
+	steps = CHL_FTOL(dist / r) + 1;
+	step = dist / (float)steps;
+	memcpy(CHL_FIELD(char, actor, ACT_POS), CHL_FIELD(char, actor, ACT_POS_PREV), 0x10);
+	sum[0] = 0.0f;
+	sum[1] = 0.0f;
+	scale = step / dist;
+	vel[0] = scale * CHL_F32(actor, ACT_VEL + 0x0);
+	vel[1] = scale * CHL_F32(actor, ACT_VEL + 0x4);
+	vel[2] = scale * CHL_F32(actor, ACT_VEL + 0x8);
+	sum[2] = 0.0f;
+	for (; 0 < steps; steps--) {
+		FUN_00070550(CHL_FIELD(float, actor, ACT_POS), d, step);
+		CHL_F32(actor, ACT_VEL + 0x0) = vel[0];
+		CHL_F32(actor, ACT_VEL + 0x4) = vel[1];
+		CHL_F32(actor, ACT_VEL + 0x8) = vel[2];
+		CHL_F32(actor, ACT_VEL + 0xc) = 1.0f;
+		CRColl_Collide(actor, 1);
+		sum[0] = sum[0] + CHL_F32(actor, ACT_VEL + 0x0);
+		sum[1] = sum[1] + CHL_F32(actor, ACT_VEL + 0x4);
+		sum[2] = sum[2] + CHL_F32(actor, ACT_VEL + 0x8);
+	}
+	CHL_F32(actor, ACT_VEL + 0x0) = sum[0];
+	CHL_F32(actor, ACT_VEL + 0x4) = sum[1];
+	CHL_F32(actor, ACT_VEL + 0x8) = sum[2];
+	CHL_F32(actor, ACT_VEL + 0xc) = 1.0f;
+}
