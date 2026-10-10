@@ -35,9 +35,6 @@
 00110b90 void CDrillersGame_UpdateSnare(void *self);
 
 # callees (prototypes from the disassembly; renamed when their file is written)
-0011fd50 void FUN_0011fd50(void *self);
-00120260 void FUN_00120260(void *self);
-001202c0 void FUN_001202c0(void *self);
 00120a70 void FUN_00120a70(void *self);
 00121a80 void FUN_00121a80(void *self);
 
@@ -129,3 +126,9 @@
 0011e1c0 void *DrRes_DeletingDtor(void *self, unsigned int flags);
 0011e1e0 void DrRes_Load(void *self);
 0011f770 void DrRes_Free(void *self);
+
+# Drillers/unplaced_pads.c (the input object 0x002aaaf8)
+0011fd50 void DrPads_Create(void *self);
+00120260 void DrPads_Delete(void *self);
+001202a0 void *DrPads_DeletingDtor(void *self, unsigned int flags);
+001202c0 void DrPads_Update(void *self);
