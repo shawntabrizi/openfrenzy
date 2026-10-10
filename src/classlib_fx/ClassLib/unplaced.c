@@ -125,9 +125,9 @@ void Texture_CopyGreyscale(int dst, int src)
 			height = height - 1;
 		}
 	}
-	CLF_UnlockTexture(dst, 0, 1);
+	CLF_UnlockTexture(dst);
 	if (dst != src)
-		CLF_UnlockTexture(src, 0, 0);
+		CLF_UnlockTexture(src);
 }
 
 /* 0x00082f10  ClassLib (gap)
@@ -281,4 +281,73 @@ void PointSprites_Begin(CPointSprites *self)
 	FUN_00044b00(6, 1, 0);
 	Blend_SetMode(mode);
 	FUN_00043930((undefined4 *)&DAT_002855f0);
+}
+
+/* ======================================================================== weighted texture frames, actor animation switch
+0x000a7d40-0x000a7e30 (between CRay.cpp and CParticleSystem.cpp) */
+
+/* 0x000a7d40  ClassLib (gap)
+Shows the frame of animated texture `tex` that is current at `time`, counting from frame
+`first`: each frame lasts its weight (frame records of 0x18 bytes at tex + 0x24, weight at
++0x14; frame count at tex + 0x37). Negative times count back from the end. */
+void Texture_SetFrameAtTime(int tex, int time, int first)
+{
+	int *weight;
+	int *w;
+	int total;
+	int count;
+	int n;
+	int sum;
+
+	count = *(byte *)(tex + 0x37);
+	total = 0;
+	if (first < count) {
+		weight = (int *)(*(int *)(tex + 0x24) + 0x14 + first * 0x18);
+		n = count - first;
+		w = weight;
+		do {
+			total = total + *w;
+			w = w + 6;
+			n = n + -1;
+		} while (n != 0);
+		if (total != 0) {
+			if (time < 0)
+				time = total - -time % total;
+			sum = 0;
+			while (sum = sum + *weight, sum <= time % total) {
+				first = first + 1;
+				weight = weight + 6;
+				if (count <= first)
+					return;
+			}
+			FUN_00041580(tex, first);
+		}
+	}
+}
+
+/* 0x000a7dc0  ClassLib (gap)
+An actor animation switch { on, ..., actor at [6], animation at [7] }: switching on plays
+the animation (looping), switching off stops the actor's animations. */
+void AnimSwitch_Set(int *self, int on)
+{
+	if (self != NULL) {
+		if (on == 0) {
+			if (*self == 1) {
+				FUN_00038190(self[6], *(int *)(self[6] + 0x134), 1, 0);
+				*self = 0;
+			}
+		} else if (*self == 0) {
+			if (self[7] != 0)
+				CLF_PlayAnim(self[6], *(int *)(self[6] + 0x134), self[7], 0x400, -1, 1, NULL, 0);
+			*self = 1;
+		}
+	}
+}
+
+/* 0x000a7e30  ClassLib (gap)
+Sets the word at self + 8 of an animation switch. */
+void AnimSwitch_SetValue(int self, int value)
+{
+	if (self != 0)
+		*(int *)(self + 8) = value;
 }

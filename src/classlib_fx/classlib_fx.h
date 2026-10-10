@@ -94,19 +94,35 @@ CLList_Next(list, node or NULL) -> next node or NULL, CLList_Clear(list) */
 #define CLF_PlaySample(index, volume, a3, flags, pos) \
 	(((int (*)(int, int, int, unsigned int, float *))FUN_00071720)((index), (volume), (a3), (flags), (pos)))
 
-/* ======================================================================== bdisplay (assumed prototypes) */
+/* ======================================================================== bdisplay
 
-/* 0x000407d0  draw a textured beam/strip between two points (like 0x00040900):
-(p0, width0a, width0b, colour0 (int[4]), p1, width1a, width1b, colour1, texture, a, b) */
+Prototypes from src/bdisplay's .decls (bdDrawBeam3D, bdDrawBeamClipped, bdTextureLock,
+bdTextureUnlock, bdDrawSprite3D, bdDrawPolyline3D/Clipped, bdDrawPointSprites), called
+through casts so that texture and buffer handles can stay ints here. */
+
+/* 0x000407d0 / 0x00040900  a textured beam between two points: (pos1, width1, length1,
+colour1 (int[4]), pos2, width2, length2, colour2, texture, vertices (NULL: draw now), zBias) */
 #define CLF_DrawBeam \
-	((int (*)(float *, float, float, int *, float *, float, float, int *, int, int, int))FUN_000407d0)
+	((int (*)(float *, float, float, int *, float *, float, float, int *, int, float *, float))FUN_000407d0)
 #define CLF_DrawBeam2 \
-	((int (*)(float *, float, float, int *, float *, float, float, int *, int, int, int))FUN_00040900)
-/* 0x00041a40  lock a texture level: returns the pixels; width, height, pitch (bytes), format */
+	((int (*)(float *, float, float, int *, float *, float, float, int *, int, float *, float))FUN_00040900)
+/* 0x00041a40  lock a texture: returns the pixels; width, height, pitch (bytes), format, palette */
 #define CLF_LockTexture \
 	((void *(*)(int, int, int *, int *, int *, int *, int *))FUN_00041a40)
-/* 0x00041ac0  unlock a texture level (texture, level, changed) */
-#define CLF_UnlockTexture ((void (*)(int, int, int))FUN_00041ac0)
+/* 0x00041ac0  unlock a texture */
+#define CLF_UnlockTexture ((void (*)(int))FUN_00041ac0)
+/* 0x00040750  a rotated sprite: (pos, width, height, angle, texture, flipU, flipV, r, g, b, a,
+vertices, zBias) */
+#define CLF_DrawSprite \
+	((int (*)(float *, float, float, float, int, int, int, int, int, int, int, void *, float))FUN_00040750)
+/* 0x00040880 / 0x00040cd0  a strip through n points: (n, points, widths, screenWidths,
+colours, vertices, zBias) */
+#define CLF_DrawPolyline \
+	((int (*)(int, void *, void *, void *, void *, void *, float))FUN_00040880)
+#define CLF_DrawPolylineClipped \
+	((int (*)(int, void *, void *, void *, void *, void *, float))FUN_00040cd0)
+/* 0x000406d0  point sprites from a vertex buffer: (vb, start, count, point size) */
+#define CLF_DrawPointSprites ((void (*)(int, int, int, float))FUN_000406d0)
 
 /* ======================================================================== bactor (assumed prototypes) */
 
@@ -394,5 +410,324 @@ typedef struct CSprite
 	float spin;         /* 0x30 */
 } CSprite;
 OF_ASSERT_SIZE(CSprite, 0x34);
+
+/* ======================================================================== CRay.cpp */
+
+struct CRayControl;
+
+/* one rotating ray of an orb (0x34 bytes) */
+typedef struct CRay
+{
+	void *next;                  /* 0x00 list node */
+	void *prev;                  /* 0x04 */
+	struct CRayControl *control; /* 0x08 */
+	float pos[4];                /* 0x0c the ray's end */
+	float angle;                 /* 0x1c */
+	float speed;                 /* 0x20 radians per tick */
+	float length;                /* 0x24 */
+	float length0;               /* 0x28 */
+	float width0;                /* 0x2c at the orb */
+	float width1;                /* 0x30 at the end */
+} CRay;
+OF_ASSERT_SIZE(CRay, 0x34);
+
+/* an orb with rays that point at a target while a test passes (0x70 bytes) */
+typedef struct CRayControl
+{
+	void *next;            /* 0x00 node in DAT_002f27c8 */
+	void *prev;            /* 0x04 */
+	CLFList rays;          /* 0x08 */
+	int numRays;           /* 0x14 */
+	void *test;            /* 0x18 float test(float *target, float *delta, float *a, float *b): <= 0 shows the rays */
+	int visible;           /* 0x1c */
+	float offset[4];       /* 0x20 added to the anchor */
+	int texture;           /* 0x30 */
+	float *anchor;         /* 0x34 */
+	float centre[4];       /* 0x38 */
+	float *target;         /* 0x48 */
+	int colour0[4];        /* 0x4c */
+	int colour1[4];        /* 0x5c */
+	float angle;           /* 0x6c turn towards the target */
+} CRayControl;
+OF_ASSERT_SIZE(CRayControl, 0x70);
+
+/* 0x002f27c8  every ray control (constructed by core's static constructor 0x001f2ba0) */
+extern CLFList DAT_002f27c8;
+/* 0x00292c44  turn rate of the rays towards their target (2.0) */
+extern float DAT_00292c44;
+
+/* ======================================================================== CParticleSystem.cpp
+
+Five particle system classes share a header and a vtable layout of 6 slots:
+  [0] Release  [1] Update(dt)  [2] Draw  [3] Reset  [4] Emit(particle)  [5] deleting destructor
+Class names are inferred from what they draw:
+  CParticleSystem  vtable 0x00266cd8  spiralling ring trails + point particles (used in arrays)
+  CSparkSystem     vtable 0x00266cf0  particles drawn as beams from the previous position
+  CSmokeSystem     vtable 0x00266d08  rotating sprites (alpha blended)
+  CGlowSystem      vtable 0x00266d20  rotating sprites (additive)
+  CSparkPointSystem vtable 0x00266d38 beams + point sprites
+A CParticleSystemList (vtable 0x00266cd4) links systems through their word at +4. */
+
+/* one particle (0x68 bytes); colours are 8.7 fixed point shorts */
+typedef struct CParticle
+{
+	byte alive;          /* 0x00 */
+	byte pad01;
+	short age;           /* 0x02 ticks */
+	short life;          /* 0x04 ticks */
+	short pad06;
+	float pos[4];        /* 0x08 */
+	float prevPos[4];    /* 0x18 */
+	float vel[4];        /* 0x28 */
+	float size;          /* 0x38 */
+	float sizeSpeed;     /* 0x3c */
+	float angle;         /* 0x40 */
+	float spin;          /* 0x44 */
+	short colour[4];     /* 0x48 */
+	short colour2[4];    /* 0x50 */
+	short dColour[4];    /* 0x58 */
+	short dColour2[4];   /* 0x60 */
+} CParticle;
+OF_ASSERT_SIZE(CParticle, 0x68);
+
+/* the header shared by the five classes */
+typedef struct CPSHeader
+{
+	const void *const *vtable;   /* 0x00 */
+	struct CPSHeader *next;      /* 0x04 link in a CParticleSystemList */
+	int unknown08;               /* 0x08 */
+	CParticle *particles;        /* 0x0c */
+	int maxParticles;            /* 0x10 */
+	int numAlive;                /* 0x14 */
+	int texture;                 /* 0x18 */
+	float pos[4];                /* 0x1c emitter position (y is also the floor) */
+	int unknown2c[4];            /* 0x2c */
+} CPSHeader;
+OF_ASSERT_SIZE(CPSHeader, 0x3c);
+
+/* a ring trail of CParticleSystem (0x2c bytes) */
+typedef struct CPSRing
+{
+	float (*points)[4];  /* 0x00 ringLength points */
+	float *widths;       /* 0x04 */
+	float *extra;        /* 0x08 */
+	int (*colours)[4];   /* 0x0c */
+	float vel[3];        /* 0x10 only [1] (rise speed) is non-zero */
+	int unknown1c;       /* 0x1c */
+	float angle;         /* 0x20 */
+	float radius;        /* 0x24 */
+	int count;           /* 0x28 points in use */
+} CPSRing;
+OF_ASSERT_SIZE(CPSRing, 0x2c);
+
+/* CParticleSystem parameters (0x40 bytes at +0x50) */
+typedef struct CPSParams
+{
+	byte active;         /* 0x50 */
+	byte unknown51;
+	short pad52;
+	float angleSpeed;    /* 0x54 ring turn per tick */
+	float riseAccel;     /* 0x58 ring rise acceleration */
+	float gravity;       /* 0x5c particle gravity */
+	float riseSpeed;     /* 0x60 ring rise speed */
+	float speed;         /* 0x64 particle speed */
+	float drag;          /* 0x68 */
+	float radiusSpeed;   /* 0x6c */
+	float radius;        /* 0x70 */
+	int numRings;        /* 0x74 */
+	int ringLength;      /* 0x78 */
+	int maxEmit;         /* 0x7c particles emitted per tick */
+	int lifeMin;         /* 0x80 */
+	int lifeRange;       /* 0x84 */
+	float pointSize;     /* 0x88 */
+	float emitTime;      /* 0x8c */
+} CPSParams;
+OF_ASSERT_SIZE(CPSParams, 0x40);
+
+typedef struct CParticleSystem
+{
+	CPSHeader h;           /* 0x00 */
+	float emitTimer;       /* 0x3c */
+	CPSRing *rings;        /* 0x40 */
+	int texture2;          /* 0x44 ring texture */
+	short colour[3];       /* 0x48 */
+	short pad4e;
+	CPSParams p;           /* 0x50 */
+	int vb;                /* 0x90 ring strips */
+	int pointVB;           /* 0x94 point sprites */
+	float (*ringPoints)[4];/* 0x98 */
+	float *ringWidths;     /* 0x9c */
+	float *ringExtra;      /* 0xa0 */
+	int (*ringColours)[4]; /* 0xa4 */
+} CParticleSystem;
+OF_ASSERT_OFFSET(CParticleSystem, p, 0x50);
+OF_ASSERT_SIZE(CParticleSystem, 0xa8);
+
+/* CSparkSystem parameters (0x2c bytes at +0x44) */
+typedef struct CSparkParams
+{
+	byte active;         /* 0x44 */
+	byte bounce;         /* 0x45 bounce on the floor */
+	short pad46;
+	float speed;         /* 0x48 */
+	float drag;          /* 0x4c */
+	float gravity;       /* 0x50 */
+	int lifeMin;         /* 0x54 */
+	int lifeRange;       /* 0x58 */
+	int sizeMin;         /* 0x5c */
+	int sizeRange;       /* 0x60 */
+	short colour[3];     /* 0x64 */
+	short colour2[3];    /* 0x6a */
+} CSparkParams;
+OF_ASSERT_SIZE(CSparkParams, 0x2c);
+
+typedef struct CSparkSystem
+{
+	CPSHeader h;         /* 0x00 */
+	int unknown3c[2];    /* 0x3c */
+	CSparkParams p;      /* 0x44 */
+	int vb;              /* 0x70 */
+} CSparkSystem;
+OF_ASSERT_OFFSET(CSparkSystem, vb, 0x70);
+
+/* CSmokeSystem parameters (0x20 bytes at +0x3c) */
+typedef struct CSmokeParams
+{
+	byte active;         /* 0x3c */
+	byte pad3d[3];
+	float speed;         /* 0x40 */
+	float drag;          /* 0x44 */
+	float gravity;       /* 0x48 */
+	float radius;        /* 0x4c */
+	int lifeMin;         /* 0x50 */
+	int lifeRange;       /* 0x54 */
+	float spin;          /* 0x58 */
+} CSmokeParams;
+OF_ASSERT_SIZE(CSmokeParams, 0x20);
+
+typedef struct CSmokeSystem
+{
+	CPSHeader h;         /* 0x00 */
+	CSmokeParams p;      /* 0x3c */
+	int vb;              /* 0x5c */
+} CSmokeSystem;
+OF_ASSERT_OFFSET(CSmokeSystem, vb, 0x5c);
+
+/* CGlowSystem parameters (0x28 bytes at +0x3c) */
+typedef struct CGlowParams
+{
+	byte active;         /* 0x3c */
+	byte pad3d[3];
+	float speed;         /* 0x40 */
+	float drag;          /* 0x44 */
+	float gravity;       /* 0x48 */
+	float unknown4c;     /* 0x4c */
+	float spin;          /* 0x50 */
+	int sizeMin;         /* 0x54 */
+	int sizeRange;       /* 0x58 */
+	int lifeMin;         /* 0x5c */
+	int lifeRange;       /* 0x60 */
+} CGlowParams;
+OF_ASSERT_SIZE(CGlowParams, 0x28);
+
+typedef struct CGlowSystem
+{
+	CPSHeader h;         /* 0x00 */
+	CGlowParams p;       /* 0x3c */
+	int vb;              /* 0x64 */
+} CGlowSystem;
+OF_ASSERT_OFFSET(CGlowSystem, vb, 0x64);
+
+/* CSparkPointSystem parameters (0x38 bytes at +0x58) */
+typedef struct CSparkPointParams
+{
+	byte active;         /* 0x58 */
+	byte bounce;         /* 0x59 */
+	short pad5a;
+	float speed;         /* 0x5c */
+	float drag;          /* 0x60 */
+	float gravity;       /* 0x64 */
+	float unknown68;     /* 0x68 */
+	float unknown6c;     /* 0x6c */
+	int lifeMin;         /* 0x70 */
+	int lifeRange;       /* 0x74 */
+	int sizeMin;         /* 0x78 */
+	int sizeRange;       /* 0x7c */
+	short colour[3];     /* 0x80 */
+	short colour2[3];    /* 0x86 */
+	float pointSize;     /* 0x8c */
+} CSparkPointParams;
+OF_ASSERT_SIZE(CSparkPointParams, 0x38);
+
+typedef struct CSparkPointSystem
+{
+	CPSHeader h;         /* 0x00 */
+	int unknown3c[2];    /* 0x3c */
+	int texture2;        /* 0x44 point sprite texture */
+	float dir[3];        /* 0x48 emission direction */
+	int unknown54;       /* 0x54 */
+	CSparkPointParams p; /* 0x58 */
+	int vb;              /* 0x90 */
+	int pointVB;         /* 0x94 */
+} CSparkPointSystem;
+OF_ASSERT_OFFSET(CSparkPointSystem, vb, 0x90);
+
+/* a list of systems linked through CPSHeader.next */
+typedef struct CParticleSystemList
+{
+	const void *const *vtable;  /* 0x0 */
+	CPSHeader *first;           /* 0x4 */
+} CParticleSystemList;
+
+/* an emitter of a CParticleEffect: an array of CParticleSystem, an actor (0x40 bytes or more) */
+typedef struct CParticleEmitter
+{
+	int on;                        /* 0x00 */
+	int id;                        /* 0x04 */
+	uint colour;                   /* 0x08 0xRRGGBB or -1 */
+	int next;                      /* 0x0c next system of the array to fire */
+	float scale;                   /* 0x10 */
+	float time;                    /* 0x14 seconds while on */
+	int actor;                     /* 0x18 */
+	int anim;                      /* 0x1c */
+	CParticleSystem *systems;      /* 0x20 */
+	int texture;                   /* 0x24 */
+	float *drift;                  /* 0x28 added to every particle's velocity */
+	float pos[4];                  /* 0x2c */
+	struct CParticleEmitter *link; /* 0x3c */
+} CParticleEmitter;
+OF_ASSERT_OFFSET(CParticleEmitter, link, 0x3c);
+
+/* a set of emitters with the same number of systems each */
+typedef struct CParticleEffect
+{
+	int numSystems;              /* 0x00 per emitter */
+	float scale;                 /* 0x04 */
+	CParticleEmitter *emitters;  /* 0x08 */
+	int unknown0c[2];            /* 0x0c */
+	int actor;                   /* 0x14 drawn at each emitter in mode 0 */
+	int texture1;                /* 0x18 */
+	int texture2;                /* 0x1c */
+} CParticleEffect;
+
+/* the vtables (rebuilt with symbols) */
+extern const void *const vtable_00266cd4[1];
+extern const void *const vtable_00266cd8[6];
+extern const void *const vtable_00266cf0[6];
+extern const void *const vtable_00266d08[6];
+extern const void *const vtable_00266d20[6];
+extern const void *const vtable_00266d38[6];
+
+/* bdisplay colour tables: red << 16, green << 8, blue, alpha << 24 by 0..255 */
+extern unsigned int DAT_002bce18[256];
+extern unsigned int DAT_002bc490[256];
+extern unsigned int DAT_002bd640[256];
+extern unsigned int DAT_002bc898[256];
+/* 0x00284b10  ambient light colour (bactor) */
+extern int DAT_00284b10;
+extern int DAT_00284b14;
+extern int DAT_00284b18;
+/* 0x002ba99c  game flags (core): bit 0 keeps the previous particle positions */
+extern int DAT_002ba99c;
 
 #endif

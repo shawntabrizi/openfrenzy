@@ -20,3 +20,11 @@ int DAT_002baeb8;        /* 0x002baeb8 this game mode has no RefBot (core) */
 int DAT_003055e0;        /* 0x003055e0 a display flag (bdisplay/core) */
 int DAT_002ed340;        /* 0x002ed340 debris disabled (DebrisSys, bumpercars_a) */
 int DAT_002ed344;        /* 0x002ed344 live actor debris count (DebrisSys, bumpercars_a) */
+unsigned int DAT_002bce18[256]; /* 0x002bce18 colour tables (bdisplay) */
+unsigned int DAT_002bc490[256]; /* 0x002bc490 */
+unsigned int DAT_002bd640[256]; /* 0x002bd640 */
+unsigned int DAT_002bc898[256]; /* 0x002bc898 */
+int DAT_00284b10;               /* 0x00284b10 ambient light (bactor; initial 30) */
+int DAT_00284b14;               /* 0x00284b14 */
+int DAT_00284b18;               /* 0x00284b18 */
+int DAT_002ba99c;               /* 0x002ba99c game flags (core) */

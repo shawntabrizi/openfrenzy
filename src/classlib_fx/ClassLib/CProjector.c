@@ -36,13 +36,13 @@ void CProjTrail_Draw(CProjTrail *self)
 				w1 = self->widths[1];
 				w0 = self->widths[0];
 				CLF_DrawBeam2(self->points[0], w0, w0, self->colours[0], self->points[1], w1, w1,
-				              self->colours[1], self->texture, 0, 0);
+				              self->colours[1], self->texture, NULL, 0.0f);
 				return;
 			}
 			if (DAT_003055e0 != 0)
 				FUN_0002c5a0();
-			count = ((int (*)(int, void *, void *, void *, void *, void *, int))FUN_00040cd0)(
-				(int)n, self->points, self->widths, self->extra, self->colours, self->vertices, 0);
+			count = CLF_DrawPolylineClipped((int)n, self->points, self->widths, self->extra,
+			                                self->colours, self->vertices, 0.0f);
 			if (2 < count) {
 				FUN_000416c0(0, self->texture);
 				if (DAT_00290dbc != 0)
@@ -155,7 +155,7 @@ void CProjector_DrawAll(void)
 			type = p->type;
 			w = p->width * 5.0f;
 			CLF_DrawBeam(p->source, w, w, type->beamColour0, p->target, w, w, type->beamColour1,
-			             type->texture, 0, 0);
+			             type->texture, NULL, 0.0f);
 		}
 	}
 	CProjTrail_DrawAll();
@@ -180,7 +180,7 @@ void CProjector_DrawRefBotAll(void)
 			type = p->type;
 			w = p->width * 5.0f;
 			CLF_DrawBeam(p->source, w, w, type->beamColour0, p->target, w, w, type->beamColour1,
-			             type->texture, 0, 0);
+			             type->texture, NULL, 0.0f);
 		}
 	}
 	FUN_00046d60(DAT_002ed3a0);
@@ -684,7 +684,7 @@ void CProjector_SpiralAt(float *pos, int player)
 	CProjector_SpiralBeam(from, to, DAT_00290de4, 0.0f, DAT_00290de8, DAT_00290df0,
 	                      &DAT_00290dc8[1], DAT_00290dec, 6, colour);
 	/* a random angle is computed and not used */
-	FUN_000703a0((float)CLF_Rand() * 0.00019175345f + 3.1415925f);
+	FUN_000703a0((float)CLF_Rand() * 0.000191753439f + 3.1415925f);
 	CLF_StreakBurst(DAT_00291708, 0x23, pos, 3.0f, 12.0f, 6.0f, 0, -1);
 	CLF_StreakRing(DAT_00291708, 0x23, 60.0f, pos, 24.0f, 16.0f, 0);
 }
@@ -709,7 +709,7 @@ void CProjector_SpiralAtEx(float *pos, float radius, float height, int turns,
 	to[3] = pos[3];
 	CProjector_SpiralBeam(from, to, radius, 0.0f, turns, sparkleDist, &DAT_00290dc8[1],
 	                      DAT_00290dec, 6, colour);
-	FUN_000703a0((float)CLF_Rand() * 0.00019175345f + 3.1415925f);
+	FUN_000703a0((float)CLF_Rand() * 0.000191753439f + 3.1415925f);
 	CLF_StreakBurst(DAT_00291708, 0x23, pos, 3.0f, 12.0f, 6.0f, 0, -1);
 	CLF_StreakRing(DAT_00291708, 0x23, 60.0f, pos, 24.0f, 16.0f, 0);
 }

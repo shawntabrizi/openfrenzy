@@ -15,6 +15,8 @@ Blocks:
   of_clf_data   [0x00290cc0, 0x00290e8c)  .data of CProjector.cpp / RefBot.cpp and the blend
                                           table (XBE values)
   of_clf_bss    [0x002ed3a0, 0x002ed454)  .bss of CProjector.cpp / RefBot.cpp (zero)
+  of_clf_ray_data [0x00292c44, 0x00292c48)  .data of CRay.cpp (XBE values)
+  of_clf_ray_bss  [0x002f27c8, 0x002f27d4)  .bss of CRay.cpp: the ray control list (zero)
 
 EXCLUDE: [0x00290d14, 0x00290d54) lies inside the ray type table (entry 1's colours) but
 classlib_ui already defines those names (its block of_clu_data2). Two definitions of a name
@@ -38,6 +40,8 @@ import xbe_data  # noqa: E402
 BLOCKS = [
     ("of_clf_data", 0x00290CC0, 0x00290E8C, True),
     ("of_clf_bss", 0x002ED3A0, 0x002ED454, False),
+    ("of_clf_ray_data", 0x00292C44, 0x00292C48, True),
+    ("of_clf_ray_bss", 0x002F27C8, 0x002F27D4, False),
 ]
 
 EXCLUDE = [(0x00290D14, 0x00290D54)]

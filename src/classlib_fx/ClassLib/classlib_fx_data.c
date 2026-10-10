@@ -52,6 +52,14 @@ __attribute__((aligned(16))) uint32_t of_clf_data[0x73] = {
 /* 0x002ed3a0-0x002ed454 */
 __attribute__((nocommon, aligned(16))) unsigned char of_clf_bss[0xb4];
 
+/* 0x00292c44-0x00292c48 */
+__attribute__((aligned(16))) uint32_t of_clf_ray_data[0x1] = {
+	/* 0x00292c44 */ 0x40000000,
+};
+
+/* 0x002f27c8-0x002f27d4 */
+__attribute__((nocommon, aligned(16))) unsigned char of_clf_ray_bss[0xc];
+
 /* names of addresses inside the blocks, for this and other modules */
 __asm__(
 	".globl DAT_00290cc0\n.set DAT_00290cc0, of_clf_data + 0x0\n"  /* 0x00290cc0 */
@@ -205,4 +213,9 @@ __asm__(
 	".globl DAT_002ed448\n.set DAT_002ed448, of_clf_bss + 0xa8\n"  /* 0x002ed448 */
 	".globl DAT_002ed44c\n.set DAT_002ed44c, of_clf_bss + 0xac\n"  /* 0x002ed44c */
 	".globl DAT_002ed450\n.set DAT_002ed450, of_clf_bss + 0xb0\n"  /* 0x002ed450 */
+	".globl DAT_00292c44\n.set DAT_00292c44, of_clf_ray_data + 0x0\n"  /* 0x00292c44 */
+	".globl _DAT_00292c44\n.set _DAT_00292c44, of_clf_ray_data + 0x0\n"  /* 0x00292c44 */
+	".globl DAT_002f27c8\n.set DAT_002f27c8, of_clf_ray_bss + 0x0\n"  /* 0x002f27c8 */
+	".globl DAT_002f27cc\n.set DAT_002f27cc, of_clf_ray_bss + 0x4\n"  /* 0x002f27cc */
+	".globl DAT_002f27d0\n.set DAT_002f27d0, of_clf_ray_bss + 0x8\n"  /* 0x002f27d0 */
 );
