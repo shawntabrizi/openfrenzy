@@ -20,6 +20,7 @@ int DAT_002db824;                 /* 0x002db824 */
 void *DAT_002db814[2];            /* 0x002db814 */
 unsigned char DAT_002d08a8[0xc00]; /* 0x002d08a8 LAUNCH_DATA */
 int DAT_002d0750;                 /* 0x002d0750 */
+int DAT_002d02ac;                 /* 0x002d02ac */
 uint64_t DAT_002cd7a0;            /* 0x002cd7a0 */
 uint32_t DAT_002be330[16];        /* 0x002be330 */
 int DAT_002be57c;                 /* 0x002be57c */
@@ -30,6 +31,9 @@ unsigned char DAT_002ecd90[0x5c]; /* 0x002ecd90 (object; up to 0x002ecdec) */
 int DAT_002b9718;                 /* 0x002b9718 core_modes_a: test map */
 int DAT_002ed340;                 /* 0x002ed340 classlib_fx: debris off */
 void *DAT_002b95cc, *DAT_002b95d0, *DAT_002b9c78;  /* core_modes_a/b mode objects */
+int DAT_002b95ac;                 /* 0x002b95ac core_modes_a */
+void *DAT_002b9670;               /* 0x002b9670 core_modes_a */
+int DAT_002b9c58, DAT_002b9c64;   /* core_modes_b */
 uint32_t DAT_002bc898[256], DAT_002bd640[256], DAT_002bc490[256], DAT_002bce18[256];  /* bdisplay */
 
 /* .data of other modules (XBE values) */
@@ -41,4 +45,6 @@ __attribute__((weak)) uint32_t DAT_002855f0[16] = {
 	0x3f800000, 0, 0, 0, 0, 0x3f800000, 0, 0, 0, 0, 0x3f800000, 0, 0, 0, 0, 0x3f800000,
 };
 __attribute__((weak)) uint32_t DAT_00285630 = 1;    /* 0x00285630 libc rand seed */
+__attribute__((weak)) int DAT_00281b0c[3] = { 0x3c, 0x3c, 0x3c };  /* 0x00281b0c core_modes_a */
+__attribute__((weak)) int DAT_00281b18[3] = { 0xff, 0xff, 0xff };  /* 0x00281b18 core_modes_a */
 __attribute__((weak)) float DAT_00292c84 = 4.0f;     /* 0x00292c84 (used by the tweak constructor) */

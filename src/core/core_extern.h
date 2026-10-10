@@ -272,5 +272,9 @@ int XMountUtilityDrive(int format_clean);  /* src/vfs/vfs_files.h */
 void DbgBreakPoint(void);
 unsigned long XGetVideoStandard(void);  /* 0x000309f9 */
 unsigned long XGetVideoFlags(void);     /* 0x00030a22 */
+unsigned long XGetLanguage(void);       /* 0x000309d4 */
+unsigned long XGetGameRegion(void);     /* 0x00030ab6 */
+void *MmAllocateContiguousMemory(unsigned long size);
+char *lstrcpynA(char *destination, const char *source, int count);  /* 0x0003105c */
 
 #endif

@@ -139,7 +139,7 @@ void Core_Init(void)
 		ext_DebugPrintf("Screen setup done\n");
 		ext_GuiSetup();
 		ext_DebugPrintf("Gui setup done\n");
-		FUN_0002fa20();
+		Core_InitGameState();
 		ext_DebugPrintf("Game state setup done\n");
 		if (Core_CreateGames())
 		{

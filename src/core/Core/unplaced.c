@@ -737,3 +737,171 @@ void Core_Main(void)
 {
 	ext_RunMain(Core_Init, 0);
 }
+
+/* ====================================================================== game state */
+
+/* 0x0002f930  (Core) the language folder (packages\<language>) from the console language
+and region; English when the CharVoice package of the language is missing */
+void Core_SelectLanguage(void)
+{
+	char path[0x100];
+	unsigned long language = XGetLanguage();
+	void *package;
+
+	g_GameRegion = (int)XGetGameRegion();
+	g_Language = 0;
+	switch (language)
+	{
+	case 1: /* English: 0 (Europe) or 10 (elsewhere), both packages\english */
+		g_Language = g_GameRegion == 4 ? 0 : 10;
+		break;
+	case 2: /* Japanese */
+		g_Language = 0xb;
+		break;
+	case 3: /* German */
+		g_Language = 2;
+		break;
+	case 4: /* French */
+		g_Language = 1;
+		break;
+	case 5: /* Spanish */
+		g_Language = 3;
+		break;
+	case 6: /* Italian */
+		g_Language = 4;
+		break;
+	}
+	sprintf(path, "%s\\CharVoice", g_LanguageFolders[g_Language]);
+	package = ext_OpenStreamPackage(path);
+	if (package != NULL)
+	{
+		ext_FreePackage(package);
+		g_LanguageFolder = g_LanguageFolders[g_Language];
+		return;
+	}
+	g_Language = g_GameRegion == 4 ? 0 : 10;
+	g_LanguageFolder = g_LanguageFolders[g_Language];
+}
+
+/* 0x0002fa20  (Core) the game state at start-up: options, language, 4 players */
+void Core_InitGameState(void)
+{
+	int i;
+
+	CORE_VAR(int, 0x002ba9ac) = 0;
+	g_DemoTimerOff = 0;
+	DAT_002d02ac = 0;
+	CORE_VAR(int, 0x002bae68) = 0xff;   /* music volume */
+	CORE_VAR(int, 0x002bae6c) = 200;    /* sound volume */
+	CORE_VAR(int, 0x002bae70) = 1;
+	CORE_VAR(int, 0x002bae74) = 0;
+	CORE_VAR(int, 0x002bae7c) = 1;
+	CORE_VAR(int, 0x002bae80) = 0;
+	g_NoHeapCheck = 0;
+	Core_SelectLanguage();
+	((void (*)(int))FUN_0004dcf0)(g_Language);
+	CORE_VAR(int, 0x002bae88) = ((int *)CORE_ADDR(0x002844a0))[CORE_VAR(int, 0x002bae74)];
+	CORE_VAR(int, 0x002bae90) = 4;
+	CORE_VAR(int, 0x002bae94) = 4;      /* players */
+	CORE_VAR(int, 0x002baec4) = 1;
+	g_GameType = 0;
+	g_StartState = 2;
+	g_FlagBAE9C = 0;
+	CORE_VAR(int, 0x002baea0) = 0;
+	g_MusicOn = 0;
+	CORE_VAR(int, 0x002baebc) = 0;      /* team mode */
+	CORE_VAR(int, 0x002baec0) = 0;
+	CORE_VAR(int, 0x002baec8) = 2;
+	CORE_VAR(int, 0x002baecc) = 3;
+	CORE_VAR(int, 0x002baeac) = 0;
+	CORE_VAR(int, 0x002baeb0) = 0;
+	CORE_VAR(int, 0x002baeb4) = 0;
+	CORE_VAR(int, 0x002baed0) = 0;
+	for (i = 0; i < 4; i++)
+	{
+		int *player = (int *)CORE_ADDR(0x002baed4) + i * 10;
+
+		player[3] = i << 16;   /* controller port */
+		player[0] = i;         /* character */
+		player[1] = 0;         /* present */
+		player[2] = i;
+		player[4] = 0;
+		player[6] = 0;
+		player[8] = i / 2;     /* team */
+		player[9] = i % 2;
+	}
+}
+
+/* 0x0002fb50  (Core) the order of the COUNT board stages (0x002844ac): forced (0x00283b00),
+or random without repeats where each stage may follow only those in its mask (0x002844c4) */
+void Core_ChooseStages(int count)
+{
+	uint32_t seed = DAT_00285630;
+	int *stages = (int *)CORE_ADDR(0x002844ac);
+	const uint8_t *follows = (const uint8_t *)CORE_ADDR(0x002844c4);
+	int i;
+
+	if (CORE_VAR(int, 0x002ba638) != 0)
+	{
+		for (i = 0; i < count; i++)
+			stages[i] = ((int *)CORE_ADDR(0x00283b00))[i];
+		return;
+	}
+	for (;;)
+	{
+		uint32_t used = 0, allowed = 0xffffffff;
+
+		i = 0;
+		do
+		{
+			uint32_t stage;
+
+			do
+			{
+				seed = seed * 0x343fd + 0x269ec3;
+				stage = ((seed >> 16) & 0x7fff) % 6;
+			} while ((allowed & (1u << stage)) == 0);
+			DAT_00285630 = seed;
+			stages[i] = (int)stage;
+			i++;
+			if (i == count)
+				return;
+			used |= 1u << stage;
+			allowed = follows[stage] & ~used;
+		} while (allowed != 0);
+	}
+}
+
+/* 0x0002fbf0  (Core) the 9 menu buttons of PLAYER (0x002baf78): Up, Right, Down, Left,
+Accept, Start, Back, X, Y */
+void Core_CreatePlayerInput(int player)
+{
+	uint32_t port = (uint32_t)g_PlayerPort(player);
+	void **buttons = (void **)CORE_ADDR(0x002baf78) + player * 9;
+	void *map = ext_InputMapCreate(9);
+
+	g_MenuInputs[player] = map;
+	buttons[5] = ext_InputMapAdd(map, "Start", 1, 1, 0, 0, 0);
+	buttons[4] = ext_InputMapAdd(map, "Accept", 1, 1, 0, 0, 0);
+	buttons[6] = ext_InputMapAdd(map, "Back", 1, 1, 0, 0, 0);
+	buttons[0] = ext_InputMapAdd(map, "Up", 1, 0, 0, 0, 0);
+	buttons[2] = ext_InputMapAdd(map, "Down", 1, 0, 0, 0, 0);
+	buttons[3] = ext_InputMapAdd(map, "Left", 1, 0, 0, 0, 0);
+	buttons[1] = ext_InputMapAdd(map, "Right", 1, 0, 0, 0, 0);
+	buttons[7] = ext_InputMapAdd(map, "X", 1, 0, 0, 0, 0);
+	buttons[8] = ext_InputMapAdd(map, "Y", 1, 0, 0, 0, 0);
+	ext_InputBind(buttons[5], port | 0xc1, 0);
+	ext_InputBind(buttons[4], port | 0xc5, 0);
+	ext_InputBind(buttons[6], port | 0xc6, 0);
+	ext_InputBind(buttons[6], port | 0xc2, 0);
+	ext_InputBind(buttons[0], port | 0xbd, 0);
+	ext_InputBind(buttons[0], port | 0x1ba, 0);
+	ext_InputBind(buttons[2], port | 0xbe, 0);
+	ext_InputBind(buttons[2], port | 0xba, 0);
+	ext_InputBind(buttons[3], port | 0xbf, 0);
+	ext_InputBind(buttons[3], port | 0x1b9, 0);
+	ext_InputBind(buttons[1], port | 0xc0, 0);
+	ext_InputBind(buttons[1], port | 0xb9, 0);
+	ext_InputBind(buttons[7], port | 199, 0);
+	ext_InputBind(buttons[8], port | 200, 0);
+}

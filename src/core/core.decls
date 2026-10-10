@@ -96,3 +96,35 @@
 
 # Core/CGameMode_Team.c (vtable 0x0025667c)
 0002a5c0 struct CGameMode_Team *CGameMode_Team_Ctor(struct CGameMode_Team *self);
+0002fe6c void FUN_0002fe6c(int *self);
+0002ff40 void CMenuMode_ActorOut(struct CMenuMode *self, const char *anim);
+0002ffd0 void CMenuMode_FreeActors(void);
+00030000 void CMenuMode_Process(int top);
+00030210 void CMenuMode_SetActor(struct CMenuMode *self, void *model, const char *anim);
+00030310 void CMenuMode_Draw(struct CMenuMode *self, int top);
+00030460 struct CMenuMode *CMenuMode_Destroy(struct CMenuMode *self, int flags);
+00030480 int Core_WriteLaunchData(const char *path, const char *device, int type, uint flags, const uint *data);
+
+# Core/CVectorShape.c
+0002f4a0 void CVectorShape_Draw(struct CVectorShape *self);
+0002f500 void CVectorShape_DrawPart(struct CVectorShape *self, unsigned int count);
+0002f570 void CVectorShape_Init(struct CVectorShape *self);
+0002f580 void CVectorShape_Free(struct CVectorShape *self);
+0002f5a0 void CVectorShape_Set(struct CVectorShape *self, const int *data, const int *colour);
+0002f710 void CVectorShape_BuildFan(struct CVectorShape *self, const float *centre, int *vb, const int *colour, const int *glow);
+
+# Core/unplaced.c: game state
+0002f930 void Core_SelectLanguage(void);
+0002fa20 void Core_InitGameState(void);
+0002fb50 void Core_ChooseStages(int count);
+0002fbf0 void Core_CreatePlayerInput(int player);
+0002a650 void CGameMode_Team_Popped(struct CGameMode_Team *self);
+0002a690 void CGameMode_Team_Draw(struct CGameMode_Team *self, int top);
+0002a720 int CGameMode_Team_Button(struct CGameMode_Team *self, int button, int player);
+0002a790 void CGameMode_Team_PlayAnim(struct CGameMode_Team *self, int player, int anim, int loop, int keep, float frame, float blend);
+0002a8b0 struct CGameMode_Team *CGameMode_Team_Destroy(struct CGameMode_Team *self, int flags);
+0002a8d0 void CGameMode_Team_Dtor(struct CGameMode_Team *self);
+0002a930 void CGameMode_Team_Pushed(struct CGameMode_Team *self);
+0002ad30 void CGameMode_Team_Loaded(struct CGameMode_Team *self);
+0002aeb0 void CGameMode_Team_Shuffle(struct CGameMode_Team *self);
+0002b0a0 void CGameMode_Team_Process(struct CGameMode_Team *self, int top);

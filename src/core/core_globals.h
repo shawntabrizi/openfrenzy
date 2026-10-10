@@ -151,6 +151,11 @@ struct CoreCheat {
 #define g_PressStartName CORE_VAR(const char *, 0x00284418)
 #define g_PadLastPort ((int *)CORE_ADDR(0x0028441c))           /* 4 */
 #define g_DefaultFirstMode CORE_VAR(struct CGameMode *, 0x002ba564)
+#define g_LanguageFolder CORE_VAR(const char *, 0x002ba544)
+#define g_GameRegion CORE_VAR(int, 0x002ba9c4)
+#define g_Language CORE_VAR(int, 0x002bae78)
+#define g_LanguageFolders ((const char **)CORE_ADDR(0x002839c0))   /* 12 */
+#define g_MenuInputs ((void **)CORE_ADDR(0x002bb010))              /* 4 input maps */
 #define g_PadsChannel CORE_VAR(void *, 0x002ba54c)      /* a debug channel: any message = pads changed */
 
 /* ---------- globals of other modules (crt/core_foreign.c) */
@@ -164,6 +169,7 @@ extern int DAT_002db824;
 extern void *DAT_002db814[2];           /* engine_misc: two blocks checked every frame */
 extern unsigned char DAT_002d08a8[0xc00];  /* LAUNCH_DATA */
 extern int DAT_002d0750;                /* launch data type */
+extern int DAT_002d02ac;
 extern uint64_t DAT_002cd7a0;           /* clock frequency */
 extern uint32_t DAT_002be330[16];       /* copy of 0x002855f0 */
 extern uint32_t DAT_002855f0[16];
