@@ -423,3 +423,208 @@ void CDemolition_ExplosionMgr_Update(struct CDemolition_ExplosionMgr *self, floa
 	for (i = 0; i < 2; i++)
 		FUN_000ef940((int)((char *)self + 0x10 + i * 0x60), dt);
 }
+
+/* 0x000f0ee0  Demolition (the bomb effects of CDemolition_Bomb.cpp; a gap function)
+   Destructor of the effects block of the frag, timed and cross bombs: the sparks (+0x50)
+   and the fuse timer (+0x18). */
+void CDemolition_BombFx_Destruct(struct CDemolition_BombFx *self)
+{
+	char *s = (char *)self;
+
+	CSparkPointSystem_Destruct((struct CSparkPointSystem *)(s + 0x50));
+	CDemoCountdown_Dtor((unsigned int *)(s + 0x18));
+}
+
+/* ====================================================================================
+   CDemolition_Object (vtable 0x0026b0d4): the physics object the bombs derive from
+   (probably CDemolition_Object.cpp; these follow the tagged CDemolition_Bomb.cpp).
+
+   It extends demolition_d's base (0x0010bd30, 0x43a0 bytes) with a CDemoBody at +0x43a0
+   (demolition_a: CDemoSimulation steps the bodies):
+     +0x438c spawn position   +0x43a4 position   +0x43c4 velocity   +0x43d4 acceleration
+     +0x43e4 contact normal   +0x4404 mass   +0x4414 gravity   +0x4424 applied force
+     +0x4434 drag   +0x4438 sliding friction   +0x443c rolling friction
+   ==================================================================================== */
+
+/* 0x000f52c0  constructor */
+struct CDemolition_Object *CDemolition_Object_Construct(struct CDemolition_Object *self)
+{
+	char *s = (char *)self;
+
+	FUN_0010bd30((undefined4 *)s);
+	DB_PTR(s, 0) = (void *)vtable_0026b0d4;
+	CDemoBody_Ctor(s + 0x43a0);
+	return self;
+}
+
+/* 0x000f5310  destructor */
+void CDemolition_Object_Destruct(struct CDemolition_Object *self)
+{
+	char *s = (char *)self;
+
+	DB_PTR(s, 0) = (void *)vtable_0026b0d4;
+	CDemoBody_Dtor(s + 0x43a0);
+	FUN_0010bd50((undefined4 *)s);
+}
+
+/* 0x000f5370  (called by CDemoSimulation_Step, demolition_a)
+   Integrates the acceleration: velocity += acceleration * dt * mass. */
+void CDemolition_Object_Integrate(struct CDemolition_Object *self, float dt)
+{
+	char *s = (char *)self;
+	float k = dt * DB_F32(s, 0x4404);
+
+	DB_F32(s, 0x43c4) = k * DB_F32(s, 0x43d4) + DB_F32(s, 0x43c4);
+	DB_F32(s, 0x43c8) = k * DB_F32(s, 0x43d8) + DB_F32(s, 0x43c8);
+	DB_F32(s, 0x43cc) = k * DB_F32(s, 0x43dc) + DB_F32(s, 0x43cc);
+}
+
+/* 0x000f53c0  (called by CDemoSimulation_Step after the step)
+   Clears the applied force. */
+void CDemolition_Object_Stop(struct CDemolition_Object *self)
+{
+	char *s = (char *)self;
+
+	DB_F32(s, 0x4424) = 0.0f;
+	DB_F32(s, 0x4428) = 0.0f;
+	DB_F32(s, 0x442c) = 0.0f;
+}
+
+/* ====================================================================================
+   The object list of the game (game +0x1398, vtable 0x0026b0e8): a list of objects
+   (linked at +0x10) that are updated (virtual +8) and drawn (virtual +0xc).
+   ==================================================================================== */
+
+/* 0x000f53e0  constructor */
+void CDemolition_ObjectList_Construct(struct CDemolition_ObjectList *self)
+{
+	DB_PTR(self, 0) = (void *)vtable_0026b0e8;
+}
+
+/* 0x000f53f0  destructor */
+void CDemolition_ObjectList_Destruct(struct CDemolition_ObjectList *self)
+{
+	DB_PTR(self, 0) = (void *)vtable_0026b0e8;
+}
+
+/* 0x000f5400  Init(package): an empty list. Always succeeds. */
+int CDemolition_ObjectList_Init(struct CDemolition_ObjectList *self, void *package)
+{
+	(void)package;
+	DB_PTR(self, 4) = NULL;
+	return 1;
+}
+
+/* 0x000f5410  updates every object (virtual +8, Update(dt)) */
+void CDemolition_ObjectList_Update(struct CDemolition_ObjectList *self, float dt)
+{
+	char *object;
+
+	for (object = (char *)DB_PTR(self, 4); object != NULL; object = (char *)DB_PTR(object, 0x10))
+		DB_VFN(object, 8, void (*)(void *, float))(object, dt);
+}
+
+/* 0x000f5440  draws every object (virtual +0xc) */
+void CDemolition_ObjectList_Draw(struct CDemolition_ObjectList *self)
+{
+	char *object;
+
+	for (object = (char *)DB_PTR(self, 4); object != NULL; object = (char *)DB_PTR(object, 0x10))
+		DB_VFN(object, 0xc, void (*)(void *))(object);
+}
+
+/* 0x000f5460  CDemolition_Object: deleting destructor (vtable 0x0026b0d4 slot 0) */
+void *CDemolition_Object_DeletingDestruct(struct CDemolition_Object *self, unsigned int flags)
+{
+	CDemolition_Object_Destruct(self);
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}
+
+/* 0x000f5480  sets the position of the body and the spawn position */
+void CDemolition_Object_SetPosition(struct CDemolition_Object *self, float *pos)
+{
+	char *s = (char *)self;
+
+	CDemoBody_SetPosition(s + 0x43a0, pos);
+	DB_F32(s, 0x438c) = pos[0];
+	DB_F32(s, 0x4390) = pos[1];
+	DB_F32(s, 0x4394) = pos[2];
+	DB_F32(s, 0x4398) = pos[3];
+}
+
+/* 0x000f54c0  (called by CDemoSimulation_Step before the step; dt is not used)
+   The acceleration of the body: drag, gravity / mass, then the friction along the contact
+   plane (the sliding friction above a speed of 0.03, else a rolling friction that grows
+   with the speed), then the applied force. */
+void CDemolition_Object_ComputeForces(struct CDemolition_Object *self, float dt)
+{
+	char *s = (char *)self;
+	float invMass;
+	float gravityY;
+	float along;
+	float slide[3];
+	float speed;
+	float k;
+
+	(void)dt;
+	DB_F32(s, 0x43d4) = 0.0f;
+	DB_F32(s, 0x43d8) = 0.0f;
+	DB_F32(s, 0x43dc) = 0.0f;
+	DB_F32(s, 0x43d4) = -(DB_F32(s, 0x4434) * DB_F32(s, 0x43c4));
+	DB_F32(s, 0x43d8) = -(DB_F32(s, 0x43c8) * DB_F32(s, 0x4434));
+	DB_F32(s, 0x43dc) = -(DB_F32(s, 0x43cc) * DB_F32(s, 0x4434));
+	invMass = 1.0f / DB_F32(s, 0x4404);
+	DB_F32(s, 0x43d4) = invMass * DB_F32(s, 0x4414) + DB_F32(s, 0x43d4);
+	DB_F32(s, 0x43d8) = invMass * DB_F32(s, 0x4418) + DB_F32(s, 0x43d8);
+	DB_F32(s, 0x43dc) = invMass * DB_F32(s, 0x441c) + DB_F32(s, 0x43dc);
+	gravityY = invMass * DB_F32(s, 0x4418);
+	/* the velocity without its part along the contact normal */
+	along = DB_F32(s, 0x43ec) * DB_F32(s, 0x43cc) + DB_F32(s, 0x43e8) * DB_F32(s, 0x43c8) +
+		DB_F32(s, 0x43e4) * DB_F32(s, 0x43c4);
+	slide[0] = DB_F32(s, 0x43c4) - along * DB_F32(s, 0x43e4);
+	slide[1] = DB_F32(s, 0x43c8) - along * DB_F32(s, 0x43e8);
+	slide[2] = DB_F32(s, 0x43cc) - along * DB_F32(s, 0x43ec);
+	speed = slide[2] * slide[2] + slide[1] * slide[1] + slide[0] * slide[0];
+	if (speed > 0.03f)
+	{
+		bmVectorNormalise(slide, slide);
+		k = gravityY * DB_F32(s, 0x4438);
+	}
+	else
+	{
+		if (!(speed > 0.0f))
+			goto applied;
+		bmVectorNormalise(slide, slide);
+		k = speed * 33.333336f * DB_F32(s, 0x443c) * gravityY;
+	}
+	DB_F32(s, 0x43d4) = slide[0] * k + DB_F32(s, 0x43d4);
+	DB_F32(s, 0x43d8) = slide[1] * k + DB_F32(s, 0x43d8);
+	DB_F32(s, 0x43dc) = slide[2] * k + DB_F32(s, 0x43dc);
+applied:
+	DB_F32(s, 0x43d4) = DB_F32(s, 0x43d4) + DB_F32(s, 0x4424);
+	DB_F32(s, 0x43d8) = DB_F32(s, 0x43d8) + DB_F32(s, 0x4428);
+	DB_F32(s, 0x43dc) = DB_F32(s, 0x43dc) + DB_F32(s, 0x442c);
+}
+
+/* 0x000f56e0  sets the applied force (4 floats) */
+void CDemolition_Object_SetVelocity(struct CDemolition_Object *self, float *velocity)
+{
+	char *s = (char *)self;
+
+	DB_F32(s, 0x4424) = velocity[0];
+	DB_F32(s, 0x4428) = velocity[1];
+	DB_F32(s, 0x442c) = velocity[2];
+	DB_F32(s, 0x4430) = velocity[3];
+}
+
+/* 0x000f5710  CDemolition_ObjectList: deleting destructor (vtable 0x0026b0e8 slot 0) */
+void *CDemolition_ObjectList_DeletingDestruct(struct CDemolition_ObjectList *self,
+	unsigned int flags)
+{
+	DB_PTR(self, 0) = (void *)vtable_0026b0e8;
+	if (flags & 1)
+		bkHeapFree(self);
+	return self;
+}

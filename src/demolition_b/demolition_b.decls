@@ -115,12 +115,45 @@
 000f4e10 void CDemolition_BombSystemCross_Update(struct CDemolition_BombSystem *self, float dt);
 000f51c0 void CDemolition_FragBomb_Update(struct CDemolition_FragBomb *self, float dt);
 
-# Demolition/unplaced.c: CDemolition_Object (vtable 0x0026b0d4)
+# Demolition/unplaced.c: CDemolition_Object (vtable 0x0026b0d4), the object list (vtable 0x0026b0e8)
 000f52c0 struct CDemolition_Object *CDemolition_Object_Construct(struct CDemolition_Object *self);
 000f5310 void CDemolition_Object_Destruct(struct CDemolition_Object *self);
+000f5370 void CDemolition_Object_Integrate(struct CDemolition_Object *self, float dt);
 000f53c0 void CDemolition_Object_Stop(struct CDemolition_Object *self);
+000f53e0 void CDemolition_ObjectList_Construct(struct CDemolition_ObjectList *self);
+000f53f0 void CDemolition_ObjectList_Destruct(struct CDemolition_ObjectList *self);
+000f5400 int CDemolition_ObjectList_Init(struct CDemolition_ObjectList *self, void *package);
+000f5410 void CDemolition_ObjectList_Update(struct CDemolition_ObjectList *self, float dt);
+000f5440 void CDemolition_ObjectList_Draw(struct CDemolition_ObjectList *self);
+000f5460 void *CDemolition_Object_DeletingDestruct(struct CDemolition_Object *self, unsigned int flags);
 000f5480 void CDemolition_Object_SetPosition(struct CDemolition_Object *self, float *pos);
+000f54c0 void CDemolition_Object_ComputeForces(struct CDemolition_Object *self, float dt);
 000f56e0 void CDemolition_Object_SetVelocity(struct CDemolition_Object *self, float *velocity);
+000f5710 void *CDemolition_ObjectList_DeletingDestruct(struct CDemolition_ObjectList *self, unsigned int flags);
+
+# Demolition/unplaced_camera.c: CDemolition_Camera (game +0x1298, vtable 0x0026b0f0)
+000f5730 struct CDemolition_Camera *CDemolition_Camera_Construct(struct CDemolition_Camera *self);
+000f5750 void CDemolition_Camera_Destruct(struct CDemolition_Camera *self);
+000f5760 void CDemolition_Camera_SetMode(struct CDemolition_Camera *self, int mode);
+000f5780 void CDemolition_Camera_Apply(struct CDemolition_Camera *self, float dt);
+000f57c0 void CDemolition_Camera_DrawFades(struct CDemolition_Camera *self);
+000f5870 void CDemolition_Camera_Reset(struct CDemolition_Camera *self);
+000f5950 void *CDemolition_Camera_ResultsPlayer(struct CDemolition_Camera *self);
+000f59f0 void *CDemolition_Camera_DeletingDestruct(struct CDemolition_Camera *self, unsigned int flags);
+000f5a10 int CDemolition_Camera_Init(struct CDemolition_Camera *self);
+000f5a70 void CDemolition_Camera_UpdateIntro(struct CDemolition_Camera *self, float dt);
+000f5c10 void CDemolition_Camera_UpdateArena(struct CDemolition_Camera *self, float dt, int mode);
+000f5e30 void CDemolition_Camera_ResultsA(struct CDemolition_Camera *self, float dt);
+000f5f60 void CDemolition_Camera_ResultsB(struct CDemolition_Camera *self, float dt);
+000f60e0 void CDemolition_Camera_ResultsC(struct CDemolition_Camera *self, float dt);
+000f6270 void CDemolition_Camera_Fit(struct CDemolition_Camera *self, float *eye, float *target, float (*points)[4], int count, float pitch, float yaw);
+000f6890 void CDemolition_Camera_UpdateResults(struct CDemolition_Camera *self, float dt);
+000f68d0 void CDemolition_Camera_FollowFrag(struct CDemolition_Camera *self, float dt, int mode);
+000f6a40 void CDemolition_Camera_FollowRemote(struct CDemolition_Camera *self, float dt, int mode);
+000f6c00 void CDemolition_Camera_FollowTimed(struct CDemolition_Camera *self, float dt, int mode);
+000f6e30 void CDemolition_Camera_UpdateCountdown(struct CDemolition_Camera *self, float dt);
+000f6eb0 void CDemolition_Camera_UpdatePlay(struct CDemolition_Camera *self, float dt);
+000f6f10 void CDemolition_Camera_Update(struct CDemolition_Camera *self, float dt);
 
 # Demolition/unplaced.c: CDemolition_CharLib (vtable 0x0026b2c0)
 000f8a50 struct CDemolition_CharLib *CDemolition_CharLib_Construct(struct CDemolition_CharLib *self);

@@ -24,3 +24,6 @@ __attribute__((weak)) unsigned int DAT_002bce18[256];   /* colour channel tables
 __attribute__((weak)) unsigned int DAT_002bc490[256];
 __attribute__((weak)) unsigned int DAT_002bd640[256];
 __attribute__((weak)) unsigned int DAT_002bc998;
+__attribute__((weak)) int DAT_002f289c[4];              /* the players' CharLib AI objects */
+__attribute__((weak)) int DAT_002baeb8;                 /* demo / no intro (core) */
+__attribute__((weak)) int DAT_002ecfac;                 /* the HUD (classlib_ui) */
