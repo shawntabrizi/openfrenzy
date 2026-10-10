@@ -69,6 +69,7 @@ void FUN_001530c0(int node, int text)
 	char word[256];
 	short number[2];
 	int value[5];
+	float extra;
 	const char *rest;
 	int kind;
 
@@ -97,8 +98,10 @@ void FUN_001530c0(int node, int text)
 		MA_U8(node, 0x10) = 2;
 		return;
 	case 8:
+		/* the original passes one pointer too few (the x86 call reads a stale stack word);
+		   the port gives the last conversion a scratch slot */
 		sscanf(rest, "%s %f %f %f %f %f %f", word, MA_FP(node, 0x14), MA_FP(node, 0x18),
-			MA_FP(node, 0x1c), MA_FP(node, 0x24), MA_FP(node, 0x28));
+			MA_FP(node, 0x1c), MA_FP(node, 0x24), MA_FP(node, 0x28), &extra);
 		MA_U8(node, 0x10) = 3;
 		return;
 	case 9:
@@ -112,8 +115,9 @@ void FUN_001530c0(int node, int text)
 		MA_U8(node, 0x10) = 2;
 		return;
 	case 0xb:
+		/* one pointer too few in the original, as in case 8 */
 		sscanf(rest, "%f %f %f %f %f %f", MA_FP(node, 0x14), MA_FP(node, 0x18),
-			MA_FP(node, 0x1c), MA_FP(node, 0x24), MA_FP(node, 0x28));
+			MA_FP(node, 0x1c), MA_FP(node, 0x24), MA_FP(node, 0x28), &extra);
 		MA_U8(node, 0x10) = 3;
 		return;
 	case 0xc:
