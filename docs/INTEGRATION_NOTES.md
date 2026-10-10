@@ -104,6 +104,53 @@ before you fix the build, and remove an item when it is fixed.
   opens the device. The WMA music decodes with a peak of 10000-32768, and the ADPCM effects
   and voices play (up to 19 voices at once in Hopper). Nobody listened to the output.
 
+## Minigame launcher triage (integration round 1, 2026-10-10)
+
+- `OPENFRENZY_GAME=<name> OPENFRENZY_VARIATION=<n>` starts one minigame directly
+  (src/runtime/of_launch.c fills the retail settings table 0x00082860, which nothing fills on
+  the Xbox; Core_Init then calls the game's start). Names: BumperCars, Fireworks, Clusteroids,
+  Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp.
+- Fixed here: classlib_ui `of_clu_data2` (0x00290d14) was a copy of CProjector ray type 1;
+  0x000846c0 read its texture at +0x44 past the copy (Hopper countdown fault, pc=0x401921fb).
+  It is now classlib_fx `of_clf_data + 0x54`. The score table field names DAT_002b9c48/58/64/68
+  were separate commons; they are now aliases into DAT_002b9968 (core_modes_b cmb_globals.c).
+- Variation 1, 60 s each, `SDL_VIDEO_DRIVER=dummy`, A pressed every 3 s. "60 s" = no fault
+  until the kill; nobody looked at frames.
+
+| Game | Result |
+|---|---|
+| BumperCars, Clusteroids, Hopper, MouseWhack, RollerBall, Jetboats | countdown PLAYING, no fault in 60 s |
+| Demolition | PLAYING, no fault; UNIMPLEMENTED 0x000fd540, 0x000fcb90, 0x000fd180 (demolition_c, not in the table) |
+| TankedUp | PLAYING, then fault (below) |
+| Fireworks, Drillers, Tag, ScratchMatch | fault before the countdown (below) |
+
+Open faults, all in minigame modules (not fixed here):
+
+- Fireworks (carryon_a): read of 0 in CLHud_DrawAIRing (0x0007b970) <- CCarryOn_Player_DrawEffects
+  <- CFire_Game_Draw. `co_Hud_DrawPlayerMarker` (carryon_a_ext.h) casts 0x0007b970 to
+  `(void *, int, float *, float *)` and passes DAT_002ecfac first. The original is
+  `(int player, float *pos, float *target)` (see 0x000c0fd0), so pos arrives as NULL.
+- Drillers: fault at 0x4 in CLList_Insert <- COverlay_Create <- CLHud_CreateScoreBoxes <-
+  CDrillersGame_Start. The root overlay list is g_DrGame + 0x90 (0x002ffa80), never initialised:
+  CDrillersGame_Ctor (0x0010f9c0) calls CLList_Init on self + 4, the original on self + 0x90
+  (`lea ecx,[esi+0x90]`).
+- ScratchMatch: same backtrace through CGameMode_ScratchMatch_Start. Its root list 0x0030fea4
+  is initialised by core's static constructor 0x001f4db0 on the symbol DAT_0030fea4, but
+  ScratchMatch reads SM_A(0x0030fea4) inside sm_bss, which exports no DAT_ aliases: two storages.
+  Fix: sm_bss.c aliases DAT_0030fea4 (and the other static-ctor objects in its range) into sm_bss.
+- Tag (foxhunt): fault at 0x1 in CLList_Insert <- FoxHunt_Shark_Ctor <-
+  CGameMode_FoxHunt_InitCooperation. The shark list DAT_00302300 is corrupt. Likely cause:
+  FoxHunt_Effects_Init calls 0x0013b910 on the 4-byte object DAT_003022cc, which writes
+  `param_1[1]` (the "lightening" system); in the image the next symbol is DAT_00302300.
+  On the Xbox that word is 0x003022d0 (fh_bss3). Fix in foxhunt: make 0x003022cc-0x00302300 one
+  block. Not proved with a watchpoint.
+- TankedUp (tankedup_a): read of 0x8 in CTankEntities_Revive <- TankAI_Think <-
+  CTankEntities_RouteMessage <- TankEnts_Update, a few seconds into play: the entity's template
+  (+0x91c) is NULL.
+- Class of bug to check in every module: objects that core's crt/static_init.c constructs on
+  DAT_<addr> commons but that a module maps into its own block without DAT_ aliases
+  (ScratchMatch above). check_split_globals.py does not catch it.
+
 ## Library identifications
 
 - 0x1e0323 `_purecall`; 0xa6fa0 returns 1; 0xf8ab0 returns 0 (stdcall, 1 argument).
