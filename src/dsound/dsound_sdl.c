@@ -54,6 +54,9 @@ turns the reverb off; audio.enabled = false skips opening a device
 #define MAXIMUM_STREAM_PACKETS 64
 #define MIX_CHUNK_FRAMES 1024
 
+#define BUFFER_MAXIMUM_NOTIFIES 16
+#define BUFFER_NOTIFY_STOP 0xFFFFFFFF
+
 #define XBOX_ADPCM_BLOCK_BYTES 36
 #define XBOX_ADPCM_BLOCK_SAMPLES 64
 
@@ -167,6 +170,15 @@ struct sdl_stream
 		long cached_block;
 		short cache[XBOX_ADPCM_BLOCK_SAMPLES * 2];
 		DWORD flags;             /* DSBUFFERDESC.dwFlags */
+		/* SetNotificationPositions: the frame each fires at (or STOP), and
+		whether the mixer reached it and mix() is to set its event */
+		DWORD notify_count;
+		struct
+		{
+			DWORD frame;
+			HANDLE event;
+			BOOL pending;
+		} notifies[BUFFER_MAXIMUM_NOTIFIES];
 	} buffer;
 	/* the buffer's data was allocated here (DSBUFFERDESC.dwBufferBytes) */
 	BOOL owns_data;
@@ -1293,6 +1305,35 @@ static void limit(float *output, unsigned long frames)
 	}
 }
 
+/* sets the events of the buffer notifications the mixer reached (outside the mixer's
+lock: SetEvent may wake a thread that calls into DirectSound) */
+static void buffer_signal_notifications(void)
+{
+	HANDLE events[32];
+	unsigned long count = 0, index;
+	struct sdl_stream *stream;
+
+	pthread_mutex_lock(&mixer_lock);
+	for (stream = streams; stream; stream = stream->next)
+	{
+		DWORD notify;
+
+		if (!stream->is_buffer)
+			continue;
+		for (notify = 0; notify < stream->buffer.notify_count && count < 32; notify++)
+		{
+			if (!stream->buffer.notifies[notify].pending)
+				continue;
+			stream->buffer.notifies[notify].pending = FALSE;
+			if (stream->buffer.notifies[notify].event)
+				events[count++] = stream->buffer.notifies[notify].event;
+		}
+	}
+	pthread_mutex_unlock(&mixer_lock);
+	for (index = 0; index < count; index++)
+		SetEvent(events[index]);
+}
+
 static void mix(float *output, unsigned long frames)
 {
 	struct sdl_stream *stream;
@@ -1323,6 +1364,7 @@ static void mix(float *output, unsigned long frames)
 		if ((!enabled && reverb.level <= 0.0f) || reverb.quiet > REVERB_QUIET_FRAMES)
 			reverb_clear();
 	}
+	buffer_signal_notifications();
 	/* the players' voices (voice_audio.c), dry, under the limiter */
 	voice_audio_mix(output, frames);
 	limit(output, frames);
@@ -2072,6 +2114,16 @@ static void buffer_loop_frames(const struct buffer_source *source, DWORD *start,
 	}
 }
 
+/* with the lock held: the DSBPN_OFFSETSTOP notifications fire */
+static void buffer_notify_stop(struct buffer_source *source)
+{
+	DWORD index;
+
+	for (index = 0; index < source->notify_count; index++)
+		if (source->notifies[index].frame == BUFFER_NOTIFY_STOP)
+			source->notifies[index].pending = TRUE;
+}
+
 /* the mixer's next frame of a buffer (take_frame); FALSE once it stopped */
 static BOOL buffer_take_frame(struct sdl_stream *stream, float *frame)
 {
@@ -2087,9 +2139,17 @@ static BOOL buffer_take_frame(struct sdl_stream *stream, float *frame)
 		if (!source->looping || loop_start >= loop_end)
 		{
 			source->playing = FALSE;
+			buffer_notify_stop(source);
 			return FALSE;
 		}
 		position = loop_start;
+	}
+	{
+		DWORD index;
+
+		for (index = 0; index < source->notify_count; index++)
+			if (source->notifies[index].frame == position)
+				source->notifies[index].pending = TRUE;
 	}
 	if (source->bits == 4)
 	{
@@ -2124,7 +2184,10 @@ static BOOL buffer_take_frame(struct sdl_stream *stream, float *frame)
 	position++;
 	/* a one-shot stops with its last frame (GetStatus says so from then on) */
 	if (!source->looping && position >= source->frames)
+	{
 		source->playing = FALSE;
+		buffer_notify_stop(source);
+	}
 	else if (source->looping && position >= loop_end)
 		position = loop_start;
 	source->position = position;
@@ -2309,8 +2372,11 @@ HRESULT WINAPI IDirectSoundBuffer_Stop(LPDIRECTSOUNDBUFFER buffer)
 	struct sdl_stream *stream = buffer_from_interface(buffer);
 
 	pthread_mutex_lock(&mixer_lock);
+	if (stream->buffer.playing)
+		buffer_notify_stop(&stream->buffer);
 	stream->buffer.playing = FALSE;
 	pthread_mutex_unlock(&mixer_lock);
+	buffer_signal_notifications();
 	return DS_OK;
 }
 
@@ -2406,6 +2472,29 @@ HRESULT WINAPI IDirectSoundBuffer_Unlock(LPDIRECTSOUNDBUFFER buffer, LPVOID audi
 	(void)bytes1;
 	(void)audio2;
 	(void)bytes2;
+	return DS_OK;
+}
+
+/* replaces the buffer's notifications (DirectSound allows it while stopped; the
+game re-arms them while the buffer plays, which works here) */
+HRESULT WINAPI IDirectSoundBuffer_SetNotificationPositions(LPDIRECTSOUNDBUFFER buffer, DWORD count,
+	LPCDSBPOSITIONNOTIFY notifies)
+{
+	struct sdl_stream *stream = buffer_from_interface(buffer);
+	DWORD index;
+
+	if (count > BUFFER_MAXIMUM_NOTIFIES || (count && !notifies))
+		return DSERR_INVALIDCALL;
+	pthread_mutex_lock(&mixer_lock);
+	stream->buffer.notify_count = count;
+	for (index = 0; index < count; index++)
+	{
+		stream->buffer.notifies[index].frame = notifies[index].dwOffset == DSBPN_OFFSETSTOP ?
+			BUFFER_NOTIFY_STOP : buffer_frame_from_bytes(&stream->buffer, notifies[index].dwOffset);
+		stream->buffer.notifies[index].event = notifies[index].hEventNotify;
+		stream->buffer.notifies[index].pending = FALSE;
+	}
+	pthread_mutex_unlock(&mixer_lock);
 	return DS_OK;
 }
 

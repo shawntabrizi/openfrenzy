@@ -73,6 +73,19 @@ HRESULT WINAPI IDirectSoundBuffer_Lock(LPDIRECTSOUNDBUFFER buffer, DWORD offset,
 	LPVOID *audio1, LPDWORD bytes1, LPVOID *audio2, LPDWORD bytes2, DWORD flags);                          /* 0x00207438 */
 HRESULT WINAPI IDirectSoundBuffer_Unlock(LPDIRECTSOUNDBUFFER buffer, LPVOID audio1, DWORD bytes1,
 	LPVOID audio2, DWORD bytes2);                                                                          /* 0x00206a6b */
+/* IDirectSoundBuffer_SetNotificationPositions (0x002079cb): when the play cursor
+reaches dwOffset (bytes), hEventNotify is set; DSBPN_OFFSETSTOP: when it stops. The
+ADPCM streams arm one at a time, half a buffer apart (0x000574c0, 0x00057570). */
+#define DSBPN_OFFSETSTOP 0xFFFFFFFF
+typedef struct _DSBPOSITIONNOTIFY
+{
+	DWORD dwOffset;
+	HANDLE hEventNotify;
+} DSBPOSITIONNOTIFY, *LPDSBPOSITIONNOTIFY;
+typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
+HRESULT WINAPI IDirectSoundBuffer_SetNotificationPositions(LPDIRECTSOUNDBUFFER buffer, DWORD count,
+	LPCDSBPOSITIONNOTIFY notifies);                                                                        /* 0x002079cb */
+
 HRESULT WINAPI IDirectSoundBuffer_SetMode(LPDIRECTSOUNDBUFFER buffer, DWORD mode, DWORD apply);
 HRESULT WINAPI IDirectSoundBuffer_SetMixBins(LPDIRECTSOUNDBUFFER buffer, DWORD mix_bin_mask);
 HRESULT WINAPI IDirectSoundBuffer_SetI3DL2Source(LPDIRECTSOUNDBUFFER buffer, LPCDSI3DL2BUFFER source, DWORD apply);

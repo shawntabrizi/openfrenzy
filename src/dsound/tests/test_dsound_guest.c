@@ -14,7 +14,8 @@ time at 48 kHz, so the checks on play cursors wait and allow a margin.
    moves at 44.1 kHz, GetStatus is PLAYING, then 0 after the end (0x00055720 frees it)
 3  a 3D one-shot (0x000557d0): DSBCAPS_CTRL3D, position, velocity, distances, play
 4  a looping Xbox ADPCM buffer (0x000573e0): it wraps, Stop holds the cursor,
-   SetCurrentPosition moves it, Lock splits a region at the end
+   SetCurrentPosition moves it, Lock splits a region at the end, position and stop
+   notifications set their events (0x000574c0, 0x00057570)
 5  the WMA music as BSOUND/xbAudioStreamWMA.cpp drives it: stream 0 of Music.xbp read from
    the disc image through a callback over a 128 KB ring (0x00056780), WmaCreateDecoder
    (0x00057060), a looping 256 KB 16-bit stereo buffer at the returned rate, Process into
@@ -383,6 +384,27 @@ int main(void)
 	check(4, IDirectSoundBuffer_Lock(looping, 18 * 72, 4 * 72, &part1, &size1, &part2, &size2, 0) >= 0
 		&& part1 == adpcm + 18 * 72 && size1 == 2 * 72 && part2 == adpcm && size2 == 2 * 72
 		&& IDirectSoundBuffer_Unlock(looping, part1, size1, part2, size2) >= 0, "Lock splits at the end");
+	/* the ADPCM streams' half-buffer notification (0x000574c0): an event set when the
+	cursor reaches block 10, again on the next lap, and a stop notification */
+	{
+		HANDLE half = CreateEventA(NULL, FALSE, FALSE, NULL);
+		HANDLE stopped = CreateEventA(NULL, FALSE, FALSE, NULL);
+		DSBPOSITIONNOTIFY notifies[2];
+
+		notifies[0].dwOffset = 10 * 72;
+		notifies[0].hEventNotify = half;
+		notifies[1].dwOffset = DSBPN_OFFSETSTOP;
+		notifies[1].hEventNotify = stopped;
+		IDirectSoundBuffer_SetCurrentPosition(looping, 0);
+		check(4, IDirectSoundBuffer_SetNotificationPositions(looping, 2, notifies) >= 0, "SetNotificationPositions");
+		check(4, WaitForSingleObject(half, 100) != 0, "no notification before Play");
+		IDirectSoundBuffer_Play(looping, 0, 0, DSBPLAY_LOOPING);
+		/* block 10 is 640 frames in: 20 ms at 32 kHz; one lap is 40 ms */
+		check(4, WaitForSingleObject(half, 500) == 0, "the event is set when the cursor reaches the offset");
+		check(4, WaitForSingleObject(half, 500) == 0, "and again on the next lap");
+		IDirectSoundBuffer_Stop(looping);
+		check(4, WaitForSingleObject(stopped, 500) == 0, "DSBPN_OFFSETSTOP is set on Stop");
+	}
 	check(4, IDirectSoundBuffer_Release(looping) == 0, "Release");
 
 	/* 5 */
