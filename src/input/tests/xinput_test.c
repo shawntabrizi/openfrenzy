@@ -14,11 +14,13 @@ What they protect:
 	  close handles (0x00049990, 0x00049ac0);
 	- XInputSetState returns ERROR_IO_PENDING with dwStatus completed, so the
 	  game's rumble loop (0x0004a0f0) sends only changes;
+	- debug.test_input scripts can press on pads 1-4 and move the sticks;
 	- the real SDL source works headless (no gamepads, the keyboard's port).
 */
 
 #include "platform.h"
 #include "input_xpp.h"
+#include "port_config.h"
 
 #include <SDL3/SDL_scancode.h>
 #include <stddef.h>
@@ -327,6 +329,72 @@ static void test_xpp(void)
 	XInputClose(pad2);
 }
 
+/* ---------- debug.test_input scripts */
+
+/* automated runs drive four players and the sticks: the old pad-1 syntax keeps working,
+"P<n>:" picks a pad, and a stick press is a full deflection the game's bInput reads as a
+direction (0x00049e40 needs |axis| >= 10000 plus its threshold) */
+static void test_script(void)
+{
+	XDEVICE_PREALLOC_TYPE types[2] = { { XDEVICE_TYPE_GAMEPAD, 4 }, { XDEVICE_TYPE_MEMORY_UNIT, 4 } };
+	struct input_script_press press;
+	const char *cursor;
+	XINPUT_GAMEPAD pad;
+	XINPUT_STATE state;
+	HANDLE pad0, pad2;
+
+	/* the round 1 syntax: pad 1 */
+	cursor = "START@8000,A@12000";
+	CHECK(input_script_next(&cursor, &press) && press.port == 0 && !strcmp(press.name, "START") && press.at == 8000);
+	CHECK(input_script_next(&cursor, &press) && press.port == 0 && !strcmp(press.name, "A") && press.at == 12000);
+	CHECK(!input_script_next(&cursor, &press));
+	/* pads 1-4 */
+	cursor = "P1:B@1,P4:LX-@20";
+	CHECK(input_script_next(&cursor, &press) && press.port == 0 && !strcmp(press.name, "B") && press.at == 1);
+	CHECK(input_script_next(&cursor, &press) && press.port == 3 && !strcmp(press.name, "LX-") && press.at == 20);
+	CHECK(input_script_ports("START@1,P3:A@2") == (XDEVICE_PORT0_MASK | XDEVICE_PORT2_MASK));
+	CHECK(input_script_ports("P2:A@2") == XDEVICE_PORT1_MASK);
+	CHECK(input_script_ports("") == 0);
+	/* a syntax error ends the script */
+	CHECK(input_script_ports("P2:A@1,BAD,P3:A@2") == XDEVICE_PORT1_MASK);
+
+	memset(&pad, 0, sizeof(pad));
+	CHECK(input_script_apply("A", &pad) && pad.bAnalogButtons[XINPUT_GAMEPAD_A] == 0xff);
+	CHECK(input_script_apply("UP", &pad) && pad.wButtons == XINPUT_GAMEPAD_DPAD_UP);
+	CHECK(input_script_apply("LY+", &pad) && pad.sThumbLY == 32767);
+	CHECK(input_script_apply("LX-", &pad) && pad.sThumbLX == -32768);
+	CHECK(input_script_apply("RY-", &pad) && pad.sThumbRY == -32768);
+	CHECK(input_script_apply("RX+", &pad) && pad.sThumbRX == 32767);
+	CHECK(!input_script_apply("LZ+", &pad) && !input_script_apply("SELECT", &pad));
+
+	/* a scripted pad 3 is connected with no gamepad, and is pressed at 0 ms */
+	input_set_source(&fake_source);
+	fake_count = 0;
+	memset(fake_keys, 0, sizeof(fake_keys));
+	CHECK(config_write("debug.test_input", "P3:B@0,P3:LY-@0"));
+	XInitDevices(2, types);
+	CHECK(XGetDevices(XDEVICE_TYPE_GAMEPAD) == (XDEVICE_PORT0_MASK | XDEVICE_PORT2_MASK));
+	pad0 = XInputOpen(XDEVICE_TYPE_GAMEPAD, XDEVICE_PORT0, XDEVICE_NO_SLOT, NULL);
+	pad2 = XInputOpen(XDEVICE_TYPE_GAMEPAD, XDEVICE_PORT2, XDEVICE_NO_SLOT, NULL);
+	CHECK(pad2 != NULL);
+	CHECK(XInputGetState(pad2, &state) == ERROR_SUCCESS);
+	CHECK(state.Gamepad.bAnalogButtons[XINPUT_GAMEPAD_B] == 0xff && state.Gamepad.sThumbLY == -32768);
+	CHECK(XInputGetState(pad0, &state) == ERROR_SUCCESS);
+	CHECK(state.Gamepad.bAnalogButtons[XINPUT_GAMEPAD_B] == 0); /* pad 1 is not pressed */
+	/* the script ends: the scripted pad leaves (hot-plug path) */
+	CHECK(config_write("debug.test_input", ""));
+	{
+		DWORD insertions, removals;
+
+		CHECK(XGetDeviceChanges(XDEVICE_TYPE_GAMEPAD, &insertions, &removals));
+		CHECK(insertions == 0 && removals == XDEVICE_PORT2_MASK);
+	}
+	CHECK(XInputGetState(pad2, &state) == ERROR_DEVICE_NOT_CONNECTED);
+	XInputClose(pad0);
+	XInputClose(pad2);
+	input_set_source(NULL);
+}
+
 /* ---------- the real SDL source, headless */
 
 static void test_sdl(void)
@@ -353,6 +421,7 @@ int main(void)
 	test_gamepad();
 	test_ports();
 	test_xpp();
+	test_script();
 	test_sdl();
 	printf("xinput_test: %d failure(s)\n", failures);
 	return failures;

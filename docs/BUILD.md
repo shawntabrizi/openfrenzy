@@ -87,6 +87,27 @@ Environment:
 | `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
 
+### Scripted input (automated runs)
+
+`OPENFRENZY_DEBUG_TEST_INPUT="ITEM[,ITEM...]"`, with `ITEM` = `[P<n>:]CONTROL@MS`. Pad n (1-4,
+default 1) holds CONTROL for 150 ms, starting MS milliseconds after the first `XInputGetState`
+call. The old pad-1 syntax (`START@6000,A@11000`) still works. `src/input/xinput_sdl.c`.
+
+| Controls | Effect |
+|---|---|
+| `START BACK UP DOWN LEFT RIGHT LTHUMB RTHUMB` | digital buttons (`UP`..`RIGHT`: the d-pad) |
+| `A B X Y BLACK WHITE LT RT` | analog buttons and triggers, full pressure |
+| `LX+ LX- LY+ LY- RX+ RX- RY+ RY-` | full stick deflection (Xbox axes: `LY+` is up) |
+
+- A pad 2-4 that the script names is connected from the start, with no gamepad attached. A
+  real SDL gamepad on that port replaces it.
+- Each press is logged once: `test_input: P2:A at 27510 ms` (pad 1 has no `P1:` prefix). An
+  unknown control is logged with `(unknown control)`. A syntax error stops the script there.
+- Example, a 4-human tournament to the first minigame (window, about 60 fps):
+  `START@6000,A@11000,A@15500,A@23000,A@27000,P2:A@27500,P3:A@28000,P4:A@28500,
+  P2:RIGHT@30000,P3:LX+@30000,P3:LX+@31000,P4:LX-@30000,A@33000,P2:A@33500,P3:A@34000,
+  P4:A@34500,START@38000,START@42000,START@46000`, then `A` every 3 s.
+
 ### Display settings
 
 The game is 4:3 only: it always has 640 columns and 480 lines in its own units. A wider or

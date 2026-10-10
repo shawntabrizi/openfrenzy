@@ -44,6 +44,30 @@ none). Ids no longer in ids[] free their port; new ids take the lowest free
 port. Ids beyond INPUT_PORT_COUNT pads wait for a free port. */
 void input_assign_ports(unsigned int ports[INPUT_PORT_COUNT], const unsigned int *ids, int count);
 
+/* ---------- debug.test_input scripts (pure; xinput_sdl.c times and applies them)
+
+A script is "ITEM[,ITEM...]", ITEM = "[P<n>:]CONTROL@MS": pad n (1-4, default 1) holds
+CONTROL for 150 ms from MS milliseconds after the first XInputGetState call. */
+
+struct input_script_press
+{
+	int port;       /* 0-3 */
+	char name[16];  /* the control */
+	long long at;   /* ms */
+};
+
+/* the press at *cursor, and *cursor moved past it; 0 at the end or on a syntax error
+(the rest of the script is then ignored) */
+int input_script_next(const char **cursor, struct input_script_press *press);
+
+/* the ports a script presses on, as an XDEVICE_PORTn_MASK bit mask */
+DWORD input_script_ports(const char *script);
+
+/* holds the control called name on pad; FALSE if there is no such control. Controls:
+START BACK UP DOWN LEFT RIGHT LTHUMB RTHUMB (digital), A B X Y BLACK WHITE LT RT (full
+pressure), LX+ LX- LY+ LY- RX+ RX- RY+ RY- (full stick deflection; +Y is up) */
+BOOL input_script_apply(const char *name, XINPUT_GAMEPAD *pad);
+
 /* ---------- test seams (xinput_sdl.c) */
 
 /* where the module reads devices from; the default reads SDL and

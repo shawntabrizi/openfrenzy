@@ -25,6 +25,7 @@ Keyboard (player 1, merged with the gamepad on port 0):
 #include "input_xpp.h"
 
 #include <SDL3/SDL_scancode.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define FULL 0xff
@@ -216,4 +217,92 @@ void input_assign_ports(unsigned int ports[INPUT_PORT_COUNT], const unsigned int
 			}
 		}
 	}
+}
+
+/* ---------- debug.test_input scripts (xinput_sdl.c applies them) */
+
+int input_script_next(const char **cursor, struct input_script_press *press)
+{
+	const char *item = *cursor;
+	size_t length;
+
+	if (!*item)
+		return 0;
+	press->port = 0;
+	/* "P<n>:" picks pad n (1-4); without it, pad 1 (port 0) */
+	if (item[0] == 'P' && item[1] >= '1' && item[1] <= '0' + INPUT_PORT_COUNT && item[2] == ':')
+	{
+		press->port = item[1] - '1';
+		item += 3;
+	}
+	length = strcspn(item, "@,");
+	if (length >= sizeof(press->name) || item[length] != '@')
+		return 0;
+	memcpy(press->name, item, length);
+	press->name[length] = 0;
+	press->at = strtoll(item + length + 1, NULL, 10);
+	item += strcspn(item, ",");
+	if (*item == ',')
+		item++;
+	*cursor = item;
+	return 1;
+}
+
+DWORD input_script_ports(const char *script)
+{
+	struct input_script_press press;
+	DWORD mask = 0;
+
+	while (script && input_script_next(&script, &press))
+		mask |= 1u << press.port;
+	return mask;
+}
+
+BOOL input_script_apply(const char *name, XINPUT_GAMEPAD *pad)
+{
+	static const struct { const char *name; int index; } analog[] =
+	{
+		{ "A", XINPUT_GAMEPAD_A }, { "B", XINPUT_GAMEPAD_B }, { "X", XINPUT_GAMEPAD_X },
+		{ "Y", XINPUT_GAMEPAD_Y }, { "BLACK", XINPUT_GAMEPAD_BLACK },
+		{ "WHITE", XINPUT_GAMEPAD_WHITE }, { "LT", XINPUT_GAMEPAD_LEFT_TRIGGER },
+		{ "RT", XINPUT_GAMEPAD_RIGHT_TRIGGER },
+	};
+	static const struct { const char *name; WORD mask; } digital[] =
+	{
+		{ "UP", XINPUT_GAMEPAD_DPAD_UP }, { "DOWN", XINPUT_GAMEPAD_DPAD_DOWN },
+		{ "LEFT", XINPUT_GAMEPAD_DPAD_LEFT }, { "RIGHT", XINPUT_GAMEPAD_DPAD_RIGHT },
+		{ "START", XINPUT_GAMEPAD_START }, { "BACK", XINPUT_GAMEPAD_BACK },
+		{ "LTHUMB", XINPUT_GAMEPAD_LEFT_THUMB }, { "RTHUMB", XINPUT_GAMEPAD_RIGHT_THUMB },
+	};
+	unsigned int index;
+
+	for (index = 0; index < sizeof(digital) / sizeof(digital[0]); index++)
+	{
+		if (!strcmp(name, digital[index].name))
+		{
+			pad->wButtons |= digital[index].mask;
+			return TRUE;
+		}
+	}
+	for (index = 0; index < sizeof(analog) / sizeof(analog[0]); index++)
+	{
+		if (!strcmp(name, analog[index].name))
+		{
+			pad->bAnalogButtons[analog[index].index] = FULL;
+			return TRUE;
+		}
+	}
+	/* full stick deflection: LX+ LX- LY+ LY- RX+ RX- RY+ RY- (Xbox axes: +Y is up) */
+	if ((name[0] == 'L' || name[0] == 'R') && (name[1] == 'X' || name[1] == 'Y') &&
+		(name[2] == '+' || name[2] == '-') && name[3] == 0)
+	{
+		SHORT value = name[2] == '+' ? 32767 : -32768;
+
+		if (name[0] == 'L')
+			*(name[1] == 'X' ? &pad->sThumbLX : &pad->sThumbLY) = value;
+		else
+			*(name[1] == 'X' ? &pad->sThumbRX : &pad->sThumbRY) = value;
+		return TRUE;
+	}
+	return FALSE;
 }

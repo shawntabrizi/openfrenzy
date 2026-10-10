@@ -27,6 +27,8 @@ Ports:
 	- SDL gamepads take the lowest free port in connection order and keep it
 	  while connected (input_assign_ports), so unplugging player 2's pad does
 	  not move player 3 to port 2. A fifth pad waits for a free port.
+	- A port 1-3 with no SDL gamepad is connected while debug.test_input
+	  presses on it ("P2:A@5000"); a real pad that arrives there replaces it.
 	- Memory units: none (saves go to the hard disk, xkernel).
 
 The game may call from any thread; a mutex guards the state. SDL events are
@@ -51,6 +53,8 @@ reads what the last pump saw.
 /* port 0's device while the keyboard holds it (not an SDL id: those are
 small counters) */
 #define KEYBOARD_TOKEN 0xffffffffu
+/* a port's device while only debug.test_input drives it */
+#define SCRIPT_TOKEN(port) (0xfffffff0u | (unsigned int)(port))
 
 /* ---------- device tables: their addresses are the device types */
 
@@ -77,6 +81,8 @@ static unsigned int port_ids[INPUT_PORT_COUNT];
 /* the devices that XGetDevices / XGetDeviceChanges last reported, per port */
 static unsigned int reported_tokens[INPUT_PORT_COUNT];
 static BOOL reported_keyboard;
+/* the ports debug.test_input presses on (read at each refresh) */
+static DWORD script_ports;
 
 /* ---------- the SDL source */
 
@@ -155,10 +161,15 @@ void input_set_source(const struct input_source *new_source)
 
 /* ---------- ports */
 
-/* port 0: the keyboard (always there); ports 1-3: their pad's SDL id, 0 if none */
+/* port 0: the keyboard (always there); ports 1-3: their pad's SDL id, else the
+scripted pad's token when debug.test_input presses on that port, else 0 */
 static unsigned int port_token(int port)
 {
-	return port == 0 ? KEYBOARD_TOKEN : port_ids[port];
+	if (port == 0)
+		return KEYBOARD_TOKEN;
+	if (port_ids[port])
+		return port_ids[port];
+	return (script_ports & (1u << port)) ? SCRIPT_TOKEN(port) : 0;
 }
 
 /* reads the connected pads and updates the ports; call with the lock held */
@@ -171,6 +182,7 @@ static void refresh_locked(void)
 		platform_pump_events();
 	count = source->list(ids, (int)(sizeof(ids) / sizeof(ids[0])));
 	input_assign_ports(port_ids, ids, count);
+	script_ports = input_script_ports(config_string("debug.test_input"));
 }
 
 static DWORD connected_mask_locked(void)
@@ -320,24 +332,22 @@ static int controller_port_locked(HANDLE device)
 	return -1;
 }
 
-/* debug.test_input (OPENFRENZY_DEBUG_TEST_INPUT): a scripted press list for automated runs
-on pad 0, "BUTTON@MS[,BUTTON@MS...]": each button is held for 150 ms from MS milliseconds
-after the first XInputGetState call. Buttons: START BACK UP DOWN LEFT RIGHT A B X Y BLACK
-WHITE LT RT. Example: "START@8000,A@12000,A@14000". (integration round 1) */
-static void test_input_apply(XINPUT_GAMEPAD *pad)
+/* debug.test_input (OPENFRENZY_DEBUG_TEST_INPUT): a scripted press list for automated runs,
+"[P<n>:]CONTROL@MS[,...]": pad n (1-4, default 1) holds CONTROL for 150 ms from MS milliseconds
+after the first XInputGetState call. Controls: START BACK UP DOWN LEFT RIGHT LTHUMB RTHUMB A B
+X Y BLACK WHITE LT RT, and LX+ LX- LY+ LY- RX+ RX- RY+ RY- (full stick deflection, +Y up).
+Pads 2-4 named in the script are connected from the start (no SDL gamepad needed).
+Example: "START@8000,A@12000,P2:A@14000,LY-@16000". (integration rounds 1 and 3) */
+static void test_input_apply(int port, XINPUT_GAMEPAD *pad)
 {
-	static const char *const analog[] = { "A", "B", "X", "Y", "BLACK", "WHITE", "LT", "RT" };
-	static const struct { const char *name; unsigned short bit; } digital[] = {
-		{ "UP", 0x1 }, { "DOWN", 0x2 }, { "LEFT", 0x4 }, { "RIGHT", 0x8 },
-		{ "START", 0x10 }, { "BACK", 0x20 },
-	};
 	static long long start_ms = -1;
+	static unsigned char logged[256];
 	const char *script = config_string("debug.test_input");
+	struct input_script_press press;
 	struct timespec now;
 	long long elapsed;
-	const char *item;
-	static unsigned char logged[256];
 	unsigned int count = 0;
+	BOOL known;
 
 	if (!script || !*script)
 		return;
@@ -345,36 +355,21 @@ static void test_input_apply(XINPUT_GAMEPAD *pad)
 	if (start_ms < 0)
 		start_ms = (long long)now.tv_sec * 1000 + now.tv_nsec / 1000000;
 	elapsed = (long long)now.tv_sec * 1000 + now.tv_nsec / 1000000 - start_ms;
-	for (item = script; *item; )
+	for (; input_script_next(&script, &press); count++)
 	{
-		char name[16];
-		size_t length = strcspn(item, "@,");
-		long long at;
-		unsigned int index;
-
-		if (length >= sizeof(name) || item[length] != '@')
-			return;
-		memcpy(name, item, length);
-		name[length] = 0;
-		at = strtoll(item + length + 1, NULL, 10);
-		if (elapsed >= at && elapsed < at + 150)
+		if (press.port != port || elapsed < press.at || elapsed >= press.at + 150)
+			continue;
+		known = input_script_apply(press.name, pad);
+		if (count < sizeof(logged) * 8 && !(logged[count / 8] & (1u << (count % 8))))
 		{
-			if (count < sizeof(logged) * 8 && !(logged[count / 8] & (1u << (count % 8))))
-			{
-				logged[count / 8] |= (unsigned char)(1u << (count % 8));
-				fprintf(stderr, "test_input: %s at %lld ms\n", name, elapsed);
-			}
-			for (index = 0; index < sizeof(digital) / sizeof(digital[0]); index++)
-				if (!strcmp(name, digital[index].name))
-					pad->wButtons |= digital[index].bit;
-			for (index = 0; index < 8; index++)
-				if (!strcmp(name, analog[index]))
-					pad->bAnalogButtons[index] = 0xff;
+			logged[count / 8] |= (unsigned char)(1u << (count % 8));
+			char pad_name[4] = "";
+
+			if (port)
+				snprintf(pad_name, sizeof(pad_name), "P%d:", port + 1);
+			fprintf(stderr, "test_input: %s%s at %lld ms%s\n", pad_name, press.name, elapsed,
+				known ? "" : " (unknown control)");
 		}
-		item += strcspn(item, ",");
-		if (*item == ',')
-			item++;
-		count++;
 	}
 }
 
@@ -407,8 +402,8 @@ DWORD WINAPI XInputGetState(HANDLE device, PXINPUT_STATE state)
 		input_keyboard_to_pad(keys, &pad);
 	if (port_ids[port] && source->read(port_ids[port], &reading))
 		input_gamepad_to_pad(&reading, &pad);
-	if (port == 0)
-		test_input_apply(&pad);
+	if (script_ports & (1u << port))
+		test_input_apply(port, &pad);
 	if (memcmp(&pad, &controllers[port].previous, sizeof(pad)))
 	{
 		controllers[port].packet_number++;
