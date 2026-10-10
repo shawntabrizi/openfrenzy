@@ -36,6 +36,11 @@ Owner: rollerball_a. Only rollerball_a edits this file.
 #define rbb_PlayerReset(p) RB_CALL(FUN_00192270, void (*)(void *))(p)
 /* 0x00192480  player: place at a position (4 floats) */
 #define rbb_PlayerPlace(p, pos) RB_CALL(FUN_00192480, void (*)(void *, const float *))(p, pos)
+/* 0x001924c0 / 0x00192220 / 0x001926e0  entity: before the physics step (forces, then
+movement, dt), and before the move (rollerball_b) */
+#define rbb_EntityForces(e, dt) RB_CALL(FUN_001924c0, void (*)(void *, float))(e, dt)
+#define rbb_EntityMove(e, dt) RB_CALL(FUN_00192220, void (*)(void *, float))(e, dt)
+#define rbb_EntityPreMove(e) RB_CALL(FUN_001926e0, void (*)(void *))(e)
 /* 0x001990e0  player: set +0x41a4 */
 #define rbb_PlayerSet41a4(p, v) RB_CALL(FUN_001990e0, void (*)(void *, float))(p, v)
 

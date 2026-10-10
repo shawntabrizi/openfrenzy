@@ -34,9 +34,9 @@ unsigned char *CRollerBallGame_Ctor(void *self)
 	CRollerBallHud_Ctor(g + RB_GO_HUD);
 	CRollerBallSpotFX_Ctor(g + RB_GO_SPOTFX);
 	CRollerBallLights_Ctor(g + RB_GO_LIGHTS);
+	CRollerBallPhysics_Ctor(g + RB_GO_PHYSICS);
 	CRollerBallInput_Ctor(g + RB_GO_INPUT);
-	CRollerBallInfo_Ctor(g + RB_GO_INFO);
-	CRollerBallSim_Ctor(g + RB_GO_SIM);
+	CRollerBallClock_Ctor(g + RB_GO_CLOCK);
 	CRollerBallTimer_Ctor(g + RB_GO_COUNTDOWN);
 	CRollerBallDebug_Ctor(g + RB_GO_DEBUG);
 	CRollerBallDirect3D_Ctor(g + RB_GO_DIRECT3D);
@@ -68,9 +68,9 @@ void CRollerBallGame_Dtor(void *self)
 	CRollerBallDirect3D_Dtor(g + RB_GO_DIRECT3D);
 	CRollerBallDebug_Dtor(g + RB_GO_DEBUG);
 	CRollerBallTimer_Dtor(g + RB_GO_COUNTDOWN);
-	CRollerBallSim_Dtor(g + RB_GO_SIM);
-	CRollerBallInfo_Dtor(g + RB_GO_INFO);
+	CRollerBallClock_Dtor(g + RB_GO_CLOCK);
 	CRollerBallInput_Dtor(g + RB_GO_INPUT);
+	CRollerBallPhysics_Dtor(g + RB_GO_PHYSICS);
 	CRollerBallLights_Dtor(g + RB_GO_LIGHTS);
 	CRollerBallSpotFX_Dtor(g + RB_GO_SPOTFX);
 	CRollerBallHud_Dtor(g + RB_GO_HUD);
@@ -125,7 +125,7 @@ static void rb_UpdateSystems(unsigned char *self, float dt, int goals)
 	rbb_EntitiesUpdate(self + RB_GO_ENTITIES, dt);
 	if (goals)
 		rbb_GoalsUpdate(self + RB_GO_GOALS, dt);
-	CRollerBallInput_Update(self + RB_GO_INPUT, dt);
+	CRollerBallPhysics_Update(self + RB_GO_PHYSICS, dt);
 	var = RB_PTR(self, RB_GO_VAROBJ);
 	RB_VFN(var, 0x0c, void (*)(void *, float))(var, dt);
 	CRollerBallRespawn_Update(self + RB_GO_RESPAWN, dt);
@@ -892,7 +892,7 @@ void CRollerBallGame_Shutdown(unsigned char *self)
 	FUN_001d5950(); /* empty (ECX = the Direct3D system) */
 	CParticleSystemList_DeleteAll((struct CParticleSystemList *)(self + RB_GO_PARTICLES));
 	CRollerBallSfx_Shutdown(self + RB_GO_SFX);
-	CRollerBallInfo_Shutdown(self + RB_GO_INFO);
+	CRollerBallInput_Shutdown(self + RB_GO_INPUT);
 	CRollerBallVideo_Shutdown(self + RB_GO_VIDEO);
 	CRollerBallShaders_Shutdown(self + RB_GO_SHADERS);
 	CRollerBallFloaty_Shutdown(self + RB_GO_FLOATY);
@@ -965,7 +965,7 @@ void FUN_00188fa0(void *self)
 	}
 	CRollerBallSfx_Play(g + RB_GO_SFX, sample, volume, 0, 0, 0);
 no_sound:
-	CRollerBallSim_Reset(g + RB_GO_SIM);
+	CRollerBallClock_Reset(g + RB_GO_CLOCK);
 	CRollerBallTimer_Set(RB_GAME + RB_GO_TIMER, 0.5f);
 	CRollerBallTimer_Start(RB_GAME + RB_GO_TIMER);
 	RB_I32(RB_GAME, 0x13c8) = 1;
@@ -1024,8 +1024,8 @@ void FUN_001890e0(void *self, int run)
 			RB_U8(g, RB_GO_PAUSED) = 0;
 		return;
 	}
-	CRollerBallInfo_Update(g + RB_GO_INFO);
-	CRollerBallSim_Update(g + RB_GO_SIM);
+	CRollerBallInput_Update(g + RB_GO_INPUT);
+	CRollerBallClock_Update(g + RB_GO_CLOCK);
 	dt = RB_F32(g, 0x268c);
 	if (dt > 2.0f)
 		dt = 2.0f;
@@ -2551,7 +2551,7 @@ it with the variation package. */
 void CRollerBallGame_Initialise(unsigned char *self)
 {
 	unsigned char *ents = self + RB_GO_ENTITIES;
-	unsigned char *input = self + RB_GO_INPUT;
+	unsigned char *input = self + RB_GO_PHYSICS;
 	void *gen;
 	void *var;
 
@@ -2570,7 +2570,7 @@ void CRollerBallGame_Initialise(unsigned char *self)
 	} else if (CDemolition_ObjectList_Init((struct CDemolition_ObjectList *)(self + RB_GO_PARTICLES),
 			gen) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - particleSystem.Initialise FAILED!\n");
-	} else if (CRollerBallSim_Init(self + RB_GO_SIM) == 0) {
+	} else if (CRollerBallClock_Init(self + RB_GO_CLOCK) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - timer.Initialise FAILED!\n");
 	} else if (CDemoCountdown_Init((int)(uintptr_t)(self + RB_GO_COUNTDOWN)) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - countdown.Initialise FAILED!\n");
@@ -2588,7 +2588,7 @@ void CRollerBallGame_Initialise(unsigned char *self)
 		bkPrintf("CRollerBall_Game::Initialise - entitySystem.Initialise FAILED!\n");
 	} else if (RB_CALL(FUN_00192f40, int (*)(void *))(self + RB_GO_CAMERA) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - camera.Initialise FAILED!\n");
-	} else if (CRollerBallInput_Init(input) == 0) {
+	} else if (CRollerBallPhysics_Init(input) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - simulation.Initialise FAILED!\n");
 	} else if (RB_CALL(AI_CanMove, int (*)(void *, void *))(self + RB_GO_HUD, gen) == 0) {
 		/* 0x000b06c0 is a folded "return 1" (ret 4): the HUD's Initialise */
@@ -2599,7 +2599,7 @@ void CRollerBallGame_Initialise(unsigned char *self)
 		bkPrintf("CRollerBall_Game::Initialise - direct3D.Initialise FAILED!\n");
 	} else if (CRollerBallSfx_Init(self + RB_GO_SFX, gen) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - sfxSystem.Initialise FAILED!\n");
-	} else if (CRollerBallInfo_Init(self + RB_GO_INFO) == 0) {
+	} else if (CRollerBallInput_Init(self + RB_GO_INPUT) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - input.Initialise FAILED!\n");
 	} else if (CRollerBallVideo_Init(self + RB_GO_VIDEO) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - videoScreenSystem.Initialise FAILED!\n");
@@ -2610,7 +2610,7 @@ void CRollerBallGame_Initialise(unsigned char *self)
 			bkPrintf("CDemolition_Game::Initialise - rumbleSystem.Initialise FAILED!\n");
 		if (RB_CALL(FUN_00196900, int (*)(void *))(self + RB_GO_SHADOWS) == 0)
 			bkPrintf("CDemolition_Game::Initialise - shadowSystem.Initialise FAILED!\n");
-		CRollerBallInput_SetPlayers(input, rbb_Entities_192350(ents));
+		CRollerBallPhysics_SetPlayers(input, (void *)(uintptr_t)rbb_Entities_192350(ents));
 	}
 variation:
 	switch (RB_I32(self, RB_GO_VARIATION)) {

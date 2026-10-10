@@ -150,10 +150,10 @@ extern unsigned char *DAT_0030ef04;
 #define RB_GO_HUD 0x201c          /* HUD scores and clock (0x001900b0) */
 #define RB_GO_SPOTFX 0x2060       /* spot effects, 10 of 0x88 bytes (0x0018fe40) */
 #define RB_GO_LIGHTS 0x25b4       /* light system (0x0018fb90, CRollerBall_Light.cpp) */
-#define RB_GO_INPUT 0x25c0        /* (0x0018ec30) */
-#define RB_GO_INFO 0x25cc         /* (0x0018eac0) */
+#define RB_GO_PHYSICS 0x25c0      /* simulation: collisions of the entities (0x0018ec30) */
+#define RB_GO_INPUT 0x25cc        /* input map and pad channels (0x0018eac0) */
 #define RB_GO_PADS 0x25d8         /* 4 pointers, one per player slot */
-#define RB_GO_SIM 0x25f0          /* simulation (0x0018e6d0) */
+#define RB_GO_CLOCK 0x25f0        /* the frame clock ("timer", 0x0018e6d0) */
 #define RB_GO_COUNTDOWN 0x26b0    /* a CRollerBall_Timer (0x0018e8c0) */
 #define RB_GO_DEBUG 0x26e8        /* (0x0018e690) */
 #define RB_GO_VAROBJ 0x26f0       /* the variation object */
@@ -198,12 +198,17 @@ struct RB_Msg {
 	short id;              /* +0x04 */
 	unsigned char unique;  /* +0x06 */
 	unsigned char prio;    /* +0x07 */
-	unsigned char b8;      /* +0x08 */
-	unsigned char b9;      /* +0x09 */
-	unsigned char pad[2];
-	int arg;               /* +0x0c */
-	float value;           /* +0x10 */
-	unsigned int extra[6];
+	union {                /* +0x08: 9 words of payload */
+		struct {
+			unsigned char b8;      /* +0x08 */
+			unsigned char b9;      /* +0x09 */
+			unsigned char pad[2];
+			int arg;               /* +0x0c */
+			float value;           /* +0x10 */
+		};
+		unsigned int d[9];
+		float f[9];
+	};
 };
 OF_ASSERT_SIZE(struct RB_Msg, 0x2c);
 
@@ -221,6 +226,7 @@ extern int DAT_002bae98;            /* number of human players */
 extern int DAT_002baebc;            /* team game */
 extern int DAT_002baed8;            /* core: player records, 0x28 bytes each */
 extern int DAT_002baee8, DAT_002baf10, DAT_002baf38, DAT_002baf60; /* scores of players 0..3 */
+extern int DAT_002baee0;            /* core: player 0 record +8 (the pad), 0x28 bytes each */
 extern int DAT_002b9c48[4];
 extern int DAT_00283ea4;
 extern int DAT_00283ef0;
@@ -233,6 +239,9 @@ extern unsigned char DAT_002ecd90[]; /* classlib_ui: the pause screen */
 extern unsigned char DAT_002b9968[]; /* core_modes_b: the score table (CScoreTable) */
 extern unsigned char DAT_002ed324[]; /* classlib_ui: the rumble manager */
 extern int DAT_002bc40c, DAT_002bc410; /* bdisplay: the screen width and height */
+extern void *DAT_002bc47c;          /* bdisplay: the D3D device */
+extern long long DAT_002cd7a0;      /* bkernel: timer ticks per second */
+extern float DAT_00285644;          /* engine_misc: the collision rest threshold */
 
 /* the kernel debug break (xkernel HLE: logs and continues) */
 void DbgBreakPoint(void);
