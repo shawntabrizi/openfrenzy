@@ -192,4 +192,70 @@ OF_ASSERT_SIZE(struct CMetaExplosion, 0x1a8);
 
 extern struct MbList DAT_00308f08;  /* explosions, nodes at +0x1a0 */
 
+/* ---------- CMLaser.cpp */
+
+struct MbLaserPoint
+{
+	float pos[4];
+	int colour[4];              /* r, g, b, a */
+};
+
+/* a laser beam (0x1b0 bytes) */
+struct CMLaser
+{
+	void *next;                 /* +0x000 node of the list 0x00308f1c */
+	void *prev;                 /* +0x004 */
+	float origin[4];            /* +0x008 */
+	float life;                 /* +0x018 frames; 0 = for ever */
+	int colour[4];              /* +0x01c fades with the life */
+	int endColour[4];           /* +0x02c */
+	float length;               /* +0x03c */
+	float maxLength;            /* +0x040 */
+	float width;                /* +0x044 */
+	float spin[4];              /* +0x048 added to the angles per frame */
+	float angles[4];            /* +0x058 */
+	struct MbLaserPoint points[10]; /* +0x068 */
+	int numPoints;              /* +0x1a8 segments */
+	void *texture;              /* +0x1ac */
+};
+OF_ASSERT_OFFSET(struct CMLaser, points, 0x68);
+OF_ASSERT_SIZE(struct CMLaser, 0x1b0);
+
+extern void *DAT_00308f14;
+extern void *DAT_00308f18;
+extern struct MbList DAT_00308f1c;
+
+/* ---------- CScorchMarks.cpp */
+
+/* a scorch mark type (0x14 bytes; table at 0x002b0a64) */
+struct MbScorchType
+{
+	const char *name;
+	void *texture;
+	float size;
+	float alpha;
+	float fade;
+};
+OF_ASSERT_SIZE(struct MbScorchType, 0x14);
+
+/* a scorch mark (0xcc bytes) */
+struct CScorchMark
+{
+	void *next;                 /* +0x00 node of the list 0x00308f2c */
+	void *prev;                 /* +0x04 */
+	struct MbVertex verts[4];   /* +0x08 */
+	void *texture;              /* +0x98 */
+	void *parent;               /* +0x9c an object with a heading at +0x1f8, or NULL */
+	float pos[4];               /* +0xa0 */
+	float normal[4];            /* +0xb0 */
+	float size;                 /* +0xc0 */
+	float alpha;                /* +0xc4 */
+	float fade;                 /* +0xc8 per frame */
+};
+OF_ASSERT_SIZE(struct CScorchMark, 0xcc);
+
+extern struct MbScorchType DAT_002b0a64[2];
+extern int DAT_00308f28;
+extern struct MbList DAT_00308f2c;
+
 #endif

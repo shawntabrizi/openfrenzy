@@ -59,3 +59,25 @@
 0016bc30 void MbTimer_Start(struct MbTimer *self);
 0016bc50 float MbTimer_GetRemaining(struct MbTimer *self);
 0016bc60 float MbTimer_GetProgress(struct MbTimer *self);
+
+# Meta/CMLaser.cpp
+0015f6e0 void CMLaser_Draw(struct CMLaser *self);
+0015f750 void CMLaser_Init(void);
+0015f790 void CMLaser_DrawAll(void);
+0015f820 void CMLaser_Trace(struct CMLaser *self);
+0015fad0 struct CMLaser *CMLaser_Construct(struct CMLaser *self, float *origin, float *angles, float *spin, float maxLength, float width, int *colour, int *endColour, float life);
+0015fbb0 struct CMLaser *CMLaser_Update(struct CMLaser *self);
+0015fcd0 void CMLaser_DeleteAll(void);
+0015fd10 void CMLaser_UpdateAll(void);
+0015fd40 void CMLaser_Fire(float *origin, int count, int r, int g, int b, int a, float life);
+0015ff00 void CMLaser_Show(float *origin, int count, float life);
+
+# Meta/CScorchMarks.cpp
+0015ff80 void CScorchMarks_Init(void);
+0015ffc0 void CScorchMark_Draw(struct CScorchMark *self);
+00160060 void CScorchMarks_DrawAll(void);
+00160120 void CScorchMark_BuildQuad(struct MbVertex *verts, float *pos, float *normal, float size, float yaw);
+001603b0 void CScorchMarks_DeleteAll(void);
+00160400 struct CScorchMark *CScorchMark_Construct(struct CScorchMark *self, float *pos, float *normal, void *parent, int type);
+00160560 void CScorchMarks_UpdateAll(void);
+001605e0 struct CScorchMark *CScorchMark_Create(float *pos, float *normal, void *parent, int type);
