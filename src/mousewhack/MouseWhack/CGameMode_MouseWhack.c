@@ -898,7 +898,7 @@ void CGameMode_MouseWhack_Exit(void *self)
 	}
 	baDeleteExtraSystem(NULL);
 	CLIntroCam_Destroy();
-	/* the bullets (list 0x0030ed00, node at +0x1b8) */
+	/* the smashable props (CBBash_Destructable; list 0x0030ed00, node at +0x1b8) */
 	node = (unsigned char *)(uintptr_t)CLList_Next((unsigned int *)DAT_0030ed00, NULL);
 	while (node != NULL) {
 		next = (unsigned char *)(uintptr_t)CLList_Remove((int *)DAT_0030ed00, (int *)node);

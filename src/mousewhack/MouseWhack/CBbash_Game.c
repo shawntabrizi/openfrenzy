@@ -963,7 +963,7 @@ void CBbash_Game_Play(void *self)
 		}
 		bugNode = (unsigned char *)(uintptr_t)CLList_Next((unsigned int *)DAT_0030ee30, (unsigned int *)next);
 	}
-	/* the bullets (node at +0x1b8; state +0x1c4 == 2: finished) */
+	/* the smashable props (CBBash_Destructable; node at +0x1b8; state +0x1c4 == 2: gone) */
 	bugNode = (unsigned char *)(uintptr_t)CLList_Next((unsigned int *)DAT_0030ed00, NULL);
 	while (bugNode != NULL) {
 		unsigned char *bullet = bugNode - 0x1b8;

@@ -9,12 +9,18 @@ Module mousewhack: the "Bug Bash" minigame (internal name MouseWhack; game list 
   CGameMode_MouseWhack.cpp 0x0016ceb0-0x00173f70  the game mode: load, init, frame, draw
                                                   (gap functions; the file name is in the
                                                   heap allocation tags of 0x0016d780)
-  CBbash_Game.cpp          0x00173f80-0x0017d170  rules, spawning, scores, camera
-  CBbash_Player.cpp        0x0017d180-0x00180710  the player (a CharLib AI character)
-  CBbash_Bullets.cpp       0x00180720-0x00180f50  paint balls / spit balls
-  CBbash_Bugs.cpp          0x00180f60-0x00183c90  the bugs (worms, roaches, flies, tremors)
-  CBBash_Splat.cpp         0x00183ca0-0x00185e80  paint splats on the floor
-  (unplaced)               0x00185e90-0x001872f0  the player AI
+  CBbash_Game.cpp          0x001729a0-0x00175b70  rules, spawning, scores, camera
+  (unplaced.c)             0x00176100-0x0017d100  the frame timer, the behaviour of each bug
+                                                  type, sounds and voices
+  CBbash_Player.cpp        0x0017d180-0x0017f8a0  the player (a CharLib AI character)
+  CBbash_Bullets.cpp       0x00180720-0x00180f00  paint balls / spit balls
+  CBBash_Destructable.cpp  0x00180f60-0x00181550  smashable props (file name from the
+                                                  instance tag of 0x00181550; not in the
+                                                  source map)
+  CBbash_Bugs.cpp          0x00181730-0x00181fc0  the bug object (spawn, frame, paint tag)
+  CBBash_Splat.cpp         0x00182c10-0x00186280  the pool of marks and debris (splats,
+                                                  rings, swipes, sprays, bits, drops)
+  (unplaced.c)             0x00186aa0-0x001872f0  player shadows, the player AI states
 
 Owner: mousewhack. Other modules may include this header; only mousewhack edits it.
 
@@ -58,7 +64,7 @@ extern unsigned char mw_bss1[0x0030a1d0 - 0x0030a138];        /* 0x0030a138 */
 extern unsigned char DAT_0030a1d0[0x0030ea20 - 0x0030a1d0];   /* the arena (CBbash_Arena), core static init */
 extern unsigned char DAT_0030ea20[0x10];                      /* core static init: a list */
 extern unsigned char mw_bss3[0x0030ed00 - 0x0030ea30];        /* 0x0030ea30 */
-extern unsigned char DAT_0030ed00[0xc];                       /* core static init: the bullet list */
+extern unsigned char DAT_0030ed00[0xc];                       /* core static init: the prop list (CBBash_Destructable) */
 extern unsigned char mw_bss4[0x0030ee30 - 0x0030ed0c];        /* 0x0030ed0c */
 extern unsigned char DAT_0030ee30[0x10];                      /* core static init: the bug list */
 extern unsigned char mw_bss5[0x0030ef04 - 0x0030ee40];        /* 0x0030ee40 */
