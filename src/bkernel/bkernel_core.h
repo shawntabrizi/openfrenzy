@@ -463,7 +463,7 @@ extern int DAT_002d02c8, DAT_002d02cc, DAT_002d02d0, DAT_002d02d4;
 /* resources */
 extern const char *const DAT_002852c0[BK_RESOURCE_TYPES]; /* 0x002852c0 type names */
 #define bkResourceTypeNames DAT_002852c0
-extern const char *const DAT_00285290[6];  /* 0x00285290 language suffixes */
+extern const char *const DAT_00285290[12];  /* 0x00285290 language suffixes */
 #define bkLanguageSuffixes DAT_00285290
 extern bkResource DAT_002ccd00;          /* 0x002ccd00 list of all resources */
 #define bkResourceList DAT_002ccd00

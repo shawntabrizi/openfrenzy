@@ -34,8 +34,8 @@ extern int DAT_002ba940[4];
 extern int DAT_00290ee4[4];
 extern float DAT_00290ef4;
 extern float DAT_00290ef8;
-/* 0x0025633e  an empty string ("" and L"") */
-extern const char DAT_0025633e[];
+/* 0x0025633e  an empty string ("" and L""); no other module defines it, so it is local here */
+static const char DAT_0025633e[4] = { 0, 0, 0, 0 };
 
 /* 0x002f2068  the start positions: x, y, z, w (1.0 when set), heading, by start slot
 (a global after the game object; bumpercars_b fills it) */

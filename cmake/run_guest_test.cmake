@@ -7,6 +7,8 @@ set(ENV{OPENFRENZY_DATA_ROOT} "${WORK}/data")
 set(ENV{OPENFRENZY_SAVE_ROOT} "${WORK}/saves")
 # Headless: these images draw nothing, and the test must also run without a window server.
 set(ENV{SDL_VIDEO_DRIVER} "dummy")
+# The game image: run only the static constructors (its main never returns).
+set(ENV{OPENFRENZY_BOOT_ONLY} "1")
 if(ISO)
   set(ENV{OPENFRENZY_ISO} "${ISO}")
 endif()

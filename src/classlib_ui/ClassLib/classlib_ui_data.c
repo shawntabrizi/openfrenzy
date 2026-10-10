@@ -447,17 +447,17 @@ __asm__(
 	".globl DAT_0028fdc0\n.set DAT_0028fdc0, of_clu_data + 0x18\n"  /* 0x0028fdc0 */
 	".globl DAT_0028fdc4\n.set DAT_0028fdc4, of_clu_data + 0x1c\n"  /* 0x0028fdc4 */
 	".globl DAT_0028fdc8\n.set DAT_0028fdc8, of_clu_data + 0x20\n"  /* 0x0028fdc8 */
-	".globl _DAT_0028fdc8\n.set _DAT_0028fdc8, of_clu_data + 0x20\n"  /* 0x0028fdc8 */
+	".globl __DAT_0028fdc8\n.set __DAT_0028fdc8, of_clu_data + 0x20\n"  /* 0x0028fdc8 */
 	".globl DAT_0028fdcc\n.set DAT_0028fdcc, of_clu_data + 0x24\n"  /* 0x0028fdcc */
-	".globl _DAT_0028fdcc\n.set _DAT_0028fdcc, of_clu_data + 0x24\n"  /* 0x0028fdcc */
+	".globl __DAT_0028fdcc\n.set __DAT_0028fdcc, of_clu_data + 0x24\n"  /* 0x0028fdcc */
 	".globl DAT_0028fdd0\n.set DAT_0028fdd0, of_clu_data + 0x28\n"  /* 0x0028fdd0 */
-	".globl _DAT_0028fdd0\n.set _DAT_0028fdd0, of_clu_data + 0x28\n"  /* 0x0028fdd0 */
+	".globl __DAT_0028fdd0\n.set __DAT_0028fdd0, of_clu_data + 0x28\n"  /* 0x0028fdd0 */
 	".globl DAT_0028fdd8\n.set DAT_0028fdd8, of_clu_data + 0x30\n"  /* 0x0028fdd8 */
-	".globl _DAT_0028fdd8\n.set _DAT_0028fdd8, of_clu_data + 0x30\n"  /* 0x0028fdd8 */
+	".globl __DAT_0028fdd8\n.set __DAT_0028fdd8, of_clu_data + 0x30\n"  /* 0x0028fdd8 */
 	".globl DAT_0028fddc\n.set DAT_0028fddc, of_clu_data + 0x34\n"  /* 0x0028fddc */
-	".globl _DAT_0028fddc\n.set _DAT_0028fddc, of_clu_data + 0x34\n"  /* 0x0028fddc */
+	".globl __DAT_0028fddc\n.set __DAT_0028fddc, of_clu_data + 0x34\n"  /* 0x0028fddc */
 	".globl DAT_0028fde0\n.set DAT_0028fde0, of_clu_data + 0x38\n"  /* 0x0028fde0 */
-	".globl _DAT_0028fde0\n.set _DAT_0028fde0, of_clu_data + 0x38\n"  /* 0x0028fde0 */
+	".globl __DAT_0028fde0\n.set __DAT_0028fde0, of_clu_data + 0x38\n"  /* 0x0028fde0 */
 	".globl DAT_0028fde8\n.set DAT_0028fde8, of_clu_data + 0x40\n"  /* 0x0028fde8 */
 	".globl DAT_0028fdec\n.set DAT_0028fdec, of_clu_data + 0x44\n"  /* 0x0028fdec */
 	".globl PTR_s_com_frenzyintro_0028fdec\n.set PTR_s_com_frenzyintro_0028fdec, of_clu_data + 0x44\n"  /* 0x0028fdec */
@@ -519,19 +519,19 @@ __asm__(
 	".globl DAT_00290960\n.set DAT_00290960, of_clu_data + 0xbb8\n"  /* 0x00290960 */
 	".globl DAT_00290964\n.set DAT_00290964, of_clu_data + 0xbbc\n"  /* 0x00290964 */
 	".globl DAT_00290968\n.set DAT_00290968, of_clu_data + 0xbc0\n"  /* 0x00290968 */
-	".globl _DAT_00290968\n.set _DAT_00290968, of_clu_data + 0xbc0\n"  /* 0x00290968 */
+	".globl __DAT_00290968\n.set __DAT_00290968, of_clu_data + 0xbc0\n"  /* 0x00290968 */
 	".globl DAT_0029096c\n.set DAT_0029096c, of_clu_data + 0xbc4\n"  /* 0x0029096c */
 	".globl DAT_0029096d\n.set DAT_0029096d, of_clu_data + 0xbc5\n"  /* 0x0029096d */
 	".globl DAT_0029096e\n.set DAT_0029096e, of_clu_data + 0xbc6\n"  /* 0x0029096e */
 	".globl DAT_00290984\n.set DAT_00290984, of_clu_data + 0xbdc\n"  /* 0x00290984 */
 	".globl DAT_00290988\n.set DAT_00290988, of_clu_data + 0xbe0\n"  /* 0x00290988 */
 	".globl DAT_0029098c\n.set DAT_0029098c, of_clu_data + 0xbe4\n"  /* 0x0029098c */
-	".globl _DAT_0029098c\n.set _DAT_0029098c, of_clu_data + 0xbe4\n"  /* 0x0029098c */
+	".globl __DAT_0029098c\n.set __DAT_0029098c, of_clu_data + 0xbe4\n"  /* 0x0029098c */
 	".globl DAT_00290990\n.set DAT_00290990, of_clu_data + 0xbe8\n"  /* 0x00290990 */
-	".globl _DAT_00290990\n.set _DAT_00290990, of_clu_data + 0xbe8\n"  /* 0x00290990 */
+	".globl __DAT_00290990\n.set __DAT_00290990, of_clu_data + 0xbe8\n"  /* 0x00290990 */
 	".globl DAT_00290994\n.set DAT_00290994, of_clu_data + 0xbec\n"  /* 0x00290994 */
 	".globl DAT_00290998\n.set DAT_00290998, of_clu_data + 0xbf0\n"  /* 0x00290998 */
-	".globl _DAT_00290998\n.set _DAT_00290998, of_clu_data + 0xbf0\n"  /* 0x00290998 */
+	".globl __DAT_00290998\n.set __DAT_00290998, of_clu_data + 0xbf0\n"  /* 0x00290998 */
 	".globl DAT_0029099c\n.set DAT_0029099c, of_clu_data + 0xbf4\n"  /* 0x0029099c */
 	".globl DAT_002909a0\n.set DAT_002909a0, of_clu_data + 0xbf8\n"  /* 0x002909a0 */
 	".globl DAT_002909a4\n.set DAT_002909a4, of_clu_data + 0xbfc\n"  /* 0x002909a4 */
@@ -540,40 +540,40 @@ __asm__(
 	".globl DAT_002909b0\n.set DAT_002909b0, of_clu_data + 0xc08\n"  /* 0x002909b0 */
 	".globl DAT_002909c4\n.set DAT_002909c4, of_clu_data + 0xc1c\n"  /* 0x002909c4 */
 	".globl DAT_002909c8\n.set DAT_002909c8, of_clu_data + 0xc20\n"  /* 0x002909c8 */
-	".globl _DAT_002909c8\n.set _DAT_002909c8, of_clu_data + 0xc20\n"  /* 0x002909c8 */
+	".globl __DAT_002909c8\n.set __DAT_002909c8, of_clu_data + 0xc20\n"  /* 0x002909c8 */
 	".globl DAT_002909cc\n.set DAT_002909cc, of_clu_data + 0xc24\n"  /* 0x002909cc */
-	".globl _DAT_002909cc\n.set _DAT_002909cc, of_clu_data + 0xc24\n"  /* 0x002909cc */
+	".globl __DAT_002909cc\n.set __DAT_002909cc, of_clu_data + 0xc24\n"  /* 0x002909cc */
 	".globl DAT_002909d4\n.set DAT_002909d4, of_clu_data + 0xc2c\n"  /* 0x002909d4 */
-	".globl _DAT_002909d4\n.set _DAT_002909d4, of_clu_data + 0xc2c\n"  /* 0x002909d4 */
+	".globl __DAT_002909d4\n.set __DAT_002909d4, of_clu_data + 0xc2c\n"  /* 0x002909d4 */
 	".globl DAT_002909d8\n.set DAT_002909d8, of_clu_data + 0xc30\n"  /* 0x002909d8 */
-	".globl _DAT_002909d8\n.set _DAT_002909d8, of_clu_data + 0xc30\n"  /* 0x002909d8 */
+	".globl __DAT_002909d8\n.set __DAT_002909d8, of_clu_data + 0xc30\n"  /* 0x002909d8 */
 	".globl DAT_002909dc\n.set DAT_002909dc, of_clu_data + 0xc34\n"  /* 0x002909dc */
-	".globl _DAT_002909dc\n.set _DAT_002909dc, of_clu_data + 0xc34\n"  /* 0x002909dc */
+	".globl __DAT_002909dc\n.set __DAT_002909dc, of_clu_data + 0xc34\n"  /* 0x002909dc */
 	".globl DAT_002909e0\n.set DAT_002909e0, of_clu_data + 0xc38\n"  /* 0x002909e0 */
 	".globl u_A_controler_was_unplugged_or_is_n_002909e0\n.set u_A_controler_was_unplugged_or_is_n_002909e0, of_clu_data + 0xc38\n"  /* 0x002909e0 */
 	".globl DAT_00290be0\n.set DAT_00290be0, of_clu_data + 0xe38\n"  /* 0x00290be0 */
-	".globl _DAT_00290be0\n.set _DAT_00290be0, of_clu_data + 0xe38\n"  /* 0x00290be0 */
+	".globl __DAT_00290be0\n.set __DAT_00290be0, of_clu_data + 0xe38\n"  /* 0x00290be0 */
 	".globl DAT_00290be4\n.set DAT_00290be4, of_clu_data + 0xe3c\n"  /* 0x00290be4 */
 	".globl DAT_00290be8\n.set DAT_00290be8, of_clu_data + 0xe40\n"  /* 0x00290be8 */
 	".globl DAT_00290bec\n.set DAT_00290bec, of_clu_data + 0xe44\n"  /* 0x00290bec */
-	".globl _DAT_00290bec\n.set _DAT_00290bec, of_clu_data + 0xe44\n"  /* 0x00290bec */
+	".globl __DAT_00290bec\n.set __DAT_00290bec, of_clu_data + 0xe44\n"  /* 0x00290bec */
 	".globl DAT_00290bf0\n.set DAT_00290bf0, of_clu_data + 0xe48\n"  /* 0x00290bf0 */
-	".globl _DAT_00290bf0\n.set _DAT_00290bf0, of_clu_data + 0xe48\n"  /* 0x00290bf0 */
+	".globl __DAT_00290bf0\n.set __DAT_00290bf0, of_clu_data + 0xe48\n"  /* 0x00290bf0 */
 	".globl DAT_00290bf4\n.set DAT_00290bf4, of_clu_data + 0xe4c\n"  /* 0x00290bf4 */
 	".globl DAT_00290bf8\n.set DAT_00290bf8, of_clu_data + 0xe50\n"  /* 0x00290bf8 */
-	".globl _DAT_00290bf8\n.set _DAT_00290bf8, of_clu_data + 0xe50\n"  /* 0x00290bf8 */
+	".globl __DAT_00290bf8\n.set __DAT_00290bf8, of_clu_data + 0xe50\n"  /* 0x00290bf8 */
 	".globl DAT_00290bfc\n.set DAT_00290bfc, of_clu_data + 0xe54\n"  /* 0x00290bfc */
-	".globl _DAT_00290bfc\n.set _DAT_00290bfc, of_clu_data + 0xe54\n"  /* 0x00290bfc */
+	".globl __DAT_00290bfc\n.set __DAT_00290bfc, of_clu_data + 0xe54\n"  /* 0x00290bfc */
 	".globl DAT_00290c00\n.set DAT_00290c00, of_clu_data + 0xe58\n"  /* 0x00290c00 */
-	".globl _DAT_00290c00\n.set _DAT_00290c00, of_clu_data + 0xe58\n"  /* 0x00290c00 */
+	".globl __DAT_00290c00\n.set __DAT_00290c00, of_clu_data + 0xe58\n"  /* 0x00290c00 */
 	".globl DAT_00290c04\n.set DAT_00290c04, of_clu_data + 0xe5c\n"  /* 0x00290c04 */
 	".globl DAT_00290c98\n.set DAT_00290c98, of_clu_data + 0xef0\n"  /* 0x00290c98 */
-	".globl _DAT_00290c98\n.set _DAT_00290c98, of_clu_data + 0xef0\n"  /* 0x00290c98 */
+	".globl __DAT_00290c98\n.set __DAT_00290c98, of_clu_data + 0xef0\n"  /* 0x00290c98 */
 	".globl DAT_00290c9c\n.set DAT_00290c9c, of_clu_data + 0xef4\n"  /* 0x00290c9c */
-	".globl _DAT_00290c9c\n.set _DAT_00290c9c, of_clu_data + 0xef4\n"  /* 0x00290c9c */
+	".globl __DAT_00290c9c\n.set __DAT_00290c9c, of_clu_data + 0xef4\n"  /* 0x00290c9c */
 	".globl DAT_00290ca0\n.set DAT_00290ca0, of_clu_data + 0xef8\n"  /* 0x00290ca0 */
 	".globl DAT_00290cb0\n.set DAT_00290cb0, of_clu_data + 0xf08\n"  /* 0x00290cb0 */
-	".globl _DAT_00290cb0\n.set _DAT_00290cb0, of_clu_data + 0xf08\n"  /* 0x00290cb0 */
+	".globl __DAT_00290cb0\n.set __DAT_00290cb0, of_clu_data + 0xf08\n"  /* 0x00290cb0 */
 	".globl DAT_00290cb4\n.set DAT_00290cb4, of_clu_data + 0xf0c\n"  /* 0x00290cb4 */
 	".globl DAT_00290cb8\n.set DAT_00290cb8, of_clu_data + 0xf10\n"  /* 0x00290cb8 */
 	".globl DAT_00290d14\n.set DAT_00290d14, of_clu_data2 + 0x0\n"  /* 0x00290d14 */
@@ -616,158 +616,158 @@ __asm__(
 	".globl DAT_002ec900\n.set DAT_002ec900, of_clu_bss + 0x2470\n"  /* 0x002ec900 */
 	".globl DAT_002ec904\n.set DAT_002ec904, of_clu_bss + 0x2474\n"  /* 0x002ec904 */
 	".globl DAT_002ec908\n.set DAT_002ec908, of_clu_bss + 0x2478\n"  /* 0x002ec908 */
-	".globl _DAT_002ec908\n.set _DAT_002ec908, of_clu_bss + 0x2478\n"  /* 0x002ec908 */
+	".globl __DAT_002ec908\n.set __DAT_002ec908, of_clu_bss + 0x2478\n"  /* 0x002ec908 */
 	".globl DAT_002ec910\n.set DAT_002ec910, of_clu_bss + 0x2480\n"  /* 0x002ec910 */
-	".globl _DAT_002ec910\n.set _DAT_002ec910, of_clu_bss + 0x2480\n"  /* 0x002ec910 */
+	".globl __DAT_002ec910\n.set __DAT_002ec910, of_clu_bss + 0x2480\n"  /* 0x002ec910 */
 	".globl DAT_002ec914\n.set DAT_002ec914, of_clu_bss + 0x2484\n"  /* 0x002ec914 */
-	".globl _DAT_002ec914\n.set _DAT_002ec914, of_clu_bss + 0x2484\n"  /* 0x002ec914 */
+	".globl __DAT_002ec914\n.set __DAT_002ec914, of_clu_bss + 0x2484\n"  /* 0x002ec914 */
 	".globl DAT_002ec918\n.set DAT_002ec918, of_clu_bss + 0x2488\n"  /* 0x002ec918 */
-	".globl _DAT_002ec918\n.set _DAT_002ec918, of_clu_bss + 0x2488\n"  /* 0x002ec918 */
+	".globl __DAT_002ec918\n.set __DAT_002ec918, of_clu_bss + 0x2488\n"  /* 0x002ec918 */
 	".globl DAT_002ec928\n.set DAT_002ec928, of_clu_bss + 0x2498\n"  /* 0x002ec928 */
-	".globl _DAT_002ec928\n.set _DAT_002ec928, of_clu_bss + 0x2498\n"  /* 0x002ec928 */
+	".globl __DAT_002ec928\n.set __DAT_002ec928, of_clu_bss + 0x2498\n"  /* 0x002ec928 */
 	".globl DAT_002ec934\n.set DAT_002ec934, of_clu_bss + 0x24a4\n"  /* 0x002ec934 */
-	".globl _DAT_002ec934\n.set _DAT_002ec934, of_clu_bss + 0x24a4\n"  /* 0x002ec934 */
+	".globl __DAT_002ec934\n.set __DAT_002ec934, of_clu_bss + 0x24a4\n"  /* 0x002ec934 */
 	".globl DAT_002ec938\n.set DAT_002ec938, of_clu_bss + 0x24a8\n"  /* 0x002ec938 */
-	".globl _DAT_002ec938\n.set _DAT_002ec938, of_clu_bss + 0x24a8\n"  /* 0x002ec938 */
+	".globl __DAT_002ec938\n.set __DAT_002ec938, of_clu_bss + 0x24a8\n"  /* 0x002ec938 */
 	".globl DAT_002ec93c\n.set DAT_002ec93c, of_clu_bss + 0x24ac\n"  /* 0x002ec93c */
-	".globl _DAT_002ec93c\n.set _DAT_002ec93c, of_clu_bss + 0x24ac\n"  /* 0x002ec93c */
+	".globl __DAT_002ec93c\n.set __DAT_002ec93c, of_clu_bss + 0x24ac\n"  /* 0x002ec93c */
 	".globl DAT_002ec94c\n.set DAT_002ec94c, of_clu_bss + 0x24bc\n"  /* 0x002ec94c */
-	".globl _DAT_002ec94c\n.set _DAT_002ec94c, of_clu_bss + 0x24bc\n"  /* 0x002ec94c */
+	".globl __DAT_002ec94c\n.set __DAT_002ec94c, of_clu_bss + 0x24bc\n"  /* 0x002ec94c */
 	".globl DAT_002ec958\n.set DAT_002ec958, of_clu_bss + 0x24c8\n"  /* 0x002ec958 */
-	".globl _DAT_002ec958\n.set _DAT_002ec958, of_clu_bss + 0x24c8\n"  /* 0x002ec958 */
+	".globl __DAT_002ec958\n.set __DAT_002ec958, of_clu_bss + 0x24c8\n"  /* 0x002ec958 */
 	".globl DAT_002ec95c\n.set DAT_002ec95c, of_clu_bss + 0x24cc\n"  /* 0x002ec95c */
-	".globl _DAT_002ec95c\n.set _DAT_002ec95c, of_clu_bss + 0x24cc\n"  /* 0x002ec95c */
+	".globl __DAT_002ec95c\n.set __DAT_002ec95c, of_clu_bss + 0x24cc\n"  /* 0x002ec95c */
 	".globl DAT_002ec960\n.set DAT_002ec960, of_clu_bss + 0x24d0\n"  /* 0x002ec960 */
-	".globl _DAT_002ec960\n.set _DAT_002ec960, of_clu_bss + 0x24d0\n"  /* 0x002ec960 */
+	".globl __DAT_002ec960\n.set __DAT_002ec960, of_clu_bss + 0x24d0\n"  /* 0x002ec960 */
 	".globl DAT_002ec970\n.set DAT_002ec970, of_clu_bss + 0x24e0\n"  /* 0x002ec970 */
-	".globl _DAT_002ec970\n.set _DAT_002ec970, of_clu_bss + 0x24e0\n"  /* 0x002ec970 */
+	".globl __DAT_002ec970\n.set __DAT_002ec970, of_clu_bss + 0x24e0\n"  /* 0x002ec970 */
 	".globl DAT_002ec97c\n.set DAT_002ec97c, of_clu_bss + 0x24ec\n"  /* 0x002ec97c */
-	".globl _DAT_002ec97c\n.set _DAT_002ec97c, of_clu_bss + 0x24ec\n"  /* 0x002ec97c */
+	".globl __DAT_002ec97c\n.set __DAT_002ec97c, of_clu_bss + 0x24ec\n"  /* 0x002ec97c */
 	".globl DAT_002ec980\n.set DAT_002ec980, of_clu_bss + 0x24f0\n"  /* 0x002ec980 */
-	".globl _DAT_002ec980\n.set _DAT_002ec980, of_clu_bss + 0x24f0\n"  /* 0x002ec980 */
+	".globl __DAT_002ec980\n.set __DAT_002ec980, of_clu_bss + 0x24f0\n"  /* 0x002ec980 */
 	".globl DAT_002ec984\n.set DAT_002ec984, of_clu_bss + 0x24f4\n"  /* 0x002ec984 */
-	".globl _DAT_002ec984\n.set _DAT_002ec984, of_clu_bss + 0x24f4\n"  /* 0x002ec984 */
+	".globl __DAT_002ec984\n.set __DAT_002ec984, of_clu_bss + 0x24f4\n"  /* 0x002ec984 */
 	".globl DAT_002ec994\n.set DAT_002ec994, of_clu_bss + 0x2504\n"  /* 0x002ec994 */
-	".globl _DAT_002ec994\n.set _DAT_002ec994, of_clu_bss + 0x2504\n"  /* 0x002ec994 */
+	".globl __DAT_002ec994\n.set __DAT_002ec994, of_clu_bss + 0x2504\n"  /* 0x002ec994 */
 	".globl DAT_002ec9a0\n.set DAT_002ec9a0, of_clu_bss + 0x2510\n"  /* 0x002ec9a0 */
-	".globl _DAT_002ec9a0\n.set _DAT_002ec9a0, of_clu_bss + 0x2510\n"  /* 0x002ec9a0 */
+	".globl __DAT_002ec9a0\n.set __DAT_002ec9a0, of_clu_bss + 0x2510\n"  /* 0x002ec9a0 */
 	".globl DAT_002ec9a4\n.set DAT_002ec9a4, of_clu_bss + 0x2514\n"  /* 0x002ec9a4 */
-	".globl _DAT_002ec9a4\n.set _DAT_002ec9a4, of_clu_bss + 0x2514\n"  /* 0x002ec9a4 */
+	".globl __DAT_002ec9a4\n.set __DAT_002ec9a4, of_clu_bss + 0x2514\n"  /* 0x002ec9a4 */
 	".globl DAT_002ec9a8\n.set DAT_002ec9a8, of_clu_bss + 0x2518\n"  /* 0x002ec9a8 */
-	".globl _DAT_002ec9a8\n.set _DAT_002ec9a8, of_clu_bss + 0x2518\n"  /* 0x002ec9a8 */
+	".globl __DAT_002ec9a8\n.set __DAT_002ec9a8, of_clu_bss + 0x2518\n"  /* 0x002ec9a8 */
 	".globl DAT_002ec9b8\n.set DAT_002ec9b8, of_clu_bss + 0x2528\n"  /* 0x002ec9b8 */
-	".globl _DAT_002ec9b8\n.set _DAT_002ec9b8, of_clu_bss + 0x2528\n"  /* 0x002ec9b8 */
+	".globl __DAT_002ec9b8\n.set __DAT_002ec9b8, of_clu_bss + 0x2528\n"  /* 0x002ec9b8 */
 	".globl DAT_002ec9c4\n.set DAT_002ec9c4, of_clu_bss + 0x2534\n"  /* 0x002ec9c4 */
-	".globl _DAT_002ec9c4\n.set _DAT_002ec9c4, of_clu_bss + 0x2534\n"  /* 0x002ec9c4 */
+	".globl __DAT_002ec9c4\n.set __DAT_002ec9c4, of_clu_bss + 0x2534\n"  /* 0x002ec9c4 */
 	".globl DAT_002ec9c8\n.set DAT_002ec9c8, of_clu_bss + 0x2538\n"  /* 0x002ec9c8 */
-	".globl _DAT_002ec9c8\n.set _DAT_002ec9c8, of_clu_bss + 0x2538\n"  /* 0x002ec9c8 */
+	".globl __DAT_002ec9c8\n.set __DAT_002ec9c8, of_clu_bss + 0x2538\n"  /* 0x002ec9c8 */
 	".globl DAT_002ec9cc\n.set DAT_002ec9cc, of_clu_bss + 0x253c\n"  /* 0x002ec9cc */
-	".globl _DAT_002ec9cc\n.set _DAT_002ec9cc, of_clu_bss + 0x253c\n"  /* 0x002ec9cc */
+	".globl __DAT_002ec9cc\n.set __DAT_002ec9cc, of_clu_bss + 0x253c\n"  /* 0x002ec9cc */
 	".globl DAT_002ec9dc\n.set DAT_002ec9dc, of_clu_bss + 0x254c\n"  /* 0x002ec9dc */
-	".globl _DAT_002ec9dc\n.set _DAT_002ec9dc, of_clu_bss + 0x254c\n"  /* 0x002ec9dc */
+	".globl __DAT_002ec9dc\n.set __DAT_002ec9dc, of_clu_bss + 0x254c\n"  /* 0x002ec9dc */
 	".globl DAT_002ec9e8\n.set DAT_002ec9e8, of_clu_bss + 0x2558\n"  /* 0x002ec9e8 */
-	".globl _DAT_002ec9e8\n.set _DAT_002ec9e8, of_clu_bss + 0x2558\n"  /* 0x002ec9e8 */
+	".globl __DAT_002ec9e8\n.set __DAT_002ec9e8, of_clu_bss + 0x2558\n"  /* 0x002ec9e8 */
 	".globl DAT_002ec9ec\n.set DAT_002ec9ec, of_clu_bss + 0x255c\n"  /* 0x002ec9ec */
-	".globl _DAT_002ec9ec\n.set _DAT_002ec9ec, of_clu_bss + 0x255c\n"  /* 0x002ec9ec */
+	".globl __DAT_002ec9ec\n.set __DAT_002ec9ec, of_clu_bss + 0x255c\n"  /* 0x002ec9ec */
 	".globl DAT_002ec9f0\n.set DAT_002ec9f0, of_clu_bss + 0x2560\n"  /* 0x002ec9f0 */
-	".globl _DAT_002ec9f0\n.set _DAT_002ec9f0, of_clu_bss + 0x2560\n"  /* 0x002ec9f0 */
+	".globl __DAT_002ec9f0\n.set __DAT_002ec9f0, of_clu_bss + 0x2560\n"  /* 0x002ec9f0 */
 	".globl DAT_002eca00\n.set DAT_002eca00, of_clu_bss + 0x2570\n"  /* 0x002eca00 */
-	".globl _DAT_002eca00\n.set _DAT_002eca00, of_clu_bss + 0x2570\n"  /* 0x002eca00 */
+	".globl __DAT_002eca00\n.set __DAT_002eca00, of_clu_bss + 0x2570\n"  /* 0x002eca00 */
 	".globl DAT_002eca0c\n.set DAT_002eca0c, of_clu_bss + 0x257c\n"  /* 0x002eca0c */
-	".globl _DAT_002eca0c\n.set _DAT_002eca0c, of_clu_bss + 0x257c\n"  /* 0x002eca0c */
+	".globl __DAT_002eca0c\n.set __DAT_002eca0c, of_clu_bss + 0x257c\n"  /* 0x002eca0c */
 	".globl DAT_002eca10\n.set DAT_002eca10, of_clu_bss + 0x2580\n"  /* 0x002eca10 */
-	".globl _DAT_002eca10\n.set _DAT_002eca10, of_clu_bss + 0x2580\n"  /* 0x002eca10 */
+	".globl __DAT_002eca10\n.set __DAT_002eca10, of_clu_bss + 0x2580\n"  /* 0x002eca10 */
 	".globl DAT_002eca14\n.set DAT_002eca14, of_clu_bss + 0x2584\n"  /* 0x002eca14 */
-	".globl _DAT_002eca14\n.set _DAT_002eca14, of_clu_bss + 0x2584\n"  /* 0x002eca14 */
+	".globl __DAT_002eca14\n.set __DAT_002eca14, of_clu_bss + 0x2584\n"  /* 0x002eca14 */
 	".globl DAT_002eca24\n.set DAT_002eca24, of_clu_bss + 0x2594\n"  /* 0x002eca24 */
-	".globl _DAT_002eca24\n.set _DAT_002eca24, of_clu_bss + 0x2594\n"  /* 0x002eca24 */
+	".globl __DAT_002eca24\n.set __DAT_002eca24, of_clu_bss + 0x2594\n"  /* 0x002eca24 */
 	".globl DAT_002eca30\n.set DAT_002eca30, of_clu_bss + 0x25a0\n"  /* 0x002eca30 */
-	".globl _DAT_002eca30\n.set _DAT_002eca30, of_clu_bss + 0x25a0\n"  /* 0x002eca30 */
+	".globl __DAT_002eca30\n.set __DAT_002eca30, of_clu_bss + 0x25a0\n"  /* 0x002eca30 */
 	".globl DAT_002eca34\n.set DAT_002eca34, of_clu_bss + 0x25a4\n"  /* 0x002eca34 */
-	".globl _DAT_002eca34\n.set _DAT_002eca34, of_clu_bss + 0x25a4\n"  /* 0x002eca34 */
+	".globl __DAT_002eca34\n.set __DAT_002eca34, of_clu_bss + 0x25a4\n"  /* 0x002eca34 */
 	".globl DAT_002eca38\n.set DAT_002eca38, of_clu_bss + 0x25a8\n"  /* 0x002eca38 */
-	".globl _DAT_002eca38\n.set _DAT_002eca38, of_clu_bss + 0x25a8\n"  /* 0x002eca38 */
+	".globl __DAT_002eca38\n.set __DAT_002eca38, of_clu_bss + 0x25a8\n"  /* 0x002eca38 */
 	".globl DAT_002eca3c\n.set DAT_002eca3c, of_clu_bss + 0x25ac\n"  /* 0x002eca3c */
 	".globl DAT_002eca40\n.set DAT_002eca40, of_clu_bss + 0x25b0\n"  /* 0x002eca40 */
-	".globl _DAT_002eca40\n.set _DAT_002eca40, of_clu_bss + 0x25b0\n"  /* 0x002eca40 */
+	".globl __DAT_002eca40\n.set __DAT_002eca40, of_clu_bss + 0x25b0\n"  /* 0x002eca40 */
 	".globl DAT_002eca48\n.set DAT_002eca48, of_clu_bss + 0x25b8\n"  /* 0x002eca48 */
-	".globl _DAT_002eca48\n.set _DAT_002eca48, of_clu_bss + 0x25b8\n"  /* 0x002eca48 */
+	".globl __DAT_002eca48\n.set __DAT_002eca48, of_clu_bss + 0x25b8\n"  /* 0x002eca48 */
 	".globl DAT_002eca4c\n.set DAT_002eca4c, of_clu_bss + 0x25bc\n"  /* 0x002eca4c */
-	".globl _DAT_002eca4c\n.set _DAT_002eca4c, of_clu_bss + 0x25bc\n"  /* 0x002eca4c */
+	".globl __DAT_002eca4c\n.set __DAT_002eca4c, of_clu_bss + 0x25bc\n"  /* 0x002eca4c */
 	".globl DAT_002eca50\n.set DAT_002eca50, of_clu_bss + 0x25c0\n"  /* 0x002eca50 */
-	".globl _DAT_002eca50\n.set _DAT_002eca50, of_clu_bss + 0x25c0\n"  /* 0x002eca50 */
+	".globl __DAT_002eca50\n.set __DAT_002eca50, of_clu_bss + 0x25c0\n"  /* 0x002eca50 */
 	".globl DAT_002eca60\n.set DAT_002eca60, of_clu_bss + 0x25d0\n"  /* 0x002eca60 */
-	".globl _DAT_002eca60\n.set _DAT_002eca60, of_clu_bss + 0x25d0\n"  /* 0x002eca60 */
+	".globl __DAT_002eca60\n.set __DAT_002eca60, of_clu_bss + 0x25d0\n"  /* 0x002eca60 */
 	".globl DAT_002eca64\n.set DAT_002eca64, of_clu_bss + 0x25d4\n"  /* 0x002eca64 */
-	".globl _DAT_002eca64\n.set _DAT_002eca64, of_clu_bss + 0x25d4\n"  /* 0x002eca64 */
+	".globl __DAT_002eca64\n.set __DAT_002eca64, of_clu_bss + 0x25d4\n"  /* 0x002eca64 */
 	".globl DAT_002eca68\n.set DAT_002eca68, of_clu_bss + 0x25d8\n"  /* 0x002eca68 */
-	".globl _DAT_002eca68\n.set _DAT_002eca68, of_clu_bss + 0x25d8\n"  /* 0x002eca68 */
+	".globl __DAT_002eca68\n.set __DAT_002eca68, of_clu_bss + 0x25d8\n"  /* 0x002eca68 */
 	".globl DAT_002eca6c\n.set DAT_002eca6c, of_clu_bss + 0x25dc\n"  /* 0x002eca6c */
-	".globl _DAT_002eca6c\n.set _DAT_002eca6c, of_clu_bss + 0x25dc\n"  /* 0x002eca6c */
+	".globl __DAT_002eca6c\n.set __DAT_002eca6c, of_clu_bss + 0x25dc\n"  /* 0x002eca6c */
 	".globl DAT_002eca70\n.set DAT_002eca70, of_clu_bss + 0x25e0\n"  /* 0x002eca70 */
-	".globl _DAT_002eca70\n.set _DAT_002eca70, of_clu_bss + 0x25e0\n"  /* 0x002eca70 */
+	".globl __DAT_002eca70\n.set __DAT_002eca70, of_clu_bss + 0x25e0\n"  /* 0x002eca70 */
 	".globl DAT_002eca74\n.set DAT_002eca74, of_clu_bss + 0x25e4\n"  /* 0x002eca74 */
-	".globl _DAT_002eca74\n.set _DAT_002eca74, of_clu_bss + 0x25e4\n"  /* 0x002eca74 */
+	".globl __DAT_002eca74\n.set __DAT_002eca74, of_clu_bss + 0x25e4\n"  /* 0x002eca74 */
 	".globl DAT_002eca84\n.set DAT_002eca84, of_clu_bss + 0x25f4\n"  /* 0x002eca84 */
-	".globl _DAT_002eca84\n.set _DAT_002eca84, of_clu_bss + 0x25f4\n"  /* 0x002eca84 */
+	".globl __DAT_002eca84\n.set __DAT_002eca84, of_clu_bss + 0x25f4\n"  /* 0x002eca84 */
 	".globl DAT_002eca88\n.set DAT_002eca88, of_clu_bss + 0x25f8\n"  /* 0x002eca88 */
-	".globl _DAT_002eca88\n.set _DAT_002eca88, of_clu_bss + 0x25f8\n"  /* 0x002eca88 */
+	".globl __DAT_002eca88\n.set __DAT_002eca88, of_clu_bss + 0x25f8\n"  /* 0x002eca88 */
 	".globl DAT_002eca8c\n.set DAT_002eca8c, of_clu_bss + 0x25fc\n"  /* 0x002eca8c */
-	".globl _DAT_002eca8c\n.set _DAT_002eca8c, of_clu_bss + 0x25fc\n"  /* 0x002eca8c */
+	".globl __DAT_002eca8c\n.set __DAT_002eca8c, of_clu_bss + 0x25fc\n"  /* 0x002eca8c */
 	".globl DAT_002eca90\n.set DAT_002eca90, of_clu_bss + 0x2600\n"  /* 0x002eca90 */
-	".globl _DAT_002eca90\n.set _DAT_002eca90, of_clu_bss + 0x2600\n"  /* 0x002eca90 */
+	".globl __DAT_002eca90\n.set __DAT_002eca90, of_clu_bss + 0x2600\n"  /* 0x002eca90 */
 	".globl DAT_002eca94\n.set DAT_002eca94, of_clu_bss + 0x2604\n"  /* 0x002eca94 */
-	".globl _DAT_002eca94\n.set _DAT_002eca94, of_clu_bss + 0x2604\n"  /* 0x002eca94 */
+	".globl __DAT_002eca94\n.set __DAT_002eca94, of_clu_bss + 0x2604\n"  /* 0x002eca94 */
 	".globl DAT_002eca98\n.set DAT_002eca98, of_clu_bss + 0x2608\n"  /* 0x002eca98 */
-	".globl _DAT_002eca98\n.set _DAT_002eca98, of_clu_bss + 0x2608\n"  /* 0x002eca98 */
+	".globl __DAT_002eca98\n.set __DAT_002eca98, of_clu_bss + 0x2608\n"  /* 0x002eca98 */
 	".globl DAT_002ecaa8\n.set DAT_002ecaa8, of_clu_bss + 0x2618\n"  /* 0x002ecaa8 */
-	".globl _DAT_002ecaa8\n.set _DAT_002ecaa8, of_clu_bss + 0x2618\n"  /* 0x002ecaa8 */
+	".globl __DAT_002ecaa8\n.set __DAT_002ecaa8, of_clu_bss + 0x2618\n"  /* 0x002ecaa8 */
 	".globl DAT_002ecaac\n.set DAT_002ecaac, of_clu_bss + 0x261c\n"  /* 0x002ecaac */
-	".globl _DAT_002ecaac\n.set _DAT_002ecaac, of_clu_bss + 0x261c\n"  /* 0x002ecaac */
+	".globl __DAT_002ecaac\n.set __DAT_002ecaac, of_clu_bss + 0x261c\n"  /* 0x002ecaac */
 	".globl DAT_002ecab0\n.set DAT_002ecab0, of_clu_bss + 0x2620\n"  /* 0x002ecab0 */
-	".globl _DAT_002ecab0\n.set _DAT_002ecab0, of_clu_bss + 0x2620\n"  /* 0x002ecab0 */
+	".globl __DAT_002ecab0\n.set __DAT_002ecab0, of_clu_bss + 0x2620\n"  /* 0x002ecab0 */
 	".globl DAT_002ecab4\n.set DAT_002ecab4, of_clu_bss + 0x2624\n"  /* 0x002ecab4 */
-	".globl _DAT_002ecab4\n.set _DAT_002ecab4, of_clu_bss + 0x2624\n"  /* 0x002ecab4 */
+	".globl __DAT_002ecab4\n.set __DAT_002ecab4, of_clu_bss + 0x2624\n"  /* 0x002ecab4 */
 	".globl DAT_002ecab8\n.set DAT_002ecab8, of_clu_bss + 0x2628\n"  /* 0x002ecab8 */
-	".globl _DAT_002ecab8\n.set _DAT_002ecab8, of_clu_bss + 0x2628\n"  /* 0x002ecab8 */
+	".globl __DAT_002ecab8\n.set __DAT_002ecab8, of_clu_bss + 0x2628\n"  /* 0x002ecab8 */
 	".globl DAT_002ecabc\n.set DAT_002ecabc, of_clu_bss + 0x262c\n"  /* 0x002ecabc */
-	".globl _DAT_002ecabc\n.set _DAT_002ecabc, of_clu_bss + 0x262c\n"  /* 0x002ecabc */
+	".globl __DAT_002ecabc\n.set __DAT_002ecabc, of_clu_bss + 0x262c\n"  /* 0x002ecabc */
 	".globl DAT_002ecacc\n.set DAT_002ecacc, of_clu_bss + 0x263c\n"  /* 0x002ecacc */
-	".globl _DAT_002ecacc\n.set _DAT_002ecacc, of_clu_bss + 0x263c\n"  /* 0x002ecacc */
+	".globl __DAT_002ecacc\n.set __DAT_002ecacc, of_clu_bss + 0x263c\n"  /* 0x002ecacc */
 	".globl DAT_002ecad0\n.set DAT_002ecad0, of_clu_bss + 0x2640\n"  /* 0x002ecad0 */
-	".globl _DAT_002ecad0\n.set _DAT_002ecad0, of_clu_bss + 0x2640\n"  /* 0x002ecad0 */
+	".globl __DAT_002ecad0\n.set __DAT_002ecad0, of_clu_bss + 0x2640\n"  /* 0x002ecad0 */
 	".globl DAT_002ecad4\n.set DAT_002ecad4, of_clu_bss + 0x2644\n"  /* 0x002ecad4 */
-	".globl _DAT_002ecad4\n.set _DAT_002ecad4, of_clu_bss + 0x2644\n"  /* 0x002ecad4 */
+	".globl __DAT_002ecad4\n.set __DAT_002ecad4, of_clu_bss + 0x2644\n"  /* 0x002ecad4 */
 	".globl DAT_002ecad8\n.set DAT_002ecad8, of_clu_bss + 0x2648\n"  /* 0x002ecad8 */
 	".globl DAT_002ecadc\n.set DAT_002ecadc, of_clu_bss + 0x264c\n"  /* 0x002ecadc */
 	".globl DAT_002ecae0\n.set DAT_002ecae0, of_clu_bss + 0x2650\n"  /* 0x002ecae0 */
-	".globl _DAT_002ecae0\n.set _DAT_002ecae0, of_clu_bss + 0x2650\n"  /* 0x002ecae0 */
+	".globl __DAT_002ecae0\n.set __DAT_002ecae0, of_clu_bss + 0x2650\n"  /* 0x002ecae0 */
 	".globl DAT_002ecaf0\n.set DAT_002ecaf0, of_clu_bss + 0x2660\n"  /* 0x002ecaf0 */
-	".globl _DAT_002ecaf0\n.set _DAT_002ecaf0, of_clu_bss + 0x2660\n"  /* 0x002ecaf0 */
+	".globl __DAT_002ecaf0\n.set __DAT_002ecaf0, of_clu_bss + 0x2660\n"  /* 0x002ecaf0 */
 	".globl DAT_002ecafc\n.set DAT_002ecafc, of_clu_bss + 0x266c\n"  /* 0x002ecafc */
-	".globl _DAT_002ecafc\n.set _DAT_002ecafc, of_clu_bss + 0x266c\n"  /* 0x002ecafc */
+	".globl __DAT_002ecafc\n.set __DAT_002ecafc, of_clu_bss + 0x266c\n"  /* 0x002ecafc */
 	".globl DAT_002ecb00\n.set DAT_002ecb00, of_clu_bss + 0x2670\n"  /* 0x002ecb00 */
-	".globl _DAT_002ecb00\n.set _DAT_002ecb00, of_clu_bss + 0x2670\n"  /* 0x002ecb00 */
+	".globl __DAT_002ecb00\n.set __DAT_002ecb00, of_clu_bss + 0x2670\n"  /* 0x002ecb00 */
 	".globl DAT_002ecb04\n.set DAT_002ecb04, of_clu_bss + 0x2674\n"  /* 0x002ecb04 */
-	".globl _DAT_002ecb04\n.set _DAT_002ecb04, of_clu_bss + 0x2674\n"  /* 0x002ecb04 */
+	".globl __DAT_002ecb04\n.set __DAT_002ecb04, of_clu_bss + 0x2674\n"  /* 0x002ecb04 */
 	".globl DAT_002ecb14\n.set DAT_002ecb14, of_clu_bss + 0x2684\n"  /* 0x002ecb14 */
-	".globl _DAT_002ecb14\n.set _DAT_002ecb14, of_clu_bss + 0x2684\n"  /* 0x002ecb14 */
+	".globl __DAT_002ecb14\n.set __DAT_002ecb14, of_clu_bss + 0x2684\n"  /* 0x002ecb14 */
 	".globl DAT_002ecb20\n.set DAT_002ecb20, of_clu_bss + 0x2690\n"  /* 0x002ecb20 */
-	".globl _DAT_002ecb20\n.set _DAT_002ecb20, of_clu_bss + 0x2690\n"  /* 0x002ecb20 */
+	".globl __DAT_002ecb20\n.set __DAT_002ecb20, of_clu_bss + 0x2690\n"  /* 0x002ecb20 */
 	".globl DAT_002ecb24\n.set DAT_002ecb24, of_clu_bss + 0x2694\n"  /* 0x002ecb24 */
-	".globl _DAT_002ecb24\n.set _DAT_002ecb24, of_clu_bss + 0x2694\n"  /* 0x002ecb24 */
+	".globl __DAT_002ecb24\n.set __DAT_002ecb24, of_clu_bss + 0x2694\n"  /* 0x002ecb24 */
 	".globl DAT_002ecb28\n.set DAT_002ecb28, of_clu_bss + 0x2698\n"  /* 0x002ecb28 */
-	".globl _DAT_002ecb28\n.set _DAT_002ecb28, of_clu_bss + 0x2698\n"  /* 0x002ecb28 */
+	".globl __DAT_002ecb28\n.set __DAT_002ecb28, of_clu_bss + 0x2698\n"  /* 0x002ecb28 */
 	".globl DAT_002ecb38\n.set DAT_002ecb38, of_clu_bss + 0x26a8\n"  /* 0x002ecb38 */
-	".globl _DAT_002ecb38\n.set _DAT_002ecb38, of_clu_bss + 0x26a8\n"  /* 0x002ecb38 */
+	".globl __DAT_002ecb38\n.set __DAT_002ecb38, of_clu_bss + 0x26a8\n"  /* 0x002ecb38 */
 	".globl DAT_002ecb44\n.set DAT_002ecb44, of_clu_bss + 0x26b4\n"  /* 0x002ecb44 */
-	".globl _DAT_002ecb44\n.set _DAT_002ecb44, of_clu_bss + 0x26b4\n"  /* 0x002ecb44 */
+	".globl __DAT_002ecb44\n.set __DAT_002ecb44, of_clu_bss + 0x26b4\n"  /* 0x002ecb44 */
 	".globl DAT_002ecb48\n.set DAT_002ecb48, of_clu_bss + 0x26b8\n"  /* 0x002ecb48 */
-	".globl _DAT_002ecb48\n.set _DAT_002ecb48, of_clu_bss + 0x26b8\n"  /* 0x002ecb48 */
+	".globl __DAT_002ecb48\n.set __DAT_002ecb48, of_clu_bss + 0x26b8\n"  /* 0x002ecb48 */
 	".globl DAT_002ecb4c\n.set DAT_002ecb4c, of_clu_bss + 0x26bc\n"  /* 0x002ecb4c */
-	".globl _DAT_002ecb4c\n.set _DAT_002ecb4c, of_clu_bss + 0x26bc\n"  /* 0x002ecb4c */
+	".globl __DAT_002ecb4c\n.set __DAT_002ecb4c, of_clu_bss + 0x26bc\n"  /* 0x002ecb4c */
 	".globl DAT_002ecb5c\n.set DAT_002ecb5c, of_clu_bss + 0x26cc\n"  /* 0x002ecb5c */
-	".globl _DAT_002ecb5c\n.set _DAT_002ecb5c, of_clu_bss + 0x26cc\n"  /* 0x002ecb5c */
+	".globl __DAT_002ecb5c\n.set __DAT_002ecb5c, of_clu_bss + 0x26cc\n"  /* 0x002ecb5c */
 	".globl DAT_002ecb62\n.set DAT_002ecb62, of_clu_bss + 0x26d2\n"  /* 0x002ecb62 */
 	".globl DAT_002ecb64\n.set DAT_002ecb64, of_clu_bss + 0x26d4\n"  /* 0x002ecb64 */
 	".globl DAT_002ecb66\n.set DAT_002ecb66, of_clu_bss + 0x26d6\n"  /* 0x002ecb66 */
@@ -780,31 +780,32 @@ __asm__(
 	".globl DAT_002ecc7e\n.set DAT_002ecc7e, of_clu_bss + 0x27ee\n"  /* 0x002ecc7e */
 	".globl DAT_002ecc80\n.set DAT_002ecc80, of_clu_bss + 0x27f0\n"  /* 0x002ecc80 */
 	".globl DAT_002ecd80\n.set DAT_002ecd80, of_clu_bss + 0x28f0\n"  /* 0x002ecd80 */
-	".globl _DAT_002ecd80\n.set _DAT_002ecd80, of_clu_bss + 0x28f0\n"  /* 0x002ecd80 */
+	".globl __DAT_002ecd80\n.set __DAT_002ecd80, of_clu_bss + 0x28f0\n"  /* 0x002ecd80 */
 	".globl DAT_002ecd84\n.set DAT_002ecd84, of_clu_bss + 0x28f4\n"  /* 0x002ecd84 */
 	".globl DAT_002ecd88\n.set DAT_002ecd88, of_clu_bss + 0x28f8\n"  /* 0x002ecd88 */
+	".globl DAT_002ecd90\n.set DAT_002ecd90, of_clu_bss + 0x2900\n"  /* 0x002ecd90 */
 	".globl DAT_002ecd9c\n.set DAT_002ecd9c, of_clu_bss + 0x290c\n"  /* 0x002ecd9c */
-	".globl _DAT_002ecd9c\n.set _DAT_002ecd9c, of_clu_bss + 0x290c\n"  /* 0x002ecd9c */
+	".globl __DAT_002ecd9c\n.set __DAT_002ecd9c, of_clu_bss + 0x290c\n"  /* 0x002ecd9c */
 	".globl DAT_002ecda0\n.set DAT_002ecda0, of_clu_bss + 0x2910\n"  /* 0x002ecda0 */
-	".globl _DAT_002ecda0\n.set _DAT_002ecda0, of_clu_bss + 0x2910\n"  /* 0x002ecda0 */
+	".globl __DAT_002ecda0\n.set __DAT_002ecda0, of_clu_bss + 0x2910\n"  /* 0x002ecda0 */
 	".globl DAT_002ecda4\n.set DAT_002ecda4, of_clu_bss + 0x2914\n"  /* 0x002ecda4 */
-	".globl _DAT_002ecda4\n.set _DAT_002ecda4, of_clu_bss + 0x2914\n"  /* 0x002ecda4 */
+	".globl __DAT_002ecda4\n.set __DAT_002ecda4, of_clu_bss + 0x2914\n"  /* 0x002ecda4 */
 	".globl DAT_002ecda8\n.set DAT_002ecda8, of_clu_bss + 0x2918\n"  /* 0x002ecda8 */
-	".globl _DAT_002ecda8\n.set _DAT_002ecda8, of_clu_bss + 0x2918\n"  /* 0x002ecda8 */
+	".globl __DAT_002ecda8\n.set __DAT_002ecda8, of_clu_bss + 0x2918\n"  /* 0x002ecda8 */
 	".globl DAT_002ecde8\n.set DAT_002ecde8, of_clu_bss + 0x2958\n"  /* 0x002ecde8 */
-	".globl _DAT_002ecde8\n.set _DAT_002ecde8, of_clu_bss + 0x2958\n"  /* 0x002ecde8 */
+	".globl __DAT_002ecde8\n.set __DAT_002ecde8, of_clu_bss + 0x2958\n"  /* 0x002ecde8 */
 	".globl DAT_002ecdec\n.set DAT_002ecdec, of_clu_bss + 0x295c\n"  /* 0x002ecdec */
 	".globl DAT_002ece10\n.set DAT_002ece10, of_clu_bss + 0x2980\n"  /* 0x002ece10 */
-	".globl _DAT_002ece10\n.set _DAT_002ece10, of_clu_bss + 0x2980\n"  /* 0x002ece10 */
+	".globl __DAT_002ece10\n.set __DAT_002ece10, of_clu_bss + 0x2980\n"  /* 0x002ece10 */
 	".globl DAT_002ecf00\n.set DAT_002ecf00, of_clu_bss + 0x2a70\n"  /* 0x002ecf00 */
-	".globl _DAT_002ecf00\n.set _DAT_002ecf00, of_clu_bss + 0x2a70\n"  /* 0x002ecf00 */
+	".globl __DAT_002ecf00\n.set __DAT_002ecf00, of_clu_bss + 0x2a70\n"  /* 0x002ecf00 */
 	".globl DAT_002ecf04\n.set DAT_002ecf04, of_clu_bss + 0x2a74\n"  /* 0x002ecf04 */
 	".globl DAT_002ecf08\n.set DAT_002ecf08, of_clu_bss + 0x2a78\n"  /* 0x002ecf08 */
 	".globl DAT_002ecf0c\n.set DAT_002ecf0c, of_clu_bss + 0x2a7c\n"  /* 0x002ecf0c */
 	".globl DAT_002ecf10\n.set DAT_002ecf10, of_clu_bss + 0x2a80\n"  /* 0x002ecf10 */
-	".globl _DAT_002ecf10\n.set _DAT_002ecf10, of_clu_bss + 0x2a80\n"  /* 0x002ecf10 */
+	".globl __DAT_002ecf10\n.set __DAT_002ecf10, of_clu_bss + 0x2a80\n"  /* 0x002ecf10 */
 	".globl DAT_002ecf14\n.set DAT_002ecf14, of_clu_bss + 0x2a84\n"  /* 0x002ecf14 */
-	".globl _DAT_002ecf14\n.set _DAT_002ecf14, of_clu_bss + 0x2a84\n"  /* 0x002ecf14 */
+	".globl __DAT_002ecf14\n.set __DAT_002ecf14, of_clu_bss + 0x2a84\n"  /* 0x002ecf14 */
 	".globl DAT_002ecf18\n.set DAT_002ecf18, of_clu_bss + 0x2a88\n"  /* 0x002ecf18 */
 	".globl DAT_002ecf1c\n.set DAT_002ecf1c, of_clu_bss + 0x2a8c\n"  /* 0x002ecf1c */
 	".globl DAT_002ecf20\n.set DAT_002ecf20, of_clu_bss + 0x2a90\n"  /* 0x002ecf20 */
@@ -833,133 +834,134 @@ __asm__(
 	".globl DAT_002ecf90\n.set DAT_002ecf90, of_clu_bss + 0x2b00\n"  /* 0x002ecf90 */
 	".globl DAT_002ecf94\n.set DAT_002ecf94, of_clu_bss + 0x2b04\n"  /* 0x002ecf94 */
 	".globl DAT_002ecf98\n.set DAT_002ecf98, of_clu_bss + 0x2b08\n"  /* 0x002ecf98 */
-	".globl _DAT_002ecf98\n.set _DAT_002ecf98, of_clu_bss + 0x2b08\n"  /* 0x002ecf98 */
+	".globl __DAT_002ecf98\n.set __DAT_002ecf98, of_clu_bss + 0x2b08\n"  /* 0x002ecf98 */
 	".globl DAT_002ecf9c\n.set DAT_002ecf9c, of_clu_bss + 0x2b0c\n"  /* 0x002ecf9c */
-	".globl _DAT_002ecf9c\n.set _DAT_002ecf9c, of_clu_bss + 0x2b0c\n"  /* 0x002ecf9c */
+	".globl __DAT_002ecf9c\n.set __DAT_002ecf9c, of_clu_bss + 0x2b0c\n"  /* 0x002ecf9c */
 	".globl DAT_002ecfa0\n.set DAT_002ecfa0, of_clu_bss + 0x2b10\n"  /* 0x002ecfa0 */
-	".globl _DAT_002ecfa0\n.set _DAT_002ecfa0, of_clu_bss + 0x2b10\n"  /* 0x002ecfa0 */
+	".globl __DAT_002ecfa0\n.set __DAT_002ecfa0, of_clu_bss + 0x2b10\n"  /* 0x002ecfa0 */
 	".globl DAT_002ecfa8\n.set DAT_002ecfa8, of_clu_bss + 0x2b18\n"  /* 0x002ecfa8 */
 	".globl DAT_002ecfac\n.set DAT_002ecfac, of_clu_bss + 0x2b1c\n"  /* 0x002ecfac */
 	".globl DAT_002ecfb8\n.set DAT_002ecfb8, of_clu_bss + 0x2b28\n"  /* 0x002ecfb8 */
 	".globl DAT_002ecfbc\n.set DAT_002ecfbc, of_clu_bss + 0x2b2c\n"  /* 0x002ecfbc */
 	".globl DAT_002ecfc0\n.set DAT_002ecfc0, of_clu_bss + 0x2b30\n"  /* 0x002ecfc0 */
 	".globl DAT_002ecfd0\n.set DAT_002ecfd0, of_clu_bss + 0x2b40\n"  /* 0x002ecfd0 */
-	".globl _DAT_002ecfd0\n.set _DAT_002ecfd0, of_clu_bss + 0x2b40\n"  /* 0x002ecfd0 */
+	".globl __DAT_002ecfd0\n.set __DAT_002ecfd0, of_clu_bss + 0x2b40\n"  /* 0x002ecfd0 */
 	".globl DAT_002ecfd8\n.set DAT_002ecfd8, of_clu_bss + 0x2b48\n"  /* 0x002ecfd8 */
 	".globl DAT_002ecff0\n.set DAT_002ecff0, of_clu_bss + 0x2b60\n"  /* 0x002ecff0 */
-	".globl _DAT_002ecff0\n.set _DAT_002ecff0, of_clu_bss + 0x2b60\n"  /* 0x002ecff0 */
+	".globl __DAT_002ecff0\n.set __DAT_002ecff0, of_clu_bss + 0x2b60\n"  /* 0x002ecff0 */
 	".globl DAT_002ed014\n.set DAT_002ed014, of_clu_bss + 0x2b84\n"  /* 0x002ed014 */
-	".globl _DAT_002ed014\n.set _DAT_002ed014, of_clu_bss + 0x2b84\n"  /* 0x002ed014 */
+	".globl __DAT_002ed014\n.set __DAT_002ed014, of_clu_bss + 0x2b84\n"  /* 0x002ed014 */
 	".globl DAT_002ed038\n.set DAT_002ed038, of_clu_bss + 0x2ba8\n"  /* 0x002ed038 */
-	".globl _DAT_002ed038\n.set _DAT_002ed038, of_clu_bss + 0x2ba8\n"  /* 0x002ed038 */
+	".globl __DAT_002ed038\n.set __DAT_002ed038, of_clu_bss + 0x2ba8\n"  /* 0x002ed038 */
 	".globl DAT_002ed05c\n.set DAT_002ed05c, of_clu_bss + 0x2bcc\n"  /* 0x002ed05c */
-	".globl _DAT_002ed05c\n.set _DAT_002ed05c, of_clu_bss + 0x2bcc\n"  /* 0x002ed05c */
+	".globl __DAT_002ed05c\n.set __DAT_002ed05c, of_clu_bss + 0x2bcc\n"  /* 0x002ed05c */
 	".globl DAT_002ed068\n.set DAT_002ed068, of_clu_bss + 0x2bd8\n"  /* 0x002ed068 */
 	".globl DAT_002ed080\n.set DAT_002ed080, of_clu_bss + 0x2bf0\n"  /* 0x002ed080 */
-	".globl _DAT_002ed080\n.set _DAT_002ed080, of_clu_bss + 0x2bf0\n"  /* 0x002ed080 */
+	".globl __DAT_002ed080\n.set __DAT_002ed080, of_clu_bss + 0x2bf0\n"  /* 0x002ed080 */
 	".globl DAT_002ed0a4\n.set DAT_002ed0a4, of_clu_bss + 0x2c14\n"  /* 0x002ed0a4 */
-	".globl _DAT_002ed0a4\n.set _DAT_002ed0a4, of_clu_bss + 0x2c14\n"  /* 0x002ed0a4 */
+	".globl __DAT_002ed0a4\n.set __DAT_002ed0a4, of_clu_bss + 0x2c14\n"  /* 0x002ed0a4 */
 	".globl DAT_002ed0c8\n.set DAT_002ed0c8, of_clu_bss + 0x2c38\n"  /* 0x002ed0c8 */
-	".globl _DAT_002ed0c8\n.set _DAT_002ed0c8, of_clu_bss + 0x2c38\n"  /* 0x002ed0c8 */
+	".globl __DAT_002ed0c8\n.set __DAT_002ed0c8, of_clu_bss + 0x2c38\n"  /* 0x002ed0c8 */
 	".globl DAT_002ed0ec\n.set DAT_002ed0ec, of_clu_bss + 0x2c5c\n"  /* 0x002ed0ec */
-	".globl _DAT_002ed0ec\n.set _DAT_002ed0ec, of_clu_bss + 0x2c5c\n"  /* 0x002ed0ec */
+	".globl __DAT_002ed0ec\n.set __DAT_002ed0ec, of_clu_bss + 0x2c5c\n"  /* 0x002ed0ec */
 	".globl DAT_002ed0f8\n.set DAT_002ed0f8, of_clu_bss + 0x2c68\n"  /* 0x002ed0f8 */
-	".globl _DAT_002ed0f8\n.set _DAT_002ed0f8, of_clu_bss + 0x2c68\n"  /* 0x002ed0f8 */
+	".globl __DAT_002ed0f8\n.set __DAT_002ed0f8, of_clu_bss + 0x2c68\n"  /* 0x002ed0f8 */
 	".globl DAT_002ed0fc\n.set DAT_002ed0fc, of_clu_bss + 0x2c6c\n"  /* 0x002ed0fc */
-	".globl _DAT_002ed0fc\n.set _DAT_002ed0fc, of_clu_bss + 0x2c6c\n"  /* 0x002ed0fc */
+	".globl __DAT_002ed0fc\n.set __DAT_002ed0fc, of_clu_bss + 0x2c6c\n"  /* 0x002ed0fc */
 	".globl DAT_002ed100\n.set DAT_002ed100, of_clu_bss + 0x2c70\n"  /* 0x002ed100 */
-	".globl _DAT_002ed100\n.set _DAT_002ed100, of_clu_bss + 0x2c70\n"  /* 0x002ed100 */
+	".globl __DAT_002ed100\n.set __DAT_002ed100, of_clu_bss + 0x2c70\n"  /* 0x002ed100 */
 	".globl DAT_002ed110\n.set DAT_002ed110, of_clu_bss + 0x2c80\n"  /* 0x002ed110 */
-	".globl _DAT_002ed110\n.set _DAT_002ed110, of_clu_bss + 0x2c80\n"  /* 0x002ed110 */
+	".globl __DAT_002ed110\n.set __DAT_002ed110, of_clu_bss + 0x2c80\n"  /* 0x002ed110 */
 	".globl DAT_002ed114\n.set DAT_002ed114, of_clu_bss + 0x2c84\n"  /* 0x002ed114 */
-	".globl _DAT_002ed114\n.set _DAT_002ed114, of_clu_bss + 0x2c84\n"  /* 0x002ed114 */
+	".globl __DAT_002ed114\n.set __DAT_002ed114, of_clu_bss + 0x2c84\n"  /* 0x002ed114 */
 	".globl DAT_002ed118\n.set DAT_002ed118, of_clu_bss + 0x2c88\n"  /* 0x002ed118 */
-	".globl _DAT_002ed118\n.set _DAT_002ed118, of_clu_bss + 0x2c88\n"  /* 0x002ed118 */
+	".globl __DAT_002ed118\n.set __DAT_002ed118, of_clu_bss + 0x2c88\n"  /* 0x002ed118 */
 	".globl DAT_002ed11c\n.set DAT_002ed11c, of_clu_bss + 0x2c8c\n"  /* 0x002ed11c */
-	".globl _DAT_002ed11c\n.set _DAT_002ed11c, of_clu_bss + 0x2c8c\n"  /* 0x002ed11c */
+	".globl __DAT_002ed11c\n.set __DAT_002ed11c, of_clu_bss + 0x2c8c\n"  /* 0x002ed11c */
 	".globl DAT_002ed120\n.set DAT_002ed120, of_clu_bss + 0x2c90\n"  /* 0x002ed120 */
-	".globl _DAT_002ed120\n.set _DAT_002ed120, of_clu_bss + 0x2c90\n"  /* 0x002ed120 */
+	".globl __DAT_002ed120\n.set __DAT_002ed120, of_clu_bss + 0x2c90\n"  /* 0x002ed120 */
 	".globl DAT_002ed124\n.set DAT_002ed124, of_clu_bss + 0x2c94\n"  /* 0x002ed124 */
-	".globl _DAT_002ed124\n.set _DAT_002ed124, of_clu_bss + 0x2c94\n"  /* 0x002ed124 */
+	".globl __DAT_002ed124\n.set __DAT_002ed124, of_clu_bss + 0x2c94\n"  /* 0x002ed124 */
 	".globl DAT_002ed134\n.set DAT_002ed134, of_clu_bss + 0x2ca4\n"  /* 0x002ed134 */
-	".globl _DAT_002ed134\n.set _DAT_002ed134, of_clu_bss + 0x2ca4\n"  /* 0x002ed134 */
+	".globl __DAT_002ed134\n.set __DAT_002ed134, of_clu_bss + 0x2ca4\n"  /* 0x002ed134 */
 	".globl DAT_002ed138\n.set DAT_002ed138, of_clu_bss + 0x2ca8\n"  /* 0x002ed138 */
-	".globl _DAT_002ed138\n.set _DAT_002ed138, of_clu_bss + 0x2ca8\n"  /* 0x002ed138 */
+	".globl __DAT_002ed138\n.set __DAT_002ed138, of_clu_bss + 0x2ca8\n"  /* 0x002ed138 */
 	".globl DAT_002ed13c\n.set DAT_002ed13c, of_clu_bss + 0x2cac\n"  /* 0x002ed13c */
-	".globl _DAT_002ed13c\n.set _DAT_002ed13c, of_clu_bss + 0x2cac\n"  /* 0x002ed13c */
+	".globl __DAT_002ed13c\n.set __DAT_002ed13c, of_clu_bss + 0x2cac\n"  /* 0x002ed13c */
 	".globl DAT_002ed140\n.set DAT_002ed140, of_clu_bss + 0x2cb0\n"  /* 0x002ed140 */
-	".globl _DAT_002ed140\n.set _DAT_002ed140, of_clu_bss + 0x2cb0\n"  /* 0x002ed140 */
+	".globl __DAT_002ed140\n.set __DAT_002ed140, of_clu_bss + 0x2cb0\n"  /* 0x002ed140 */
 	".globl DAT_002ed144\n.set DAT_002ed144, of_clu_bss + 0x2cb4\n"  /* 0x002ed144 */
-	".globl _DAT_002ed144\n.set _DAT_002ed144, of_clu_bss + 0x2cb4\n"  /* 0x002ed144 */
+	".globl __DAT_002ed144\n.set __DAT_002ed144, of_clu_bss + 0x2cb4\n"  /* 0x002ed144 */
 	".globl DAT_002ed148\n.set DAT_002ed148, of_clu_bss + 0x2cb8\n"  /* 0x002ed148 */
-	".globl _DAT_002ed148\n.set _DAT_002ed148, of_clu_bss + 0x2cb8\n"  /* 0x002ed148 */
+	".globl __DAT_002ed148\n.set __DAT_002ed148, of_clu_bss + 0x2cb8\n"  /* 0x002ed148 */
 	".globl DAT_002ed158\n.set DAT_002ed158, of_clu_bss + 0x2cc8\n"  /* 0x002ed158 */
-	".globl _DAT_002ed158\n.set _DAT_002ed158, of_clu_bss + 0x2cc8\n"  /* 0x002ed158 */
+	".globl __DAT_002ed158\n.set __DAT_002ed158, of_clu_bss + 0x2cc8\n"  /* 0x002ed158 */
 	".globl DAT_002ed15c\n.set DAT_002ed15c, of_clu_bss + 0x2ccc\n"  /* 0x002ed15c */
-	".globl _DAT_002ed15c\n.set _DAT_002ed15c, of_clu_bss + 0x2ccc\n"  /* 0x002ed15c */
+	".globl __DAT_002ed15c\n.set __DAT_002ed15c, of_clu_bss + 0x2ccc\n"  /* 0x002ed15c */
 	".globl DAT_002ed160\n.set DAT_002ed160, of_clu_bss + 0x2cd0\n"  /* 0x002ed160 */
-	".globl _DAT_002ed160\n.set _DAT_002ed160, of_clu_bss + 0x2cd0\n"  /* 0x002ed160 */
+	".globl __DAT_002ed160\n.set __DAT_002ed160, of_clu_bss + 0x2cd0\n"  /* 0x002ed160 */
 	".globl DAT_002ed164\n.set DAT_002ed164, of_clu_bss + 0x2cd4\n"  /* 0x002ed164 */
-	".globl _DAT_002ed164\n.set _DAT_002ed164, of_clu_bss + 0x2cd4\n"  /* 0x002ed164 */
+	".globl __DAT_002ed164\n.set __DAT_002ed164, of_clu_bss + 0x2cd4\n"  /* 0x002ed164 */
 	".globl DAT_002ed168\n.set DAT_002ed168, of_clu_bss + 0x2cd8\n"  /* 0x002ed168 */
-	".globl _DAT_002ed168\n.set _DAT_002ed168, of_clu_bss + 0x2cd8\n"  /* 0x002ed168 */
+	".globl __DAT_002ed168\n.set __DAT_002ed168, of_clu_bss + 0x2cd8\n"  /* 0x002ed168 */
 	".globl DAT_002ed16c\n.set DAT_002ed16c, of_clu_bss + 0x2cdc\n"  /* 0x002ed16c */
-	".globl _DAT_002ed16c\n.set _DAT_002ed16c, of_clu_bss + 0x2cdc\n"  /* 0x002ed16c */
+	".globl __DAT_002ed16c\n.set __DAT_002ed16c, of_clu_bss + 0x2cdc\n"  /* 0x002ed16c */
 	".globl DAT_002ed17c\n.set DAT_002ed17c, of_clu_bss + 0x2cec\n"  /* 0x002ed17c */
-	".globl _DAT_002ed17c\n.set _DAT_002ed17c, of_clu_bss + 0x2cec\n"  /* 0x002ed17c */
+	".globl __DAT_002ed17c\n.set __DAT_002ed17c, of_clu_bss + 0x2cec\n"  /* 0x002ed17c */
 	".globl DAT_002ed180\n.set DAT_002ed180, of_clu_bss + 0x2cf0\n"  /* 0x002ed180 */
-	".globl _DAT_002ed180\n.set _DAT_002ed180, of_clu_bss + 0x2cf0\n"  /* 0x002ed180 */
+	".globl __DAT_002ed180\n.set __DAT_002ed180, of_clu_bss + 0x2cf0\n"  /* 0x002ed180 */
 	".globl DAT_002ed184\n.set DAT_002ed184, of_clu_bss + 0x2cf4\n"  /* 0x002ed184 */
-	".globl _DAT_002ed184\n.set _DAT_002ed184, of_clu_bss + 0x2cf4\n"  /* 0x002ed184 */
+	".globl __DAT_002ed184\n.set __DAT_002ed184, of_clu_bss + 0x2cf4\n"  /* 0x002ed184 */
 	".globl DAT_002ed188\n.set DAT_002ed188, of_clu_bss + 0x2cf8\n"  /* 0x002ed188 */
-	".globl _DAT_002ed188\n.set _DAT_002ed188, of_clu_bss + 0x2cf8\n"  /* 0x002ed188 */
+	".globl __DAT_002ed188\n.set __DAT_002ed188, of_clu_bss + 0x2cf8\n"  /* 0x002ed188 */
 	".globl DAT_002ed18c\n.set DAT_002ed18c, of_clu_bss + 0x2cfc\n"  /* 0x002ed18c */
-	".globl _DAT_002ed18c\n.set _DAT_002ed18c, of_clu_bss + 0x2cfc\n"  /* 0x002ed18c */
+	".globl __DAT_002ed18c\n.set __DAT_002ed18c, of_clu_bss + 0x2cfc\n"  /* 0x002ed18c */
 	".globl DAT_002ed190\n.set DAT_002ed190, of_clu_bss + 0x2d00\n"  /* 0x002ed190 */
-	".globl _DAT_002ed190\n.set _DAT_002ed190, of_clu_bss + 0x2d00\n"  /* 0x002ed190 */
+	".globl __DAT_002ed190\n.set __DAT_002ed190, of_clu_bss + 0x2d00\n"  /* 0x002ed190 */
 	".globl DAT_002ed1a0\n.set DAT_002ed1a0, of_clu_bss + 0x2d10\n"  /* 0x002ed1a0 */
-	".globl _DAT_002ed1a0\n.set _DAT_002ed1a0, of_clu_bss + 0x2d10\n"  /* 0x002ed1a0 */
+	".globl __DAT_002ed1a0\n.set __DAT_002ed1a0, of_clu_bss + 0x2d10\n"  /* 0x002ed1a0 */
 	".globl DAT_002ed1a4\n.set DAT_002ed1a4, of_clu_bss + 0x2d14\n"  /* 0x002ed1a4 */
-	".globl _DAT_002ed1a4\n.set _DAT_002ed1a4, of_clu_bss + 0x2d14\n"  /* 0x002ed1a4 */
+	".globl __DAT_002ed1a4\n.set __DAT_002ed1a4, of_clu_bss + 0x2d14\n"  /* 0x002ed1a4 */
 	".globl DAT_002ed1a8\n.set DAT_002ed1a8, of_clu_bss + 0x2d18\n"  /* 0x002ed1a8 */
-	".globl _DAT_002ed1a8\n.set _DAT_002ed1a8, of_clu_bss + 0x2d18\n"  /* 0x002ed1a8 */
+	".globl __DAT_002ed1a8\n.set __DAT_002ed1a8, of_clu_bss + 0x2d18\n"  /* 0x002ed1a8 */
 	".globl DAT_002ed1ac\n.set DAT_002ed1ac, of_clu_bss + 0x2d1c\n"  /* 0x002ed1ac */
-	".globl _DAT_002ed1ac\n.set _DAT_002ed1ac, of_clu_bss + 0x2d1c\n"  /* 0x002ed1ac */
+	".globl __DAT_002ed1ac\n.set __DAT_002ed1ac, of_clu_bss + 0x2d1c\n"  /* 0x002ed1ac */
 	".globl DAT_002ed1b0\n.set DAT_002ed1b0, of_clu_bss + 0x2d20\n"  /* 0x002ed1b0 */
-	".globl _DAT_002ed1b0\n.set _DAT_002ed1b0, of_clu_bss + 0x2d20\n"  /* 0x002ed1b0 */
+	".globl __DAT_002ed1b0\n.set __DAT_002ed1b0, of_clu_bss + 0x2d20\n"  /* 0x002ed1b0 */
 	".globl DAT_002ed1b4\n.set DAT_002ed1b4, of_clu_bss + 0x2d24\n"  /* 0x002ed1b4 */
-	".globl _DAT_002ed1b4\n.set _DAT_002ed1b4, of_clu_bss + 0x2d24\n"  /* 0x002ed1b4 */
+	".globl __DAT_002ed1b4\n.set __DAT_002ed1b4, of_clu_bss + 0x2d24\n"  /* 0x002ed1b4 */
 	".globl DAT_002ed1c4\n.set DAT_002ed1c4, of_clu_bss + 0x2d34\n"  /* 0x002ed1c4 */
-	".globl _DAT_002ed1c4\n.set _DAT_002ed1c4, of_clu_bss + 0x2d34\n"  /* 0x002ed1c4 */
+	".globl __DAT_002ed1c4\n.set __DAT_002ed1c4, of_clu_bss + 0x2d34\n"  /* 0x002ed1c4 */
 	".globl DAT_002ed1c8\n.set DAT_002ed1c8, of_clu_bss + 0x2d38\n"  /* 0x002ed1c8 */
-	".globl _DAT_002ed1c8\n.set _DAT_002ed1c8, of_clu_bss + 0x2d38\n"  /* 0x002ed1c8 */
+	".globl __DAT_002ed1c8\n.set __DAT_002ed1c8, of_clu_bss + 0x2d38\n"  /* 0x002ed1c8 */
 	".globl DAT_002ed1cc\n.set DAT_002ed1cc, of_clu_bss + 0x2d3c\n"  /* 0x002ed1cc */
-	".globl _DAT_002ed1cc\n.set _DAT_002ed1cc, of_clu_bss + 0x2d3c\n"  /* 0x002ed1cc */
+	".globl __DAT_002ed1cc\n.set __DAT_002ed1cc, of_clu_bss + 0x2d3c\n"  /* 0x002ed1cc */
 	".globl DAT_002ed1d0\n.set DAT_002ed1d0, of_clu_bss + 0x2d40\n"  /* 0x002ed1d0 */
-	".globl _DAT_002ed1d0\n.set _DAT_002ed1d0, of_clu_bss + 0x2d40\n"  /* 0x002ed1d0 */
+	".globl __DAT_002ed1d0\n.set __DAT_002ed1d0, of_clu_bss + 0x2d40\n"  /* 0x002ed1d0 */
 	".globl DAT_002ed1d4\n.set DAT_002ed1d4, of_clu_bss + 0x2d44\n"  /* 0x002ed1d4 */
-	".globl _DAT_002ed1d4\n.set _DAT_002ed1d4, of_clu_bss + 0x2d44\n"  /* 0x002ed1d4 */
+	".globl __DAT_002ed1d4\n.set __DAT_002ed1d4, of_clu_bss + 0x2d44\n"  /* 0x002ed1d4 */
 	".globl DAT_002ed1d8\n.set DAT_002ed1d8, of_clu_bss + 0x2d48\n"  /* 0x002ed1d8 */
-	".globl _DAT_002ed1d8\n.set _DAT_002ed1d8, of_clu_bss + 0x2d48\n"  /* 0x002ed1d8 */
+	".globl __DAT_002ed1d8\n.set __DAT_002ed1d8, of_clu_bss + 0x2d48\n"  /* 0x002ed1d8 */
 	".globl DAT_002ed1e8\n.set DAT_002ed1e8, of_clu_bss + 0x2d58\n"  /* 0x002ed1e8 */
-	".globl _DAT_002ed1e8\n.set _DAT_002ed1e8, of_clu_bss + 0x2d58\n"  /* 0x002ed1e8 */
+	".globl __DAT_002ed1e8\n.set __DAT_002ed1e8, of_clu_bss + 0x2d58\n"  /* 0x002ed1e8 */
 	".globl DAT_002ed1ec\n.set DAT_002ed1ec, of_clu_bss + 0x2d5c\n"  /* 0x002ed1ec */
-	".globl _DAT_002ed1ec\n.set _DAT_002ed1ec, of_clu_bss + 0x2d5c\n"  /* 0x002ed1ec */
+	".globl __DAT_002ed1ec\n.set __DAT_002ed1ec, of_clu_bss + 0x2d5c\n"  /* 0x002ed1ec */
 	".globl DAT_002ed1f0\n.set DAT_002ed1f0, of_clu_bss + 0x2d60\n"  /* 0x002ed1f0 */
-	".globl _DAT_002ed1f0\n.set _DAT_002ed1f0, of_clu_bss + 0x2d60\n"  /* 0x002ed1f0 */
+	".globl __DAT_002ed1f0\n.set __DAT_002ed1f0, of_clu_bss + 0x2d60\n"  /* 0x002ed1f0 */
 	".globl DAT_002ed1f4\n.set DAT_002ed1f4, of_clu_bss + 0x2d64\n"  /* 0x002ed1f4 */
-	".globl _DAT_002ed1f4\n.set _DAT_002ed1f4, of_clu_bss + 0x2d64\n"  /* 0x002ed1f4 */
+	".globl __DAT_002ed1f4\n.set __DAT_002ed1f4, of_clu_bss + 0x2d64\n"  /* 0x002ed1f4 */
 	".globl DAT_002ed1f8\n.set DAT_002ed1f8, of_clu_bss + 0x2d68\n"  /* 0x002ed1f8 */
-	".globl _DAT_002ed1f8\n.set _DAT_002ed1f8, of_clu_bss + 0x2d68\n"  /* 0x002ed1f8 */
+	".globl __DAT_002ed1f8\n.set __DAT_002ed1f8, of_clu_bss + 0x2d68\n"  /* 0x002ed1f8 */
 	".globl DAT_002ed1fc\n.set DAT_002ed1fc, of_clu_bss + 0x2d6c\n"  /* 0x002ed1fc */
-	".globl _DAT_002ed1fc\n.set _DAT_002ed1fc, of_clu_bss + 0x2d6c\n"  /* 0x002ed1fc */
+	".globl __DAT_002ed1fc\n.set __DAT_002ed1fc, of_clu_bss + 0x2d6c\n"  /* 0x002ed1fc */
 	".globl DAT_002ed20c\n.set DAT_002ed20c, of_clu_bss + 0x2d7c\n"  /* 0x002ed20c */
-	".globl _DAT_002ed20c\n.set _DAT_002ed20c, of_clu_bss + 0x2d7c\n"  /* 0x002ed20c */
+	".globl __DAT_002ed20c\n.set __DAT_002ed20c, of_clu_bss + 0x2d7c\n"  /* 0x002ed20c */
 	".globl DAT_002ed210\n.set DAT_002ed210, of_clu_bss + 0x2d80\n"  /* 0x002ed210 */
-	".globl _DAT_002ed210\n.set _DAT_002ed210, of_clu_bss + 0x2d80\n"  /* 0x002ed210 */
+	".globl __DAT_002ed210\n.set __DAT_002ed210, of_clu_bss + 0x2d80\n"  /* 0x002ed210 */
 	".globl DAT_002ed214\n.set DAT_002ed214, of_clu_bss + 0x2d84\n"  /* 0x002ed214 */
-	".globl _DAT_002ed214\n.set _DAT_002ed214, of_clu_bss + 0x2d84\n"  /* 0x002ed214 */
+	".globl __DAT_002ed214\n.set __DAT_002ed214, of_clu_bss + 0x2d84\n"  /* 0x002ed214 */
 	".globl DAT_002ed218\n.set DAT_002ed218, of_clu_bss + 0x2d88\n"  /* 0x002ed218 */
 	".globl DAT_002ed220\n.set DAT_002ed220, of_clu_bss + 0x2d90\n"  /* 0x002ed220 */
+	".globl DAT_002ed324\n.set DAT_002ed324, of_clu_bss + 0x2e94\n"  /* 0x002ed324 */
 	".globl DAT_002ed338\n.set DAT_002ed338, of_clu_bss + 0x2ea8\n"  /* 0x002ed338 */
 );

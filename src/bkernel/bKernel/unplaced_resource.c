@@ -31,8 +31,9 @@ bkResource *(*const DAT_002852e8[BK_RESOURCE_TYPES])(struct bkPackage *, uint) =
 	(bkResource *(*)(struct bkPackage *, uint))FUN_000521c0, /* anim collision mesh */
 	(bkResource *(*)(struct bkPackage *, uint))FUN_000562d0, /* audio stream: engine_misc */
 };
-/* 0x00285290: language suffixes of string tables (bkLanguage) */
-const char *const DAT_00285290[6] = { "uk", "f", "d", "e", "it", "nl" };
+/* 0x00285290: language suffixes of string tables (bkLanguage); 12 entries up to 0x002852c0.
+core's Core_SelectLanguage uses 10 ("us") and 11 ("jp") too. */
+const char *const DAT_00285290[12] = { "uk", "f", "d", "e", "it", "nl", "sw", "fin", "n", "dk", "us", "jp" };
 /* 0x00285310: destroyer of each type (the original jumps to it after unlinking) */
 void (*const DAT_00285310[BK_RESOURCE_TYPES])(bkResource *) = {
 	(void (*)(bkResource *))FUN_00041530, /* texture: bdisplay */

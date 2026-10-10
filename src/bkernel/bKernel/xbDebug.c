@@ -7,6 +7,7 @@ neighbours and work on the same log records, so they are placed here too.
 
 #include "bkernel_core.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 /* 0x00285158: the default log, "z:\debugLog.txt" after bkInitLog */
@@ -71,7 +72,13 @@ static void bkPrintOutput(void)
 	ulonglong start;
 	longlong wait;
 
-	if (bkCurrentLog->flags & BK_LOG_DEBUGGER)
+	static int forceDebugger = -1;
+
+	/* Port: OPENFRENZY_BKLOG=1 copies every line to the debugger output (stderr), also
+	   for the silent log that core_init selects after start-up. */
+	if (forceDebugger < 0)
+		forceDebugger = getenv("OPENFRENZY_BKLOG") != NULL;
+	if ((bkCurrentLog->flags & BK_LOG_DEBUGGER) || forceDebugger)
 		OutputDebugStringA(bkPrintBuffer);
 	if (bkCurrentLog->path[0] != '\0')
 	{

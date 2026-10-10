@@ -231,6 +231,22 @@ static void fault(int signal, siginfo_t *info, void *context) {
 #endif
     fprintf(stderr, "OpenFrenzy fault %d at %p; pc=%llx guest pc=%x\n", signal, info->si_addr,
             (unsigned long long)u->uc_mcontext->__ss.__pc, guest_pc);
+    /* openfrenzy: guest backtrace (guest code keeps frame pointers; frame records hold
+     * x29/x30 as 64-bit words in the arena). Symbolize with llvm-symbolizer. */
+    fprintf(stderr, "  lr guest %x\n", (uint32_t)u->uc_mcontext->__ss.__lr);
+    uint64_t fp = u->uc_mcontext->__ss.__fp;
+    for (int depth = 0; depth < 32; depth++) {
+        if (fp < OPENFRENZY_MACOS_BIAS || fp >= OPENFRENZY_MACOS_BIAS + UINT64_C(0x100000000) || (fp & 7))
+            break;
+        uint64_t *frame = (uint64_t *)fp;
+        uint64_t next = frame[0], ret = frame[1];
+        if (!ret)
+            break;
+        fprintf(stderr, "  #%d guest %x\n", depth, (uint32_t)ret);
+        if (next <= fp)
+            break;
+        fp = next;
+    }
     _exit(128 + signal);
 }
 void host_install_signal_handlers(void) {

@@ -47,6 +47,21 @@ EXTRA_ALIASES = {0x00290CB4, 0x00290CB8}
 NAME_RE = re.compile(r"\b((?:_?DAT|PTR_[A-Za-z0-9_]*?|s_[A-Za-z0-9_]*?|u_[A-Za-z0-9_]*?)_(00[23][0-9a-f]{5}))\b")
 
 
+def source_names(names):
+    """integration round 1: also alias every DAT_/_DAT_ name that any module's source uses
+    (Ghidra does not name every address, e.g. the mode stack 0x002ba750). Without an alias
+    a user gets its own common copy (scripts/check_split_globals.py)."""
+    pattern = re.compile(r"\b(_?DAT_(00[23][0-9a-f]{5}))\b")
+    for base, _, files in os.walk(os.path.join(ROOT, "src")):
+        if os.sep + "tests" in base or os.sep + "tools" in base:
+            continue
+        for f in files:
+            if f.endswith((".c", ".h")):
+                for full, addr in pattern.findall(open(os.path.join(base, f), errors="replace").read()):
+                    names.setdefault(int(addr, 16), set()).add(full)
+    return names
+
+
 def ghidra_names():
     names = {}
     funcs = os.path.join(ROOT, "export", "funcs")
@@ -109,7 +124,7 @@ def main():
             units.append(u)
         return None
 
-    names = ghidra_names()
+    names = source_names(ghidra_names())
     for addr in EXTRA_ALIASES:
         names.setdefault(addr, set()).add("DAT_%08x" % addr)
     starts = function_starts()
@@ -169,7 +184,10 @@ def main():
     out.append("/* Ghidra names of addresses inside the blocks, for other modules */")
     out.append("__asm__(")
     for n, block, off, addr in aliases:
-        out.append('\t".globl %s\\n.set %s, %s + 0x%x\\n"  /* 0x%08x */' % (n, n, block, off, addr))
+        # file-scope asm names are Mach-O names: asm_convert.py strips one leading
+        # underscore, so the C name _DAT_x is written __DAT_x (integration round 1)
+        sym = "_" + n if n.startswith("_") else n
+        out.append('\t".globl %s\\n.set %s, %s + 0x%x\\n"  /* 0x%08x */' % (sym, sym, block, off, addr))
     out.append(");")
     path = os.path.join(ROOT, "src", "classlib_ui", "ClassLib", "classlib_ui_data.c")
     with open(path, "w") as f:

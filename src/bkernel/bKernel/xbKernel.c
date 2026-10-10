@@ -141,19 +141,12 @@ void bkPollOSEvents(void)
 /* 0x0004e690
 bkRun: calls function(argument). main() starts the game through it with core_init.
 
-Port: compiled only with OPENFRENZY_BKERNEL_RUN_GAME=1. Until the rest of start-up exists,
-core_init never returns (it retries bkInit while bdisplay's FUN_00041d70 is a stub), so the
-shared test guest_guest_runs would hang. Without the switch the generated stub stays: main
-returns at once. Turn it on (the architect's decision) when the boot path is complete. */
-#ifndef OPENFRENZY_BKERNEL_RUN_GAME
-#define OPENFRENZY_BKERNEL_RUN_GAME 0
-#endif
-#if OPENFRENZY_BKERNEL_RUN_GAME
+Port: on since integration round 1. The test guest_guest_runs sets OPENFRENZY_BOOT_ONLY=1
+(src/runtime/of_boot.c), so it does not reach this endless game loop. */
 void bkRun(void (*function)(int), int argument)
 {
 	function(argument);
 }
-#endif
 
 /* 0x0004e6a0 */
 HANDLE bkCreateLock(void)

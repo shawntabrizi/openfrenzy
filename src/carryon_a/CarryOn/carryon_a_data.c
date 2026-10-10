@@ -393,6 +393,7 @@ __asm__(
 	".weak_definition DAT_00293ae4\n.set DAT_00293ae4, of_co_data + 0x94\n"  /* 0x00293ae4 */
 	".weak_definition DAT_00293ae8\n.set DAT_00293ae8, of_co_data + 0x98\n"  /* 0x00293ae8 */
 	".globl DAT_00293af0\n.set DAT_00293af0, of_co_data + 0xa0\n"  /* 0x00293af0 */
+	".weak_definition DAT_00293afc\n.set DAT_00293afc, of_co_data + 0xac\n"  /* 0x00293afc */
 	".weak_definition DAT_00293b28\n.set DAT_00293b28, of_co_data + 0xd8\n"  /* 0x00293b28 */
 	".weak_definition _DAT_00293b28\n.set _DAT_00293b28, of_co_data + 0xd8\n"  /* 0x00293b28 */
 	".globl DAT_00293b34\n.set DAT_00293b34, of_co_data + 0xe4\n"  /* 0x00293b34 */
@@ -527,6 +528,22 @@ __asm__(
 	".weak_definition DAT_00294514\n.set DAT_00294514, of_co_data2 + 0x600\n"  /* 0x00294514 */
 	".weak_definition DAT_00294518\n.set DAT_00294518, of_co_data2 + 0x604\n"  /* 0x00294518 */
 	".weak_definition DAT_0029451c\n.set DAT_0029451c, of_co_data2 + 0x608\n"  /* 0x0029451c */
+	".weak_definition DAT_00294520\n.set DAT_00294520, of_co_data2 + 0x60c\n"  /* 0x00294520 */
+	".weak_definition DAT_00294524\n.set DAT_00294524, of_co_data2 + 0x610\n"  /* 0x00294524 */
+	".weak_definition DAT_0029452c\n.set DAT_0029452c, of_co_data2 + 0x618\n"  /* 0x0029452c */
+	".weak_definition DAT_00294534\n.set DAT_00294534, of_co_data2 + 0x620\n"  /* 0x00294534 */
+	".weak_definition DAT_0029453c\n.set DAT_0029453c, of_co_data2 + 0x628\n"  /* 0x0029453c */
+	".weak_definition DAT_00294544\n.set DAT_00294544, of_co_data2 + 0x630\n"  /* 0x00294544 */
+	".weak_definition DAT_0029454c\n.set DAT_0029454c, of_co_data2 + 0x638\n"  /* 0x0029454c */
+	".weak_definition DAT_00294554\n.set DAT_00294554, of_co_data2 + 0x640\n"  /* 0x00294554 */
+	".weak_definition DAT_0029455c\n.set DAT_0029455c, of_co_data2 + 0x648\n"  /* 0x0029455c */
+	".weak_definition DAT_00294568\n.set DAT_00294568, of_co_data2 + 0x654\n"  /* 0x00294568 */
+	".weak_definition DAT_00294574\n.set DAT_00294574, of_co_data2 + 0x660\n"  /* 0x00294574 */
+	".weak_definition DAT_00294578\n.set DAT_00294578, of_co_data2 + 0x664\n"  /* 0x00294578 */
+	".weak_definition DAT_0029457c\n.set DAT_0029457c, of_co_data2 + 0x668\n"  /* 0x0029457c */
+	".weak_definition DAT_00294594\n.set DAT_00294594, of_co_data2 + 0x680\n"  /* 0x00294594 */
+	".weak_definition DAT_002945b4\n.set DAT_002945b4, of_co_data2 + 0x6a0\n"  /* 0x002945b4 */
+	".weak_definition DAT_002945d8\n.set DAT_002945d8, of_co_data2 + 0x6c4\n"  /* 0x002945d8 */
 	".weak_definition DAT_00294608\n.set DAT_00294608, of_co_data2 + 0x6f4\n"  /* 0x00294608 */
 	".weak_definition PTR_DAT_00294608\n.set PTR_DAT_00294608, of_co_data2 + 0x6f4\n"  /* 0x00294608 */
 	".weak_definition DAT_00294648\n.set DAT_00294648, of_co_data2 + 0x734\n"  /* 0x00294648 */
@@ -656,6 +673,10 @@ __asm__(
 	".weak_definition _DAT_002f796c\n.set _DAT_002f796c, of_co_bss2 + 0xc4c\n"  /* 0x002f796c */
 	".weak_definition DAT_002f7970\n.set DAT_002f7970, of_co_bss2 + 0xc50\n"  /* 0x002f7970 */
 	".weak_definition _DAT_002f7970\n.set _DAT_002f7970, of_co_bss2 + 0xc50\n"  /* 0x002f7970 */
+	".weak_definition DAT_002f7974\n.set DAT_002f7974, of_co_bss2 + 0xc54\n"  /* 0x002f7974 */
+	".weak_definition DAT_002f7978\n.set DAT_002f7978, of_co_bss2 + 0xc58\n"  /* 0x002f7978 */
+	".weak_definition DAT_002f797c\n.set DAT_002f797c, of_co_bss2 + 0xc5c\n"  /* 0x002f797c */
+	".weak_definition DAT_002f7980\n.set DAT_002f7980, of_co_bss2 + 0xc60\n"  /* 0x002f7980 */
 	".weak_definition DAT_002f7984\n.set DAT_002f7984, of_co_bss2 + 0xc64\n"  /* 0x002f7984 */
 	".weak_definition DAT_002f7988\n.set DAT_002f7988, of_co_bss2 + 0xc68\n"  /* 0x002f7988 */
 	".weak_definition DAT_002f798c\n.set DAT_002f798c, of_co_bss2 + 0xc6c\n"  /* 0x002f798c */

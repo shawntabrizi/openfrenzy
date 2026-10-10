@@ -18,6 +18,7 @@ Built with the game flags (of_game.h). openfrenzy runtime module.
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void of_run_static_constructors(void);   /* generated: gen/of_crt_init.c */
 
@@ -27,6 +28,13 @@ int main(int argc, char **argv)
 	(void)argv;
 	fprintf(stderr, "openfrenzy: static constructors\n");
 	of_run_static_constructors();
+	/* OPENFRENZY_BOOT_ONLY=1 (the ctest guest_guest_runs): stop after the constructors,
+	   because the game's main never returns. */
+	if (getenv("OPENFRENZY_BOOT_ONLY") != NULL)
+	{
+		fprintf(stderr, "openfrenzy: OPENFRENZY_BOOT_ONLY set, game main skipped\n");
+		return 0;
+	}
 	fprintf(stderr, "openfrenzy: game main 0x0002d540\n");
 	FUN_0002d540();
 	/* the Xbox returns to the dashboard here (XapiBootToDash) */
