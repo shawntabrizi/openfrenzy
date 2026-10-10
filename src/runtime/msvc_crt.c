@@ -183,8 +183,14 @@ void _splitpath(const char *path, char *drive, char *directory, char *name, char
 	}
 	if (extension)
 	{
-		strncpy(extension, last_dot ? last_dot : "", _MAX_EXT - 1);
-		extension[_MAX_EXT - 1] = '\0';
+		/* only the extension and its terminator, as MSVC writes (strncpy would pad with
+		zeros up to _MAX_EXT and overrun a smaller buffer of the caller) */
+		size_t length = last_dot ? strlen(last_dot) : 0;
+
+		if (length >= _MAX_EXT)
+			length = _MAX_EXT - 1;
+		memcpy(extension, last_dot ? last_dot : "", length);
+		extension[length] = '\0';
 	}
 }
 
