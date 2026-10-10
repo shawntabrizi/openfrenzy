@@ -23,10 +23,13 @@ int main(void)
 	setvbuf(stdout, NULL, _IONBF, 0);
 	unsetenv("OPENFRENZY_DISPLAY_VSYNC");
 	unsetenv("OPENFRENZY_AUDIO_VOLUME");
+	/* (an agent's shell can set it false; the default is what a player gets) */
+	unsetenv("OPENFRENZY_AUDIO_ENABLED");
 
 	/* defaults */
 	OF_CHECK(config_boolean("display.vsync") == 1, "display.vsync defaults to true");
 	OF_CHECK(config_boolean("debug.null_renderer") == 0, "debug.null_renderer defaults to false");
+	OF_CHECK(config_boolean("audio.enabled") == 1, "audio.enabled defaults to true: a fresh install has sound");
 	OF_CHECK(fabs(config_real("audio.volume") - 1.0) < 1e-9, "audio.volume defaults to 1.0");
 	OF_CHECK(config_integer("debug.screenshot_every") == 0, "debug.screenshot_every defaults to 0");
 	OF_CHECK(!strcmp(config_string("audio.output_device"), "default"), "audio.output_device is \"default\"");

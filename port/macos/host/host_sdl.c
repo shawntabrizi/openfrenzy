@@ -317,8 +317,29 @@ struct audio_binding {
     unsigned char *staging;
     size_t staging_length;
     size_t staging_capacity;
+    /* OPENFRENZY_DSOUND_LOG: the longest callback (handoff to the guest, its
+     * mix and the submission) of the last 10 s (audio_handoff_log) */
+    int log;
+    uint64_t log_window_start, log_longest;
+    unsigned log_callbacks;
 };
 static struct audio_binding *audio_bindings[HANDLE_COUNT];
+
+static void audio_handoff_log(struct audio_binding *binding, uint64_t start, uint64_t end) {
+    if (!binding->log_window_start)
+        binding->log_window_start = start;
+    if (end - start > binding->log_longest)
+        binding->log_longest = end - start;
+    binding->log_callbacks++;
+    if (end - binding->log_window_start >= UINT64_C(10000000000)) {
+        host_logf(HOST_LOG_INFO, "audio handoff: %u device callbacks in %.2f s, longest %.2f ms",
+                  binding->log_callbacks, (end - binding->log_window_start) / 1e9,
+                  binding->log_longest / 1e6);
+        binding->log_window_start = end;
+        binding->log_longest = 0;
+        binding->log_callbacks = 0;
+    }
+}
 
 static void *audio_thread(void *context) {
     struct audio_binding *binding = context;
@@ -344,6 +365,7 @@ static void *audio_thread(void *context) {
 static void SDLCALL audio_callback(void *userdata, SDL_AudioStream *stream, int additional,
                                    int total) {
     struct audio_binding *binding = userdata;
+    uint64_t start = binding->log ? SDL_GetTicksNS() : 0;
 
     (void)stream;
     pthread_mutex_lock(&binding->lock);
@@ -363,6 +385,8 @@ static void SDLCALL audio_callback(void *userdata, SDL_AudioStream *stream, int 
         binding->staging_length = 0;
     }
     pthread_mutex_unlock(&binding->lock);
+    if (binding->log)
+        audio_handoff_log(binding, start, SDL_GetTicksNS());
 }
 
 uint32_t host_sdl_open_audio_stream(uint32_t device, const void *spec, uint32_t callback,
@@ -382,6 +406,23 @@ uint32_t host_sdl_open_audio_stream(uint32_t device, const void *spec, uint32_t 
     if (!stream) {
         SDL_free(binding);
         return 0;
+    }
+    binding->log = SDL_getenv("OPENFRENZY_DSOUND_LOG") != NULL;
+    if (binding->log) {
+        SDL_AudioDeviceID opened = SDL_GetAudioStreamDevice(stream);
+        SDL_AudioSpec format;
+        int frames = 0;
+
+        if (SDL_GetAudioDeviceFormat(opened, &format, &frames))
+            host_logf(HOST_LOG_INFO,
+                      "audio device '%s': %d Hz, %d channels, %s, %d frames a buffer; the game's stream: "
+                      "%d Hz, %d channels, %s",
+                      SDL_GetAudioDeviceName(opened), format.freq, format.channels,
+                      SDL_GetAudioFormatName(format.format), frames, ((const SDL_AudioSpec *)spec)->freq,
+                      ((const SDL_AudioSpec *)spec)->channels,
+                      SDL_GetAudioFormatName(((const SDL_AudioSpec *)spec)->format));
+        else
+            host_logf(HOST_LOG_ERROR, "audio device format unknown: %s", SDL_GetError());
     }
     /* the device starts paused, so no callback can run before this */
     binding->handle = handle_new(_handle_audio, stream);

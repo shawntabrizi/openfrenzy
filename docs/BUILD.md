@@ -89,7 +89,7 @@ Environment:
 | `OPENFRENZY_<SECTION>_<KEY>` | a setting of `src/runtime/of_config.c`, e.g. `OPENFRENZY_DISPLAY_VSYNC=false` |
 | `OPENFRENZY_GAME=<name>` | start that minigame directly (BumperCars, Fireworks, Clusteroids, Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp); `src/runtime/of_launch.c` |
 | `OPENFRENZY_VARIATION=<n>` | its variation, 1-4 for every minigame (1 when not set); needs `OPENFRENZY_GAME`. A bad value stops the run before the game starts (exit 2). See "Direct launch variations" below |
-| `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
+| `OPENFRENZY_DSOUND_LOG=1` | log the audio device (its real format, from the host), DirectSound buffers, the mix level and the WMA decode level, and each 10 s the device pace (callbacks, frames and their rate, longest interval and mix, underruns, silent time) and every silence gap of 100 ms or more (`src/dsound/dsound_sdl.c`). Agent shells may set `OPENFRENZY_AUDIO_ENABLED=false` and `SDL_AUDIO_DRIVER=dummy`; unset both to test a real device (`env -u ...`) |
 | `OPENFRENZY_DEBUG_TEST_KEYS=<script>` | real SDL key and focus events for automated runs of the keyboard path; see "Scripted keys" below |
 | `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` | skip the Bink videos (boot logos, attract video), as builds without FFmpeg do. Boot reaches the title in a few seconds instead of about 75 s; use it for scripted runs whose presses assume the title at once (`START@6000`) |
 | `OPENFRENZY_DSOUND_CAPTURE=<path>` | write the final audio output (after the limiter) to a WAV file: 48 kHz, stereo, 16-bit. It works without an audio device too (sandbox). See "Audio capture" below |

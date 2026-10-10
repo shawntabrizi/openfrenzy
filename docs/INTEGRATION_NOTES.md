@@ -423,6 +423,59 @@ No new fault was found, so no code changed. `OPENFRENZY_BKLOG=1` is needed for t
 - Not verified: keyboard input with real key events. Key events posted to the process with
   `CGEventPostToPid` (window not focused) did not move the title screen; the computer-use
   daemon was not available. The scripted pad path works.
+
+### Real audio device (fix-audio-device-real, round 5)
+
+- Where `audio.enabled` comes from: `src/runtime/of_config.c` has the default `true`, and the
+  environment (`OPENFRENZY_AUDIO_ENABLED`) overrides it. The port reads no config file; the
+  save root holds no settings. The "false" of earlier runs was not a game or save setting: the
+  owner's shell profile sets `OPENFRENZY_AUDIO_ENABLED=false` and `SDL_AUDIO_DRIVER=dummy`
+  only in agent shells (`$CLAUDECODE`). A fresh install has sound on. `test_config` now checks
+  the default with the variable unset (it fails if the default becomes false).
+- New logs (`OPENFRENZY_DSOUND_LOG=1`): the host logs the format the device really has (after
+  open, `SDL_GetAudioDeviceFormat`) and each 10 s the longest host callback (the handoff to
+  the guest audio thread, its mix and the submit). dsound_sdl.c logs each 10 s
+  `dsound: device pace` (callbacks, frames, rate, longest interval between callbacks, longest
+  mix, how far the frames delivered are behind the wall time, underruns, silent seconds,
+  silence gaps), `dsound: underrun` when the frames delivered fall more than 4096 frames
+  (85 ms) behind the wall time, and `dsound: silence from / ends at` for each run of 100 ms
+  or more of output at or under 1/32768 (output time, so the stack changes logged between
+  the two lines can be matched).
+- Run: outside the sandbox, real window, `env -u SDL_AUDIO_DRIVER -u OPENFRENZY_AUDIO_ENABLED`,
+  fresh save root, round-2 input (A every 3 s to 600 s), `OPENFRENZY_DEBUG_SKIP_VIDEOS=true`,
+  `OPENFRENZY_DSOUND_LOG=1 OPENFRENZY_BKLOG=1`, `OPENFRENZY_AUDIO_VOLUME=0.1` (to keep the
+  speakers quiet at night; the master volume is a gain in the mix, it does not change the
+  device path), host and guest copied under other names; SIGTERM at 615 s, `Game exited (0)`.
+  The board went: title, menus, character select, Power Station, Tube Tremors, Hopper,
+  MouseWhack, Meta stage and vote, Clusteroids, TankedUp, score screen. No fault.
+- Device: `audio device 'MacBook Pro Speakers': 48000 Hz, 2 channels, SDL_AUDIO_F32LE, 1024
+  frames a buffer`, the same as the game's stream (48 kHz stereo float), so SDL does not
+  convert. (system_profiler showed the speakers at 44.1 kHz before the run; the device ran at
+  48 kHz while the game had it open.)
+- Pace, 61 windows of 10 s, from the first callback to 610.7 s: 469-470 callbacks a window
+  (1024 frames each), 47981-48090 Hz a window (one callback more or less in 10 s is +-0.2 %),
+  29,312,000 frames in 610.76 s. Longest interval 23.3 ms in most windows, 29.8 ms at most.
+  "Most behind" goes from 9.8 ms to 11.9 ms over the run (device clock against the Mac's
+  monotonic clock, about 3.5 ppm; no frames lost), 18.4 ms at most. 0 underruns.
+- Mix time: under 1 ms in 56 of 61 windows. In TankedUp (540-590 s) it reached 2.2, 7.2, 3.0,
+  15.3 and 1.3 ms; the host callback's longest was the same (15.32 ms), so the wake-up of the
+  guest audio thread added almost nothing. The game had frame hitches at the same time (worst
+  frame 250 ms at about 555 s) and up to 34 voices. Other agents built and ran games on the
+  same Mac during the run, so CPU contention is likely, but the cause is not proved. Decoding
+  is outside `mixer_lock`, and the lock sections are short. 15.3 ms is 72 % of the 21.3 ms
+  period: no underrun, but not much margin. Nothing was changed (buffer size, thread priority):
+  no underrun happened to fix.
+- Silence gaps (100 ms or more), 10 in 610 s, all at the start or at a scene change:
+  0-0.27 s (boot, before the first voice); 0.33, 0.58, 0.26, 0.67 and 0.14 s when a minigame
+  starts (each starts within 0.1 s of `Top of stack now: <game>`, after `bStopAudioStreamWMA`
+  stopped the intro music); 0.37 s when the Meta stage starts (level load); 0.12 s at the map
+  (`com_mapscreen.xbp` loads, the music restarts); 0.14 s at a score screen (music change);
+  1.72 s when TankedUp ends (music stopped, then `com_scorescreen.xbp` loads). No gap in play.
+  Silent time outside these: at most 0.16 s a window, in runs under 100 ms.
+- Not verified: that the sound is audible or right. Nobody listened. The run used master
+  volume 0.1. Only the built-in speakers were tried (no Bluetooth, HDMI or device change during
+  the run), and the Bink videos were skipped. The build had other agents' uncommitted edits
+  in the shared tree (sdl_platform.c, host_sdl.c frame pacing, test keys).
   Update (fix-keyboard-input-verify): verified with SDL key events; see "Keyboard input" below.
 
 ### Keyboard input (fix-keyboard-input-verify)

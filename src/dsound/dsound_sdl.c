@@ -1543,6 +1543,119 @@ static void buffer_signal_notifications(void)
 		SetEvent(events[index]);
 }
 
+/* ---------- pace (OPENFRENZY_DSOUND_LOG)
+
+The device's side of the output, a line each 10 s of wall time from the audio
+callback (pace_callback): the callbacks, the frames delivered and their rate
+(48000 while the device keeps time), the longest time between two callbacks
+and the longest mix, and the underruns. The device plays at its own clock, so
+the frames delivered keep up with the wall time since the first callback; a
+device that ran dry (its callback came late) plays silence and is behind from
+then on. An underrun is the frames delivered falling more than
+PACE_UNDERRUN_FRAMES behind the wall time; the count starts again from there,
+so one stall counts once. Silence gaps (pace_silence): the output (after the
+limiter) at most 1/32768 for PACE_GAP_FRAMES or more, logged with the output
+time where they start and end, so that the scene changes logged between them
+(OPENFRENZY_BKLOG) can be matched. */
+
+#define PACE_WINDOW_SECONDS 10.0
+#define PACE_UNDERRUN_FRAMES 4096
+#define PACE_GAP_FRAMES (OUTPUT_RATE / 10)
+
+static struct
+{
+	double start;             /* wall time that frames_total is counted from */
+	double window_start;
+	double last;
+	double interval_max, mix_max;
+	double behind_max;        /* frames, in this window */
+	unsigned long long frames_total;
+	unsigned long callbacks, frames, underruns, underruns_total;
+	/* the silence the mixer is in, in frames, and the silent frames of this window */
+	unsigned long silent_run;
+	unsigned long long silent_frames;
+	unsigned long gaps;
+} pace;
+
+static double pace_now(void)
+{
+	struct timespec now;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return (double)now.tv_sec + (double)now.tv_nsec * 1e-9;
+}
+
+/* (mix, after the limiter) */
+static void pace_silence(const float *output, unsigned long frames)
+{
+	const float floor = 1.0f / 32768.0f;
+	/* (mix counted these frames already) */
+	double first = dsound_output_seconds() - (double)frames / OUTPUT_RATE;
+	unsigned long frame;
+
+	for (frame = 0; frame < frames; frame++)
+	{
+		if (fabsf(output[frame * 2]) <= floor && fabsf(output[frame * 2 + 1]) <= floor)
+		{
+			pace.silent_frames++;
+			if (++pace.silent_run == PACE_GAP_FRAMES)
+				platform_log("dsound: silence from %.2f s", first +
+					((double)frame + 1.0 - PACE_GAP_FRAMES) / OUTPUT_RATE);
+			continue;
+		}
+		if (pace.silent_run >= PACE_GAP_FRAMES)
+		{
+			pace.gaps++;
+			platform_log("dsound: silence ends at %.2f s after %.2f s", first + (double)frame / OUTPUT_RATE,
+				(double)pace.silent_run / OUTPUT_RATE);
+		}
+		pace.silent_run = 0;
+	}
+}
+
+/* (audio_callback) before the mix of frames; done is the time the mix took */
+static void pace_callback(double now, unsigned long frames, double done)
+{
+	double behind;
+
+	if (!pace.callbacks && !pace.frames_total)
+		pace.start = pace.window_start = pace.last = now;
+	if (now - pace.last > pace.interval_max)
+		pace.interval_max = now - pace.last;
+	pace.last = now;
+	if (done > pace.mix_max)
+		pace.mix_max = done;
+	behind = (now - pace.start) * OUTPUT_RATE - (double)pace.frames_total;
+	if (behind > pace.behind_max)
+		pace.behind_max = behind;
+	if (behind > PACE_UNDERRUN_FRAMES)
+	{
+		pace.underruns++;
+		pace.underruns_total++;
+		platform_log("dsound: underrun: the device is %.1f ms behind at %.2f s", behind * 1000.0 / OUTPUT_RATE,
+			dsound_output_seconds());
+		pace.start = now - (double)pace.frames_total / OUTPUT_RATE;
+	}
+	pace.callbacks++;
+	pace.frames += frames;
+	pace.frames_total += frames;
+	if (now - pace.window_start >= PACE_WINDOW_SECONDS)
+	{
+		double seconds = now - pace.window_start;
+
+		platform_log("dsound: device pace: %lu callbacks, %lu frames in %.2f s (%.1f Hz), longest interval %.1f ms, "
+			"longest mix %.2f ms, most behind %.1f ms, %lu underruns (%lu in all), %.2f s silent, %lu silence gaps, "
+			"output %.2f s", pace.callbacks, pace.frames, seconds, (double)pace.frames / seconds,
+			pace.interval_max * 1000.0, pace.mix_max * 1000.0, pace.behind_max * 1000.0 / OUTPUT_RATE,
+			pace.underruns, pace.underruns_total, (double)pace.silent_frames / OUTPUT_RATE, pace.gaps,
+			dsound_output_seconds());
+		pace.window_start = now;
+		pace.callbacks = pace.frames = pace.underruns = pace.gaps = 0;
+		pace.interval_max = pace.mix_max = pace.behind_max = 0.0;
+		pace.silent_frames = 0;
+	}
+}
+
 static void mix(float *output, unsigned long frames)
 {
 	struct sdl_stream *stream;
@@ -1626,6 +1739,8 @@ static void mix(float *output, unsigned long frames)
 	voice_audio_mix(output, frames);
 	limit(output, frames);
 	capture_write(output, frames);
+	if (dsound_log_enabled())
+		pace_silence(output, frames);
 }
 
 /* ---------- output */
@@ -1647,6 +1762,9 @@ static const char *audio_device_setting(void)
 static void SDLCALL audio_callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
 	float buffer[MIX_CHUNK_FRAMES * OUTPUT_CHANNELS];
+	double start = dsound_log_enabled() ? pace_now() : 0.0;
+	unsigned long requested = (unsigned long)(additional_amount > 0 ? additional_amount : 0) /
+		(OUTPUT_CHANNELS * sizeof(float));
 
 	(void)userdata;
 	(void)total_amount;
@@ -1662,6 +1780,8 @@ static void SDLCALL audio_callback(void *userdata, SDL_AudioStream *stream, int 
 		SDL_PutAudioStreamData(stream, buffer, (int)(frames * OUTPUT_CHANNELS * sizeof(float)));
 		additional_amount -= (int)(frames * OUTPUT_CHANNELS * sizeof(float));
 	}
+	if (dsound_log_enabled())
+		pace_callback(start, requested, pace_now() - start);
 }
 
 /* without a device, drain voices in real time */
