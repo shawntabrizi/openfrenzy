@@ -244,6 +244,9 @@ extern long long DAT_002cd7a0;      /* bkernel: timer ticks per second */
 extern float DAT_00285644;          /* engine_misc: the collision rest threshold */
 extern int DAT_002ecf90[4];         /* classlib_ui: HUD score text x offsets (float bits) */
 extern float DAT_00290be4[4];       /* classlib_ui: HUD score text y offsets */
+extern int DAT_00290e8c;            /* bumpercars_a: colour index of the next debris */
+extern unsigned char DAT_00291734[]; /* bumpercars_a: the debris type "RESPAWNCHAR" */
+extern float DAT_002ea478[4];       /* a zero vector */
 
 /* the kernel debug break (xkernel HLE: logs and continues) */
 void DbgBreakPoint(void);
@@ -269,6 +272,6 @@ void FUN_001892e0(void *self, int draw);           /* game: render (jmp from 0x0
 int FUN_0018ddf0(void *a, int b, void *c);         /* video screen texture callback */
 void FUN_00190400(void *self);                     /* texture animation constructor */
 void FUN_00190410(void *self);                     /* texture animation destructor */
-int FUN_00190b70(void *a, void *b, void *c, void *d, void *e); /* respawn callback */
+int FUN_00190b70(int reason, void *inst, void *node, void *anim, void *context); /* goal animation callback */
 
 #endif

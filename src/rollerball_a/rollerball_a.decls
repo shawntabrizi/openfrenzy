@@ -228,13 +228,24 @@
 00190590 void CRollerBallTextures_Update(void *self, float dt);
 001905e0 void *CRollerBallTexAnim_DeletingDtor(void *self, unsigned int flags);
 00190600 void *CRollerBallTextures_DeletingDtor(void *self, unsigned int flags);
+
+# RollerBall/CRollerBall_Respawn.c
+00190620 void *CRollerBallRespawnEntry_Ctor(void *self);
+00190640 void CRollerBallRespawnEntry_Dtor(void *self);
+00190650 void CRollerBallRespawnEntry_Update(void *self, float dt);
 001907c0 void *CRollerBallRespawn_Ctor(void *self);
 001907f0 void CRollerBallRespawn_Dtor(void *self);
 00190810 int CRollerBallRespawn_Init(void *self, void *package);
 00190840 void CRollerBallRespawn_Shutdown(void *self);
 00190860 void CRollerBallRespawn_Update(void *self, float dt);
-001909b0 int CRollerBallRespawn_RespawnAt(void *self, void *player, float *pos);
-00190b60 int CRollerBallRespawn_Respawn(void *self, void *player, float *pos);
+001908b0 void *CRollerBallRespawnPoint_DeletingDtor(void *self, unsigned int flags);
+001908d0 void *CRollerBallRespawnEntry_DeletingDtor(void *self, unsigned int flags);
+001908f0 void *CRollerBallRespawn_DeletingDtor(void *self, unsigned int flags);
+00190910 void CRollerBallRespawn_AddPoint(void *self, int id, const float *pos, const float *dir);
+001909b0 void *CRollerBallRespawn_RespawnAt(void *self, unsigned char *player, const float *pos);
+00190b60 void *CRollerBallRespawn_Respawn(void *self, unsigned char *player, const float *pos);
+
+# RollerBall/CRollerball_Goal.c
 00190e10 void *CRollerBallGoals_Ctor(void *self);
 00190ea0 void CRollerBallGoals_Dtor(void *self);
 00190f20 void CRollerBallGoals_Shutdown(void *self);
