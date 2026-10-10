@@ -6,10 +6,24 @@ routes sin(), atan2(), pow() and the others to (include/halo_math.h). OpenCE tak
 them from its own musl copy, so that every port computes the same values. Here
 they are the guest musl's own functions, which are the same on every machine
 the port runs on (one guest C library).
-This file must not include halo_math.h (its macros would make these recursive).
+The guest flags force-include halo_linux_prefix.h, which pulls in halo_math.h, so
+its macros are removed here; otherwise each function calls itself forever.
 */
 
 #include <math.h>
+
+#undef sin
+#undef cos
+#undef tan
+#undef asin
+#undef acos
+#undef atan
+#undef atan2
+#undef exp
+#undef log
+#undef log2
+#undef log10
+#undef pow
 
 double halo_sin(double x)
 {
