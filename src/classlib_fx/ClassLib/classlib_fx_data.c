@@ -12,6 +12,12 @@ static const char str_0026361c[] = "tracey";  /* 0x0026361c */
 static const char str_00263710[] = "eye";  /* 0x00263710 */
 static const char str_00263714[] = "idle";  /* 0x00263714 */
 static const char str_0026371c[] = "refrobot2.obe";  /* 0x0026371c */
+static const char str_00263844[] = "regen_bar_jet.obe";  /* 0x00263844 */
+static const char str_00263858[] = "regen_bar_jade.obe";  /* 0x00263858 */
+static const char str_0026386c[] = "regen_bar_zak.obe";  /* 0x0026386c */
+static const char str_00263880[] = "regen_bar_geena.obe";  /* 0x00263880 */
+static const char str_00263894[] = "regen_bar_fly.obe";  /* 0x00263894 */
+static const char str_002638a8[] = "regen_bar_dub.obe";  /* 0x002638a8 */
 static const char str_0026bca8[] = "goldtoken.obe";  /* 0x0026bca8 */
 static const char str_0026bcb8[] = "silvertoken.obe";  /* 0x0026bcb8 */
 static const char str_0026bcc8[] = "bronzetoken.obe";  /* 0x0026bcc8 */
@@ -20,8 +26,8 @@ static const char str_0026e04c[] = "waterfield.bmp";  /* 0x0026e04c */
 /* other modules' data the tables point at (tentative definitions in clf_extern.c) */
 extern int DAT_002916dc[];
 
-/* 0x00290cc0-0x00290e8c */
-__attribute__((aligned(16))) uint32_t of_clf_data[0x73] = {
+/* 0x00290cc0-0x00290ee4 */
+__attribute__((aligned(16))) uint32_t of_clf_data[0x89] = {
 	/* 0x00290cc0 */ (uint32_t)str_0026361c, (uint32_t)str_00263614, 0x00000040, 0x00000040,
 	/* 0x00290cd0 */ 0x00000040, 0x00000040, 0x00000064, 0x00000064,
 	/* 0x00290ce0 */ 0x00000064, 0x00000064, 0x00000078, 0x00000078,
@@ -50,7 +56,13 @@ __attribute__((aligned(16))) uint32_t of_clf_data[0x73] = {
 	/* 0x00290e50 */ 0x00000306, 0x00000300, 0x00008006, 0x00000000,
 	/* 0x00290e60 */ 0x00000301, 0x00008006, 0x00000001, 0x00000000,
 	/* 0x00290e70 */ 0x00008006, 0x00000304, 0x00000305, 0x00008006,
-	/* 0x00290e80 */ 0x00000304, 0x00000001, 0x00008006,
+	/* 0x00290e80 */ 0x00000304, 0x00000001, 0x00008006, 0xffffffff,
+	/* 0x00290e90 */ (uint32_t)str_002638a8, (uint32_t)str_00263894, (uint32_t)str_00263880, (uint32_t)str_0026386c,
+	/* 0x00290ea0 */ (uint32_t)str_00263858, (uint32_t)str_00263844, (uint32_t)((unsigned char *)of_clf_data + 0x1e8), (uint32_t)((unsigned char *)of_clf_data + 0x1e8),
+	/* 0x00290eb0 */ 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	/* 0x00290ec0 */ 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	/* 0x00290ed0 */ 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	/* 0x00290ee0 */ 0x00000000,
 };
 
 /* 0x002ed3a0-0x002ed454 */
@@ -94,6 +106,15 @@ __attribute__((aligned(16))) uint32_t of_clf_ai_data[0x18] = {
 	/* 0x002ae7e4 */ 0x3ecccccd, 0x3dcccccd, 0x40000000, 0x40000000,
 	/* 0x002ae7f4 */ 0x40000000, 0x3f800000, 0x40000000, 0x428c0000,
 	/* 0x002ae804 */ 0x41a00000, 0x40a00000, 0x40400000, 0x42700000,
+};
+
+/* 0x002b2670-0x002b26b4 */
+__attribute__((aligned(16))) uint32_t of_clf_gull_data[0x11] = {
+	/* 0x002b2670 */ 0x3ca3d70a, 0x3d4ccccd, 0x43000000, 0x41400000,
+	/* 0x002b2680 */ 0x3f000000, 0x3b03126f, 0x3f000000, 0x40000000,
+	/* 0x002b2690 */ 0xc4bb8000, 0x43c80000, 0xc4bb8000, 0x3f800000,
+	/* 0x002b26a0 */ 0x44bb8000, 0x44960000, 0x44bb8000, 0x3f800000,
+	/* 0x002b26b0 */ 0x40400000,
 };
 
 /* names of addresses inside the blocks, for this and other modules */
@@ -204,6 +225,28 @@ __asm__(
 	".globl DAT_00290e80\n.set DAT_00290e80, of_clf_data + 0x1c0\n"  /* 0x00290e80 */
 	".globl DAT_00290e84\n.set DAT_00290e84, of_clf_data + 0x1c4\n"  /* 0x00290e84 */
 	".globl DAT_00290e88\n.set DAT_00290e88, of_clf_data + 0x1c8\n"  /* 0x00290e88 */
+	".globl DAT_00290e8c\n.set DAT_00290e8c, of_clf_data + 0x1cc\n"  /* 0x00290e8c */
+	".globl DAT_00290e90\n.set DAT_00290e90, of_clf_data + 0x1d0\n"  /* 0x00290e90 */
+	".globl DAT_00290e94\n.set DAT_00290e94, of_clf_data + 0x1d4\n"  /* 0x00290e94 */
+	".globl DAT_00290e98\n.set DAT_00290e98, of_clf_data + 0x1d8\n"  /* 0x00290e98 */
+	".globl DAT_00290e9c\n.set DAT_00290e9c, of_clf_data + 0x1dc\n"  /* 0x00290e9c */
+	".globl DAT_00290ea0\n.set DAT_00290ea0, of_clf_data + 0x1e0\n"  /* 0x00290ea0 */
+	".globl DAT_00290ea4\n.set DAT_00290ea4, of_clf_data + 0x1e4\n"  /* 0x00290ea4 */
+	".globl DAT_00290ea8\n.set DAT_00290ea8, of_clf_data + 0x1e8\n"  /* 0x00290ea8 */
+	".globl DAT_00290eac\n.set DAT_00290eac, of_clf_data + 0x1ec\n"  /* 0x00290eac */
+	".globl DAT_00290eb0\n.set DAT_00290eb0, of_clf_data + 0x1f0\n"  /* 0x00290eb0 */
+	".globl DAT_00290eb4\n.set DAT_00290eb4, of_clf_data + 0x1f4\n"  /* 0x00290eb4 */
+	".globl DAT_00290eb8\n.set DAT_00290eb8, of_clf_data + 0x1f8\n"  /* 0x00290eb8 */
+	".globl DAT_00290ebc\n.set DAT_00290ebc, of_clf_data + 0x1fc\n"  /* 0x00290ebc */
+	".globl DAT_00290ec0\n.set DAT_00290ec0, of_clf_data + 0x200\n"  /* 0x00290ec0 */
+	".globl DAT_00290ec4\n.set DAT_00290ec4, of_clf_data + 0x204\n"  /* 0x00290ec4 */
+	".globl DAT_00290ec8\n.set DAT_00290ec8, of_clf_data + 0x208\n"  /* 0x00290ec8 */
+	".globl DAT_00290ecc\n.set DAT_00290ecc, of_clf_data + 0x20c\n"  /* 0x00290ecc */
+	".globl DAT_00290ed0\n.set DAT_00290ed0, of_clf_data + 0x210\n"  /* 0x00290ed0 */
+	".globl DAT_00290ed4\n.set DAT_00290ed4, of_clf_data + 0x214\n"  /* 0x00290ed4 */
+	".globl DAT_00290ed8\n.set DAT_00290ed8, of_clf_data + 0x218\n"  /* 0x00290ed8 */
+	".globl DAT_00290edc\n.set DAT_00290edc, of_clf_data + 0x21c\n"  /* 0x00290edc */
+	".globl DAT_00290ee0\n.set DAT_00290ee0, of_clf_data + 0x220\n"  /* 0x00290ee0 */
 	".globl DAT_002ed3a0\n.set DAT_002ed3a0, of_clf_bss + 0x0\n"  /* 0x002ed3a0 */
 	".globl DAT_002ed3a4\n.set DAT_002ed3a4, of_clf_bss + 0x4\n"  /* 0x002ed3a4 */
 	".globl DAT_002ed3a8\n.set DAT_002ed3a8, of_clf_bss + 0x8\n"  /* 0x002ed3a8 */
@@ -397,4 +440,21 @@ __asm__(
 	".globl _DAT_002ae80c\n.set _DAT_002ae80c, of_clf_ai_data + 0x58\n"  /* 0x002ae80c */
 	".globl DAT_002ae810\n.set DAT_002ae810, of_clf_ai_data + 0x5c\n"  /* 0x002ae810 */
 	".globl _DAT_002ae810\n.set _DAT_002ae810, of_clf_ai_data + 0x5c\n"  /* 0x002ae810 */
+	".globl DAT_002b2670\n.set DAT_002b2670, of_clf_gull_data + 0x0\n"  /* 0x002b2670 */
+	".globl DAT_002b2674\n.set DAT_002b2674, of_clf_gull_data + 0x4\n"  /* 0x002b2674 */
+	".globl DAT_002b2678\n.set DAT_002b2678, of_clf_gull_data + 0x8\n"  /* 0x002b2678 */
+	".globl DAT_002b267c\n.set DAT_002b267c, of_clf_gull_data + 0xc\n"  /* 0x002b267c */
+	".globl DAT_002b2680\n.set DAT_002b2680, of_clf_gull_data + 0x10\n"  /* 0x002b2680 */
+	".globl DAT_002b2684\n.set DAT_002b2684, of_clf_gull_data + 0x14\n"  /* 0x002b2684 */
+	".globl DAT_002b2688\n.set DAT_002b2688, of_clf_gull_data + 0x18\n"  /* 0x002b2688 */
+	".globl DAT_002b268c\n.set DAT_002b268c, of_clf_gull_data + 0x1c\n"  /* 0x002b268c */
+	".globl DAT_002b2690\n.set DAT_002b2690, of_clf_gull_data + 0x20\n"  /* 0x002b2690 */
+	".globl DAT_002b2694\n.set DAT_002b2694, of_clf_gull_data + 0x24\n"  /* 0x002b2694 */
+	".globl DAT_002b2698\n.set DAT_002b2698, of_clf_gull_data + 0x28\n"  /* 0x002b2698 */
+	".globl DAT_002b269c\n.set DAT_002b269c, of_clf_gull_data + 0x2c\n"  /* 0x002b269c */
+	".globl DAT_002b26a0\n.set DAT_002b26a0, of_clf_gull_data + 0x30\n"  /* 0x002b26a0 */
+	".globl DAT_002b26a4\n.set DAT_002b26a4, of_clf_gull_data + 0x34\n"  /* 0x002b26a4 */
+	".globl DAT_002b26a8\n.set DAT_002b26a8, of_clf_gull_data + 0x38\n"  /* 0x002b26a8 */
+	".globl DAT_002b26ac\n.set DAT_002b26ac, of_clf_gull_data + 0x3c\n"  /* 0x002b26ac */
+	".globl DAT_002b26b0\n.set DAT_002b26b0, of_clf_gull_data + 0x40\n"  /* 0x002b26b0 */
 );

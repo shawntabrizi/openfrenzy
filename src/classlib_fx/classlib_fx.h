@@ -904,4 +904,188 @@ extern const void *const vtable_0026e05c[11];
 /* 0x002ae578  default parameters */
 extern CWaterParams DAT_002ae578;
 
+/* ======================================================================== CSeagulls.cpp */
+
+/* flock parameters (0x44 bytes; defaults at 0x002b2670) */
+typedef struct CFlockParams
+{
+	float turnRate;      /* 0x00 pitch change */
+	float bankRate;      /* 0x04 yaw change */
+	float radius;        /* 0x08 neighbour radius */
+	float speed;         /* 0x0c cruise speed */
+	float separation;    /* 0x10 0..1: closer than this repels */
+	float climb;         /* 0x14 speed lost per pitch */
+	float minSpeed;      /* 0x18 fraction of the cruise speed */
+	float maxSpeed;      /* 0x1c */
+	float boxMin[4];     /* 0x20 */
+	float boxMax[4];     /* 0x30 */
+	float scale;         /* 0x40 actor scale */
+} CFlockParams;
+OF_ASSERT_SIZE(CFlockParams, 0x44);
+
+/* one seagull (0x68 bytes) */
+typedef struct CGull
+{
+	float pos[4];        /* 0x00 */
+	float dir[4];        /* 0x10 */
+	float steer[4];      /* 0x20 separation from neighbours */
+	float align[4];      /* 0x30 neighbours' directions */
+	int neighbours;      /* 0x40 */
+	float speed;         /* 0x44 */
+	float heading;       /* 0x48 */
+	float pitchSpeed;    /* 0x4c */
+	float roll;          /* 0x50 */
+	float yawRate;       /* 0x54 */
+	int actor;           /* 0x58 */
+	int glide;           /* 0x5c animations */
+	int flap;            /* 0x60 */
+	int flapping;        /* 0x64 */
+} CGull;
+OF_ASSERT_SIZE(CGull, 0x68);
+
+/* a flock of seagulls flying around a random target in a box (0x70 bytes) */
+typedef struct CSeagulls
+{
+	float target[3];     /* 0x00 */
+	int unknown0c;       /* 0x0c */
+	int count;           /* 0x10 */
+	int count2;          /* 0x14 */
+	CGull *gulls;        /* 0x18 */
+	int *obstacles;      /* 0x1c */
+	int numObstacles;    /* 0x20 */
+	int maxObstacles;    /* 0x24 */
+	CFlockParams p;      /* 0x28 */
+	int model;           /* 0x6c */
+} CSeagulls;
+OF_ASSERT_SIZE(CSeagulls, 0x70);
+
+/* 0x002b2670  default flock parameters */
+extern CFlockParams DAT_002b2670;
+
+/* ======================================================================== ActorDebris.cpp
+
+Debris pieces drawn as actors: the "actordebris" extra system (bactor). An item shares the
+first 0xa4 bytes with bumpercars_a's debris piece (Debris.cpp: struct DebrisPiece). */
+
+/* the spin of a piece (0x30 bytes; bumpercars_a's DebrisSpin) */
+typedef struct CDebrisSpin
+{
+	float axisAngle[4];  /* 0x00 */
+	float perp[4];       /* 0x10 */
+	float angleRate;     /* 0x20 */
+	float radius;        /* 0x24 */
+	float radiusRate;    /* 0x28 */
+	uint flags;          /* 0x2c bit 0: the axis follows the velocity */
+} CDebrisSpin;
+OF_ASSERT_SIZE(CDebrisSpin, 0x30);
+
+/* the stages of a debris type (bumpercars_a's DebrisParams) */
+typedef struct CDebrisParams
+{
+	int alpha[4];      /* 0x00 */
+	int red[4];        /* 0x10 */
+	int green[4];      /* 0x20 */
+	int blue[4];       /* 0x30 */
+	float life[3];     /* 0x40 */
+	float lifeRandom;  /* 0x4c */
+	float size[4];     /* 0x50 */
+	float spin;        /* 0x60 */
+	float spinRandom;  /* 0x64 */
+	float maxSpeed;    /* 0x68 */
+	float drag;        /* 0x6c per frame */
+	float bounce;      /* 0x70 */
+	float gravity;     /* 0x74 */
+} CDebrisParams;
+OF_ASSERT_SIZE(CDebrisParams, 0x78);
+
+/* the actor of an actor debris type */
+typedef struct CActorDebrisModel
+{
+	char *name;        /* 0x00 actor file */
+	char *animName;    /* 0x04 */
+	char *textureName; /* 0x08 animated texture */
+	int unknown0c[4];
+	uint flags;        /* 0x1c 2 additive, 8 blend 3, 4 loop the animation */
+} CActorDebrisModel;
+
+/* a debris type (bumpercars_a's DebrisType) */
+typedef struct CDebrisType
+{
+	int unknown00;                /* 0x00 */
+	CDebrisParams *params;        /* 0x04 */
+	float *spinInit;              /* 0x08 */
+	void *spriteAnim;             /* 0x0c */
+	CActorDebrisModel *model;     /* 0x10 */
+	float windResistance;         /* 0x14 */
+	struct CDebrisType *onDeath;  /* 0x18 */
+	struct CDebrisType *trail;    /* 0x1c */
+	float trailInterval;          /* 0x20 */
+	void *streak;                 /* 0x24 */
+	uint flags;                   /* 0x28 */
+} CDebrisType;
+
+/* the arguments of a new piece */
+typedef struct CDebrisArgs
+{
+	CDebrisType *type;  /* 0x00 */
+	float *pos;         /* 0x04 */
+	float *vel;         /* 0x08 */
+	int stageTime[2];   /* 0x0c a double: 0 for the type's stage 0 time */
+	uint colour;        /* 0x14 */
+} CDebrisArgs;
+
+/* an actor debris piece (0x230 bytes) */
+typedef struct CActorDebris
+{
+	int system;            /* 0x000 */
+	float pos[4];          /* 0x004 */
+	float offset[4];       /* 0x014 */
+	float drawPos[4];      /* 0x024 */
+	float drawVel[4];      /* 0x034 */
+	float vel[4];          /* 0x044 */
+	float spinAxis[3];     /* 0x054 */
+	float spinAngle;       /* 0x060 */
+	float spinSpeed;       /* 0x064 */
+	float groundY;         /* 0x068 */
+	float groundBounce;    /* 0x06c */
+	CDebrisParams *params; /* 0x070 */
+	CDebrisSpin *spin;     /* 0x074 */
+	CDebrisType *type;     /* 0x078 */
+	float time;            /* 0x07c left in the stage */
+	float stageTime;       /* 0x080 */
+	float age;             /* 0x084 */
+	float size;            /* 0x088 */
+	float scale;           /* 0x08c */
+	float trailTime;       /* 0x090 */
+	byte rgba[4];          /* 0x094 */
+	uint colour;           /* 0x098 */
+	int stage;             /* 0x09c */
+	uint flags;            /* 0x0a0 */
+	int unknowna4[3];      /* 0x0a4 */
+	byte actor[0x170];     /* 0x0b0 BActorInstance: +0xc0 position, +0xd0 scale, +0xe0 rotation, +0x134 node */
+	int *anim;             /* 0x220 */
+	int texture;           /* 0x224 */
+	float animSpeed;       /* 0x228 */
+	int unknown22c;        /* 0x22c */
+} CActorDebris;
+OF_ASSERT_OFFSET(CActorDebris, actor, 0xb0);
+OF_ASSERT_SIZE(CActorDebris, 0x230);
+
+/* 0x00290e8c  the next actor debris uses override model DAT_00290e90[i] (-1: the type's) */
+extern int DAT_00290e8c;
+extern char *DAT_00290e90[6];
+/* 0x00290cb8  debris drawing on (classlib_ui data) */
+extern int DAT_00290cb8;
+/* 0x00290ea8  the debris vertex buffer "debrisVB" (data block of_clf_data) */
+extern CSpriteVB DAT_00290ea8;
+/* 0x002ed33c  the ground test (bumpercars_a): (pos, delta, hit, normal) -> hit fraction */
+extern void *DAT_002ed33c;
+
+/* the actordebris callbacks (not in the function table) */
+int FUN_00085230(int system, CActorDebris *item);
+void FUN_00085460(int system, int count, CActorDebris **items);
+void FUN_00085560(int system, int reason);
+void FUN_00085580(int system, CActorDebris *item, CDebrisArgs *args);
+void FUN_00085a40(int system, int count, CActorDebris **items, float dt);
+
 #endif

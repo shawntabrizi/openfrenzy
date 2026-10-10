@@ -212,3 +212,19 @@
 0013ae50 int AIState_Fall(void *ai, int entered);
 0013ae80 int AIState_Hurt(void *ai, int entered);
 0013af80 int AIState_Knockout(void *ai, int entered);
+
+# ---- CSeagulls.cpp (and 0x0016cc80 after it)
+0016bea0 void CSeagulls_AddObstacle(struct CSeagulls *self, int obstacle);
+0016bf20 void CGull_Init(struct CGull *self, struct CFlockParams *p, int onEdge, int model);
+0016c1f0 void CSeagulls_Release(struct CSeagulls *self);
+0016c260 void CSeagulls_Neighbours(struct CSeagulls *self);
+0016c5a0 void CSeagulls_Update(struct CSeagulls *self, float dt);
+0016cb30 void CSeagulls_PickTarget(struct CSeagulls *self);
+0016cbf0 struct CSeagulls *CSeagulls_Init(struct CSeagulls *self, int count, struct CFlockParams *params, int model);
+0016cc80 void CSeagulls_Tick(struct CSeagulls *self, float dt);
+
+# ---- ActorDebris.cpp (file inferred; its callbacks are not in the table)
+00085200 void ActorDebris_Kill(void);
+000852a0 void ActorDebris_DrawOpaque(struct CActorDebris *item);
+00085340 void ActorDebris_DrawBlended(struct CActorDebris *item);
+00086160 void ActorDebris_Create(void);

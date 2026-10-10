@@ -12,8 +12,10 @@ names in export/funcs/*.c of any module, plus DAT_<addr> for every word of a blo
 module's code uses DAT_<addr> names for its tables), except in EXCLUDE.
 
 Blocks:
-  of_clf_data   [0x00290cc0, 0x00290e8c)  .data of CProjector.cpp / RefBot.cpp and the blend
-                                          table (XBE values)
+  of_clf_data   [0x00290cc0, 0x00290ee4)  .data of CProjector.cpp / RefBot.cpp, the blend
+                                          table, the actor debris model override
+                                          (0x00290e8c) and the debris vertex buffer
+                                          "debrisVB" (a CSpriteVB at 0x00290ea8, XBE values)
   of_clf_bss    [0x002ed3a0, 0x002ed454)  .bss of CProjector.cpp / RefBot.cpp (zero)
   of_clf_ray_data [0x00292c44, 0x00292c48)  .data of CRay.cpp (XBE values)
   of_clf_ray_bss  [0x002f27c8, 0x002f27d4)  .bss of CRay.cpp: the ray control list (zero)
@@ -24,6 +26,7 @@ Blocks:
   of_clf_water_bss  [0x00302340, 0x003023d4)  .bss: the two water materials, and two words of
                                           the state handlers (0x003023cc, 0x003023d0)
   of_clf_ai_data    [0x002ae7b4, 0x002ae814)  .data of the AI state handlers (0x00139e00-)
+  of_clf_gull_data  [0x002b2670, 0x002b26b4)  .data of CSeagulls.cpp: default flock parameters
 
 EXCLUDE: [0x00290d14, 0x00290d54) lies inside the ray type table (entry 1's colours) but
 classlib_ui already defines those names (its block of_clu_data2). Two definitions of a name
@@ -31,7 +34,8 @@ cannot link, so this module emits no alias there; the bytes in of_clf_data are t
 projector code uses. See the module report: classlib_ui should drop of_clu_data2.
 
 A word of .data becomes a pointer when it points at a text string in .rdata, at a game
-function start, or at an address in DATA_POINTERS (another module's data: emitted as the
+function start, into its own block (the empty list heads of debrisVB), or at an address in
+DATA_POINTERS (another module's data: emitted as the
 address of DAT_<addr>, which that module defines or aliases; clf_extern.c has a tentative
 definition). Every other value inside an XBE section stops the generator (fail loud).
 """
@@ -45,7 +49,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import xbe_data  # noqa: E402
 
 BLOCKS = [
-    ("of_clf_data", 0x00290CC0, 0x00290E8C, True),
+    ("of_clf_data", 0x00290CC0, 0x00290EE4, True),
     ("of_clf_bss", 0x002ED3A0, 0x002ED454, False),
     ("of_clf_ray_data", 0x00292C44, 0x00292C48, True),
     ("of_clf_ray_bss", 0x002F27C8, 0x002F27D4, False),
@@ -54,6 +58,7 @@ BLOCKS = [
     ("of_clf_water_data", 0x002AE578, 0x002AE5C0, True),
     ("of_clf_water_bss", 0x00302340, 0x003023D4, False),
     ("of_clf_ai_data", 0x002AE7B4, 0x002AE814, True),
+    ("of_clf_gull_data", 0x002B2670, 0x002B26B4, True),
 ]
 
 EXCLUDE = [(0x00290D14, 0x00290D54)]
@@ -148,6 +153,8 @@ def main():
                 elif s == ".text" and v in starts:
                     funcs.add(v)
                     words.append("(uint32_t)FUN_%08x" % v)
+                elif start <= v < end:
+                    words.append("(uint32_t)((unsigned char *)%s + 0x%x)" % (name, v - start))
                 elif v in DATA_POINTERS:
                     datap.add(v)
                     words.append("(uint32_t)DAT_%08x" % v)
