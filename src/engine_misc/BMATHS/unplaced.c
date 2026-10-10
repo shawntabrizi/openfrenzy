@@ -9,6 +9,7 @@ where Ghidra shows 80-bit intermediates), so the last bits of results can differ
 */
 
 #include <math.h>
+#include <stdint.h>
 
 #include "engine_misc_maths.h"
 #include "engine_misc_extern.h"
@@ -35,12 +36,12 @@ void bmCollMeshFixup(int package, int name)
 	mesh = (struct BCollMesh *)em_bkFindResource(package, name, 0, 0, 0, 0);
 	if (mesh == NULL)
 		return;
-	mesh->tris = (unsigned short (*)[3])((char *)mesh->tris + (int)mesh);
+	mesh->tris = (unsigned short (*)[3])((char *)mesh->tris + (uintptr_t)mesh);
 	n = mesh->cells[2] * mesh->cells[1] * mesh->cells[0];
-	mesh->verts = (float (*)[3])((char *)mesh->verts + (int)mesh);
-	mesh->grid = (struct BCollCell *)((char *)mesh->grid + (int)mesh);
+	mesh->verts = (float (*)[3])((char *)mesh->verts + (uintptr_t)mesh);
+	mesh->grid = (struct BCollCell *)((char *)mesh->grid + (uintptr_t)mesh);
 	for (i = 0; i < n; i++)
-		mesh->grid[i].list = (unsigned short *)((char *)mesh->grid[i].list + (int)mesh);
+		mesh->grid[i].list = (unsigned short *)((char *)mesh->grid[i].list + (uintptr_t)mesh);
 }
 
 /* 0x00052770  BMATHS (unplaced)

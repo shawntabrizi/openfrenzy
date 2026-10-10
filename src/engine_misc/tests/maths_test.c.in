@@ -1,0 +1,301 @@
+/*
+maths_test.c.in: host tests of engine_misc's BMATHS collision tests (run_tests.sh).
+
+Why these checks matter: the minigames (bumper cars, tanks, demolition, rowing, ...) move
+everything with these functions. A moving sphere must stop a small skin before a face it
+would pass through, a ray must report where it crosses a triangle with a normal facing
+its start (both faces collide), a miss must say why (when asked), and a mesh query must
+report each triangle once, nearest first. If a port change breaks one of these, players
+fall through floors or stick to walls.
+*/
+
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "engine_misc_maths.h"
+
+/* ---------- the other modules' helpers, with the semantics of the original code */
+
+/* 0x00019230 */
+void FUN_00019230(float *out, const float *a, const float *b)
+{
+	out[0] = a[0] - b[0];
+	out[1] = a[1] - b[1];
+	out[2] = a[2] - b[2];
+}
+
+/* 0x000384a0 */
+void FUN_000384a0(float *out, const float *in, float s)
+{
+	s = 1.0f / s;
+	out[0] = s * in[0];
+	out[1] = s * in[1];
+	out[2] = s * in[2];
+}
+
+/* 0x0001e9d0 */
+void FUN_0001e9d0(float *out, const float *a, const float *b)
+{
+	out[0] = a[0] + b[0];
+	out[1] = a[1] + b[1];
+	out[2] = a[2] + b[2];
+}
+
+/* 0x0001ea00 */
+void FUN_0001ea00(float *out, const float *in, float s)
+{
+	out[0] = s * in[0];
+	out[1] = s * in[1];
+	out[2] = s * in[2];
+}
+
+/* 0x00036ac0 */
+void FUN_00036ac0(float *out, const float *a, const float *b)
+{
+	out[0] = b[2] * a[1] - a[2] * b[1];
+	out[1] = a[2] * b[0] - b[2] * a[0];
+	out[2] = a[0] * b[1] - b[0] * a[1];
+}
+
+/* 0x000514a0: normalises unless the length is 0 */
+void FUN_000514a0(float *out, const float *in)
+{
+	float len = sqrtf(in[0] * in[0] + in[1] * in[1] + in[2] * in[2]);
+
+	if (len != 0.0f) {
+		out[0] = in[0] / len;
+		out[1] = in[1] / len;
+		out[2] = in[2] / len;
+	}
+}
+
+/* 0x00051540: squared distance */
+float FUN_00051540(const float *a, const float *b)
+{
+	float dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
+
+	return dx * dx + dy * dy + dz * dz;
+}
+
+void *FUN_0004e390(int a, int b, int c, int d, int e, int f)
+{
+	(void)a; (void)b; (void)c; (void)d; (void)e; (void)f;
+	return NULL;
+}
+
+/* ---------- checks */
+
+static int failures;
+
+static void check(int ok, const char *what)
+{
+	if (!ok) {
+		printf("FAIL: %s\n", what);
+		failures++;
+	} else {
+		printf("ok: %s\n", what);
+	}
+}
+
+static int near(float a, float b)
+{
+	return fabsf(a - b) < 1e-4f;
+}
+
+/* a triangle on the ground (y = 0) */
+static void ground_triangle(struct BTriangle *tri, float x, float z, float size)
+{
+	memset(tri, 0, sizeof(*tri));
+	tri->v[0][0] = x;
+	tri->v[0][2] = z;
+	tri->v[1][0] = x + size;
+	tri->v[1][2] = z;
+	tri->v[2][0] = x;
+	tri->v[2][2] = z + size;
+}
+
+static void test_ray_triangle(void)
+{
+	struct BTriangle tri;
+	struct BRay ray;
+	struct BCollHit hit;
+
+	ground_triangle(&tri, 0.0f, 0.0f, 1.0f);
+	memset(&ray, 0, sizeof(ray));
+	ray.origin[0] = 0.25f;
+	ray.origin[1] = 1.0f;
+	ray.origin[2] = 0.25f;
+	ray.dir[1] = -2.0f;
+	memset(&hit, 0, sizeof(hit));
+	hit.flags = BCOLL_T | BCOLL_UV | BCOLL_NORMAL | BCOLL_POINT | BCOLL_REASON;
+	check(bmRayTriangle(&ray, &tri, &hit) == 1, "a ray down through a triangle hits it");
+	check(near(hit.t, 0.5f), "  at half its length");
+	check(near(hit.point[0], 0.25f) && near(hit.point[1], 0.0f) && near(hit.point[2], 0.25f),
+		"  at the crossing point");
+	check(near(hit.normal[1], 1.0f), "  with a normal facing the ray's start");
+	check(near(hit.u, 0.25f) && near(hit.v, 0.25f), "  with its position on the triangle");
+
+	ray.dir[1] = 2.0f;
+	ray.origin[1] = -1.0f;
+	memset(&hit, 0, sizeof(hit));
+	hit.flags = BCOLL_T | BCOLL_NORMAL;
+	check(bmRayTriangle(&ray, &tri, &hit) == 1 && near(hit.normal[1], -1.0f),
+		"from below it hits the other face, normal down");
+
+	ray.origin[0] = 2.0f;
+	ray.origin[1] = 1.0f;
+	ray.dir[1] = -2.0f;
+	memset(&hit, 0, sizeof(hit));
+	hit.flags = BCOLL_REASON;
+	check(bmRayTriangle(&ray, &tri, &hit) == 0 && hit.code == 0x800, "a ray beside it misses: outside");
+
+	ray.origin[0] = 0.25f;
+	ray.dir[1] = -0.5f;
+	memset(&hit, 0, sizeof(hit));
+	hit.flags = BCOLL_REASON;
+	check(bmRayTriangle(&ray, &tri, &hit) == 0 && hit.code == 0x100, "a ray stopping above it: too far");
+}
+
+static void test_sphere_triangle(void)
+{
+	struct BTriangle tri;
+	struct BSphere sphere;
+	struct BCollHit hit;
+	float delta[4] = { 0.0f, -2.0f, 0.0f, 0.0f };
+
+	ground_triangle(&tri, 0.0f, 0.0f, 1.0f);
+	memset(&sphere, 0, sizeof(sphere));
+	sphere.centre[0] = 0.25f;
+	sphere.centre[1] = 1.0f;
+	sphere.centre[2] = 0.25f;
+	sphere.centre[3] = 1.0f;
+	sphere.radius = 0.1f;
+	memset(&hit, 0, sizeof(hit));
+	hit.flags = BCOLL_T | BCOLL_NORMAL | BCOLL_POINT;
+	check(bmSweepSphereTriangle(&sphere, &tri, delta, &hit) == 1, "a falling sphere hits the face");
+	/* touches after (1 - 0.1) of 2 units = 0.45, minus the 0.002 skin */
+	check(near(hit.t, 0.448f), "  stopping the skin (0.002 of the move) before contact");
+	check(near(hit.normal[1], 1.0f), "  with the face's normal towards it");
+	check(near(hit.point[0], 0.25f) && near(hit.point[2], 0.25f), "  under its centre");
+
+	delta[1] = -0.5f;
+	memset(&hit, 0, sizeof(hit));
+	hit.flags = BCOLL_T;
+	check(bmSweepSphereTriangle(&sphere, &tri, delta, &hit) == 0, "a short fall does not reach it");
+}
+
+static void test_sphere_edge(void)
+{
+	struct BSphere sphere;
+	struct BEdge edge;
+	struct BCollHit hit;
+	float delta[4] = { 0.0f, -2.0f, 0.0f, 0.0f };
+
+	memset(&edge, 0, sizeof(edge));
+	edge.a[0] = -1.0f;
+	edge.b[0] = 1.0f;
+	memset(&sphere, 0, sizeof(sphere));
+	sphere.centre[1] = 1.0f;
+	sphere.radius = 0.5f;
+	memset(&hit, 0, sizeof(hit));
+	hit.flags = BCOLL_T | BCOLL_UV | BCOLL_POINT | BCOLL_NORMAL;
+	check(bmSweepSphereEdge(&sphere, &edge, delta, &hit) == 1, "a sphere falling onto an edge hits it");
+	/* contact after 0.5 of 2 units = 0.25, minus the skin */
+	check(near(hit.t, 0.248f), "  at the right time");
+	check(near(hit.u, 0.5f), "  at the middle of the edge");
+	/* the normal is (centre at t - contact) / radius, and t includes the skin: 1.008 */
+	check(near(hit.normal[1], 1.008f) && near(hit.normal[0], 0.0f), "  pushed straight up");
+}
+
+static void test_ray_sphere(void)
+{
+	struct BRay ray;
+	struct BSphere sphere;
+	struct BCollHit hit;
+
+	memset(&ray, 0, sizeof(ray));
+	ray.origin[2] = -5.0f;
+	ray.dir[2] = 1.0f;
+	ray.length = 10.0f;
+	memset(&sphere, 0, sizeof(sphere));
+	sphere.radius = 1.0f;
+	memset(&hit, 0, sizeof(hit));
+	hit.flags = BCOLL_T | BCOLL_NORMAL | BCOLL_POINT;
+	check(bmRaySphere(&ray, &sphere, &hit) == 1, "a ray at a sphere hits it");
+	check(near(hit.t, 0.4f) && near(hit.point[2], -1.0f) && near(hit.normal[2], -1.0f),
+		"  on the near side, normal outwards");
+}
+
+static void test_closest_points(void)
+{
+	float a[8] = { -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f };
+	float b[8] = { 0.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f };
+	float s = -1.0f, t = -1.0f;
+
+	check(bmClosestLinePoints(a, b, &s, &t) == 1 && near(s, 0.5f) && near(t, 0.5f),
+		"two crossing lines meet half way along both");
+	b[0] = -1.0f;
+	b[2] = 0.0f;
+	b[4] = 1.0f;
+	b[6] = 0.0f;
+	check(bmClosestLinePoints(a, b, &s, &t) == 0, "parallel lines have no closest points");
+}
+
+static void test_ray_mesh(void)
+{
+	static float verts[6][3] = {
+		{ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f },
+		{ 0.0f, 0.5f, 0.0f }, { 1.0f, 0.5f, 0.0f }, { 0.0f, 0.5f, 1.0f },
+	};
+	static unsigned short tris[2][3] = { { 0, 1, 2 }, { 3, 4, 5 } };
+	static unsigned short list[2] = { 0, 1 };
+	struct BCollCell cell;
+	struct BCollMesh mesh;
+	struct BRay ray;
+	struct BCollHit hits[4];
+	int count;
+
+	memset(&cell, 0, sizeof(cell));
+	cell.count = 2;
+	cell.list = list;
+	memset(&mesh, 0, sizeof(mesh));
+	mesh.cells[0] = mesh.cells[1] = mesh.cells[2] = 1;
+	mesh.verts = verts;
+	mesh.cellSize[0] = mesh.cellSize[1] = mesh.cellSize[2] = 10.0f;
+	mesh.tris = tris;
+	mesh.origin[0] = mesh.origin[1] = mesh.origin[2] = -1.0f;
+	mesh.grid = &cell;
+	memset(&ray, 0, sizeof(ray));
+	ray.origin[0] = 0.25f;
+	ray.origin[1] = 1.0f;
+	ray.origin[2] = 0.25f;
+	ray.dir[1] = -2.0f;
+	memset(hits, 0, sizeof(hits));
+	hits[0].flags = BCOLL_T;
+	count = 4;
+	check(bmRayMesh(&ray, &mesh, &count, hits) == 1 && count == 2, "a ray through a mesh hits both layers");
+	check(hits[0].code == 1 && near(hits[0].t, 0.25f) && hits[1].code == 0 && near(hits[1].t, 0.5f),
+		"  nearest first, each with its triangle");
+	count = 1;
+	memset(hits, 0, sizeof(hits));
+	hits[0].flags = BCOLL_T;
+	check(bmRayMesh(&ray, &mesh, &count, hits) == 1 && count == 1 && hits[0].code == 1,
+		"  with room for one, the nearest is kept");
+}
+
+int main(void)
+{
+	test_ray_triangle();
+	test_sphere_triangle();
+	test_sphere_edge();
+	test_ray_sphere();
+	test_closest_points();
+	test_ray_mesh();
+	if (failures != 0) {
+		printf("%d check(s) FAILED\n", failures);
+		return 1;
+	}
+	printf("all checks passed\n");
+	return 0;
+}
