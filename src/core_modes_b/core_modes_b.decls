@@ -90,3 +90,16 @@
 00022660 void CGameMode_MetaVote_Start(struct CGameMode_MetaVote *self);
 00022f40 void CGameMode_MetaVote_Update(struct CGameMode_MetaVote *self, int active);
 000233b0 void CGameMode_MetaVote_Loaded(struct CGameMode_MetaVote *self);
+
+# Core/CGameMode_MiniGameIntro.c (all but 0x00023a00 are unplaced in the table)
+00023440 struct CGameMode_MiniGameIntro *CGameMode_MiniGameIntro_ctor(struct CGameMode_MiniGameIntro *self, int game, const char *name);
+00023530 void CGameMode_MiniGameIntro_dtor(struct CGameMode_MiniGameIntro *self);
+00023590 void CGameMode_MiniGameIntro_Start(struct CGameMode_MiniGameIntro *self);
+000235d0 void CGameMode_MiniGameIntro_Suspend(struct CGameMode_MiniGameIntro *self);
+00023600 int CGameMode_MiniGameIntro_OnButton(struct CGameMode_MiniGameIntro *self, int button, int pad);
+000237b0 void CGameMode_MiniGameIntro_Update(struct CGameMode_MiniGameIntro *self, int active);
+00023900 void CGameMode_MiniGameIntro_Render(struct CGameMode_MiniGameIntro *self, int active);
+000239e0 void *CGameMode_MiniGameIntro_DeletingDtor(struct CGameMode_MiniGameIntro *self, unsigned char flags);
+00023a00 void CGameMode_MiniGameIntro_CreateTexts(struct CGameMode_MiniGameIntro *self);
+000242d0 void CGameMode_MiniGameIntro_Enter(struct CGameMode_MiniGameIntro *self);
+00024510 void CGameMode_MiniGameIntro_Exit(struct CGameMode_MiniGameIntro *self);

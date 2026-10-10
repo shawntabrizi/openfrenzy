@@ -102,3 +102,29 @@ __attribute__((weak)) float DAT_002838d0 = 0.08f;   /* stretch per speed */
 __attribute__((weak)) float DAT_002838d4 = 0.16f;   /* chip scale */
 __attribute__((weak)) int DAT_002844fc[3] = { 0xff, 0xff, 0xff };
 __attribute__((weak)) float DAT_00283888[4] = { -1.0f, 1.0f, -1.0f, 1.0f };
+
+/* used by CGameMode_MiniGameIntro */
+int DAT_002ba220;
+int DAT_002ba224;
+int DAT_002baed0;
+int DAT_002baeb8;
+int DAT_002baea8;
+int DAT_002ba6a4;
+int DAT_002ba4e0;
+int DAT_002f28ac;
+int DAT_002bae90;
+int DAT_002ecf90[4];
+int DAT_002b95b0[6];
+int _DAT_002ecd9c;
+int _DAT_002ecda0;
+int _DAT_002ecda4;
+int _DAT_002ecda8;
+int _DAT_002ecde8;
+__attribute__((weak)) int DAT_00290960 = 1;
+__attribute__((weak)) float DAT_00290be4[4] = { 50.0f, 50.0f, 50.0f, 50.0f };
+__attribute__((weak)) int DAT_00290754[0x79];       /* classlib_ui owns it; zero in the XBE */
+__attribute__((weak)) int DAT_00292c4c = 0x18;
+__attribute__((weak)) int DAT_00292c50 = 0x18;
+__attribute__((weak)) int DAT_00292c78 = 0x240;
+__attribute__((weak)) int DAT_002838e4[3] = { 90, -25, -125 };
+__attribute__((weak)) int DAT_002838f0 = 30;

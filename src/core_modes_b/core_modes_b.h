@@ -132,10 +132,10 @@ OF_ASSERT_SIZE(struct cmb_CGameMode, 0x98);
 
 /* CGameMode vtable slots (byte offsets) */
 #define CMB_VT_DTOR 0x00      /* (this, flags) scalar deleting destructor */
-#define CMB_VT_STOP 0x04      /* (this) leave / release */
-#define CMB_VT_START 0x08     /* (this) enter */
-#define CMB_VT_RESUME 0x0c    /* (this) back on top of the stack */
-#define CMB_VT_LOAD 0x10      /* (this) pushed */
+#define CMB_VT_SUSPEND 0x04   /* (this) another mode is pushed on top; also on pop */
+#define CMB_VT_START 0x08     /* (this) pushed with start = 1 */
+#define CMB_VT_EXIT 0x0c      /* (this) popped */
+#define CMB_VT_ENTER 0x10     /* (this) pushed */
 #define CMB_VT_BUTTONS 0x14   /* (this, int) */
 #define CMB_VT_UPDATE 0x18    /* (this, int active) */
 #define CMB_VT_RENDER 0x1c    /* (this, int active) */
@@ -375,6 +375,51 @@ struct CMetaToken {
 	void *actor;                /* 0x1c: tile model */
 };
 OF_ASSERT_SIZE(struct CMetaToken, 0x20);
+
+/* ---------- CGameMode_MiniGameIntro: the rules and controls of the next minigame */
+
+struct CGameMode_MiniGameIntro {
+	struct cmb_CGameMode base;
+	unsigned char list[0xc];    /* 0x098: overlay list */
+	void *title;                /* 0x0a4 */
+	void *text[3];              /* 0x0a8: description lines */
+	void *controls[2];          /* 0x0b4 */
+	unsigned char pad_bc[8];
+	void *logo;                 /* 0x0c4: animlogo.gif overlay */
+	void *choice[2];            /* 0x0c8: play / practice */
+	int loading_model;          /* 0x0d0 */
+	unsigned char pad_d4[0x250 - 0xd4];
+	int selection;              /* 0x250 */
+	int ready;                  /* 0x254 */
+	int game;                   /* 0x258: text index of the game */
+	char name[0x80];            /* 0x25c */
+	int frames;                 /* 0x2dc */
+	int fade_start;             /* 0x2e0 */
+	int field_2e4;
+	float saved_fov[2];         /* 0x2e8 */
+	void *backdrop;             /* 0x2f0: CBGTilingBackdrop */
+	int loaded;                 /* 0x2f4 */
+};
+OF_ASSERT_OFFSET(struct CGameMode_MiniGameIntro, selection, 0x250);
+OF_ASSERT_OFFSET(struct CGameMode_MiniGameIntro, frames, 0x2dc);
+OF_ASSERT_OFFSET(struct CGameMode_MiniGameIntro, loaded, 0x2f4);
+
+extern int DAT_002ba220, DAT_002ba224;     /* fonts of the minigame intro */
+extern int DAT_002baed0;                   /* practice (no score) */
+extern int DAT_002baeb8;                   /* demo mode: CPU players only */
+extern int DAT_002baea8;                   /* chosen intro option */
+extern int DAT_002ba6a4;                   /* attract mode */
+extern int DAT_002ba4e0, DAT_002f28ac, DAT_002bae90;
+extern int DAT_00290960;
+extern float DAT_00290be4[4];
+extern int DAT_002ecf90[4];
+extern int DAT_002b95b0[6];                /* per character: package to load */
+extern int DAT_00290754[0x79];             /* classlib_ui: per character +0x60 apart */
+extern int DAT_00292c4c, DAT_00292c50, DAT_00292c78;
+extern int DAT_002838e4[3];                /* description line heights */
+extern int DAT_002838f0;                   /* fade frames */
+extern int _DAT_002ecd9c, _DAT_002ecda0, _DAT_002ecda4, _DAT_002ecda8; /* text ids for the pause menu */
+extern int _DAT_002ecde8;
 
 struct CGameMode_MetaVote {
 	struct cmb_CGameMode base;
