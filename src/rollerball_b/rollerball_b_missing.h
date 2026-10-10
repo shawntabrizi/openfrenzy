@@ -24,4 +24,7 @@ int FUN_001965a0(int node, void *self);
 /* the race path record's destructor (rollerball_a calls it) */
 void FUN_00198110(void *self);
 
+/* race2 controller: approach the path point (jump table of 0x0019cd90) */
+void FUN_0019bdd0(void *self);
+
 #endif

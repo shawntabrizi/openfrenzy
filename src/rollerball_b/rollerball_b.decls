@@ -185,3 +185,53 @@
 001989a0 void CRollerBallAseReader_Ctor(void *self);
 001989b0 void CRollerBallAseReader_Dtor(void *self);
 001989e0 void *CRollerBallAseReader_DeletingDtor(void *self, unsigned int flags);
+
+# shader fragment and player controllers (file unknown: RollerBall/unplaced_ai.c;
+# the five constructors are listed above under "player controllers")
+0019a4e0 void *CRollerBallShaderFragment_Ctor(void *self);
+0019a520 void CRollerBallShaderFragment_Begin(void);
+0019a560 void CRollerBallShaderFragment_End(void);
+0019a590 void CRollerBallShaderFragment_SetConstants(void *self, int *ctx);
+0019a620 int CRollerBallControl_Init(void *self, void *entity);
+0019a660 void CRollerBallControlRace2_Reset(void *self);
+0019a730 void *CRollerBallControl_PickRandomTarget(void *self);
+0019a7c0 void *CRollerBallControl_Nearest(void *self, float *pos);
+0019a840 void *CRollerBallControl_Farthest(void *self, float *pos);
+0019a8c0 void *CRollerBallControl_InSights(void *self, float heading);
+0019a9c0 void *CRollerBallControlBase_DeletingDtor(void *self, unsigned int flags);
+0019a9e0 void CRollerBallControlBase_Think(void *self, float dt);
+0019acc0 void CRollerBallControlBase_Chase(void *self);
+0019ade0 void CRollerBallControlBase_Approach(void *self);
+0019aee0 void CRollerBallControlBase_Reset(void *self);
+0019b0e0 void CRollerBallControlBase_RollTimers(void *self);
+0019b1f0 void *CRollerBallControlSumo_DeletingDtor(void *self, unsigned int flags);
+0019b210 void CRollerBallControlArena_Attack(void *self);
+0019b3a0 void CRollerBallControlArena_Recover(void *self);
+0019b570 void CRollerBallControlSumo_Dodge(void *self, float dt);
+0019b7a0 void CRollerBallControlArena_Hit(void *self, void *other);
+0019b830 void CRollerBallControlSumo_Reset(void *self);
+0019baa0 void CRollerBallControlArena_RollTimers(void *self);
+0019bc40 void *CRollerBallControlRace2_DeletingDtor(void *self, unsigned int flags);
+0019bc60 void CRollerBallControlRace_Seek(void *self);
+0019bf90 void *CRollerBallControlRace_DeletingDtor(void *self, unsigned int flags);
+0019bfb0 void CRollerBallControlRace_PickLane(void *self);
+0019c000 void *CRollerBallControlDrop_DeletingDtor(void *self, unsigned int flags);
+0019c020 void CRollerBallControlDrop_Dodge(void *self, float dt);
+0019c250 void CRollerBallControlArena_ChooseTarget(void *self);
+0019c420 void CRollerBallControlDrop_Reset(void *self);
+0019c690 void CRollerBallControlSumo_Think(void *self, float dt);
+0019c900 void CRollerBallControlRace_Think(void *self, float dt);
+0019c960 void CRollerBallControlRace_Reset(void *self);
+0019ca60 void CRollerBallControlDrop_Think(void *self, float dt);
+0019ccd0 void CRollerBallControlBase_Update(void *self, float dt);
+0019cd20 void CRollerBallControlSumo_Update(void *self, float dt);
+0019cd90 void CRollerBallControlRace2_Update(void *self, float dt);
+0019cdb0 void CRollerBallControlRace_Update(void *self, float dt);
+0019cde0 void CRollerBallControlDrop_Update(void *self, float dt);
+
+# RollerBall/CRollerBall_Particle.cpp (0x0019d0c0 and 0x0019d110 keep their table prototypes)
+0019ce50 void CRollerBallParticles_Ctor(void *self);
+0019ce60 void CRollerBallParticles_Draw(void *self);
+0019d120 void CRollerBallParticles_Dtor(void *self);
+0019d130 void *CRollerBallParticles_DeletingDtor(void *self, unsigned int flags);
+0019d150 int CRollerBallParticles_Init(void *self, int *params, int count);
