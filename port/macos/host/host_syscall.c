@@ -173,10 +173,14 @@ long long host_syscall(long long number, long long a, long long b, long long c, 
                        long long e, long long f) {
     switch (number) {
     case __NR_read:
+        /* The kernel fails a read into a write-watched page (EFAULT) instead of faulting:
+         * unwatch the destination first (host_memory.c). */
+        host_memory_watch_prepare_write((uint32_t)b, (uint32_t)c);
         return result(read((int)a, G(void *, b), (uint32_t)c));
     case __NR_write:
         return result(write((int)a, G(const void *, b), (uint32_t)c));
     case __NR_pread64:
+        host_memory_watch_prepare_write((uint32_t)b, (uint32_t)c);
         return result(pread((int)a, G(void *, b), (uint32_t)c, d));
     case __NR_pwrite64:
         return result(pwrite((int)a, G(const void *, b), (uint32_t)c, d));
@@ -188,8 +192,11 @@ long long host_syscall(long long number, long long a, long long b, long long c, 
             return -22;
         struct iovec v[64];
         struct guest_vec *g = G(struct guest_vec *, b);
-        for (int i = 0; i < c; i++)
+        for (int i = 0; i < c; i++) {
             v[i] = (struct iovec){guest_pointer(g[i].address), g[i].length};
+            if (number == __NR_readv || number == __NR_preadv)
+                host_memory_watch_prepare_write(g[i].address, g[i].length);
+        }
         if (number == __NR_readv)
             return result(readv((int)a, v, (int)c));
         if (number == __NR_writev)

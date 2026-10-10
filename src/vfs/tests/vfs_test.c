@@ -239,6 +239,38 @@ static void test_disc_fopen(void)
 	fclose(file);
 }
 
+/* The renderer write-protects contiguous memory it caches (memory_watch_protect), and the
+Babel heap lives in the contiguous window, so a freed texture's page can still be watched
+when a later file buffer reuses it. A kernel read into such a page fails (EFAULT) instead
+of faulting, and the fread through the D: cookie came back short: the Meta level parser
+then read stale heap bytes past the real text and smashed its stack (integration round 4,
+military_part_1.lnd after Space Tails). fread must fill the whole buffer. */
+void *NTAPI MmAllocateContiguousMemory(ULONG size);   /* xkernel */
+VOID NTAPI MmFreeContiguousMemory(void *address);
+
+static void test_disc_fopen_watched(void)
+{
+	FILE *file = vfs_fopen("D:\\DEFAULT.XBE", "rb");
+	unsigned char *watched = MmAllocateContiguousMemory(0x10000);
+	unsigned char *plain = malloc(0x9000);
+	size_t got;
+
+	check(file != NULL && watched != NULL && plain != NULL, "fopen watched: setup");
+	if (!file || !watched || !plain)
+		return;
+	memset(watched, 0xb1, 0x10000);
+	/* the second half of the buffer (pages from 0x4000) is write-watched */
+	memory_watch_protect((unsigned long)(watched + 0x4000), 0xc000);
+	got = fread(watched + 0x100, 1, 0x9000, file);
+	check(got == 0x9000, "fopen watched: fread into watched pages reads everything");
+	fseek(file, 0, SEEK_SET);
+	check(fread(plain, 1, 0x9000, file) == 0x9000 && !memcmp(plain, watched + 0x100, 0x9000),
+		"fopen watched: the data equals a read into unwatched memory");
+	fclose(file);
+	free(plain);
+	MmFreeContiguousMemory(watched);
+}
+
 static void test_disc_find(void)
 {
 	WIN32_FIND_DATAA data;
@@ -343,6 +375,7 @@ int main(int argc, char **argv)
 		test_disc_names();
 		test_disc_read_only();
 		test_disc_fopen();
+		test_disc_fopen_watched();
 		test_disc_find();
 		crc_of_file("d:\\default.xbe");
 		crc_of_file("d:\\Packages\\BugBash.xbp");
