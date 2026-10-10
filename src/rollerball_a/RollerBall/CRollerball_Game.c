@@ -881,9 +881,9 @@ void CRollerBallGame_Shutdown(unsigned char *self)
 	CDemoOverlay_Shutdown(self + RB_GO_HUD);
 	CRollerBallLights_Shutdown(self + RB_GO_LIGHTS);
 	FUN_001d5950(); /* empty (ECX = the texture animations) */
-	FUN_001d5950(); /* empty (ECX = the simulation) */
+	FUN_001d5950(); /* empty (ECX = the frame clock) */
 	FUN_001d5950(); /* empty (ECX = the countdown) */
-	FUN_001d5950(); /* empty (ECX = the input) */
+	FUN_001d5950(); /* empty (ECX = the physics) */
 	rbb_EntitiesShutdown(self + RB_GO_ENTITIES);
 	rbb_WorldShutdown(self + RB_GO_WORLD);
 	FUN_001bb790(); /* the intro camera (thunk to CLIntroCam_Destroy) */
@@ -2551,7 +2551,7 @@ it with the variation package. */
 void CRollerBallGame_Initialise(unsigned char *self)
 {
 	unsigned char *ents = self + RB_GO_ENTITIES;
-	unsigned char *input = self + RB_GO_PHYSICS;
+	unsigned char *phys = self + RB_GO_PHYSICS;
 	void *gen;
 	void *var;
 
@@ -2588,7 +2588,7 @@ void CRollerBallGame_Initialise(unsigned char *self)
 		bkPrintf("CRollerBall_Game::Initialise - entitySystem.Initialise FAILED!\n");
 	} else if (RB_CALL(FUN_00192f40, int (*)(void *))(self + RB_GO_CAMERA) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - camera.Initialise FAILED!\n");
-	} else if (CRollerBallPhysics_Init(input) == 0) {
+	} else if (CRollerBallPhysics_Init(phys) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - simulation.Initialise FAILED!\n");
 	} else if (RB_CALL(AI_CanMove, int (*)(void *, void *))(self + RB_GO_HUD, gen) == 0) {
 		/* 0x000b06c0 is a folded "return 1" (ret 4): the HUD's Initialise */
@@ -2610,7 +2610,7 @@ void CRollerBallGame_Initialise(unsigned char *self)
 			bkPrintf("CDemolition_Game::Initialise - rumbleSystem.Initialise FAILED!\n");
 		if (RB_CALL(FUN_00196900, int (*)(void *))(self + RB_GO_SHADOWS) == 0)
 			bkPrintf("CDemolition_Game::Initialise - shadowSystem.Initialise FAILED!\n");
-		CRollerBallPhysics_SetPlayers(input, (void *)(uintptr_t)rbb_Entities_192350(ents));
+		CRollerBallPhysics_SetPlayers(phys, (void *)(uintptr_t)rbb_Entities_192350(ents));
 	}
 variation:
 	switch (RB_I32(self, RB_GO_VARIATION)) {
