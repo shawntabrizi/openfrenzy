@@ -1,8 +1,11 @@
 /*
 SDL_PLATFORM.H
 
-Window, OpenGL context and input state shared by the renderer and the
-controller emulation (see sdl_platform.c).
+Window, OpenGL ES context and input state shared by the renderer (d3d8), the
+controller emulation (input) and audio (dsound); implemented by sdl_platform.c.
+The interface is OpenCE's (Halo). The Halo-only parts (menus' pointer,
+scoreboard, rebinding, display modes, render interpolation) are kept so the
+OpenCE-derived modules compile, and are inert in this game.
 */
 
 #ifndef __HALO_LINUX_SDL_PLATFORM_H

@@ -1,9 +1,10 @@
 /*
 PLATFORM.H
 
-Shared internals of the Linux platform layer, which implements the Xbox SDK
-(XAPI, Direct3D 8, DirectSound, XNet, ...) and MSVC runtime interfaces that
-the game calls. Files including this header are compiled with the game's
+Shared internals of the platform layer (src/runtime, vfs, xkernel, d3d8, dsound,
+input; from OpenCE's port/linux/src), which implements the Xbox SDK (XAPI,
+Direct3D 8, DirectSound, XInput) and MSVC runtime interfaces that the game
+calls. Comments that mention Linux, Android or Halo describe the OpenCE origin. Files including this header are compiled with the game's
 ABI and see the XDK declarations, so every definition is type-checked
 against the SDK prototype it replaces.
 */

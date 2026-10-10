@@ -52,21 +52,41 @@ library). `MISSING` and `UNKNOWN` rows point to a stub that calls
 `platform_unimplemented` and returns 0. `scripts/gen_xdk_entry_points.py` regenerates the file. Hand
 identifications of unnamed functions go in its `IDENTIFIED` map.
 
-## Compile check
+## Regenerating the entry-point table
 
 ```sh
-src/runtime/build_check.sh [build-dir]   # default: build-fix-platform-layer
+cmake -S . -B build-runtime -G Ninja          # once
+src/runtime/build_check.sh [build-dir]        # default: build-runtime
 ```
 
-It compiles every file with the guest ABI flags of OpenCE's
-`tools/android_build.py` (`--target=arm64_32-apple-watchos`, ILP32, musl
-1.2.5 headers, Khronos GLES 3.2 headers, SDL3 headers from Homebrew). musl
-and the GLES headers are downloaded into the build directory on first run.
+It builds the platform layer with the CMake build (guest flags, the of-rebase
+pass), lists the symbols `libofplatform.a` defines (`llvm-nm`), merges
+`export/functions.jsonl` with `export/functions_extra.jsonl` (calls from
+functions that only the second Ghidra pass found are added to the callers),
+runs `scripts/gen_xdk_entry_points.py`, and rebuilds. No network is needed.
+The earlier version compiled the layer without the rebase pass and downloaded
+musl and the GLES headers; the CMake build replaces it.
 
-It produces objects only. It does not run the `guest_rebase` LLVM pass and
-does not link: the musl runtime, guest runtime, Darwin host, and the rest of
-the OpenCE platform layer are not in the tree yet. Undefined symbols left
-after this layer: libc/pthread, `halo_gl*` (`gl_functions.c`), `platform_*`
-(`sdl_platform.c`), `config_*` (`port_config.c`), `posix_*` and `host_gl_*`
-(host), `memory_watch_*`, `xgpu_post_*`/`xgpu_text_*`, `halo_sin`/`halo_cos`
-(`port/third_party/musl-math`).
+## Runtime module tests
+
+```sh
+src/runtime/tests/run_tests.sh [build-dir] [test_name ...]   # headless
+SDL_VIDEO_DRIVER= OPENFRENZY_WINDOWED=1 src/runtime/tests/run_tests.sh build-runtime test_d3d_window
+```
+
+Each `tests/test_*.c` is a guest image compiled with the platform layer's
+flags and run in the host; it passes when the guest exits 0. Tests that fail
+because of another module are listed in `tests/known_failures.txt` (reported
+as XFAIL, and as XPASS once fixed). A real window needs the window server, so
+the second command runs outside the Claude Code sandbox.
+
+| Test | What it proves |
+|---|---|
+| `test_config` | settings: defaults, `OPENFRENZY_*` overrides, writes; data/save roots are the host's |
+| `test_d3d_window` | the game's `bStartDisplay` device creation and 120 Clear/Present frames; with a window: GLES context, drawable, no GL error (debug screenshots match the clear colours) |
+| `test_d3d_present_order` | the same without starting the vertical blank thread (known d3d8 failure) |
+| `test_input_events` | keyboard/mouse state and the debug-keyboard queue (virtual keys, XDK flags) |
+| `test_msvc_crt` | MSVC CRT behaviour: wide `%S`, `%I64d`, `_stricmp`, `_itoa`, `_splitpath` |
+| `test_unimplemented` | the stub log counts each function once across threads |
+| `test_disc_read` | `CreateFileA`/`ReadFile` on `D:\` of the real disc image (needs vfs) |
+| `test_toolchain_strings` | string literals keep a leading `_` (known toolchain failure) |
