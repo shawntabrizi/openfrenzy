@@ -34,9 +34,14 @@ pumped (platform_pump_events) only on the event thread; elsewhere the call
 reads what the last pump saw.
 */
 
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
 #include "platform.h"
 #include "sdl_platform.h"
 #include "input_xpp.h"
+#include "port_config.h"
 
 #include <SDL3/SDL.h>
 #include <pthread.h>
@@ -314,6 +319,56 @@ static int controller_port_locked(HANDLE device)
 	return -1;
 }
 
+/* debug.test_input (OPENFRENZY_DEBUG_TEST_INPUT): a scripted press list for automated runs
+on pad 0, "BUTTON@MS[,BUTTON@MS...]": each button is held for 150 ms from MS milliseconds
+after the first XInputGetState call. Buttons: START BACK UP DOWN LEFT RIGHT A B X Y BLACK
+WHITE LT RT. Example: "START@8000,A@12000,A@14000". (integration round 1) */
+static void test_input_apply(XINPUT_GAMEPAD *pad)
+{
+	static const char *const analog[] = { "A", "B", "X", "Y", "BLACK", "WHITE", "LT", "RT" };
+	static const struct { const char *name; unsigned short bit; } digital[] = {
+		{ "UP", 0x1 }, { "DOWN", 0x2 }, { "LEFT", 0x4 }, { "RIGHT", 0x8 },
+		{ "START", 0x10 }, { "BACK", 0x20 },
+	};
+	static long long start_ms = -1;
+	const char *script = config_string("debug.test_input");
+	struct timespec now;
+	long long elapsed;
+	const char *item;
+
+	if (!script || !*script)
+		return;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	if (start_ms < 0)
+		start_ms = (long long)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+	elapsed = (long long)now.tv_sec * 1000 + now.tv_nsec / 1000000 - start_ms;
+	for (item = script; *item; )
+	{
+		char name[16];
+		size_t length = strcspn(item, "@,");
+		long long at;
+		unsigned int index;
+
+		if (length >= sizeof(name) || item[length] != '@')
+			return;
+		memcpy(name, item, length);
+		name[length] = 0;
+		at = strtoll(item + length + 1, NULL, 10);
+		if (elapsed >= at && elapsed < at + 150)
+		{
+			for (index = 0; index < sizeof(digital) / sizeof(digital[0]); index++)
+				if (!strcmp(name, digital[index].name))
+					pad->wButtons |= digital[index].bit;
+			for (index = 0; index < 8; index++)
+				if (!strcmp(name, analog[index]))
+					pad->bAnalogButtons[index] = 0xff;
+		}
+		item += strcspn(item, ",");
+		if (*item == ',')
+			item++;
+	}
+}
+
 /* 0x0024d2ae XInputGetState: ERROR_SUCCESS, or ERROR_DEVICE_NOT_CONNECTED (state
 zeroed) for a closed handle or a device gone since XInputOpen. (The original
 copies the last report even then; the game ignores the result, so a zeroed
@@ -343,6 +398,8 @@ DWORD WINAPI XInputGetState(HANDLE device, PXINPUT_STATE state)
 		input_keyboard_to_pad(keys, &pad);
 	if (port_ids[port] && source->read(port_ids[port], &reading))
 		input_gamepad_to_pad(&reading, &pad);
+	if (port == 0)
+		test_input_apply(&pad);
 	if (memcmp(&pad, &controllers[port].previous, sizeof(pad)))
 	{
 		controllers[port].packet_number++;

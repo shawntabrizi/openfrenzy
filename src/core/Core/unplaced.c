@@ -89,6 +89,10 @@ void CGameModeStack_ShowTop(void)
 	int largest;
 	int total = ext_HeapFree(&largest);
 
+	/* Port: the original reads modes[-1] after the last pop (only at exit, from the static
+	   destructor 0x001f4e20); that faults here. */
+	if (g_ModeStack.count == 0)
+		return;
 	ext_DebugPrintf("\nTop of stack now: %s\nBabel TOTAL FREE: %d Kb  Babel LARGEST FREE: %d Kb\n",
 		g_ModeStack.modes[g_ModeStack.count - 1]->name, total / 1024, largest / 1024);
 	ext_FUN_0004c300();

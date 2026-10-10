@@ -166,13 +166,13 @@ void CLHud_StartBars(float *self, float width)
 {
 	if (self[0x32] != 0.0f) {
 		if (DAT_002baed8[0] != 0)
-			*(short *)((int)self[0x60] + 0x54) = 0;
+			*(short *)(*(int *)&self[0x60] + 0x54) = 0; /* the slot holds a pointer */
 		if (DAT_002baed8[10] != 0)
-			*(short *)((int)self[0x61] + 0x54) = 0;
+			*(short *)(*(int *)&self[0x61] + 0x54) = 0; /* the slot holds a pointer */
 		if (DAT_002baed8[20] != 0)
-			*(short *)((int)self[0x62] + 0x54) = 0;
+			*(short *)(*(int *)&self[0x62] + 0x54) = 0; /* the slot holds a pointer */
 		if (DAT_002baed8[30] != 0)
-			*(short *)((int)self[99] + 0x54) = 0;
+			*(short *)(*(int *)&self[99] + 0x54) = 0; /* the slot holds a pointer */
 	}
 	self[2] = 0.0f;
 	self[4] = 0.0f;
