@@ -190,8 +190,10 @@ extern float DAT_0028ffa8;            /* bdisplay: near plane used by the miniga
 extern float DAT_0028ffac;            /* bdisplay: far plane (10000) */
 extern unsigned char DAT_00290718[];  /* classlib_ui: player colours, 0x60 bytes per player */
 extern int DAT_00292c78;              /* charlib: 0x240 */
+extern int DAT_002bae6c;              /* core: sound effect volume 0-255 */
 extern int DAT_002bae70;              /* core: handicap / difficulty 0-2 */
 extern int DAT_002bae94;              /* core: number of players */
+extern int DAT_002baeb8;              /* core: this game mode has no RefBot / skips the intro */
 extern int DAT_002baed4[];            /* core: player records, 10 ints each */
 extern void *DAT_002db808;            /* engine_misc: the DirectSound object */
 extern float DAT_002ea478[4];         /* classlib_ui: a zero vector */
