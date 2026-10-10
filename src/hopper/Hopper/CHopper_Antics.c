@@ -229,7 +229,7 @@ void HopAntics_Reset(void *self)
 			break;
 		case 4:
 			HOP_AF(actor, 0xd4) = 500.0f;
-			a = (hop_ArenaAngle - 125.0f) * HOP_DEG;
+			a = (hop_CamAngle - 125.0f) * HOP_DEG;
 			r = (float)i * 140.0f + 800.0f;
 			x = -(sinf(a) * r);
 			z = -(cosf(a) * r);
@@ -339,7 +339,7 @@ void HopAntics_Start(void *self)
 			break;
 		case 4:
 			HOP_AF(hop_PlayerActor(i), 0xd4) = 500.0f;
-			a = (hop_ArenaAngle - 125.0f) * HOP_DEG;
+			a = (hop_CamAngle - 125.0f) * HOP_DEG;
 			turn = a;
 			r = (float)order[i] * 140.0f + 800.0f;
 			pos[0] = -(sinf(a) * r);
@@ -704,7 +704,7 @@ void HopAntics_Update4(void *self)
 		if (hop_Out[i] == 0) {
 			if (hop_RoundOver == 0) {
 				HOP_AU(hop_PlayerActor(i), 0x220) |= 1;
-				a = (hop_ArenaAngle - (125.0f - HOP_AF(hop_Players[i], 0x1180))) * HOP_DEG;
+				a = (hop_CamAngle - (125.0f - HOP_AF(hop_Players[i], 0x1180))) * HOP_DEG;
 				HOP_AF(hop_PlayerActor(i), 0x1d8) = 1.5707964f + a;
 				r = (float)order[i] * 140.0f + 800.0f;
 				HOP_AF(hop_PlayerActor(i), 0xd0) = -(r * sinf(a));
@@ -723,7 +723,7 @@ void HopAntics_Update4(void *self)
 			}
 		} else {
 			HOP_AU(hop_PlayerActor(i), 0x220) &= ~1u;
-			a = ((hop_ArenaAngle - (125.0f - HOP_AF(hop_Players[i], 0x1180))) + (float)(hop_Spin[i] / 2)) * HOP_DEG;
+			a = ((hop_CamAngle - (125.0f - HOP_AF(hop_Players[i], 0x1180))) + (float)(hop_Spin[i] / 2)) * HOP_DEG;
 			r = (float)order[i] * 140.0f + (float)(hop_Spin[i] * 3) + 800.0f;
 			HOP_AF(hop_PlayerActor(i), 0xd0) = -(r * sinf(a));
 			HOP_AF(hop_PlayerActor(i), 0xd4) = -hop_Sink;
@@ -793,7 +793,7 @@ void HopAntics_DrawRing4(int player, float *pos)
 
 	if (hop_RoundOver != 0)
 		return;
-	a = (hop_ArenaAngle - (125.0f - HOP_AF(hop_Players[player], 0x1180))) * HOP_DEG;
+	a = (hop_CamAngle - (125.0f - HOP_AF(hop_Players[player], 0x1180))) * HOP_DEG;
 	r = (float)HOP_IV(0x002ae8cc)[player] * 140.0f + 800.0f;
 	pos[0] = -(r * sinf(a));
 	pos[2] = -(r * cosf(a));
@@ -894,7 +894,7 @@ quads from radius 500 to 1400, 16 degrees and 52.5 high apart */
 void HopAntics_DrawSpiral(void *self)
 {
 	float *quad = (float *)HOP_ADDR(0x00302708);
-	float angle = hop_ArenaAngle;
+	float angle = hop_CamAngle;
 	float low = 0.0f;
 	float high = 52.5f;
 	float s, t, sinS, cosS, sinT, cosT;

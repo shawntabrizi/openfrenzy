@@ -182,7 +182,7 @@ extern int DAT_00293eb8[4];            /* charlib: the shadow projector of each 
 #define hop_RouteTables HOP_G(0x003024bc, char *) /* new CLRouteTable[route cells] */
 #define hop_RouteObject ((void *)HOP_ADDR(0x003024c8)) /* core static init: the shared route object */
 #define hop_Platforms ((void **)HOP_ADDR(0x002af098)) /* the arena's platform actors (27) */
-#define hop_ArenaAngle HOP_F(0x002aebfc)       /* the arena's turn angle (degrees) */
+#define hop_CamAngle HOP_F(0x002aebfc)         /* the camera angle (degrees; camera +0x24) */
 #define hop_Sink HOP_F(0x002af15c)             /* how far the arena has sunk */
 
 /* this module's vtables (0x0026e14c-0x0026f08c, .rdata) */

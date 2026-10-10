@@ -66,17 +66,44 @@
 00140c70 void HopRes_Load(void *self);
 001414a0 void HopRes_Free(void *self);
 
-# ---- provisional shapes (written later in this module)
+# ---- Hopper/unplaced_camera.c (the camera 0x002aebd8)
 00141920 void HopCamera_Start(void *self);
 00141960 void HopCamera_Apply(void *self);
+00141a20 void *HopCamera_Destroy(void *self, byte flags);
+00141a40 void HopCamera_Play1(void *self);
+00141ac0 void HopCamera_Play2(void *self);
+00141b40 void HopCamera_Play3(void *self);
+00141bc0 void HopCamera_Play4(void *self);
+00141f00 void HopCamera_EaseIn(void *self);
 00142200 void HopCamera_Update(void *self);
+
+# ---- Hopper/unplaced_arena.c (the arena 0x002aec10)
 00142760 void HopArena_Start(void *self);
-001431e0 void HopArena_Shutdown(void *self);
-00143c60 void HopArena_Update(void *self, int unused);
-00145c30 void HopArena_Draw(void *self, int unused);
-001445d0 void HopArena_DrawExtras2(void *self);
-00144fd0 void HopArena_DrawExtras3(void *self);
+001428e0 void HopArena_Update1(void *self, int fast);
+00142cd0 void HopArena_DropNext(void *self);
+00142d50 void HopArena_Update4(void *self, int fast);
 001430a0 void HopArena_DrawExtras4(void *self);
+001431e0 void HopArena_Shutdown(void *self);
+00143220 void *HopArena_Destroy(void *self, byte flags);
+00143240 void HopArena_Update2(void *self, int fast);
+001436e0 void HopArena_Wobble3(void *self);
+001438c0 void HopArena_Update3(void *self, int fast);
+00143c60 void HopArena_Update(void *self, int fast);
+00143ca0 char HopArena_WhichBlade1(void *self, float x, float z);
+00143da0 int HopArena_InBlades(void *self, float x, float z, short state);
+00143ed0 void HopArena_DrawFloor1(void *self);
+00143fa0 void HopArena_Draw1(void *self, int fast);
+001441c0 void HopArena_Draw2(void *self, int fast);
+001445d0 void HopArena_DrawExtras2(void *self);
+001447e0 int HopArena_WhichBlade3(void *self, float x, float z);
+00144b40 int HopArena_InBlades3(void *self, float x, float z, short state);
+00144d90 void HopArena_Draw3(void *self, int fast);
+00144fd0 void HopArena_DrawExtras3(void *self);
+00145920 void HopArena_Draw4(void *self, int fast);
+00145c30 void HopArena_Draw(void *self, int fast);
+
+# ---- provisional shapes (written later in this module)
+0014c970 void HopShader_SetConstant(float r, float g, float b, float a);
 001472d0 void HopBubbles_Start(void *self);
 00147380 void HopBubbles_Update(void *self);
 0014a940 void HopFx_Start(void *self);
@@ -92,8 +119,6 @@
 0014c880 void HopOverlay_Resume(void *self);
 0014c8f0 void *HopShaderColour_Ctor(void *self);
 0014c950 void *HopShaderLit_Ctor(void *self);
-00143da0 int HopArena_InBlades(void *self, float x, float z, short state);
-00144b40 int HopArena_InBlades3(void *self, float x, float z, short state);
 00145cb0 void *HopPlayer_Ctor(void *self, int index, float *pos);
 00145eb0 void HopPlayer_Dtor(void *self);
 00145fb0 void HopPlayers_Start(void);
