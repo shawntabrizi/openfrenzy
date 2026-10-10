@@ -42,7 +42,7 @@ void Actor_DrawFirstPass(void *actor)
 	if ((CHL_U32(actor, ACT_FLAGS) & 0x600) != 0 && CHL_I32(actor, ACT_ALPHA) < 0x100)
 		return;
 	if (CHL_I32(actor, ACT_TYPE) == 5)
-		chl_PushDrawState(3, 0, 0);
+		chl_PushRenderState(3, 0, 0);
 	if (CHL_I32(actor, ACT_FOG_OWN) == 0) {
 		if (actor_fog_enable == 0 || (CHL_U32(actor, ACT_FLAGS) & 0x20000) != 0) {
 			chl_SetRenderState(8, 0, 0);
@@ -81,9 +81,9 @@ void Actor_DrawFirstPass(void *actor)
 		if ((CHL_U32(actor, ACT_FLAGS) & 0x200000) != 0)
 			Lights_EnableAll(1, 1);
 	} else {
-		chl_PushDrawState(3, 0, 0);
+		chl_PushRenderState(3, 0, 0);
 		chl_DrawInstance(ACT_INST(actor), 1);
-		chl_PopDrawState(3);
+		chl_PopRenderState(3);
 	}
 	chl_SetRenderState(1, 2, 0);
 	chl_SetRenderState(6, 1, 0);
@@ -92,7 +92,7 @@ void Actor_DrawFirstPass(void *actor)
 		D3DDevice_SetTextureState_Deferred(1, (D3DTEXTURESTAGESTATETYPE)9, 0);
 	}
 	if (CHL_I32(actor, ACT_TYPE) == 5)
-		chl_PopDrawState(3);
+		chl_PopRenderState(3);
 }
 
 /* draws the first pass of one actor with fog unless the actor has none */

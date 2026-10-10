@@ -568,3 +568,40 @@ void Light_Update(void *light)
 		CHL_F32(light, LT_DELAY) = 0.0f;
 	}
 }
+
+/* 0x000b7b80  CharLib (lights.cpp, inferred)
+Deletes every light. */
+void Lights_DeleteAll(void)
+{
+	void *light = chl_ListNext(lights_list, NULL);
+	void *prev;
+
+	while (light != NULL) {
+		prev = chl_ListRemove(lights_list, light);
+		if (CHL_I32(light, LT_CREATED) != 0) {
+			if (CHL_I32(light, LT_ON) != 0)
+				lights_on_count = lights_on_count - 1;
+			lt_Delete(CHL_FIELD(void, light, LT_BLIGHT));
+			lights_count = lights_count - 1;
+		}
+		if (CHL_PTR(light, LT_ATTACH) != NULL)
+			CHL_I32(CHL_PTR(light, LT_ATTACH), 0x45c) = CHL_I32(CHL_PTR(light, LT_ATTACH), 0x45c) - 1;
+		chl_Free(light);
+		light = chl_ListNext(lights_list, prev);
+	}
+	lights_count = 0;
+}
+
+/* 0x000b7c20  CharLib (lights.cpp, inferred)
+Updates every light (the next light is taken first: the update may delete it). */
+void Lights_UpdateAll(void)
+{
+	void *light = chl_ListNext(lights_list, NULL);
+	void *current;
+
+	while (light != NULL) {
+		current = light;
+		light = chl_ListNext(lights_list, light);
+		Light_Update(current);
+	}
+}

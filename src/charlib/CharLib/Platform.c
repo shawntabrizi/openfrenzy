@@ -603,7 +603,7 @@ void Platforms_UpdateAttached(void)
 			memcpy(CHL_FIELD(char, platform, PL_POS), pos, 0x10);
 			memcpy(CHL_FIELD(char, platform, PL_ORIENT), quat, 0x10);
 		}
-		FUN_000beb70(PL_ACTOR(platform));
+		Actor_UpdateShadowMesh(PL_ACTOR(platform));
 	}
 }
 
@@ -805,7 +805,7 @@ void Platform_Update(void *platform)
 	} else if (CHL_PTR(platform, PL_COLLMESH) != NULL) {
 		CRColl_RefreshMesh(platform, NULL);
 	}
-	FUN_000beb70(PL_ACTOR(platform));
+	Actor_UpdateShadowMesh(PL_ACTOR(platform));
 unchanged:
 	if (CHL_U16(platform, 0x3fa) < 2 && CHL_F32(platform, PL_SPIN + 0x4) == 0.0f)
 		memcpy(CHL_FIELD(char, platform, PL_PREV_EULER), euler, 0x10);
@@ -835,7 +835,7 @@ unchanged:
 		}
 		CHL_U32(platform, PL_ACTOR_FLAGS) = CHL_U32(platform, PL_ACTOR_FLAGS) & 0xffffffdf;
 		CRColl_RefreshMesh(platform, NULL);
-		FUN_000beb70(PL_ACTOR(platform));
+		Actor_UpdateShadowMesh(PL_ACTOR(platform));
 	}
 
 	/* trails at its nodes */

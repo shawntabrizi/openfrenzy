@@ -103,9 +103,9 @@ extern unsigned int DAT_002bd640[256];
 
 /* ---------- bdisplay (render state helpers; names are guesses from use) */
 
-/* 0x00046cb0 push a draw state (3, 0, 0) / 0x00046d00 pop it */
-#define chl_PushDrawState ((void (*)(int, int, int))FUN_00046cb0)
-#define chl_PopDrawState ((void (*)(int))FUN_00046d00)
+/* 0x00046cb0 push a render state and set it (state, value, extra) / 0x00046d00 pop it (state) */
+#define chl_PushRenderState ((void (*)(int, unsigned int, int))FUN_00046cb0)
+#define chl_PopRenderState ((void (*)(int))FUN_00046d00)
 /* 0x00044dd0 fog start and end / 0x00044e20 fog colour (r, g, b) */
 #define chl_SetFogRange ((void (*)(float, float))FUN_00044dd0)
 #define chl_SetFogColour ((void (*)(int, int, int))FUN_00044e20)

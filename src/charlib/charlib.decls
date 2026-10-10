@@ -71,7 +71,6 @@
 000b1860 void AI_Think(void *ai);
 000b18a0 void AI_ThinkTail(void *ai);
 000b6710 int CLRoute_PathStep(struct CLRoute *r, int from, int to, float y);
-000b9a30 void RespawnPoint_Update(void *point);
 # CarryOn/CModule_CarryOn.cpp (in the CharLib block)
 000b1a60 void *CModuleCarryOn_Ctor(void *self);
 000b1a90 void CModuleCarryOn_Dtor(void *self);
@@ -144,3 +143,41 @@
 000b90f0 void Platform_Update(void *platform);
 000b9880 void *Platform_Smash(void *platform, int smoke);
 000b99f0 void Platforms_UpdateAll(void);
+# Collect.cpp
+000b9a30 void RespawnPoint_Update(void *point);
+000b9ae0 void RespawnPoints_UpdateAll(void);
+000b9b20 void *RespawnPoint_Init(void *point, float *pos, int id);
+000b9b80 void RespawnPoints_DeleteAll(void);
+000b9be0 void Pickup_FreeEffect(void *pickup);
+000b9bf0 void Pickups_LoadModels(void);
+000b9c40 void *Pickup_FindType(int type);
+000b9c90 void *Pickup_Nearest(float *pos, int type);
+000b9d10 void *Pickup_Init(void *pickup, int type, float *pos, float glow_scale);
+000b9f40 void Pickups_DrawEffects(void);
+000b9fa0 void Pickups_DrawModels(void);
+000ba0a0 void Pickups_DrawGlows(void);
+000ba1a0 void Pickups_SpawnRing(int type, float *centre, float radius, int count);
+000ba2a0 void Pickups_SpawnGrid(int type, float *centre, float spacing, int nx, int nz);
+000ba3c0 void *Pickup_Delete(void *pickup);
+000ba430 void Pickups_DeleteAll(void);
+000ba460 void Pickups_DrawAll(void);
+000ba470 void *Pickup_Update(void *pickup);
+# CharLibShadow.cpp
+000be6d0 void Shadows_Init(int mode, float a, float b, float c);
+000be900 void Shadows_SetLight(int mode, float a, float b, float c);
+000be970 void Shadows_SetLightPos(float *pos);
+000be9a0 void Shadows_Aim(void);
+000beb70 void Actor_UpdateShadowMesh(void *actor);
+000bebf0 void Shadows_SaveTransforms(void);
+000bec20 void Shadows_RestoreTransforms(void);
+000bec50 void Shadows_DrawFor(void *object);
+000bed50 void Shadows_Draw(void);
+000bee40 int Shadows_BeginReceive(void);
+000beed0 void Shadows_EndReceive(void);
+000bef00 int Shadows_BeginReceiveFor(void *object);
+000befa0 void *CCollectEffect_Ctor(void *effect);
+000befb0 void CCollectEffect_Free(void *effect);
+000befd0 void CCollectEffect_Draw(void *effect);
+# lights.cpp (end)
+000b7b80 void Lights_DeleteAll(void);
+000b7c20 void Lights_UpdateAll(void);

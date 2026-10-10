@@ -175,9 +175,9 @@ void Actor_DrawOpaque(void *actor)
 	chl_SetRenderState(10, (CHL_U32(actor, ACT_FLAGS) & 0x400) != 0, 0);
 	chl_SetRenderState(5, 0, 0);
 	if ((CHL_U32(actor, ACT_FLAGS) & 0x80005) != 0) {
-		chl_PushDrawState(3, 0, 0);
+		chl_PushRenderState(3, 0, 0);
 		chl_DrawInstance(ACT_INST(actor), 6);
-		chl_PopDrawState(3);
+		chl_PopRenderState(3);
 		return;
 	}
 	if ((CHL_U32(actor, ACT_FLAGS) & 0x200000) != 0)
@@ -200,7 +200,7 @@ void Actor_DrawFaded(void *actor)
 	if (CHL_I32(actor, ACT_ALPHA) == 0x100)
 		return;
 	if (CHL_I32(actor, ACT_TYPE) == 5 || (CHL_U32(actor, ACT_FLAGS) & 0x80000) != 0)
-		chl_PushDrawState(3, 0, 0);
+		chl_PushRenderState(3, 0, 0);
 	if (CHL_I32(actor, ACT_FOG_OWN) == 0) {
 		if (actor_fog_enable == 0 || (CHL_U32(actor, ACT_FLAGS) & 0x20000) != 0) {
 			chl_SetRenderState(8, 0, 0);
@@ -240,7 +240,7 @@ void Actor_DrawFaded(void *actor)
 done:
 	if (CHL_I32(actor, ACT_TYPE) != 5 && (CHL_U32(actor, ACT_FLAGS) & 0x80000) == 0)
 		return;
-	chl_PopDrawState(3);
+	chl_PopRenderState(3);
 }
 
 /* 0x000ae4d0  CharLib/Actor.cpp (bracketed)

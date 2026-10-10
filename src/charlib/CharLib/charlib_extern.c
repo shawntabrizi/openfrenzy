@@ -43,3 +43,5 @@ __attribute__((weak)) int DAT_00284b14 = 0x1e;
 __attribute__((weak)) int DAT_00284b18 = 0x1e;
 __attribute__((weak)) unsigned char DAT_00291760[0x2c];      /* 0x00291760 BLEND_SMOKE effect */
 __attribute__((weak)) unsigned char DAT_002917b8[0x2c];      /* 0x002917b8 BLEND_SMOKE_NOGRAV effect */
+float DAT_002be588;               /* 0x002be588 bdisplay: field of view x */
+float DAT_002be58c;               /* 0x002be58c bdisplay: field of view y */
