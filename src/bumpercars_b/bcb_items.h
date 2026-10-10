@@ -106,13 +106,15 @@ struct BCarWaypoint {
 /* 0x002f0a70  number of waypoints; 0x002f0a74 number of keeper gates; 0x002f0a78 the active
 gate, 0x002f0a7c the previous one; 0x002f0a80 the waypoints (stride 0x4c) */
 #define g_NumWaypoints BCB_VAR(int, 0x002f0a70)
+/* 0x002efa8c  the next finish place of the race (1 first) */
+#define g_FinishPlace BCB_VAR(int, 0x002efa8c)
 #define g_NumGates BCB_VAR(int, 0x002f0a74)
 #define g_ActiveGate BCB_VAR(int, 0x002f0a78)
 #define g_PreviousGate BCB_VAR(int, 0x002f0a7c)
 #define g_Waypoints ((struct BCarWaypoint *)BCB_ADDR(0x002f0a80))
 #define BCB_MAX_WAYPOINTS 40
 /* 0x002f1368  the generic goals (CBCar_GenericGoal, 0x28 bytes) */
-#define g_GenericGoals BCB_VAR(struct BCarGenericGoals *, 0x002f1368)
+#define g_GenericGoals BCB_VAR(struct BCarGenericGoal *, 0x002f1368)
 /* 0x002f136c  the two lap-end particle systems (classlib_fx CParticleSystem, 0xa8 bytes) */
 #define g_LapEffects ((void **)BCB_ADDR(0x002f136c))
 #define g_HelixTexture BCB_VAR(struct bdTexture *, 0x002f1374)
@@ -122,112 +124,13 @@ gate, 0x002f0a7c the previous one; 0x002f0a80 the waypoints (stride 0x4c) */
 
 /* ======================================================================== the generic goal */
 
-/* a goal (CBCar_GenericGoal.cpp, 0x40 bytes) */
-struct BCarGoal {
-	int state;                   /* 0x00 */
-	int user;                    /* 0x04 */
-	int owner;                   /* 0x08 -1 */
-	int unk0c;
-	struct bdTexture *texture;   /* 0x10 */
-	int unk14;
-	struct BActorInstance *inst; /* 0x18 the activation actor */
-	struct BAnim *animActive;    /* 0x1c "active" */
-	void *effects;               /* 0x20 numEffects CParticleSystem (0xa8 bytes each) */
-	int unk24;
-	int unk28;
-	float pos[4];                /* 0x2c (y + 4) */
-	struct BCarGoal *next;       /* 0x3c */
-};
-OF_ASSERT_SIZE(struct BCarGoal, 0x40);
+/* CBCar_GenericGoal (agent A, 0x000a8030-0x000a8250): the goal manager is classlib_fx's
+CParticleEffect layout and a goal its CParticleEmitter (0x40 bytes: on 0x00, id 0x04,
+colour 0x08, next 0x0c, scale 0x10, time 0x14, actor 0x18, anim 0x1c, systems 0x20,
+texture 0x24, drift 0x28, pos 0x2c, link 0x3c). This file only passes them around. */
+#define BCB_GOAL_POS(goal) ((float *)((char *)(goal) + 0x2c))
 
-/* the goal manager (0x28 bytes) */
-struct BCarGenericGoals {
-	int numEffects;              /* 0x00 */
-	float baseHeight;            /* 0x04 */
-	struct BCarGoal *goals;      /* 0x08 */
-	struct BActor *activeActor;  /* 0x0c greygenericgoal.obe */
-	struct BActor *baseActor;    /* 0x10 goalbase.obe */
-	struct BActorInstance *baseInst; /* 0x14 */
-	struct bdTexture *greyTexture;   /* 0x18 */
-	struct bdTexture *activeTexture; /* 0x1c */
-	struct bdTexture *helixTexture;  /* 0x20 */
-	struct bdTexture *sparkTexture;  /* 0x24 */
-};
-OF_ASSERT_SIZE(struct BCarGenericGoals, 0x28);
-
-/* ======================================================================== skid tracks */
-
-/* a point of a skid track (0x3c bytes) */
-struct BCarTrackPoint {
-	int connected;         /* 0x00 joined to the previous point */
-	float time;            /* 0x04 */
-	float alpha;           /* 0x08 */
-	float pos[4];          /* 0x0c */
-	float left[4];         /* 0x1c */
-	float right[4];        /* 0x2c */
-};
-OF_ASSERT_SIZE(struct BCarTrackPoint, 0x3c);
-
-/* a ring of skid track points (CBCar_Track.cpp, 0x2c bytes) */
-struct BCarTrack {
-	int maxPoints;                 /* 0x00 */
-	int first;                     /* 0x04 */
-	int last;                      /* 0x08 */
-	int disabled;                  /* 0x0c */
-	int connected;                 /* 0x10 the next point joins the last */
-	float width;                   /* 0x14 */
-	float time;                    /* 0x18 */
-	int lifeFrames;                /* 0x1c */
-	struct BCarTrackPoint *points; /* 0x20 */
-	struct bdTexture *texture;     /* 0x24 */
-	struct bdTexture *texture2;    /* 0x28 */
-};
-OF_ASSERT_SIZE(struct BCarTrack, 0x2c);
-
-/* ======================================================================== headlights */
-
-/* a headlight cone (CBCar_Headlight.cpp, 0x40 bytes) */
-struct BCarHeadlight {
-	int segments;              /* 0x00 */
-	float length;              /* 0x04 */
-	float angle;               /* 0x08 radians */
-	float roll;                /* 0x0c */
-	float *pos;                /* 0x10 the car's position */
-	float *rot;                /* 0x14 the car's rotation (quaternion) */
-	struct bdTexture *texture; /* 0x18 */
-	void *verts;               /* 0x1c (segments + 2) vertices of 0x24 bytes */
-	float tip[4];              /* 0x20 */
-	float tilt[4];             /* 0x30 quaternion */
-};
-OF_ASSERT_SIZE(struct BCarHeadlight, 0x40);
-
-/* ======================================================================== floating scores */
-
-/* the floating score system (CBCar_FloatyScore, 0x90 bytes) */
-struct BCarFloatyScore {
-	struct BExtraSystem *system;  /* 0x00 */
-	unsigned char unk04[0x7c];
-	float riseSpeed;              /* 0x80 */
-	float scale;                  /* 0x84 */
-	float speed;                  /* 0x88 */
-	int big;                      /* 0x8c */
-};
-
-/* a floating score item (0x88 bytes) */
-struct BCarFloatyItem {
-	float pos[4];                 /* 0x00 */
-	unsigned char colour[4];      /* 0x10 r, g, b, a */
-	char text[0x20];              /* 0x14 */
-	unsigned short wtext[0x20];   /* 0x34 */
-	int age;                      /* 0x74 frames */
-	float width;                  /* 0x78 */
-	float height;                 /* 0x7c */
-	void *font;                   /* 0x80 */
-	int size;                     /* 0x84 1 or 3 */
-};
-OF_ASSERT_SIZE(struct BCarFloatyItem, 0x88);
-
-#define g_FloatySystem BCB_VAR(struct BCarFloatyScore *, 0x002f27c4)
+/* (skid tracks, headlights and the floating scores: agent A, 0x000a6260-0x000a74d0) */
 
 /* ======================================================================== the free camera */
 
@@ -242,12 +145,17 @@ extern unsigned int DAT_002bc490[];   /* green  (i << 8) */
 extern unsigned int DAT_002bc898[];   /* alpha  (i << 24) */
 extern unsigned int DAT_002bce18[];   /* red    (i << 16) */
 extern unsigned int DAT_002bd640[];   /* blue   (i) */
-extern unsigned int DAT_002bc598[];
-extern unsigned int DAT_002bc988[];
-extern unsigned int DAT_002bca94[];
-extern unsigned int DAT_002bcc94[];
-extern unsigned int DAT_002bcf30[];
-extern unsigned int DAT_002bd6f8[];
+/* (the code also reads single entries by their address: 0x002bc988 is alpha[0x3c],
+0x002bca94 alpha[0x7f], 0x002bcc94 alpha[0xff], 0x002bc598 green[0x42], 0x002bcf30
+red[0x46], 0x002bd6f8 blue[0x2e]; they are written as table entries here) */
+
+/* a vertex of the FVF 0x152 (XYZ | NORMAL | DIFFUSE | TEX1), 0x24 bytes */
+struct BCarVertex {
+	float pos[3];
+	float normal[3];
+	unsigned int colour;
+	float uv[2];
+};
 #define BCB_ARGB(a, r, g, b) (DAT_002bc898[a] | DAT_002bce18[r] | DAT_002bc490[g] | DAT_002bd640[b])
 
 /* the colour bytes of a character (classlib_ui table at 0x00290718, 0x60 bytes per character) */

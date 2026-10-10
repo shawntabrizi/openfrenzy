@@ -130,6 +130,14 @@
 000a6bc0 struct BCarHeadlight *BCarHeadlight_Construct(struct BCarHeadlight *self, float *pos, float *rot, struct bdTexture *texture, float range, float width, int segments);
 000a6d60 void BCarHeadlight_Update(struct BCarHeadlight *self);
 
+# ---- agent A (from B's range, 0x000a6260-0x000a8250)
+# BumperCars/CBCar_GenericGoal.c
+000a8020 void BCarGoal_SetActive(struct BCarGoal *goal, int active);
+000a8030 struct BCarGenericGoal *BCarGenericGoal_Construct(struct BCarGenericGoal *self, int count);
+000a8170 void BCarGenericGoal_DeleteGoal(struct BCarGenericGoal *self, struct BCarGoal *goal);
+000a8200 void BCarGenericGoal_Destruct(struct BCarGenericGoal *self);
+000a8250 struct BCarGoal *BCarGenericGoal_AddGoal(struct BCarGenericGoal *self, float *pos, int arg2, int arg1);
+
 # ---- agent B (0x000a0cc0-0x000a8250); A's lines above for this range are kept
 # BumperCars/CBCar_Puck.c
 000a11b0 void BCarPucks_Update(int playing);
@@ -156,3 +164,9 @@
 000a3af0 void BCarExplosions_Draw(struct BCarExplosions *self, int view);
 000a3b20 int BCarExplosions_Add(struct BCarExplosions *self, float *pos, float radius);
 000a3bf0 void BCarExplosions_Delete(struct BCarExplosions *self);
+# BumperCars/CBCar_Waypoints.c
+000a3c40 void BCarWaypoints_Draw(int glow);
+000a3eb0 void BCarWaypoint_LoadInformation(struct BCarTextReader *reader);
+000a41e0 void BCarWaypoints_Update(int playing, float dt);
+000a48d0 int BCarWaypoint_LoadFile(struct bkPackage *package, char *file);
+000a4c20 void BCarWaypoints_Delete(void);

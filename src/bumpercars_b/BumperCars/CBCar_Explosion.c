@@ -200,14 +200,6 @@ int BCarExplosion_Update(struct BCarExplosion *self, float dt)
 	return 0;
 }
 
-/* the shock wave quad (4 vertices of 0x24 bytes, FVF 0x152), 0x002f2190 */
-struct BCarVertex {
-	float pos[3];
-	float normal[3];
-	unsigned int colour;
-	float uv[2];
-};
-
 /* 0x000a3880  (gap; file inferred: CBCar_Explosion.cpp)
 Explosion_Draw: the shock wave, a textured square around the centre that grows to the radius
 and fades, drawn 4 times turned by a quarter. `view` is not used. */
