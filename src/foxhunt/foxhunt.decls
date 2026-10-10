@@ -52,7 +52,7 @@
 00133f80 void *FoxHunt_Effects_Ctor(void *self);
 00133fd0 void FoxHunt_Effects_Update(void *self, float dt);
 00133ff0 void FoxHunt_Effects_Draw(void *self);
-00134000 void FoxHunt_AddDebris(int type, float *pos, float *vel, int life, unsigned int colour);
+00134000 char *FoxHunt_AddDebris(int type, float *pos, float *vel, int life, unsigned int colour);
 00134360 int FoxHunt_Effects_Init(void *self, int unused, int variation);
 00134400 void FoxHunt_LoadPropActors(void);
 
@@ -92,13 +92,30 @@
 
 # ---- FoxHunt/CFHunt_Throwable.c
 00134460 void *CFHunt_Throwable_Ctor(void *self, int type, float *pos, float size);
-00134620 int FoxHunt_Throwable_CanThrow(void *self);
+00134620 int FoxHunt_Throwable_FindTarget(void *self);
+00134770 void FoxHunt_Throwable_Update(void *self);
+00135800 void FoxHunt_Buttons_Init(void);
 00135840 void *FoxHunt_Button_Ctor(void *self, int id, float a, float b, int c, int d, float *pos, float heading);
 00135cd0 int FoxHunt_Button_IsNear(void *self, char *actor);
 00135d80 void *FoxHunt_Shark_Ctor(void *self, float *pos, int index);
+001359d0 int FoxHunt_Button_Press(void *self);
+00135a20 int FoxHunt_Button_Release(void *self);
+00135a60 int FoxHunt_Button_Update(void *self);
+00135d50 void FoxHunt_UpdateButtons(void);
+00135f70 void FoxHunt_LoadSharkModel(void);
+00135fb0 char *FoxHunt_Shark_Reset(void *self);
+00136040 char *FoxHunt_Shark_Update(void *self);
+00136390 void FoxHunt_UpdateSharks(void);
+001363c0 void FoxHunt_ResetSharks(void);
+00136440 void FoxHunt_LoadFlagModels(void);
+00136470 void FoxHunt_DropFlag(int id);
+001364c0 void FoxHunt_ResetFlags(void);
+00136530 void FoxHunt_ResetFlag(int id);
 
 # ---- FoxHunt/CFHunt_Flag.c
 00136570 void *CFHunt_Flag_Ctor(void *self, float *pos, int a, int b);
+00136890 int CFHunt_Flag_NearOther(void *self);
+00136be0 void CFHunt_Flag_Respawn(void *self);
 
 # ---- FoxHunt/unplaced_level.c
 00137980 void *FoxHunt_Glass_Ctor(void *self, float *pos, int type);

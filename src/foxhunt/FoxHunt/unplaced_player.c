@@ -601,7 +601,7 @@ void FoxHunt_Player_Act(void *self)
 	char *prio;
 
 	if (FH_AI(self, 0x11bc) == 1) {
-		if (FoxHunt_Throwable_CanThrow(fh_Throwables[FH_AI(self, 0x11c0)]) != 0) {
+		if (FoxHunt_Throwable_FindTarget(fh_Throwables[FH_AI(self, 0x11c0)]) != 0) {
 			PRESS(self, 0x6c);
 			return;
 		}
@@ -1747,7 +1747,7 @@ hunt_goal_a:
 		goto throw_check;
 	}
 throw_check:
-	if (FoxHunt_Throwable_CanThrow(fh_Throwables[FH_AI(self, 0x11c0)]) == 0)
+	if (FoxHunt_Throwable_FindTarget(fh_Throwables[FH_AI(self, 0x11c0)]) == 0)
 		return 0;
 	if (400.0f <= best)
 		return 0;

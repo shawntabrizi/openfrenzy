@@ -115,10 +115,10 @@ void FoxHunt_Effects_Draw(void *self)
 }
 
 /* 0x00134000  (gap, stdcall; the callers' ECX is unused): adds a debris particle of type
-`type` (the table at 0x002ac8f0, 0x2c bytes per type) */
-void FoxHunt_AddDebris(int type, float *pos, float *vel, int life, unsigned int colour)
+`type` (the table at 0x002ac8f0, 0x2c bytes per type). Returns the piece. */
+char *FoxHunt_AddDebris(int type, float *pos, float *vel, int life, unsigned int colour)
 {
-	Debris_Add((struct DebrisType *)(FH_A(0x002ac8f0) + type * 0x2c), pos, vel, life, colour);
+	return (char *)Debris_Add((struct DebrisType *)(FH_A(0x002ac8f0) + type * 0x2c), pos, vel, life, colour);
 }
 
 /* 0x00134030  (gap): a jump to hopper's 0x0013b140 (adds an extra item: a sprite at `pos`
