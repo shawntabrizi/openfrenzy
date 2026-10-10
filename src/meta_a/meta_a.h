@@ -106,6 +106,13 @@ static inline int ma_rand(void)
 
 #include "meta_a_globals.h"
 
+/* meta_a's tables (defined next to their code) */
+extern const void *const PTR_LAB_002b06d4[15]; /* CMetaPlayer conditions (unplaced_player.c) */
+extern const void *const PTR_LAB_002b0710[15]; /* CMetaPlayer states (unplaced_player.c) */
+extern const void *const vtable_0026f890[18];  /* CMetaPlayer (unplaced_metaplayer.c) */
+extern const void *const vtable_0026f0c8[14];  /* CGameMode_Meta (CGameMode_Meta.c) */
+extern const void *const vtable_0026f678[4];   /* CModule_Meta (unplaced_player.c) */
+
 /* functions missing from the function table (Meta/meta_a_foreign.c) */
 undefined4 *FUN_000ad830(undefined4 *self);
 

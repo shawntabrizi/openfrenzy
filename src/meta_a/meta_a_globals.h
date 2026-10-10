@@ -30,6 +30,7 @@ extern int DAT_002ba954[];          /* the minigame objects (13) */
 extern int DAT_002ba99c;            /* frame counter */
 extern int DAT_002bae84;            /* custom soundtrack database */
 extern int DAT_002bae98;            /* 1: party, 2: tournament */
+extern int DAT_002bae70;            /* difficulty */
 extern int DAT_002baea0;
 extern int DAT_002baea8;            /* a minigame was chosen */
 extern int DAT_002baeac;            /* chosen minigame */
@@ -58,7 +59,9 @@ extern float DAT_0028fdd8[3];       /* the unit z vector (0, 0, 1) */
 extern unsigned char DAT_00290148[]; /* character textures, 0x108 bytes each */
 extern void *PTR_DAT_002906f8;      /* character table, 0x60 bytes each: +0x00 name */
 extern unsigned char DAT_00290718[]; /* +0x20 colour bytes */
-extern float DAT_0029071c, DAT_00290720, DAT_00290728, DAT_00290734, DAT_00290738;
+extern float DAT_0029071c, DAT_00290720, DAT_00290728, DAT_0029072c, DAT_00290734, DAT_00290738;
+extern void *PTR_s_lpalm_00290708, *PTR_s_malletdub_obe_00290714;
+extern int DAT_00290750;            /* think time base */
 extern int DAT_0029073c, DAT_00290740, DAT_0029074c;
 extern int DAT_002909ac;            /* pause colour, blue */
 extern int DAT_002ec904;            /* a fade is running */
@@ -82,6 +85,8 @@ extern unsigned char DAT_00308440[];  /* CLList (meta_b objects with a tag at +0
 extern unsigned char DAT_003090a8[];  /* CLList (meta_b objects with a tag at +0x6c) */
 extern unsigned char DAT_003090d8[];  /* CLList (meta_b objects with a tag at +0x5c) */
 extern int DAT_00309060[16];        /* the big red buttons (meta_b) */
+extern unsigned char DAT_00308e60[];  /* CLList: the vents (meta_b) */
+extern unsigned char DAT_00308f48[];  /* CLList: the bombs (meta_b) */
 extern unsigned char DAT_002ea478[];
 extern int DAT_003055e0;            /* demo mode */
 extern unsigned char DAT_00290ea8[]; /* CSpriteVB (classlib_fx; fallback in Meta/meta_a_foreign.c) */
@@ -93,6 +98,9 @@ extern float DAT_00292c84;          /* gravity */
 extern float DAT_00292c88;          /* lowest height of the level */
 extern float DAT_00292c98;          /* jump speed */
 extern int DAT_00293928;            /* sample volume */
+extern int DAT_00293948;            /* AI mode-6 time */
+extern unsigned char DAT_00292ca0[]; /* the character animation table */
+extern float DAT_002f2898;
 extern float DAT_00293a28, DAT_00293a2c, DAT_00293a30, DAT_00293a34, DAT_00293a38;
 extern float DAT_00294b54, DAT_00294b58;
 extern float DAT_002f2890, DAT_002f2894;
@@ -167,10 +175,13 @@ extern float DAT_002b0884, DAT_002b0888, DAT_002b088c; /* red */
 extern float DAT_002b0890, DAT_002b0894, DAT_002b0898; /* green */
 extern float DAT_002b089c, DAT_002b08a0, DAT_002b08a4; /* blue */
 extern float DAT_002b08a8, DAT_002b08ac, DAT_002b08b0; /* alpha */
+extern float DAT_002b08b4, DAT_002b08b8; /* hammer grow speed, marker pulse */
 extern int DAT_002b08c0;            /* neutral % */
 extern int DAT_002b08c4;            /* super orb value */
 extern float DAT_002b09ec;          /* orb radius / active range */
 extern unsigned char DAT_002b0d30[0x318]; /* 11 CSpriteDef */
+extern signed char DAT_002b05f0[0xe1];  /* CMetaPlayer state/condition priorities (15 x 15) */
+extern float DAT_002b0868;          /* hurting platform damage */
 
 /* Meta .bss */
 extern int DAT_00304558;            /* route height buffers (new[]) */
@@ -196,6 +207,7 @@ extern int DAT_00306600[1000];      /* the puzzle sound channels */
 extern int DAT_00305650;
 extern float DAT_00305654;
 extern int DAT_00305658;            /* steal orb on hurt */
+extern int DAT_003075a0;            /* puzzle actions run without their speed */
 extern int DAT_003075a4;            /* the puzzle being evaluated */
 extern int DAT_003075a8;            /* condition node bump pointer */
 extern int DAT_003075bc[4];         /* the four CMetaPlayer objects */
@@ -204,6 +216,8 @@ extern int DAT_003082c0;            /* the tile board */
 extern int DAT_00309244;
 extern int DAT_00309254;
 extern int DAT_00309f00[0x64];      /* route height objects */
+extern float DAT_00309ef8;          /* start heading */
+extern int DAT_0030a098;            /* high-detail characters */
 
 /* END FALLBACK */
 

@@ -395,7 +395,7 @@ void FUN_0014ea80(void)
 			if ((MA_U32(MA_CHAR(DAT_003075bc[i]), 0x220) & 0x8000) != 0) {
 				state = MA_I16(DAT_003075bc[i], 0x36);
 				if (state != 10 && state != 0xd)
-					FUN_00156c40(DAT_003075bc[i], (int)DAT_002ea478, 10000.0f, (ma_rand() & 1) + 1, 1);
+					FUN_00156c40(DAT_003075bc[i], (float *)DAT_002ea478, 10000.0f, (ma_rand() & 1) + 1, 1);
 			}
 		}
 	} else {

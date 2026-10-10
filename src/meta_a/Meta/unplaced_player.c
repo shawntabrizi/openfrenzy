@@ -7,7 +7,7 @@ UNPLACED_PLAYER.C  <-  gap functions 0x00151040-0x00153020 of C:\BlitzParty\Game
   table 0x002b06d4 and the state table 0x002b0710 (15 entries each, by state:
   STAND IDLE WALK JUMP LAND ATTACK JUMP_ATTACK PRESS FLAG FALL HURT TAUNT SCORE
   KNOCKOUT DROWN), which the CMetaPlayer constructor 0x00157100 installs.
-- Level helpers: player input maps, the debug object, the light lists.
+- Level helpers: player input maps, the debug object, puzzle timers.
 */
 
 #include "meta_a.h"
@@ -20,9 +20,10 @@ UNPLACED_PLAYER.C  <-  gap functions 0x00151040-0x00153020 of C:\BlitzParty\Game
 int Actor_AnimLoopCallback(int reason, void *inst, void *node, void *anim, void *actor);  /* 0x000ae6a0 */
 int Actor_AnimQueueCallback(int reason, void *inst, void *node, void *anim, void *actor); /* 0x000ae780 */
 
-/* charlib FUN_000b0320 (thiscall AI player): play a voice sample of its character */
-#define MA_CHAR_VOICE(ai, kind, volume, pitch) \
-	FUN_000b0320((int)(ai), (kind), (volume), (pitch), 0, 0xffffffff, 0)
+/* charlib AI_PlayVoice (FUN_000b0320, thiscall AI player): play a voice sample of its
+   character (kind, volume, float cooldown, ...) */
+#define MA_CHAR_VOICE(ai, kind, volume, cooldown) \
+	FUN_000b0320((int)(ai), (kind), (volume), (cooldown), 0, 0xffffffff, 0)
 
 /* charlib FUN_000b02f0 (thiscall AI player): set the state */
 #define MA_SET_STATE(ai, state) FUN_000b02f0((int)(ai), (ushort)(state))
@@ -297,7 +298,7 @@ undefined4 FUN_00151680(int ai, int entered)
 {
 	if (entered != 0) {
 		FUN_000af690(MA_CHAR(ai), 5, 0, 0, 1.0f, 0.1f, 1);
-		MA_CHAR_VOICE(ai, 1, DAT_00293928, 0);
+		MA_CHAR_VOICE(ai, 1, DAT_00293928, 0.0f);
 	}
 	ma_zero_push((void *)ai);
 	return 0;
@@ -307,7 +308,7 @@ undefined4 FUN_00151680(int ai, int entered)
 undefined4 FUN_001516f0(int *ai, int entered)
 {
 	if (entered != 0) {
-		MA_CHAR_VOICE(ai, 2, DAT_00293928, 0);
+		MA_CHAR_VOICE(ai, 2, DAT_00293928, 0.0f);
 		FUN_000af690(ai[0xc], 0x11, 0, 0, DAT_002b05a4, 0.1f, 1);
 		MA_VFN(ai, 0x18, void (*)(void *, int))(ai, -1);
 		if (DAT_00305658 != 0)
@@ -323,7 +324,7 @@ undefined4 FUN_001516f0(int *ai, int entered)
 undefined4 FUN_00151770(int ai, int entered)
 {
 	if (entered != 0) {
-		MA_CHAR_VOICE(ai, 0xb, DAT_00293928, 0x43340000);
+		MA_CHAR_VOICE(ai, 0xb, DAT_00293928, 180.0f);
 		FUN_000af690(MA_CHAR(ai), 7, 0, 0, 1.0f, 0.1f, 1);
 	}
 	ma_zero_push((void *)ai);
@@ -513,7 +514,7 @@ undefined4 FUN_00151e70(int ai, int entered)
 {
 	if (entered != 0) {
 		if (2 < MA_I32(ai, 0x1140))
-			MA_CHAR_VOICE(ai, 4, DAT_00293928, 0x43340000);
+			MA_CHAR_VOICE(ai, 4, DAT_00293928, 180.0f);
 		FUN_000af690(MA_CHAR(ai), 0xc, 0, 0, 1.0f, 0.1f, 1);
 		ma_scale_velocity(MA_CHAR(ai), DAT_002b0750);
 	}
@@ -621,7 +622,7 @@ undefined4 FUN_00152260(int ai, int entered)
 			DAT_002f2894 = MA_F32(MA_CHAR(ai), 0xd4);
 			DAT_002f2890 = 0.0f;
 		}
-		MA_CHAR_VOICE(ai, 0, DAT_00293928, 0);
+		MA_CHAR_VOICE(ai, 0, DAT_00293928, 0.0f);
 		MA_F32(MA_CHAR(ai), 0x238) = -1.0f;
 	}
 	ma_push_from_stick((void *)ai);
@@ -819,7 +820,7 @@ undefined4 FUN_00152b30(int *ai, int entered)
 	float k;
 
 	if (entered != 0) {
-		MA_CHAR_VOICE(ai, 3, DAT_00293928, 0);
+		MA_CHAR_VOICE(ai, 3, DAT_00293928, 0.0f);
 		FUN_000af690(ai[0xc], 0x13, 0, 0, DAT_002b05a8, 0.1f, 1);
 		ai[0x448] = 1;
 		MA_VFN(ai, 0x18, void (*)(void *, int))(ai, -1);
@@ -971,11 +972,11 @@ void FUN_00152f90(void)
 		DAT_00305660[i] = 0;
 }
 
-/* 0x00152fb0  reset the light lists: every light of every group off */
+/* 0x00152fb0  reset the puzzles: every action's timer to -1, the fired flags off */
 void FUN_00152fb0(void)
 {
-	unsigned int group;
-	unsigned int light;
+	unsigned int group;  /* puzzle */
+	unsigned int light;  /* action */
 
 	for (group = CLList_Next((unsigned int *)DAT_003075b0, NULL); group != 0;
 		group = CLList_Next((unsigned int *)DAT_003075b0, (unsigned int *)group)) {
@@ -986,7 +987,7 @@ void FUN_00152fb0(void)
 	}
 }
 
-/* 0x00153020  a light group: lights that are off (<= 0) count up by their speed */
+/* 0x00153020  a puzzle's action timers: those at or below 0 count up by their speed */
 void FUN_00153020(int group)
 {
 	unsigned int light;

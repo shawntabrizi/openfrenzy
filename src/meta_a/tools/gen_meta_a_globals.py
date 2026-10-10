@@ -27,14 +27,15 @@ import xbe_data  # noqa: E402
 HEADER = os.path.join(ROOT, "src", "meta_a", "meta_a_globals.h")
 OUT = os.path.join(ROOT, "src", "meta_a", "Meta", "meta_a_globals.c")
 
-SIZES = {"char": 1, "unsigned char": 1, "short": 2, "unsigned short": 2, "int": 4,
+SIZES = {"char": 1, "signed char": 1, "unsigned char": 1, "short": 2, "unsigned short": 2, "int": 4,
          "unsigned int": 4, "float": 4, "void *": 4}
-DECL = re.compile(r"^extern\s+(unsigned char|unsigned short|unsigned int|char|short|int|float|void \*)\s*(.*?);")
+DECL = re.compile(r"^extern\s+(signed char|unsigned char|unsigned short|unsigned int|char|short|int|float|void \*)\s*(.*?);")
 NAME = re.compile(r"^\**\s*((?:_?DAT|s_[A-Za-z0-9_]*?|PTR_[A-Za-z0-9_]*?)_(00[0-9a-f]{6}))\s*((?:\[[^\]]*\])*)$")
 # addresses whose initial value may hold a dword in the image range (checked by hand)
 POINTER_FREE_OK = {
     "s_aisteam1_00290f00",  # CSpriteDef: +0x44 numFrames/flags (0x00020000)
     "DAT_002b0d30",         # CSpriteDef: +0x44 numFrames/flags (0x00010000)
+    "DAT_002b05f0",         # signed char priority table (small bytes)
 }
 
 

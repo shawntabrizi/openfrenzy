@@ -11,3 +11,10 @@
 
 # Meta/puzzles.c
 00153080 int FUN_00153080(int puzzle);
+
+# Meta/unplaced_metaplayer.c
+00155f70 undefined4 FUN_00155f70(int ai, float *to);
+001563e0 uint FUN_001563e0(int ai, int alive_only);
+00156c40 void FUN_00156c40(int ai, float *target, float damage, int mode, int drop);
+001573d0 uint FUN_001573d0(int ai, int alive_only);
+00157bd0 void FUN_00157bd0(int ai);
