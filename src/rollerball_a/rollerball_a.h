@@ -229,6 +229,10 @@ extern int DAT_002ecfac;            /* the HUD */
 extern unsigned char DAT_002ba750[]; /* core: the game mode stack */
 extern void *DAT_002ba9a0;          /* core: settings */
 extern unsigned char DAT_002ecd90[]; /* classlib_ui: the pause screen */
+extern unsigned char DAT_002b9968[]; /* core_modes_b: the score table (CScoreTable) */
+
+/* the kernel debug break (xkernel HLE: logs and continues) */
+void DbgBreakPoint(void);
 
 /* ---------- vtables of this module (rebuilt from the XBE) */
 

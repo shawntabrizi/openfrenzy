@@ -1094,3 +1094,1448 @@ void FUN_001892e0(void *self, int draw)
 	if (RB_VS(int, RB_I32(RB_GAME, RB_GO_VARIATION), 0x002b4bb8u) != 0)
 		bdSetRenderState(8, 1, 0);
 }
+
+/* ======================================================================== variation helpers */
+
+/* a texture animation of the texture system (game +0x1ee0: entries of 0x1c bytes from
++0x1f00, count at +0x2018) for every player: the 8 frames of the player's colour from the
+animated texture NAMES[i] (one name per player), 4 frames a second */
+static void rb_AddPlayerTexAnims(const char *const *names)
+{
+	unsigned char *p, *e;
+	struct bkResource *res;
+	short idx;
+
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p), names++) {
+		e = RB_GAME + 0x1f00 + RB_I32(RB_GAME, 0x2018) * 0x1c;
+		res = bLoadResource(NULL, *names, 0, 0xdefa);
+		RB_PTR(e, 4) = res;
+		RB_U16(e, 0xc) = RB_U8(res, 0x37);
+		idx = (short)RB_I32(p, RB_PL_INDEX);
+		RB_I16(e, 8) = (short)(idx * 8);
+		RB_I16(e, 0xa) = (short)(idx * 8 + 7);
+		RB_I16(e, 0xe) = (short)(idx * 8);
+		RB_I16(e, 0x10) = 1;
+		RB_F32(e, 0x18) = 4.0f;
+		RB_U8(e, 0x12) = 1;
+		RB_F32(e, 0x14) = 0.0f;
+		RB_I32(RB_GAME, 0x2018) = RB_I32(RB_GAME, 0x2018) + 1;
+	}
+}
+
+/* a shadow (0x24 bytes, 256 x 256) for every player, cast by the actor fields +0x41dc and
++0x41d8, added to the shadow system (allocation tag LINE of CRollerball_Game.cpp) */
+static void rb_AddPlayerShadows(int line)
+{
+	unsigned char *p;
+	void *shadow;
+
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		shadow = RB_NEW(0x24, RB_FILE_GAME, line);
+		rbb_ShadowCtor(shadow, 1, 0x100, 0x100, p);
+		rbb_ShadowAddCaster(shadow, p + 0x41dc);
+		rbb_ShadowAddCaster(shadow, p + 0x41d8);
+		rbb_ShadowsAdd(RB_GAME + RB_GO_SHADOWS, shadow);
+	}
+}
+
+/* the world object (game +0x158: entries of 0x88 bytes, count at +0x6a8, name CRC at
++0x7c) whose name CRC is CRC, or NULL */
+static unsigned char *rb_FindWorldObject(unsigned int crc)
+{
+	int i;
+
+	for (i = 0; i < RB_I32(RB_GAME, 0x6a8); i++) {
+		if (RB_U32(RB_GAME, 0x1d4 + i * 0x88) == crc)
+			return RB_GAME + 0x158 + i * 0x88;
+	}
+	return NULL;
+}
+
+/* the leave check of every variation update (state 4): the game timer ran out */
+static void rb_UpdateLeave(void)
+{
+	if (CRollerBallTimer_Remaining(RB_GAME + RB_GO_TIMER) <= 0.0f)
+		RB_U8(RB_GAME, RB_GO_QUIT) = 1;
+}
+
+/* ======================================================================== CRollerBall_Base */
+
+/* Variation "base" (vtable 0x00273a78): the goal game ("goalsign"). */
+
+/* 0x00189400  RollerBall/CRollerball_Game.cpp: deleting destructor (flags bit 0: free) */
+void *CRollerBallBase_DeletingDtor(void *self, unsigned int flags)
+{
+	*(const void *const **)self = vtable_00273a78;
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x00189420  RollerBall/CRollerball_Game.cpp
+Initialise: the players' ramp texture animations (texanim\p<n>ramp_anim.gif, 0x002b4ce8),
+the goal sign animation (all frames, 1 frame a second), a shadow per player, then Reset.
+Returns 1. */
+int CRollerBallBase_Init(void *self, void *package)
+{
+	unsigned char *e;
+	struct bkResource *res;
+	unsigned char frames;
+
+	(void)package;
+	if (RB_FIRST_PLAYER() != NULL)
+		rb_AddPlayerTexAnims((const char *const *)RB_ADDR(0x002b4ce8u));
+	e = RB_GAME + 0x1f00 + RB_I32(RB_GAME, 0x2018) * 0x1c;
+	res = bLoadResource(NULL, "models\\alphatex\\goalsign_anim.gif", 0, 0xdefa);
+	RB_PTR(e, 4) = res;
+	frames = RB_U8(res, 0x37);
+	RB_U16(e, 0xc) = frames;
+	RB_I16(e, 8) = 0;
+	RB_U16(e, 0xa) = (unsigned short)(frames - 1);
+	RB_I16(e, 0xe) = 0;
+	RB_I16(e, 0x10) = 1;
+	RB_F32(e, 0x18) = 1.0f;
+	RB_U8(e, 0x12) = 1;
+	RB_F32(e, 0x14) = 0.0f;
+	RB_I32(RB_GAME, 0x2018) = RB_I32(RB_GAME, 0x2018) + 1;
+	rb_AddPlayerShadows(0x647);
+	RB_VFN(self, 0x14, void (*)(void *))(self);
+	return 1;
+}
+
+/* 0x001895d0  RollerBall/CRollerball_Game.cpp
+Intro state (base): a player that is near the camera (1000) and faces it (within 120
+degrees) gets message 3 and the sound 8 once (+0x1e). */
+void CRollerBallBase_UpdateIntro(void *self)
+{
+	struct RB_Msg msg;
+	unsigned char *p;
+	float angle;
+
+	(void)self;
+	p = RB_FIRST_PLAYER();
+	angle = atan2f(RB_F32(RB_GAME, 0x1374) - RB_F32(RB_GAME, 0x1384),
+		RB_F32(RB_GAME, 0x137c) - RB_F32(RB_GAME, 0x138c));
+	for (; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) == 0 || RB_U8(p, RB_PL_1E) != 0)
+			continue;
+		if (!(bmVectorDistance(RB_FP(p, RB_PL_POS), RB_FP(RB_GAME, 0x1374)) <= 1000.0f))
+			continue;
+		if (!(fabsf(CLMath_AngleDelta(RB_F32(p, RB_PL_HEADING), angle)) <= 2.09439516f))
+			continue;
+		rbb_MsgCtor(&msg);
+		msg.id = 3;
+		msg.prio = 2;
+		msg.unique = 0;
+		msg.b8 = 1;
+		msg.b9 = 0;
+		msg.value = 0.01f;
+		msg.arg = 3;
+		rbb_PostMsg(p, &msg);
+		CRollerBallSfx_Play(RB_GAME + RB_GO_SFX, 8, 0x7f, 0, 0, NULL);
+		RB_U8(p, RB_PL_1E) = 1;
+		rbb_MsgDtor(&msg);
+	}
+}
+
+/* 0x00189720  RollerBall/CRollerball_Game.cpp: deleting destructor (flags bit 0: free) */
+void *CRollerBallSumo_DeletingDtor(void *self, unsigned int flags)
+{
+	CRollerBallSumo_Dtor(self);
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x00189740  RollerBall/CRollerball_Game.cpp
+Initialise (sumo): the five platforms "platform<n>01" (radii and heights from the tables
+0x002b4d08.., a platform object of 0xd0 bytes each), the variation timer, the ring
+(radius 2030 at the height +0x40 = 310), the four arms "sumo_arm<n>01" and their
+"retract" sub-objects, the ramp "ramp_platform01", the players' ramp animations, a shadow
+per player, then Reset. Returns 1. */
+int CRollerBallSumo_Init(void *self, void *package)
+{
+	unsigned char *s = self;
+	unsigned int crc[5];
+	char name[256];
+	float pos[4];
+	unsigned char *entry, **arm;
+	void *obj;
+	int i, j;
+
+	(void)package;
+	RB_F32(s, 0x40) = 310.0f;
+	for (i = 0; i < 5; i++) {
+		sprintf(name, "platform%d01", i + 1);
+		crc[i] = bkCRCString(name);
+	}
+	for (i = 0; i < 5; i++) {
+		unsigned char *pf = s + 0x4c + i * 0x18;
+
+		RB_I32(pf, -4) = 0;
+		RB_F32(pf, 0) = RB_VAR(float, 0x002b4d30u + i * 4);
+		RB_F32(pf, 8) = RB_VAR(float, 0x002b4d08u + i * 4);
+		RB_F32(pf, 4) = RB_VAR(float, 0x002b4d1cu + i * 4);
+		entry = rb_FindWorldObject(crc[i]);
+		if (entry != NULL)
+			RB_PTR(pf, 0xc) = entry;
+		obj = RB_NEW(0xd0, RB_FILE_GAME, 0x8fc);
+		if (obj != NULL)
+			obj = rbb_PlatformCtor(obj);
+		RB_PTR(pf, 0x10) = obj;
+		pos[0] = 0.0f;
+		pos[1] = 600.0f;
+		pos[2] = 0.0f;
+		pos[3] = 1.0f;
+		rbb_PlatformInit(obj, pos, RB_VAR(int, 0x002b4d58u + i * 4));
+		rbb_PlatformSetTime(RB_PTR(pf, 0x10), RB_VAR(float, 0x002b4d44u + i * 4));
+		rbb_PlatformSet48(RB_PTR(pf, 0x10), RB_VAR(float, 0x002b4d1cu + i * 4));
+		rbb_PlatformSet74(RB_PTR(pf, 0x10), ~i & 1);
+	}
+	CDemoCountdown_Init((int)(uintptr_t)(s + 0x08));
+	pos[0] = 0.0f;
+	pos[1] = RB_F32(s, 0x40);
+	pos[2] = 0.0f;
+	rbb_RingInit(s + 0xc0, pos, 2030.0f, 0x60, 0x60);
+	rbb_RingSet(s + 0xc0, RB_VAR(float, 0x002b4d08u) - 50.0f, 2030.0f);
+	arm = (unsigned char **)(s + 0x264);
+	for (i = 0; i < 4; i++, arm += 2) {
+		sprintf(name, "sumo_arm%d01", i + 1);
+		crc[i] = bkCRCString(name);
+		for (j = 0; j < RB_I32(RB_GAME, 0xfd8); j++) {
+			if (crc[i] == RB_U32(RB_GAME, 0x908 + j * 0x3c)) {
+				arm[0] = RB_GAME + 0x8d0 + j * 0x3c;
+				break;
+			}
+		}
+		if (arm[0] != NULL)
+			arm[1] = (unsigned char *)baFindSubObject(RB_PTR(arm[0], 0x30), "retract");
+	}
+	entry = rb_FindWorldObject(bkCRCString("ramp_platform01"));
+	if (entry != NULL)
+		RB_PTR(s, 0x284) = entry;
+	if (RB_FIRST_PLAYER() != NULL) {
+		rb_AddPlayerTexAnims((const char *const *)RB_ADDR(0x002b4cf8u));
+		rb_AddPlayerShadows(0x97d);
+	}
+	RB_VFN(self, 0x14, void (*)(void *))(self);
+	return 1;
+}
+
+/* 0x00189b40  RollerBall/CRollerball_Game.cpp
+Play state (sumo): the round ends when fewer than two players are left, the countdown
+ran out, or (team game) the two players left are partners. The players still in get the
+rank "number of players left", the best rank wins (winner message 3, others 6), the
+winners are placed on a circle (radius: value A - 200, at least 220 - 50) at height 725,
+results state with 5 s per winner (7 s for one human winner), the platforms stop, the
+scores are set and the HUD shows the winner text. */
+void CRollerBallSumo_UpdatePlay(void *self)
+{
+	struct RB_Msg msg;
+	unsigned char *first, *p, *last = NULL, *q;
+	int done = 0, active = 0, winners, minrank, i;
+	float step, angle, radius, pos[4];
+	void **obj;
+
+	rbb_MsgCtor(&msg);
+	first = RB_FIRST_PLAYER();
+	if (first == NULL) {
+		done = 1;
+	} else {
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			last = p;
+			if (RB_U8(p, RB_PL_ACTIVE) != 0)
+				active++;
+		}
+		if (active < 2)
+			done = 1;
+	}
+	if (CRollerBallTimer_Remaining(RB_GAME + RB_GO_COUNTDOWN) <= 0.0f)
+		done = 1;
+	if (DAT_002baebc != 0 && active == 2) {
+		for (q = first; q != NULL && RB_U8(q, RB_PL_ACTIVE) == 0; q = RB_NEXT(q))
+			;
+		if (q != NULL)
+			last = q;
+		if ((RB_PTR(last, RB_PL_TEAMMATE) == NULL ||
+				RB_U8(RB_PTR(last, RB_PL_TEAMMATE), RB_PL_ACTIVE) == 0) && !done)
+			goto out;
+	} else if (!done) {
+		goto out;
+	}
+	rbb_EntitiesFreeze(RB_GAME + RB_GO_ENTITIES, 1);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		RB_U8(p, RB_PL_1A) = 0;
+		RB_U8(p, RB_PL_1C) = 0;
+	}
+	if (DAT_002baebc != 0 && active == 2) {
+		for (q = first; q != NULL && RB_U8(q, RB_PL_ACTIVE) == 0; q = RB_NEXT(q))
+			;
+		if (q != NULL)
+			last = q;
+		if (RB_PTR(last, RB_PL_TEAMMATE) != NULL &&
+				RB_U8(RB_PTR(last, RB_PL_TEAMMATE), RB_PL_ACTIVE) == 0) {
+			for (p = first; p != NULL; p = RB_NEXT(p)) {
+				if (RB_U8(p, RB_PL_ACTIVE) == 0)
+					RB_I32(p, RB_PL_RANK) = 2;
+			}
+		}
+	}
+	active = 0;
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) != 0)
+			active++;
+	}
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) != 0)
+			RB_I32(p, RB_PL_RANK) = active;
+	}
+	winners = 0;
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_WINNER) != 0)
+			winners++;
+	}
+	if (first == NULL || winners < 1) {
+		winners = 0;
+		minrank = 4;
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			if (RB_I32(p, RB_PL_RANK) < minrank)
+				minrank = RB_I32(p, RB_PL_RANK);
+		}
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			if (RB_I32(p, RB_PL_RANK) == minrank) {
+				RB_U8(p, RB_PL_WINNER) = 1;
+				winners++;
+			}
+		}
+	}
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		msg.b9 = 1;
+		msg.b8 = 1;
+		msg.unique = 0;
+		msg.prio = 2;
+		msg.id = 3;
+		msg.value = 0.5f;
+		if (RB_U8(p, RB_PL_WINNER) == 0) {
+			msg.arg = 6;
+			rbb_PostMsg(p, &msg);
+			RB_U8(p, RB_PL_1D) = 0;
+		} else {
+			msg.arg = 3;
+			rbb_PostMsg(p, &msg);
+			RB_U8(p, RB_PL_1D) = 1;
+		}
+	}
+	angle = 0.0f;
+	pos[1] = 725.0f;
+	pos[3] = 0.0f; /* the original leaves this word of the stack unset */
+	step = 6.28318548f / (float)winners;
+	radius = RB_VFN(self, 0x24, float (*)(void *))(self) - 200.0f;
+	if (radius < RB_VAR(float, 0x002b4d2cu))
+		radius = RB_VAR(float, 0x002b4d2cu) - 50.0f;
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_WINNER) == 0)
+			continue;
+		pos[0] = cosf(angle) * radius;
+		pos[2] = sinf(angle) * radius;
+		rbb_PlayerPlace(p, pos);
+		RB_F32(p, RB_PL_VEL) = 0.0f;
+		angle = angle - step;
+		RB_F32(p, RB_PL_VEL + 4) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 8) = 0.0f;
+		RB_U8(p, RB_PL_1B) = 0;
+	}
+	RB_I16(RB_GAME, RB_GO_STATE) = 3;
+	CRollerBallTimer_Stop(RB_GAME + RB_GO_COUNTDOWN);
+	rbb_CameraSetMode(RB_GAME + RB_GO_CAMERA, 4);
+	if (DAT_002bae98 == 1 && winners == 1)
+		RB_F32(RB_GAME, RB_GO_RESULTTIME) = 7.0f;
+	else
+		RB_F32(RB_GAME, RB_GO_RESULTTIME) = (float)winners * 5.0f;
+	CRollerBallTimer_Set(RB_GAME + RB_GO_TIMER, RB_F32(RB_GAME, RB_GO_RESULTTIME));
+	CRollerBallTimer_Start(RB_GAME + RB_GO_TIMER);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		RB_F32(p, RB_PL_VEL) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 4) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 8) = 0.0f;
+	}
+	obj = (void **)((unsigned char *)self + 0x5c);
+	for (i = 5; i != 0; i--, obj += 6)
+		rbb_Platform_197580(*obj);
+	RB_VFN(self, 0x18, void (*)(void *))(self);
+	{
+		int scores[4];
+
+		scores[0] = DAT_002baee8;
+		scores[1] = DAT_002baf10;
+		scores[3] = DAT_002baf60;
+		scores[2] = DAT_002baf38;
+		CLHud_CreateWinnerText(DAT_002ecfac, scores, 0);
+	}
+out:
+	rbb_MsgDtor(&msg);
+}
+
+/* a random time 600..1800 (the arms of the sumo ring) */
+static float rb_RandomArmTime(void)
+{
+	return ((float)rb_rand() * RB_RAND_SCALE + 0.5f) * 1200.0f;
+}
+
+/* 0x00189f80  RollerBall/CRollerball_Game.cpp
+Reset (sumo): players lose +0x1a, +0x1b; intro state; camera mode 1; the platforms are
+reset; the arms' animations are flushed and rewound; four random arm times; the variation
+timer is reset. */
+void CRollerBallSumo_Reset(void *self)
+{
+	unsigned char *s = self;
+	unsigned char *p, **arm;
+	struct BActorInstance *inst;
+	int i;
+
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		RB_U8(p, RB_PL_1A) = 0;
+		RB_U8(p, RB_PL_1B) = 0;
+	}
+	RB_I16(RB_GAME, RB_GO_STATE) = 1;
+	rbb_CameraSetMode(RB_GAME + RB_GO_CAMERA, 1);
+	for (i = 0; i < 5; i++) {
+		RB_I32(s, 0x48 + i * 0x18) = 0;
+		rbb_PlatformReset(RB_PTR(s, 0x5c + i * 0x18));
+	}
+	arm = (unsigned char **)(s + 0x264);
+	for (i = 4; i != 0; i--, arm += 2) {
+		inst = RB_PTR(arm[0], 0x30);
+		baFlushAnimations(inst, RB_PTR(inst, 0x134), 1, 0);
+		inst = RB_PTR(arm[0], 0x30);
+		baSetNodeTime(inst, RB_PTR(inst, 0x134), 0, 1);
+	}
+	RB_U8(s, 0x260) = 0;
+	RB_F32(s, 0x288) = rb_RandomArmTime();
+	RB_F32(s, 0x28c) = rb_RandomArmTime();
+	RB_F32(s, 0x290) = rb_RandomArmTime();
+	RB_F32(s, 0x294) = rb_RandomArmTime();
+	CRollerBallTimer_Reset(s + 0x08);
+}
+
+/* ======================================================================== race paths */
+
+/* an ASE shape read by rollerball_b (vtable 0x00274b4c) and the ASE text reader
+(vtable 0x00274b8c) */
+struct RB_AseShape {
+	const void *vtbl;
+	float *points; /* 4 floats per point */
+	int count;
+};
+struct RB_AseReader {
+	const void *vtbl;
+	char *data;
+	char *cur;
+	char *end;
+};
+
+/* a 2D segment hit (bmSegmentSegment) */
+struct RB_Hit2D {
+	float v[4];
+	int flag; /* +0x10 */
+	int pad[3];
+};
+
+/* opens the ASE file NAME of PACKAGE in READER; 0 when it is missing */
+static int rb_AseOpen(struct RB_AseReader *reader, void *package, const char *name)
+{
+	char path[1024];
+	uint size;
+	void *data;
+
+	sprintf(path, "%s", name);
+	data = bkLoadFile((struct bkPackage *)package, path, NULL, &size, NULL, 0);
+	if (data == NULL)
+		return 0;
+	rbb_AseReaderOpen(reader, data, (int)size);
+	return 1;
+}
+
+/* the path records (0x30 bytes, rollerball_b) behind a count word, built with the array
+constructor iterator (0x001888d0 / 0x001888e0) */
+static unsigned char *rb_NewPathRecords(int count, int line)
+{
+	int *block;
+	unsigned char *records;
+	int i;
+
+	block = RB_NEW(count * 0x30 + 4, RB_FILE_GAME, line);
+	if (block == NULL)
+		return NULL;
+	records = (unsigned char *)(block + 1);
+	*block = count;
+	for (i = 0; i < count; i++)
+		CRollerBallPath_Construct(records + i * 0x30);
+	return records;
+}
+
+/* deletes path records made by rb_NewPathRecords (array destructor iterator, then free):
+first each record's point array (+0x24) */
+static void rb_DeletePathRecords(unsigned char *records, int count)
+{
+	int i, n;
+
+	for (i = 0; i < count; i++) {
+		if (RB_PTR(records, i * 0x30 + 0x24) != NULL) {
+			RB_DELETE(RB_PTR(records, i * 0x30 + 0x24));
+			RB_PTR(records, i * 0x30 + 0x24) = NULL;
+		}
+	}
+	n = RB_I32(records, -4);
+	for (i = n - 1; i >= 0; i--)
+		FUN_001888e0(records + i * 0x30);
+	RB_DELETE(records - 4);
+}
+
+/* reads the AI lines of an ASE file: the "Start" line (its first two points are the 2D
+start line: x0, z0, x1, z1 into START) and the lines "Line01".. into the path records
+(each record's next line index is (i + 1) mod NPOINTS) */
+static void rb_ReadAiLines(struct RB_AseReader *reader, struct RB_AseShape *shape,
+	float **start_points, float *start, unsigned char *records, int nlines, int npoints)
+{
+	char name[1024];
+	int i;
+
+	CFire_TextReader_Rewind((struct CoTextReader *)reader);
+	rbb_AseReadNamedShape(shape, reader, "Start");
+	*start_points = shape->points;
+	start[0] = shape->points[0];
+	start[1] = shape->points[2];
+	start[2] = shape->points[4];
+	start[3] = shape->points[6];
+	CFire_TextReader_Rewind((struct CoTextReader *)reader);
+	for (i = 1; nlines > 0 && i <= nlines; i++) {
+		sprintf(name, "Line%02d", i);
+		rbb_AseReadNamedShape(shape, reader, name);
+		rbb_PathSetPoints(records + (i - 1) * 0x30, shape->points, shape->count);
+		RB_I32(records, (i - 1) * 0x30 + 0x2c) = i % npoints;
+		CFire_TextReader_Rewind((struct CoTextReader *)reader);
+	}
+}
+
+/* the distance along the race line POINTS (2D, x and z) up to each point, starting with
+the segment from the last point; the last entry is 0. Returns the total. */
+static float rb_LineDistances(const float *points, float *dist, int count)
+{
+	float total = 0.0f, dx, dz;
+	int prev = count - 1, cur = 0, i;
+
+	for (i = 0; i < count; i++) {
+		dx = points[prev * 4] - points[cur * 4];
+		dz = points[prev * 4 + 2] - points[cur * 4 + 2];
+		total = sqrtf(dx * dx + dz * dz) + total;
+		dist[i] = total;
+		prev = (prev + 1) % count;
+		cur = (cur + 1) % count;
+	}
+	dist[count - 1] = 0.0f;
+	return total;
+}
+
+/* ======================================================================== CRollerBall_Race2 */
+
+/* Variation "race2" (vtable 0x00273b08): one lap race on race2\paths.
++0x04 line points, +0x08 point count, +0x0c distances, +0x10 length, +0x14 start points,
++0x18 the start line (x0, z0, x1, z1), +0x28 AI line records, +0x2c record count,
++0x30 the players' last positions (16 bytes each). */
+
+/* 0x0018a140  RollerBall/CRollerball_Game.cpp: deleting destructor (flags bit 0: free) */
+void *CRollerBallRace2_DeletingDtor(void *self, unsigned int flags)
+{
+	*(const void *const **)self = vtable_00273b08;
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x0018a160  RollerBall/CRollerball_Game.cpp
+Initialise (race2): the race line race2line.ase, the AI lines race2ai.ase, the line
+distances, a shadow per player, then Reset. Returns 0 when a file is missing. */
+int CRollerBallRace2_Init(void *self, void *package)
+{
+	unsigned char *s = self;
+	struct RB_AseReader reader;
+	struct RB_AseShape shape;
+	unsigned char *records;
+	float *start_points;
+	int count;
+
+	rbb_AseReaderCtor(&reader);
+	rbb_AseShapesCtor(&shape);
+	if (!rb_AseOpen(&reader, package, "race2\\paths\\race2line.ase")) {
+		rbb_AseShapesDtor(&shape);
+		rbb_AseReaderDtor(&reader);
+		return 0;
+	}
+	rbb_AseReadShape(&shape, &reader);
+	RB_PTR(s, 0x04) = shape.points;
+	RB_I32(s, 0x08) = shape.count;
+	RB_PTR(s, 0x0c) = RB_NEW(shape.count << 2, RB_FILE_GAME, 0xe47);
+	count = RB_I32(s, 0x08);
+	RB_I32(s, 0x2c) = count;
+	records = rb_NewPathRecords(count, 0xe4c);
+	RB_PTR(s, 0x28) = records;
+	if (!rb_AseOpen(&reader, package, "race2\\paths\\race2ai.ase")) {
+		rbb_AseShapesDtor(&shape);
+		rbb_AseReaderDtor(&reader);
+		return 0;
+	}
+	rb_ReadAiLines(&reader, &shape, &start_points, RB_FP(s, 0x18), RB_PTR(s, 0x28),
+		RB_I32(s, 0x2c), RB_I32(s, 0x08));
+	RB_PTR(s, 0x14) = start_points;
+	RB_F32(s, 0x10) = 0.0f;
+	if (RB_I32(s, 0x08) > 0)
+		RB_F32(s, 0x10) = rb_LineDistances(RB_PTR(s, 0x04), RB_PTR(s, 0x0c), RB_I32(s, 0x08));
+	else
+		((float *)RB_PTR(s, 0x0c))[RB_I32(s, 0x08) - 1] = 0.0f;
+	rb_AddPlayerShadows(0xe91);
+	RB_VFN(self, 0x14, void (*)(void *))(self);
+	rbb_AseShapesDtor(&shape);
+	rbb_AseReaderDtor(&reader);
+	return 1;
+}
+
+/* 0x0018a4f0  RollerBall/CRollerball_Game.cpp
+Shutdown (race2): the AI line records and their points, the distances, the race line, the
+start points. */
+void CRollerBallRace2_Shutdown(void *self)
+{
+	unsigned char *s = self;
+
+	if (RB_PTR(s, 0x28) != NULL) {
+		rb_DeletePathRecords(RB_PTR(s, 0x28), RB_I32(s, 0x2c));
+		RB_PTR(s, 0x28) = NULL;
+	}
+	if (RB_PTR(s, 0x0c) != NULL) {
+		RB_DELETE(RB_PTR(s, 0x0c));
+		RB_PTR(s, 0x0c) = NULL;
+	}
+	if (RB_PTR(s, 0x04) != NULL) {
+		RB_DELETE(RB_PTR(s, 0x04));
+		RB_PTR(s, 0x04) = NULL;
+	}
+	if (RB_PTR(s, 0x14) != NULL) {
+		RB_DELETE(RB_PTR(s, 0x14));
+		RB_PTR(s, 0x14) = NULL;
+	}
+}
+
+/* the crossing of the start line by a player's last move (+0x40e0 -> +0x40d0, x and z):
+1 forward (laps +1, unless the backward count +0x41f4 has to be paid back first),
+-1 backward (+0x41f4 - 1), 0 no crossing */
+static int rb_CrossStart(unsigned char *p, float *line)
+{
+	struct RB_Hit2D hit;
+	float seg[4];
+
+	hit.flag = 0;
+	seg[0] = RB_F32(p, 0x40e0);
+	seg[1] = RB_F32(p, 0x40e8);
+	seg[2] = RB_F32(p, RB_PL_POS);
+	seg[3] = RB_F32(p, RB_PL_POS + 8);
+	if (bmSegmentSegment(line, seg, (struct BHit2D *)&hit) == 0)
+		return 0;
+	if (rbb_SideOfLine(seg, line) >= 0.0f) {
+		RB_I32(p, RB_PL_41F4) = RB_I32(p, RB_PL_41F4) - 1;
+	} else if (RB_I32(p, RB_PL_41F4) != 0) {
+		RB_I32(p, RB_PL_41F4) = RB_I32(p, RB_PL_41F4) + 1;
+	} else {
+		RB_I32(p, RB_PL_41F0) = RB_I32(p, RB_PL_41F0) + 1;
+	}
+	return 1;
+}
+
+/* 0x0018a5a0  RollerBall/CRollerball_Game.cpp
+Play state (race2): players cross the start line (one lap); a player that finished gets
+its place. The round ends when three players finished or the countdown ran out: finished
+players are winners by place (first: message 3, others 6); unfinished players lose. */
+void CRollerBallRace2_UpdatePlay(void *self)
+{
+	unsigned char *s = self;
+	struct RB_Msg msg;
+	unsigned char *first, *p, *q, *last = NULL;
+	int *save;
+	int finished, winners, n;
+
+	rbb_MsgCtor(&msg);
+	first = RB_FIRST_PLAYER();
+	save = (int *)(s + 0x38);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) == 0 || RB_I32(p, RB_PL_41F0) >= 1)
+			continue;
+		last = p;
+		if (rb_CrossStart(p, RB_FP(s, 0x18))) {
+			RB_I32(p, RB_PL_SCORE) = RB_I32(p, RB_PL_41F0);
+			if (RB_I32(p, RB_PL_41F0) >= 1) {
+				n = 0;
+				for (q = first; q != NULL; q = RB_NEXT(q)) {
+					if (q != p && RB_I32(q, RB_PL_41F0) >= 1)
+						n++;
+				}
+				RB_I32(p, RB_PL_RANK) = n;
+				continue;
+			}
+		}
+		if (RB_U8(p, RB_PL_18) != 0) {
+			save[-2] = RB_I32(p, RB_PL_POS);
+			save[-1] = RB_I32(p, RB_PL_POS + 4);
+			save[0] = RB_I32(p, RB_PL_POS + 8);
+			save[1] = RB_I32(p, RB_PL_POS + 12);
+		}
+		save += 4;
+	}
+	finished = 0;
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		last = p;
+		if (RB_I32(p, RB_PL_41F0) >= 1)
+			finished++;
+	}
+	if (finished < 3 && CRollerBallTimer_Remaining(RB_GAME + RB_GO_COUNTDOWN) > 0.0f)
+		goto out;
+	CLSamples_PlayGeneric(0, 0xff, 0, 0, NULL);
+	rbb_EntitiesFreeze(RB_GAME + RB_GO_ENTITIES, 1);
+	if (finished != 0) {
+		winners = 0;
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			RB_U8(p, RB_PL_1A) = 0;
+			if (RB_I32(p, RB_PL_41F0) < 1) {
+				RB_U8(p, RB_PL_WINNER) = 0;
+				if (RB_U8(p, RB_PL_AI) != 0)
+					RB_U8(p, RB_PL_1C) = 0;
+				else
+					RB_U8(p, RB_PL_1A) = 0;
+			} else if (RB_I32(p, RB_PL_RANK) >= 1) {
+				RB_U8(p, RB_PL_WINNER) = 0;
+				msg.b8 = 1;
+				msg.b9 = 1;
+				msg.id = 3;
+				msg.prio = 2;
+				msg.unique = 0;
+				msg.value = 0.5f;
+				msg.arg = 6;
+				rbb_PostMsg(p, &msg);
+			} else {
+				msg.id = 3;
+				msg.prio = 2;
+				msg.unique = 0;
+				msg.b8 = 1;
+				msg.b9 = 1;
+				msg.value = 0.5f;
+				msg.arg = 3;
+				rbb_PostMsg(p, &msg);
+				winners++;
+			}
+		}
+	} else {
+		/* the original changes the last player of the list on every pass, and counts the
+		winners as the address of its position save pointer (the result time becomes
+		huge, so the results wait for a button) */
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			RB_U8(last, RB_PL_WINNER) = 0;
+			if (RB_U8(last, RB_PL_AI) != 0)
+				RB_U8(last, RB_PL_1C) = 0;
+			else
+				RB_U8(last, RB_PL_1A) = 0;
+		}
+		winners = (int)(uintptr_t)save;
+	}
+	RB_I16(RB_GAME, RB_GO_STATE) = 3;
+	CRollerBallTimer_Stop(RB_GAME + RB_GO_COUNTDOWN);
+	rbb_CameraSetMode(RB_GAME + RB_GO_CAMERA, 4);
+	if (DAT_002bae98 == 1 && winners == 1)
+		RB_F32(RB_GAME, RB_GO_RESULTTIME) = 7.0f;
+	else
+		RB_F32(RB_GAME, RB_GO_RESULTTIME) = (float)winners * 5.0f;
+	CRollerBallTimer_Set(RB_GAME + RB_GO_TIMER, RB_F32(RB_GAME, RB_GO_RESULTTIME));
+	CRollerBallTimer_Start(RB_GAME + RB_GO_TIMER);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		RB_F32(p, RB_PL_VEL) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 4) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 8) = 0.0f;
+	}
+	RB_VFN(self, 0x18, void (*)(void *))(self);
+	{
+		int scores[4];
+
+		scores[0] = DAT_002baee8;
+		scores[1] = DAT_002baf10;
+		scores[3] = DAT_002baf60;
+		scores[2] = DAT_002baf38;
+		CLHud_CreateWinnerText(DAT_002ecfac, scores, 0);
+	}
+out:
+	rbb_MsgDtor(&msg);
+}
+
+/* 0x0018a990  RollerBall/CRollerball_Game.cpp
+Reset (race2): players lose +0x1a, +0x1b, the last player's position is kept at +0x30;
+intro state; camera mode 1. */
+void CRollerBallRace2_Reset(void *self)
+{
+	unsigned char *p;
+
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		RB_U8(p, RB_PL_1A) = 0;
+		RB_U8(p, RB_PL_1B) = 0;
+		RB_I32(self, 0x30) = RB_I32(p, RB_PL_POS);
+		RB_I32(self, 0x34) = RB_I32(p, RB_PL_POS + 4);
+		RB_I32(self, 0x38) = RB_I32(p, RB_PL_POS + 8);
+		RB_I32(self, 0x3c) = RB_I32(p, RB_PL_POS + 12);
+	}
+	RB_I16(RB_GAME, RB_GO_STATE) = 1;
+	rbb_CameraSetMode(RB_GAME + RB_GO_CAMERA, 1);
+}
+
+/* ======================================================================== CRollerBall_Race */
+
+/* Variation "race" (vtable 0x00273b50): three lap race on race\paths with four race lines.
++0x04..+0x10 the four race lines' points, +0x14 point count, +0x18 distances, +0x1c
+length, +0x20 start points, +0x24 the start line (x0, z0, x1, z1), +0x34 AI line records,
++0x38 record count, +0x3c the players' last positions (16 bytes each), +0x7c the video
+screen, +0x80 and +0x94 two finish emitters (position, particle system at +0x90 / +0xa4),
++0xa8 a counter. */
+
+/* 0x0018aa00  RollerBall/CRollerball_Game.cpp: deleting destructor (flags bit 0: free) */
+void *CRollerBallRace_DeletingDtor(void *self, unsigned int flags)
+{
+	*(const void *const **)self = vtable_00273b50;
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x0018aa20  RollerBall/CRollerball_Game.cpp
+Initialise (race): the race lines raceline1..4.ase, the AI lines raceai.ase, the line
+distances, the video screen race\tex\zscreen.bmp, the two finish emitters (positions
+0x002b4d6c..), a shadow per player, the players' laps (-1), the active goal animation,
+then Reset. Returns 0 when a file is missing. */
+int CRollerBallRace_Init(void *self, void *package)
+{
+	unsigned char *s = self;
+	struct RB_AseReader reader;
+	struct RB_AseShape shape;
+	char name[1024];
+	float *start_points;
+	unsigned char *p, *e, *ps;
+	void *screen;
+	struct bkResource *res;
+	unsigned char frames;
+	int i, count;
+
+	rbb_AseReaderCtor(&reader);
+	rbb_AseShapesCtor(&shape);
+	for (i = 1; i <= 4; i++) {
+		sprintf(name, "race\\paths\\raceline%d.ase", i);
+		if (!rb_AseOpen(&reader, package, name))
+			goto fail;
+		rbb_AseReadShape(&shape, &reader);
+		RB_PTR(s, i * 4) = shape.points;
+	}
+	RB_I32(s, 0x14) = shape.count;
+	RB_PTR(s, 0x18) = RB_NEW(shape.count << 2, RB_FILE_GAME, 0x11b9);
+	count = RB_I32(s, 0x14);
+	RB_I32(s, 0x38) = count;
+	RB_PTR(s, 0x34) = rb_NewPathRecords(count, 0x11be);
+	if (!rb_AseOpen(&reader, package, "race\\paths\\raceai.ase"))
+		goto fail;
+	rb_ReadAiLines(&reader, &shape, &start_points, RB_FP(s, 0x24), RB_PTR(s, 0x34),
+		RB_I32(s, 0x38), RB_I32(s, 0x14));
+	RB_PTR(s, 0x20) = start_points;
+	RB_F32(s, 0x1c) = 0.0f;
+	if (RB_I32(s, 0x14) > 0)
+		RB_F32(s, 0x1c) = rb_LineDistances(RB_PTR(s, 0x04), RB_PTR(s, 0x18), RB_I32(s, 0x14));
+	else
+		((float *)RB_PTR(s, 0x18))[RB_I32(s, 0x14) - 1] = 0.0f;
+	screen = RB_NEW(0x58, RB_FILE_GAME, 0x11fc);
+	if (screen != NULL)
+		CRollerBallScreen_Ctor(screen);
+	RB_PTR(s, 0x7c) = screen;
+	CRollerBallScreen_Init(screen, "race\\tex\\zscreen.bmp", 0x100, 0x100);
+	CRollerBallList_Add(RB_GAME + RB_GO_VIDEO, RB_PTR(s, 0x7c));
+	for (i = 0; i < 2; i++) {
+		e = s + 0x80 + i * 0x14;
+		RB_U32(e, 0x0) = RB_VAR(unsigned int, 0x002b4d6cu + i * 0x10);
+		RB_U32(e, 0x4) = RB_VAR(unsigned int, 0x002b4d70u + i * 0x10);
+		RB_U32(e, 0x8) = RB_VAR(unsigned int, 0x002b4d74u + i * 0x10);
+		RB_U32(e, 0xc) = RB_VAR(unsigned int, 0x002b4d78u + i * 0x10);
+		ps = RB_NEW(0xa8, RB_FILE_GAME, 0x1209);
+		if (ps != NULL)
+			CParticleSystem_Construct((struct CParticleSystem *)ps);
+		RB_PTR(e, 0x10) = ps;
+		CParticleSystem_Init((struct CParticleSystem *)ps, NULL, 800);
+		ps = RB_PTR(e, 0x10);
+		RB_F32(ps, 0x54) = rb_bitsf(0x3e20d97cu);
+		RB_F32(ps, 0x6c) = 0.5f;
+		RB_F32(ps, 0x58) = 0.3f;
+		RB_F32(ps, 0x60) = 15.0f;
+		RB_F32(ps, 0x70) = 30.0f;
+		CParticleSystem_SetTexture((struct CPSHeader *)RB_PTR(e, 0x10), RB_I32(RB_GAME, 0x1eec));
+		CParticleSystem_SetTexture2((struct CParticleSystem *)RB_PTR(e, 0x10),
+			RB_I32(RB_GAME, 0x1ee8));
+		CParticleSystem_SetPosition((struct CPSHeader *)RB_PTR(e, 0x10), (float *)e);
+		CRollerBallList_Add(RB_GAME + RB_GO_PARTICLES, RB_PTR(e, 0x10));
+	}
+	rb_AddPlayerShadows(0x1225);
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p))
+		RB_I32(p, RB_PL_41F0) = -1;
+	e = RB_GAME + 0x1f00 + RB_I32(RB_GAME, 0x2018) * 0x1c;
+	res = bLoadResource(NULL, "race\\texanim\\activegoalanim.gif", 0, 0xdefa);
+	RB_PTR(e, 4) = res;
+	frames = RB_U8(res, 0x37);
+	RB_U16(e, 0xc) = frames;
+	RB_I16(e, 8) = 0;
+	RB_U16(e, 0xa) = (unsigned short)(frames - 1);
+	RB_I16(e, 0xe) = 0;
+	RB_I16(e, 0x10) = 1;
+	RB_F32(e, 0x18) = 3.0f;
+	RB_U8(e, 0x12) = 1;
+	RB_F32(e, 0x14) = 0.0f;
+	RB_I32(RB_GAME, 0x2018) = RB_I32(RB_GAME, 0x2018) + 1;
+	RB_VFN(self, 0x14, void (*)(void *))(self);
+	rbb_AseShapesDtor(&shape);
+	rbb_AseReaderDtor(&reader);
+	return 1;
+fail:
+	rbb_AseShapesDtor(&shape);
+	rbb_AseReaderDtor(&reader);
+	return 0;
+}
+
+/* 0x0018af90  RollerBall/CRollerball_Game.cpp
+Shutdown (race): the AI line records and their points, the distances, the four race
+lines, the start points. */
+void CRollerBallRace_Shutdown(void *self)
+{
+	unsigned char *s = self;
+	int i;
+
+	if (RB_PTR(s, 0x34) != NULL) {
+		rb_DeletePathRecords(RB_PTR(s, 0x34), RB_I32(s, 0x38));
+		RB_PTR(s, 0x34) = NULL;
+	}
+	if (RB_PTR(s, 0x18) != NULL) {
+		RB_DELETE(RB_PTR(s, 0x18));
+		RB_PTR(s, 0x18) = NULL;
+	}
+	for (i = 1; i <= 4; i++) {
+		if (RB_PTR(s, i * 4) != NULL) {
+			RB_DELETE(RB_PTR(s, i * 4));
+			RB_PTR(s, i * 4) = NULL;
+		}
+	}
+	if (RB_PTR(s, 0x20) != NULL) {
+		RB_DELETE(RB_PTR(s, 0x20));
+		RB_PTR(s, 0x20) = NULL;
+	}
+}
+
+/* the catch-up of the computer players: the leader (ORDER[0]) gets the speed and
+acceleration of the variation (0x002b5134 / 0x002b5138, records of 0x28 bytes); the others
+get more by how far they are behind (progress difference x K, at most 1) */
+static void rb_RaceCatchUp(unsigned char **order, float k)
+{
+	int v = RB_I32(RB_GAME, RB_GO_VARIATION);
+	float lead = RB_F32(order[0], 0x41ec);
+	float speed = RB_VAR(float, 0x002b5134u + v * 0x28);
+	float accel = RB_VAR(float, 0x002b5138u + v * 0x28);
+	float f, t;
+	int i;
+
+	RB_F32(order[0], 0x416c) = speed;
+	RB_F32(order[0], 0x4170) = accel;
+	for (i = 1; i < 4; i++) {
+		t = (lead - RB_F32(order[i], 0x41ec)) * k;
+		f = 0.0f;
+		if (t >= 0.0f) {
+			f = t;
+			if (t > 1.0f)
+				f = 1.0f;
+		}
+		v = RB_I32(RB_GAME, RB_GO_VARIATION);
+		RB_F32(order[i], 0x416c) = speed * f + RB_VAR(float, 0x002b5134u + v * 0x28);
+		RB_F32(order[i], 0x4170) = f * accel + RB_VAR(float, 0x002b5138u + v * 0x28);
+	}
+}
+
+/* 0x0018b050  RollerBall/CRollerball_Game.cpp
+Play state (race): players cross the start line (laps; the score is laps + 1, 0..3); a
+player that finished 3 laps gets its place, and the first one fires the finish emitters in
+its colour (+0x41c0). The computer players catch up by difficulty (game +0x20: 1 or 2).
+The round ends when three players finished or the countdown ran out: by place (or, when
+nobody finished, by progress +0x41ec) the winners get message 3, the others 6; the players
+go back to their start points (game +0x6ac). */
+void CRollerBallRace_UpdatePlay(void *self)
+{
+	unsigned char *s = self;
+	struct RB_Msg msg;
+	unsigned char *first, *p, *q, *chosen;
+	unsigned char *order[4];
+	unsigned char taken[4];
+	int *save;
+	int finished, winners, n, k, idx, chosen_idx;
+	float best;
+
+	rbb_MsgCtor(&msg);
+	first = RB_FIRST_PLAYER();
+	save = (int *)(s + 0x44);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) == 0 || RB_I32(p, RB_PL_41F0) >= 3)
+			continue;
+		if (rb_CrossStart(p, RB_FP(s, 0x24))) {
+			n = RB_I32(p, RB_PL_41F0) + 1;
+			RB_I32(p, RB_PL_SCORE) = n;
+			if (n < 0)
+				RB_I32(p, RB_PL_SCORE) = 0;
+			if (RB_I32(p, RB_PL_SCORE) > 3)
+				RB_I32(p, RB_PL_SCORE) = 3;
+			if (RB_I32(p, RB_PL_41F0) > 2) {
+				n = 0;
+				for (q = first; q != NULL; q = RB_NEXT(q)) {
+					if (q != p && RB_I32(q, RB_PL_41F0) > 2)
+						n++;
+				}
+				RB_U8(p, RB_PL_1C) = 0;
+				RB_U8(p, RB_PL_1A) = 0;
+				RB_I32(p, RB_PL_RANK) = n;
+				if (n == 0) {
+					for (k = 0; k < 2; k++) {
+						CParticleSystem_Start(RB_PTR(s, 0x90 + k * 0x14),
+							(short)RB_I32(p, 0x41c0), (short)RB_I32(p, 0x41c4),
+							(short)RB_I32(p, 0x41c8));
+						RB_U8(RB_PTR(s, 0x90 + k * 0x14), 0x50) = 1;
+					}
+				}
+				continue;
+			}
+		}
+		if (RB_U8(p, RB_PL_18) != 0) {
+			save[-2] = RB_I32(p, RB_PL_POS);
+			save[-1] = RB_I32(p, RB_PL_POS + 4);
+			save[0] = RB_I32(p, RB_PL_POS + 8);
+			save[1] = RB_I32(p, RB_PL_POS + 12);
+		}
+		save += 4;
+	}
+	/* the players by progress (+0x41ec), best first. The original keeps the previous
+	choice when no player is left (fewer than four players); the port does the same and
+	starts with the first player instead of the variation object. */
+	memset(taken, 0, sizeof taken);
+	chosen = first;
+	chosen_idx = 0;
+	for (k = 0; k < 4; k++) {
+		best = -99999.0f;
+		idx = 0;
+		for (q = first; q != NULL; q = RB_NEXT(q), idx++) {
+			if (taken[idx & 3] == 0 && best < RB_F32(q, 0x41ec)) {
+				best = RB_F32(q, 0x41ec);
+				chosen = q;
+				chosen_idx = idx;
+			}
+		}
+		order[k] = chosen;
+		taken[chosen_idx & 3] = 1;
+	}
+	switch (RB_I32(RB_GAME, 0x20)) {
+	case 0:
+		break;
+	case 1:
+		rb_RaceCatchUp(order, 6.0f);
+		break;
+	case 2:
+		rb_RaceCatchUp(order, 24.0f);
+		break;
+	default:
+		bkPrintf("ERROR: Unhandled difficulty\n");
+		break;
+	}
+	finished = 0;
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_I32(p, RB_PL_41F0) > 2)
+			finished++;
+	}
+	if (finished < 3 && CRollerBallTimer_Remaining(RB_GAME + RB_GO_COUNTDOWN) > 0.0f)
+		goto out;
+	CLSamples_PlayGeneric(0, 0xff, 0, 0, NULL);
+	rbb_EntitiesFreeze(RB_GAME + RB_GO_ENTITIES, 1);
+	if (finished == 0) {
+		best = 0.0f;
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			if (best < RB_F32(p, 0x41ec))
+				best = RB_F32(p, 0x41ec);
+		}
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			RB_U8(p, RB_PL_1A) = 0;
+			RB_U8(p, RB_PL_1C) = 0;
+			RB_U8(p, RB_PL_WINNER) = best <= RB_F32(p, 0x41ec) ? 1 : 0;
+		}
+	} else {
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			RB_U8(p, RB_PL_1A) = 0;
+			RB_U8(p, RB_PL_1C) = 0;
+			if (RB_I32(p, RB_PL_41F0) < 3)
+				RB_U8(p, RB_PL_WINNER) = 0;
+			else
+				RB_U8(p, RB_PL_WINNER) = RB_I32(p, RB_PL_RANK) < 1;
+		}
+	}
+	winners = 0;
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		msg.b9 = 1;
+		msg.b8 = 1;
+		msg.unique = 0;
+		msg.prio = 2;
+		msg.value = 0.5f;
+		if (RB_U8(p, RB_PL_WINNER) == 0) {
+			msg.id = 3;
+			msg.arg = 6;
+			rbb_PostMsg(p, &msg);
+		} else {
+			msg.id = 3;
+			msg.arg = 3;
+			rbb_PostMsg(p, &msg);
+			winners++;
+		}
+	}
+	RB_I16(RB_GAME, RB_GO_STATE) = 3;
+	CRollerBallTimer_Stop(RB_GAME + RB_GO_COUNTDOWN);
+	rbb_CameraSetMode(RB_GAME + RB_GO_CAMERA, 4);
+	if (DAT_002bae98 == 1 && winners == 1)
+		RB_F32(RB_GAME, RB_GO_RESULTTIME) = 7.0f;
+	else
+		RB_F32(RB_GAME, RB_GO_RESULTTIME) = (float)winners * 5.0f;
+	CRollerBallTimer_Set(RB_GAME + RB_GO_TIMER, RB_F32(RB_GAME, RB_GO_RESULTTIME));
+	CRollerBallTimer_Start(RB_GAME + RB_GO_TIMER);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		RB_F32(p, RB_PL_VEL) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 4) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 8) = 0.0f;
+		rbb_PlayerPlace(p, (const float *)(RB_GAME + 0x6ac + RB_I32(p, RB_PL_SLOT) * 0x20));
+		RB_U8(p, RB_PL_1B) = 0;
+	}
+	RB_VFN(self, 0x18, void (*)(void *))(self);
+	{
+		int scores[4];
+
+		scores[1] = DAT_002baf10;
+		scores[0] = DAT_002baee8;
+		scores[2] = DAT_002baf38;
+		scores[3] = DAT_002baf60;
+		CLHud_CreateWinnerText(DAT_002ecfac, scores, 0);
+	}
+out:
+	rbb_MsgDtor(&msg);
+}
+
+/* 0x0018b8b0  RollerBall/CRollerball_Game.cpp
+Reset (race): players lose +0x1a, +0x1b, the last player's position is kept at +0x3c;
+intro state; camera mode 1; the finish emitters reset (virtual +0xc); the players' laps
+-1 and headings -pi/4; the counter +0xa8 is cleared. */
+void CRollerBallRace_Reset(void *self)
+{
+	unsigned char *s = self;
+	unsigned char *p;
+	void *ps;
+	int i;
+
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		RB_U8(p, RB_PL_1A) = 0;
+		RB_U8(p, RB_PL_1B) = 0;
+		RB_I32(s, 0x3c) = RB_I32(p, RB_PL_POS);
+		RB_I32(s, 0x40) = RB_I32(p, RB_PL_POS + 4);
+		RB_I32(s, 0x44) = RB_I32(p, RB_PL_POS + 8);
+		RB_I32(s, 0x48) = RB_I32(p, RB_PL_POS + 12);
+	}
+	RB_I16(RB_GAME, RB_GO_STATE) = 1;
+	rbb_CameraSetMode(RB_GAME + RB_GO_CAMERA, 1);
+	for (i = 0; i < 2; i++) {
+		ps = RB_PTR(s, 0x90 + i * 0x14);
+		RB_VFN(ps, 0x0c, void (*)(void *))(ps);
+	}
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		RB_I32(p, RB_PL_41F0) = -1;
+		RB_F32(p, 0x41a4) = -0.785398185f;
+		RB_F32(p, RB_PL_HEADING) = -0.785398185f;
+	}
+	RB_I32(s, 0xa8) = 0;
+}
+
+/* 0x0018b8c0  RollerBall/CRollerball_Game.cpp
+Not a function: Ghidra's entry in the middle of 0x0018b8b0 (the player loop, entered with
+the list in EAX and 0 in EBX). Nothing calls it; its code is in CRollerBallRace_Reset. */
+void CRollerBallRace_ResetChunk(void *self)
+{
+	(void)self;
+}
+
+/* ======================================================================== CRollerBall_Drop */
+
+/* 0x0018b990  RollerBall/CRollerball_Game.cpp: deleting destructor (flags bit 0: free) */
+void *CRollerBallDrop_DeletingDtor(void *self, unsigned int flags)
+{
+	CRollerBallDrop_Dtor(self);
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x0018b9b0  RollerBall/CRollerball_Game.cpp
+Initialise (drop): +0x40 = 450; the five platforms "platform<n>01" (values from the
+tables 0x002b4d8c.., a platform object of 0xd0 bytes each), the variation timer, a shadow
+per player, the booster animation, then Reset. Returns 1. */
+int CRollerBallDrop_Init(void *self, void *package)
+{
+	unsigned char *s = self;
+	unsigned int crc[5];
+	char name[256];
+	float pos[4];
+	unsigned char *pf, *entry, *e;
+	struct bkResource *res;
+	unsigned char frames;
+	void *obj;
+	int i;
+
+	(void)package;
+	RB_F32(s, 0x40) = 450.0f;
+	for (i = 0; i < 5; i++) {
+		sprintf(name, "platform%d01", i + 1);
+		crc[i] = bkCRCString(name);
+	}
+	for (i = 0; i < 5; i++) {
+		pf = s + 0x48 + i * 0x58;
+		RB_I32(pf, -4) = 0;
+		RB_F32(pf, 0) = RB_VAR(float, 0x002b4d8cu + i * 4);
+		RB_F32(pf, 8) = RB_VAR(float, 0x002b4da0u + i * 4);
+		RB_F32(pf, 4) = RB_VAR(float, 0x002b4db4u + i * 4);
+		entry = rb_FindWorldObject(crc[i]);
+		if (entry != NULL)
+			RB_PTR(pf, 0xc) = entry;
+		obj = RB_NEW(0xd0, RB_FILE_GAME, 0x170e);
+		if (obj != NULL)
+			obj = rbb_PlatformCtor(obj);
+		RB_PTR(pf, 0x10) = obj;
+		pos[0] = 0.0f;
+		pos[1] = 600.0f;
+		pos[2] = 0.0f;
+		pos[3] = 0.0f; /* the original leaves this word of the stack unset */
+		rbb_PlatformInit(obj, pos, RB_VAR(int, 0x002b4ddcu + i * 4));
+		rbb_PlatformSetTime(RB_PTR(pf, 0x10), RB_VAR(float, 0x002b4dc8u + i * 4));
+		rbb_PlatformSet48(RB_PTR(pf, 0x10), RB_VAR(float, 0x002b4db4u + i * 4));
+		rbb_PlatformSet74(RB_PTR(pf, 0x10), ~i & 1);
+	}
+	CDemoCountdown_Init((int)(uintptr_t)(s + 0x08));
+	rb_AddPlayerShadows(0x1728);
+	e = RB_GAME + 0x1f00 + RB_I32(RB_GAME, 0x2018) * 0x1c;
+	res = bLoadResource(NULL, "drop\\alphatex\\booster.gif", 0, 0xdefa);
+	RB_PTR(e, 4) = res;
+	frames = RB_U8(res, 0x37);
+	RB_U16(e, 0xa) = (unsigned short)(frames - 1);
+	RB_U16(e, 0xc) = frames;
+	RB_I16(e, 8) = 0;
+	RB_I16(e, 0xe) = 0;
+	RB_I16(e, 0x10) = 1;
+	RB_F32(e, 0x18) = 4.0f;
+	RB_U8(e, 0x12) = 1;
+	RB_F32(e, 0x14) = 0.0f;
+	RB_I32(RB_GAME, 0x2018) = RB_I32(RB_GAME, 0x2018) + 1;
+	RB_VFN(self, 0x14, void (*)(void *))(self);
+	return 1;
+}
+
+/* 0x0018bc40  RollerBall/CRollerball_Game.cpp
+Play state (drop): when at most one player is left the round ends: the players left get
+the rank "number left" (+0x41f0), winners (+0x17) get message 3, the others 6; the winners
+are placed on a circle (radius: value A (+0x38) - 200, at least 285 - 50) at height 725;
+results state; the platforms stop; scores and winner text. */
+void CRollerBallDrop_UpdatePlay(void *self)
+{
+	struct RB_Msg msg;
+	unsigned char *first, *p;
+	int active = 0, winners, i;
+	float step, angle, radius, pos[4];
+	void **obj;
+
+	rbb_MsgCtor(&msg);
+	first = RB_FIRST_PLAYER();
+	if (first != NULL) {
+		for (p = first; p != NULL; p = RB_NEXT(p)) {
+			if (RB_U8(p, RB_PL_ACTIVE) != 0)
+				active++;
+		}
+		if (active > 1)
+			goto out;
+	}
+	rbb_EntitiesFreeze(RB_GAME + RB_GO_ENTITIES, 1);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		RB_U8(p, RB_PL_1A) = 0;
+		RB_U8(p, RB_PL_1C) = 0;
+	}
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_ACTIVE) != 0)
+			RB_I32(p, RB_PL_41F0) = active;
+	}
+	winners = 0;
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_WINNER) != 0)
+			winners++;
+	}
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		msg.b9 = 1;
+		msg.b8 = 1;
+		msg.unique = 0;
+		msg.prio = 2;
+		msg.id = 3;
+		msg.arg = RB_U8(p, RB_PL_WINNER) == 0 ? 6 : 3;
+		msg.value = 0.5f;
+		rbb_PostMsg(p, &msg);
+	}
+	angle = 0.0f;
+	pos[1] = 725.0f;
+	pos[3] = 0.0f; /* the original leaves this word of the stack unset */
+	step = 6.28318548f / (float)winners;
+	radius = RB_VFN(self, 0x38, float (*)(void *))(self) - 200.0f;
+	if (radius < RB_VAR(float, 0x002b4dc4u))
+		radius = RB_VAR(float, 0x002b4dc4u) - 50.0f;
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_WINNER) == 0)
+			continue;
+		pos[0] = cosf(angle) * radius;
+		pos[2] = sinf(angle) * radius;
+		rbb_PlayerPlace(p, pos);
+		RB_F32(p, RB_PL_VEL) = 0.0f;
+		angle = angle - step;
+		RB_F32(p, RB_PL_VEL + 4) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 8) = 0.0f;
+		RB_U8(p, RB_PL_1B) = 0;
+	}
+	RB_I16(RB_GAME, RB_GO_STATE) = 3;
+	CRollerBallTimer_Stop(RB_GAME + RB_GO_COUNTDOWN);
+	rbb_CameraSetMode(RB_GAME + RB_GO_CAMERA, 4);
+	if (DAT_002bae98 == 1 && winners == 1)
+		RB_F32(RB_GAME, RB_GO_RESULTTIME) = 7.0f;
+	else
+		RB_F32(RB_GAME, RB_GO_RESULTTIME) = (float)winners * 5.0f;
+	CRollerBallTimer_Set(RB_GAME + RB_GO_TIMER, RB_F32(RB_GAME, RB_GO_RESULTTIME));
+	CRollerBallTimer_Start(RB_GAME + RB_GO_TIMER);
+	for (p = first; p != NULL; p = RB_NEXT(p)) {
+		RB_F32(p, RB_PL_VEL) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 4) = 0.0f;
+		RB_F32(p, RB_PL_VEL + 8) = 0.0f;
+	}
+	obj = (void **)((unsigned char *)self + 0x58);
+	for (i = 5; i != 0; i--, obj += 0x16)
+		rbb_Platform_197580(*obj);
+	RB_VFN(self, 0x18, void (*)(void *))(self);
+	{
+		int scores[4];
+
+		scores[0] = DAT_002baee8;
+		scores[1] = DAT_002baf10;
+		scores[3] = DAT_002baf60;
+		scores[2] = DAT_002baf38;
+		CLHud_CreateWinnerText(DAT_002ecfac, scores, 0);
+	}
+out:
+	rbb_MsgDtor(&msg);
+}
+
+/* the drop platforms' random times 400..1200 */
+static float rb_RandomDropTime(void)
+{
+	return ((float)rb_rand() * RB_RAND_SCALE + 0.5f) * 800.0f;
+}
+
+/* 0x0018bf40  RollerBall/CRollerball_Game.cpp
+Reset (drop): the score table is ranked; players out of the results (DAT_002b9c48) take
+no part; the players in (+0x15) are placed on a circle of radius 600 at height 725 facing
+the middle (start angle by player count: 2 pi, 3 210 degrees, 4 225 degrees); intro
+state; camera mode 1; the platforms reset; four random times; the variation timer is
+reset. Fewer than two players: debug break. */
+void CRollerBallDrop_Reset(void *self)
+{
+	unsigned char *s = self;
+	unsigned char *p;
+	int *out;
+	int n, i;
+	float angle, step, heading, pos[4], axis[4];
+
+	CScoreTable_Rank((struct CScoreTable *)DAT_002b9968);
+	out = DAT_002b9c48;
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p), out++) {
+		RB_U8(p, RB_PL_1B) = 0;
+		RB_U8(p, RB_PL_1A) = 0;
+		if (*out != 0) {
+			RB_U8(p, RB_PL_1C) = 0;
+			RB_U8(p, RB_PL_15) = 0;
+			RB_U8(p, RB_PL_AI) = 1;
+			RB_U8(p, RB_PL_ACTIVE) = 0;
+			RB_U8(p, RB_PL_WINNER) = 0;
+			RB_U8(p, 0x16) = 0;
+		}
+	}
+	n = 0;
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_15) != 0)
+			n++;
+	}
+	if (n <= 1)
+		DbgBreakPoint();
+	step = 6.28318548f / (float)n;
+	switch (n) {
+	case 2:
+		angle = 3.14159274f;
+		break;
+	case 3:
+		angle = rb_bitsf(0x406a927fu);
+		break;
+	case 4:
+		angle = rb_bitsf(0x407b53d1u);
+		break;
+	default:
+		/* the original reuses the count's bits as the angle */
+		angle = rb_bitsf((unsigned int)n);
+		break;
+	}
+	pos[1] = 725.0f;
+	pos[3] = 0.0f; /* the original leaves this word of the stack unset */
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p)) {
+		if (RB_U8(p, RB_PL_15) == 0)
+			continue;
+		pos[0] = cosf(angle) * 600.0f;
+		pos[2] = sinf(angle) * 600.0f;
+		rbb_PlayerPlace(p, pos);
+		heading = atan2f(pos[0], pos[2]) + 3.14159274f;
+		RB_F32(p, 0x41a4) = heading;
+		RB_F32(p, RB_PL_HEADING) = heading;
+		rbb_PlayerSet41a4(p, heading);
+		axis[3] = -RB_F32(p, RB_PL_HEADING);
+		axis[0] = 0.0f;
+		axis[1] = 1.0f;
+		axis[2] = 0.0f;
+		bmAxisAngleToQuaternion(RB_FP(p, 0x4120), axis);
+		angle = angle - step;
+	}
+	RB_I16(RB_GAME, RB_GO_STATE) = 1;
+	rbb_CameraSetMode(RB_GAME + RB_GO_CAMERA, 1);
+	for (i = 0; i < 5; i++) {
+		RB_I32(s, 0x44 + i * 0x58) = 0;
+		rbb_PlatformReset(RB_PTR(s, 0x58 + i * 0x58));
+	}
+	RB_F32(s, 0x200) = rb_RandomDropTime();
+	RB_F32(s, 0x204) = rb_RandomDropTime();
+	RB_F32(s, 0x208) = rb_RandomDropTime();
+	RB_F32(s, 0x20c) = rb_RandomDropTime();
+	CRollerBallTimer_Reset(s + 0x08);
+}
+
+/* 0x0018c000  RollerBall/CRollerball_Game.cpp
+Not a function: Ghidra's entry in the middle of 0x0018bf40 (after the start angle is
+chosen, with the frame of 0x0018bf40). Nothing calls it; its code is in
+CRollerBallDrop_Reset. */
+void CRollerBallDrop_ResetChunk(void)
+{
+}

@@ -37,7 +37,7 @@ Owner: rollerball_a. Only rollerball_a edits this file.
 /* 0x00192480  player: place at a position (4 floats) */
 #define rbb_PlayerPlace(p, pos) RB_CALL(FUN_00192480, void (*)(void *, const float *))(p, pos)
 /* 0x001990e0  player: set +0x41a4 */
-#define rbb_PlayerSet41a4(p, v) RB_CALL(FUN_001990e0, void (*)(void *, int))(p, v)
+#define rbb_PlayerSet41a4(p, v) RB_CALL(FUN_001990e0, void (*)(void *, float))(p, v)
 
 /* ---------- rollerball_b: world (game +0x4c) and camera (game +0x1368) */
 
@@ -85,12 +85,12 @@ Owner: rollerball_a. Only rollerball_a edits this file.
 #define rbb_PlatformCtor(o) RB_CALL(FUN_001973c0, void *(*)(void *))(o)
 #define rbb_Platform_1973f0(o) RB_CALL(FUN_001973f0, void (*)(void *))(o)
 #define rbb_PlatformReset(o) RB_CALL(FUN_001974f0, void (*)(void *))(o)
-#define rbb_PlatformSet48(o, v) RB_CALL(FUN_00197540, void (*)(void *, int))(o, v)
+#define rbb_PlatformSet48(o, v) RB_CALL(FUN_00197540, void (*)(void *, float))(o, v)
 #define rbb_PlatformSetTime(o, v) RB_CALL(FUN_00197550, void (*)(void *, float))(o, v)
 #define rbb_PlatformSet74(o, v) RB_CALL(FUN_00197560, void (*)(void *, int))(o, v)
 #define rbb_PlatformSet50(o, v) RB_CALL(FUN_00197570, void (*)(void *, int))(o, v)
 #define rbb_Platform_197580(o) RB_CALL(FUN_00197580, void (*)(void *))(o)
-#define rbb_PlatformInit(o, pos, v) RB_CALL(FUN_001975b0, int (*)(void *, const float *, float))(o, pos, v)
+#define rbb_PlatformInit(o, pos, v) RB_CALL(FUN_001975b0, int (*)(void *, const float *, int))(o, pos, v)
 #define rbb_PlatformDelete(o) RB_CALL(FUN_001977d0, void (*)(void *))(o)
 #define rbb_Platform_197f40(o) RB_CALL(FUN_00197f40, void (*)(void *))(o)
 #define rbb_Platform_197fa0(o, v) RB_CALL(FUN_00197fa0, int (*)(void *, float))(o, v)
@@ -115,8 +115,8 @@ void FUN_00198110(void *self);
 #define rbb_PathSetPoints(o, pts, n) RB_CALL(FUN_00198130, void (*)(void *, float *, int))(o, pts, n)
 #define rbb_Path_1981e0(o, pos) RB_CALL(FUN_001981e0, unsigned int (*)(void *, const float *))(o, pos)
 #define rbb_SideOfLine(a, b) RB_CALL(FUN_00198340, float (*)(const float *, const float *))(a, b)
-#define rbb_Path_1983a0(o, a, b, c) \
-	RB_CALL(FUN_001983a0, int (*)(void *, void *, int, float *))(o, a, b, c)
+#define rbb_PathNear(o, pos, r, out) \
+	RB_CALL(FUN_001983a0, int (*)(void *, const float *, float, float *))(o, pos, r, out)
 /* 0x001986e0 / 0x00198700  ASE shape list constructor / destructor */
 #define rbb_AseShapesCtor(o) RB_CALL(FUN_001986e0, void (*)(void *))(o)
 #define rbb_AseShapesDtor(o) RB_CALL(FUN_00198700, void (*)(void *))(o)

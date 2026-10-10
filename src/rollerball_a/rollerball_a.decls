@@ -60,6 +60,30 @@
 00188c10 float CRollerBallDrop_GetValueB(void *self);
 00188c50 float CRollerBallDrop_GetTime(void *self);
 
+00189400 void *CRollerBallBase_DeletingDtor(void *self, unsigned int flags);
+00189420 int CRollerBallBase_Init(void *self, void *package);
+001895d0 void CRollerBallBase_UpdateIntro(void *self);
+00189720 void *CRollerBallSumo_DeletingDtor(void *self, unsigned int flags);
+00189740 int CRollerBallSumo_Init(void *self, void *package);
+00189b40 void CRollerBallSumo_UpdatePlay(void *self);
+00189f80 void CRollerBallSumo_Reset(void *self);
+0018a140 void *CRollerBallRace2_DeletingDtor(void *self, unsigned int flags);
+0018a160 int CRollerBallRace2_Init(void *self, void *package);
+0018a4f0 void CRollerBallRace2_Shutdown(void *self);
+0018a5a0 void CRollerBallRace2_UpdatePlay(void *self);
+0018a990 void CRollerBallRace2_Reset(void *self);
+0018aa00 void *CRollerBallRace_DeletingDtor(void *self, unsigned int flags);
+0018aa20 int CRollerBallRace_Init(void *self, void *package);
+0018af90 void CRollerBallRace_Shutdown(void *self);
+0018b050 void CRollerBallRace_UpdatePlay(void *self);
+0018b8b0 void CRollerBallRace_Reset(void *self);
+0018b8c0 void CRollerBallRace_ResetChunk(void *self);
+0018b990 void *CRollerBallDrop_DeletingDtor(void *self, unsigned int flags);
+0018b9b0 int CRollerBallDrop_Init(void *self, void *package);
+0018bc40 void CRollerBallDrop_UpdatePlay(void *self);
+0018bf40 void CRollerBallDrop_Reset(void *self);
+0018c000 void CRollerBallDrop_ResetChunk(void);
+
 # RollerBall/unplaced_systems.c: the small sub-systems of the game object
 0018dad0 void CRollerBallRumble_Ctor(void *self);
 0018dae0 void CRollerBallRumble_Dtor(void *self);
@@ -73,8 +97,11 @@
 0018dd90 void CRollerBallShaders_Shutdown(void *self);
 0018ddb0 void CRollerBall2740_Ctor(void *self);
 0018ddc0 void CRollerBall2740_Dtor(void *self);
+0018de20 void CRollerBallScreen_Ctor(void *self);
+0018de30 int CRollerBallScreen_Init(void *self, const char *texture, int width, int height);
 0018dfe0 void CRollerBallVideo_Ctor(void *self);
 0018dff0 void CRollerBallVideo_Dtor(void *self);
+0018e010 void CRollerBallList_Add(void *self, void *item);
 0018e040 void CRollerBallVideo_Shutdown(void *self);
 0018e070 void CRollerBallVideo_Draw(void *self);
 0018e290 void CRollerBallVideo_UpdateScreen(void *self, float dt);
