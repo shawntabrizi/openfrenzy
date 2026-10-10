@@ -25,6 +25,14 @@ Owner: clusteroids.
 #define g_ClFrameTime CL_VAR(float, 0x002fae9c)        /* frame time, 1.0 = 1/60 s */
 #define g_ClCamera CL_ADDR(0x00296ee4)                 /* the camera object (vtable 0x00269648) */
 
+/* ---------- functions missing from of_functions.tsv (tail-jump targets Ghidra did not make
+   functions; reported to the architect) */
+
+/* 0x000debb0: prints the profile pass times (the tail of ClustGame_Draw jumps here) */
+void FUN_000debb0(void);
+/* 0x000df730 (not defined separately): frees the debug input channels/map and the players'
+   input maps; CGameModeClusteroids_Suspend tail-jumps here and holds its code inline */
+
 /* ---------- the four players: records of 0x850 bytes from 0x002fcb20 */
 
 #define CL_PLAYER_BASE 0x002fcb20u
