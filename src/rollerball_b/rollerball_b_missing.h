@@ -16,4 +16,9 @@ void FUN_00193120(void *self, float dt);
 void FUN_00193260(void *self, float dt);
 void FUN_00193360(void *self, float dt);
 
+/* ParseMap callbacks of CRollerball_World.cpp ("World", "Instance", "Object" nodes) */
+int FUN_00195400(int node, void *self);
+int FUN_00195930(int node, void *self);
+int FUN_001965a0(int node, void *self);
+
 #endif

@@ -75,3 +75,21 @@
 00194850 void CRollerballCamera_UpdateCountdown(void *self, float dt);
 001948f0 void CRollerballCamera_UpdatePlay(void *self, float dt);
 00194970 void CRollerballCamera_Update(void *self, float dt);
+
+# RollerBall/CRollerball_World.cpp
+00194a40 void CRollerballWorld_Ctor(void *self);
+00194a50 void CRollerballWorld_Dtor(void *self);
+00194a60 void CRollerballWorld_Shutdown(void *self);
+00194bb0 void CRollerballWorld_Update(void *self, float dt);
+00194c70 void CRollerballWorld_DrawBase(void *self);
+00194e10 void CRollerballWorld_DrawShadowsBase(void *self);
+00194e70 void CRollerballWorld_DrawSumo(void *self);
+00195010 void CRollerballWorld_DrawRace(void *self);
+00195170 void CRollerballWorld_DrawDrop(void *self);
+001952f0 void CRollerballWorld_DrawShadows(void *self);
+00195340 void CRollerballWorld_DrawPlatforms(void *self);
+001953e0 void *CRollerballWorld_DeletingDtor(void *self, unsigned int flags);
+00196500 void CRollerballWorld_Draw(void *self);
+00196560 void CRollerballWorld_DrawShadowPass(void *self);
+001965f0 int CRollerballWorld_LoadLOM(void *self, struct bkPackage *package, const char *path);
+001966a0 int CRollerballWorld_Load(void *self, struct bkPackage *package, const char *level);
