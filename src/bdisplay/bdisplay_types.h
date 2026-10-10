@@ -202,7 +202,7 @@ OF_ASSERT_SIZE(bdRenderTarget, 0x110);
 typedef struct bdGlyph
 {
 	short u, v;          /* texel position in the font texture */
-	short width, height; /* height 0: glyph not present */
+	short width, height; /* width 0: glyph not present */
 } bdGlyph;
 
 #define BDFONT_FIRST_CHAR 0x20
@@ -264,18 +264,23 @@ typedef struct bdPrintFormat
 } bdPrintFormat;
 OF_ASSERT_SIZE(bdPrintFormat, 0x20);
 
-/* what a print callback gets (the caller's stack block at 0x5c-0x48 in
-bPrintFontVerts, 0x20-0x1c in PrintFontLite): reason 0 per character
-(after its four vertices are written), 1 for "@(...)" and 2 for "@[...]" */
+/* what a print callback gets: a block on the caller's stack (bPrintFontVerts
+0x00045d.., PrintFontLite). reason 0: after each character's four vertices
+(current, index, line); 1: "@(text)" (record, text; nonzero keeps the
+record); 2: "@[name]" inline picture (record, text; 0 drops the record).
+PrintFontLite sets only vertices, current, line (0), index and context. */
 typedef struct bdPrintCallbackInfo
 {
-	float *vertices;  /* 0x00 start of the vertex block */
-	void *current;    /* 0x04 reason 0: the character's vertices; 1, 2: the bdPrintChar */
-	char *text;       /* 0x08 reason 1, 2: the text between the brackets */
-	int line;         /* 0x0c */
-	int index;        /* 0x10 character index */
-	void *context;    /* 0x14 */
+	float *vertices;           /* 0x00 start of the vertex block */
+	float *current;            /* 0x04 the character's vertices */
+	struct bdPrintChar *chars; /* 0x08 DAT_002bef00 */
+	struct bdPrintChar *record; /* 0x0c */
+	char *text;                /* 0x10 between the brackets */
+	int line;                  /* 0x14 */
+	int index;                 /* 0x18 character in the line */
+	void *context;             /* 0x1c */
 } bdPrintCallbackInfo;
+OF_ASSERT_SIZE(bdPrintCallbackInfo, 0x20);
 typedef int (*bdPrintCallback)(int reason, bdPrintCallbackInfo *info);
 
 /* ---------- library functions the shared XDK headers do not declare yet.

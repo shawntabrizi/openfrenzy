@@ -43,16 +43,35 @@
 00041ac0 void bdTextureUnlock(struct bdTexture *texture);
 00041b10 struct bdTexture *bdCreateTexture(int width, int height, int unused, int numFrames, short flags, int format);
 
-# ---------- camera and projection (file unknown)
-00043c10 void bdProjectPoints(float *out, float *in, int count);
-000443f0 float bdProjectSize(float *pos, float width, float height, float *outWidth, float *outHeight);
-000444b0 float bdProjectWidth(float *pos, float width, float *outWidth);
-00043b70 void bdSetProjectionMode(int mode);
+# ---------- camera, projection, render states, render targets (xbRender.cpp)
+00043490 void bdSetCameraPosition(float x, float y, float z);
+000434b0 void bdSetCameraAngles(float x, float y, float z, int order);
+000435f0 void bdSetCameraLookAt(float *eye, float *target, float roll);
+000436e0 void bdSetCameraOrbit(float *target, float pitch, float yaw, float distance);
+00043790 void bdUpdateView(void);
+000438b0 void bdSetWorldIdentity(void);
+00043930 void bdSetWorldMatrix(float *world);
 000439d0 void bdSetup2DProjection(void);
 00043a90 void bdSetupProjection(void);
+00043b70 void bdSetProjectionMode(int mode);
+00043c10 void bdProjectPoints(float *out, float *in, int count);
+00043cf0 void bdTransformPoints(float *out, float *in, int count);
+00043d20 char bdBoxVisible(float *matrix, float x0, float x1, float y0, float y1, float z0, float z1);
+00044320 int bdSphereVisible(float *pos, float radius);
+000443f0 float bdProjectSize(float *pos, float width, float height, float *outWidth, float *outHeight);
+000444b0 float bdProjectWidth(float *pos, float width, float *outWidth);
+00044550 void bdSetDepthOffset(float offset);
+000445e0 void bdSetClipWindow(int x, int y, int width, int height);
 00044810 void bdSetNearFar(float nearZ, float farZ);
 00044840 void bdSetViewport(int x, int y, int width, int height);
 00044a00 void bdSetFieldOfView(float fovX, float fovY);
+00044a70 void bdRenderTargetGetInfo(struct bdRenderTarget *target, int *width, int *height, int *colourDepth, int *zDepth);
+00044ac0 int bdLockRenderState(int state);
+00044ae0 int bdUnlockRenderState(int state);
+00044b00 void bdSetRenderState(int state, unsigned int value, unsigned int extra);
+00044e70 void bdSetTextureFactorAlpha(int alpha);
+00044e90 struct bdRenderTarget *bdCreateRenderTarget(int width, int height, int colourDepth, int zDepth, unsigned int flags);
+000455a0 void bdSetRenderTargetTexture(struct bdRenderTarget *target, int stage);
 
 # ---------- xbDisplay.cpp
 00041d70 int bdInit(void);
@@ -73,6 +92,13 @@
 # ---------- xbFont.cpp
 00042e10 void bdFontInit(void);
 00042e40 void bdFontShutdown(void);
+00042e60 struct bdFont *bdLoadFont(void *package, unsigned int crc);
+00042ec0 void bdFontDelete(struct bdFont *font);
+00042ef0 int bdGetTextExtent(float *rect, struct bdFont *font, const unsigned short *text, int length, struct bdPrintFormat *format, void *callback, void *context);
+00043010 void bdPrintFontBox(struct bdFont *font, const unsigned short *text, int length, struct bdPrintFormat *format, int r, int g, int b, int a, void *callback, void *context);
+00043140 void PrintFontLite(struct bdFont *font, const unsigned short *text, int length, float x, float y, int r, int g, int b, int a, void *callback, void *context);
+00043400 void bdPrintFont(struct bdFont *font, const unsigned short *text, int length, struct bdPrintFormat *format, int r, int g, int b, int a, void *callback, void *context);
+00043440 void bdPrintFontLite(struct bdFont *font, const unsigned short *text, int length, float x, float y, int r, int g, int b, int a, void *callback, void *context);
 
 # ---------- render states and render targets (xbRender.cpp)
 00044dd0 void bdSetFogRange(float start, float end);
@@ -82,4 +108,20 @@
 000458a0 void bdDeleteRenderTarget(struct bdRenderTarget *target);
 
 # ---------- unplaced
+000459b0 int bPrintFontVerts(float *vertices, struct bdPrintLine *lines, struct bdFont *font, const unsigned short *text, int length, struct bdPrintFormat *format, int r, int g, int b, int a, void *callback, void *context);
+00046320 void bdGetStringSize(struct bdFont *font, const unsigned short *text, int length, float *width, float *height);
+00046c90 unsigned int bdGetRenderState(int state, unsigned int *extra);
+00046cb0 void bdPushRenderState(int state, unsigned int value, unsigned int extra);
+00046d00 void bdPopRenderState(int state);
+00046d40 void bdSaveRenderStates(unsigned int *saved);
+00046d60 void bdRestoreRenderStates(unsigned int *saved);
+00046db0 struct bdTexture *bdLoadTexture2(void *package, unsigned int crc);
+00046dc0 void bdTextureDelete2(struct bdTexture *texture);
+00046dd0 void bdDrawLinearTexture(struct bdTexture *texture, int x, int y);
 00047010 const char *bdGetErrorString(int result);
+00047070 int FUN_00047070(void);
+00047300 void FUN_00047300(void *callback);
+
+# ---------- xbVideo.cpp (0x00046390 and 0x000463b0, Bink's allocator
+# callbacks, are not in the function table: defined in BDISPLAY/xbVideo.c)
+000463c0 int bdVideoPlayStream(const char *fileName, unsigned int flags, void *callback, void *context);

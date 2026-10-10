@@ -129,6 +129,18 @@ static inline void bd_matrix_scale(float *m, float x, float y, float z)
 	m[14] = 0.0f;
 }
 
+/* out = b x a (4x4, row-major): bKernel's SSE multiply (0x00050150) when
+all three are 16-byte aligned, its plain one (0x0004ff30) otherwise; the
+two compute the same product. The original tests the alignment the same
+way (for its own globals the compiler folded the test). */
+static inline void bd_matrix_multiply(float *out, float *a, float *b)
+{
+	if ((((uintptr_t)out | (uintptr_t)a | (uintptr_t)b) & 0xf) == 0)
+		FUN_00050150(out, a, b);
+	else
+		FUN_0004ff30(out, a, b);
+}
+
 /* the colour of channels r, g, b, a (0-255) from the channel tables */
 #define BD_RGBA(r, g, b, a) \
 	(DAT_002bce18[(r)] | DAT_002bc490[(g)] | DAT_002bd640[(b)] | DAT_002bc898[(a)])
