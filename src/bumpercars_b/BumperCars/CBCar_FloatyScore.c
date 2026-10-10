@@ -17,17 +17,17 @@ void BCarFloaty_Update(struct BCarFloaty *self, float dt, float angle)
 
 	if (self->system == NULL)
 		return;
-	BCB_F32(self->system, 4) = angle;
+	self->system->angle = angle;
 	/* the update callback receives dt's 32 bits through the extra system's argument */
 	memcpy(&bits, &dt, sizeof bits);
-	baUpdateExtras(BCB_PTR(self->system, 0), (void *)(uintptr_t)bits);
+	baUpdateExtras(self->system->system, (void *)(uintptr_t)bits);
 }
 
 /* 0x000a0ba0  (gap; file inferred) */
 void BCarFloaty_Draw(struct BCarFloaty *self)
 {
 	if (self->system != NULL)
-		baDrawExtras(BCB_PTR(self->system, 0), NULL);
+		baDrawExtras(self->system->system, NULL);
 }
 
 /* 0x000a0bc0  (gap; file inferred)
@@ -39,7 +39,7 @@ void BCarFloaty_Add(struct BCarFloaty *self, float *pos, int points, int r, int 
 	if (self->system == NULL)
 		return;
 	_snprintf(text, 10, "%+d", points);                          /* 0x0026619c */
-	baAddExtraItem(BCB_PTR(self->system, 0), self->font, (double)pos[0], (double)pos[1],
+	baAddExtraItem(self->system->system, self->font, (double)pos[0], (double)pos[1],
 		(double)pos[2], r, g, b, text);
 }
 
@@ -54,8 +54,8 @@ struct BCarFloaty *BCarFloaty_Construct(struct BCarFloaty *self, int maxItems,
 	if (self->system != NULL)
 	{
 		self->font = bLoadResource(NULL, "handgotl.ttf", 3, 0xdefa);  /* 0x00253e78 */
-		BCB_CALL(FUN_000a74d0, void (*)(struct BCarFloatyScore *, int))(self->system, maxItems);
-		BCB_F32(self->system, 0x84) = scale * BCB_F32(self->system, 0x84);
+		BCarFloatyScore_Init(self->system, maxItems);
+		self->system->scale = scale * self->system->scale;
 	}
 	return self;
 }
@@ -66,7 +66,7 @@ void BCarFloaty_Destruct(struct BCarFloaty *self)
 {
 	if (self->system != NULL)
 	{
-		baDeleteExtraSystem(BCB_PTR(self->system, 0));
+		baDeleteExtraSystem(self->system->system);
 		BCB_DELETE(self->system);
 		self->system = NULL;
 	}

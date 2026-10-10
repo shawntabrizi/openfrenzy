@@ -361,7 +361,32 @@ OF_ASSERT_SIZE(struct BCarItemInfo, 0xec);
 /* the floaty score owner (CBCar_FloatyScore.cpp, 8 bytes; its pointer is at 0x002f138c):
 the floaty text system (struct BCarFloatyScore of bcb_items.h, 0x90 bytes, set up by ClassLib
 code 0x000a74d0, which also keeps it in 0x002f27c4) and the font of the texts */
-struct BCarFloatyScore;
+/* the floaty text system (0x90 bytes, BumperCars/bcb_floaty.c) */
+struct BCarFloatyScore {
+	struct BExtraSystem *system;   /* 0x00 */
+	float angle;                   /* 0x04 the camera heading (the texts face it) */
+	unsigned int saved[30];        /* 0x08 render states kept while drawing */
+	float rise;                    /* 0x80 units per frame */
+	float scale;                   /* 0x84 */
+	float life;                    /* 0x88 */
+	int big;                       /* 0x8c texts of size 3 instead of 1 */
+};
+OF_ASSERT_SIZE(struct BCarFloatyScore, 0x90);
+
+/* a text (0x88 bytes) */
+struct BCarFloatyItem {
+	float pos[4];                  /* 0x00 */
+	unsigned char colour[4];       /* 0x10 r, g, b, a */
+	char text[0x20];               /* 0x14 */
+	unsigned short wtext[0x20];    /* 0x34 */
+	int age;                       /* 0x74 frames */
+	float width;                   /* 0x78 */
+	float height;                  /* 0x7c */
+	struct bdFont *font;           /* 0x80 */
+	int size;                      /* 0x84 1 or 3 */
+};
+OF_ASSERT_SIZE(struct BCarFloatyItem, 0x88);
+
 struct BCarFloaty {
 	struct BCarFloatyScore *system; /* 0x00 */
 	void *font;                     /* 0x04 "handgotl.ttf" */
@@ -519,6 +544,10 @@ extern unsigned char DAT_00291734[];
 /* functions Ghidra missed (not in src/include/of_functions.tsv; see the module report) */
 void FUN_00096c00(void);          /* delete the human players' input maps (CBCar_Player.c) */
 void FUN_000990d0(int speak);     /* the race variant's lead player (CBCar_Player.c) */
+struct BExtraSystem;
+struct BCarFloatyItem;
+int FUN_000a6e50(struct BExtraSystem *system, struct BCarFloatyItem *item, void *args); /* bcb_floaty.c */
+int FUN_000a6fb0(struct BExtraSystem *system, int numItems, struct BCarFloatyItem **items, void *arg);
 
 /* the game timer's elapsed seconds (0x00096600 on 0x002f1fa8) */
 #define BCB_NOW() BCarTimer_GetElapsed(&g_BCarTimer.timer)
