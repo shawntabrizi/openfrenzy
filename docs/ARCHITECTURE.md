@@ -118,6 +118,7 @@ From OpenCE-mac-zimm3rmann (`e55684a`), renamed `HALO_*` -> `OPENFRENZY_*`:
 | `host_sdl.c` | SDL3 window, events, gamepad, audio (guest-side handles). |
 | `host_gl.c`, `host_gl_bridge.c` | GLES 3 entry points (`hostgl_*`), implemented by ANGLE. |
 | `host_perf.c` | Frame timing log. |
+| `host_bink.c` | Bink video and audio decoding with FFmpeg (`host_bink_*`; openfrenzy, not from OpenCE). Without FFmpeg (`OPENFRENZY_BINK_FFMPEG` off) every open fails. |
 
 - Window, input and audio use **SDL3** (Homebrew 3.4.x). Rendering uses **GLES 3.0** from
   **ANGLE with the Metal backend** (pinned download, `port/macos/dependencies.json`).
@@ -167,7 +168,7 @@ The disc (XDVDFS, game partition at offset 0, 125 files):
 | `Packages/*.xbp` (89, 596 MB), `Packages/<Language>/*.xbp` | Babel packages: textures, models, sounds, per minigame and variant (`bump-v01`, `drill-v3`, ...). Loaded by bKernel (`FUN_0004d320` "%s.xbp", `FUN_0004e250` "Package", file cache `xbCache.cpp` needs 2 KB-aligned sizes). Header: a 32-bit hash/ID, then 0x80, then table fields (not decoded yet). | bkernel decodes |
 | `Packages/Music.xbp` (37 MB) | 29 WMA (ASF) streams; `InitMusic` "%s.wma" (0x00071b60) | dsound needs a WMA decoder |
 | `Packages/MetaLevs/*.lnd` | text level scripts for the board game (`LANDSCAPE sitemesh01.obe 0 0 0`, `PLAY_TIME 4800`); parsed by `Meta/LevelLoad.cpp` (0x00166db0) | meta |
-| `Packages/Video/*.bik`, `XDemos/videos/*.bik` | Bink videos (Blitz logos, attract mode, demos) | skipped (bink_null) |
+| `Packages/Video/*.bik`, `XDemos/videos/*.bik` | Bink videos (Blitz logos, attract mode, demos) | `bink_host.c` + host FFmpeg |
 | `layer0-*.zro`, `layer1-*.zro` (16 x 64 MB) | zero padding (verified: all bytes 0) | ignored |
 | `XDemos/` | the demo launcher (`XDemos.xbe`) | not used |
 
@@ -186,7 +187,7 @@ equivalent (`ref/OpenCE/port/linux/src/` at `231708d`), split into platform modu
 | `D3D` (D3D8 1.0.3925), `XGRPH` | `d3d8_gl.c`, `d3d8_resources.c`, `nv2a_vsh.c`, `nv2a_psh.c`, `xbox_textures.c`, `gl_functions.c`, `xgpu_text.c`, `xgpu_post.c` | d3d8 |
 | `DSOUND` (3925) | `dsound_sdl.c` | dsound |
 | `WMADEC`, `WMADECXM` | a WMA decoder (to write or port; music in `Music.xbp` is WMA) | dsound |
-| `.text` region `bink` (RAD Bink) | `bink_null.c` (from OpenCE): videos are skipped | dsound |
+| `.text` region `bink` (RAD Bink) | `bink_host.c` (started from OpenCE's `bink_null.c`): the host decodes with FFmpeg (`host_bink.c`); audio goes to a DirectSound stream | dsound |
 | `XPP` | `xinput_sdl.c` | input |
 | `.text` regions `xapi`, `libc` | `xbox_kernel.c`, `xbox_xapi.c`, `xbox_memory.c` + musl + `msvc_crt.c`/`msvc_wide.c` | xkernel, runtime |
 | disc and save drives | `xiso_fs.c` (new: XDVDFS reader), `xbox_files.c`, `xiso.c` | vfs |

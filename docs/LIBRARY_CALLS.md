@@ -16,18 +16,18 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 | 0x001f68c0 | `D3DDevice_SetRenderState_TextureFactor` | D3DDevice_SetRenderState_TextureFactor (HLE, HLE) | bdisplay, bumpercars_b, carryon_a, charlib, classlib_fx, clusteroids, hopper, rollerball_a, rowing_b, scratchmatch, tankedup_b |
 | 0x001f7370 | `D3DDevice_SetRenderState_StencilEnable` | D3DDevice_SetRenderState_StencilEnable (HLE, HLE) | bactor, charlib, engine_misc, hopper, rollerball_a, tankedup_b |
 | 0x001f8000 | `D3DDevice_SetStreamSource` | D3DDevice_SetStreamSource (HLE, HLE) | bactor, bdisplay, carryon_b, classlib_fx, rowing_b |
-| 0x001f5510 | `D3D_KickOffAndWaitForIdle` | no HLE yet (MISSING): the owning platform module adds it | core, core_modes_a, core_modes_b, rowing_a |
-| 0x001f5550 | `D3DDevice_InsertFence` | no HLE yet (MISSING): the owning platform module adds it | carryon_b, classlib_fx, rowing_b |
-| 0x001f5cd0 | `D3DDevice_SetLight` | no HLE yet (MISSING): the owning platform module adds it | bactor, bumpercars_a, rowing_b |
+| 0x001f5510 | `D3D_KickOffAndWaitForIdle` | D3D_KickOffAndWaitForIdle (HLE, HLE) | core, core_modes_a, core_modes_b, rowing_a |
+| 0x001f5550 | `D3DDevice_InsertFence` | D3DDevice_InsertFence (HLE, HLE) | carryon_b, classlib_fx, rowing_b |
+| 0x001f5cd0 | `D3DDevice_SetLight` | D3DDevice_SetLight (HLE, HLE) | bactor, bumpercars_a, rowing_b |
 | 0x001f5f90 | `D3DDevice_SetTexture` | D3DDevice_SetTexture (HLE, HLE) | bactor, bdisplay, engine_misc |
 | 0x001f60f0 | `D3DDevice_SetPalette` | D3DDevice_SetPalette (HLE, HLE) | bactor, bdisplay, drillers |
 | 0x001f6680 | `D3DDevice_SetRenderState_Deferred` | D3DDevice_SetRenderState_Deferred (HLE, HLE) | bactor, bdisplay, classlib_fx |
 | 0x001f84a0 | `D3DDevice_SetVertexShaderConstant` | D3DDevice_SetVertexShaderConstant (HLE, HLE) | bactor, meta_a, rollerball_b |
 | 0x001f5340 | `D3DDevice_GetDeviceCaps` | D3DDevice_GetDeviceCaps (HLE, HLE) | bdisplay, carryon_a |
 | 0x001f5470 | `D3DDevice_GetTransform` | D3DDevice_GetTransform (HLE, HLE) | charlib, rollerball_b |
-| 0x001f54a0 | `D3DDevice_SetMaterial` | no HLE yet (MISSING): the owning platform module adds it | bdisplay, classlib_fx |
+| 0x001f54a0 | `D3DDevice_SetMaterial` | D3DDevice_SetMaterial (HLE, HLE) | bdisplay, classlib_fx |
 | 0x001f6170 | `D3DDevice_SetIndices` | D3DDevice_SetIndices (HLE, HLE) | bdisplay, classlib_fx |
-| 0x001f6200 | `D3DDevice_GetDisplayFieldStatus` | no HLE yet (MISSING): the owning platform module adds it | core, core_modes_a |
+| 0x001f6200 | `D3DDevice_GetDisplayFieldStatus` | D3DDevice_GetDisplayFieldStatus (HLE, HLE) | core, core_modes_a |
 | 0x001f6490 | `D3DDevice_PersistDisplay` | D3DDevice_PersistDisplay (HLE, HLE) | core_modes_a, core_modes_b |
 | 0x001f69f0 | `D3DDevice_SetRenderState_ZBias` | D3DDevice_SetRenderState_ZBias (HLE, HLE) | demolition_c, rollerball_b |
 | 0x001f83c0 | `D3DDevice_SetVertexShader` | D3DDevice_SetVertexShader (HLE, HLE) | bactor, bdisplay |
@@ -38,7 +38,7 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 | 0x001f58a0 | `D3DDevice_GetBackBuffer` | D3DDevice_GetBackBuffer (HLE, HLE) | bdisplay |
 | 0x001f5b40 | `D3DDevice_GetDepthStencilSurface` | D3DDevice_GetDepthStencilSurface (HLE, HLE) | bdisplay |
 | 0x001f5b70 | `D3DDevice_SetViewport` | D3DDevice_SetViewport (HLE, HLE) | bdisplay |
-| 0x001f5eb0 | `D3DDevice_LightEnable` | no HLE yet (MISSING): the owning platform module adds it | bactor |
+| 0x001f5eb0 | `D3DDevice_LightEnable` | D3DDevice_LightEnable (HLE, HLE) | bactor |
 | 0x001f6790 | `D3DDevice_SetRenderState_FogColor` | D3DDevice_SetRenderState_FogColor (HLE, HLE) | bdisplay |
 | 0x001f67e0 | `D3DDevice_SetRenderState_CullMode` | D3DDevice_SetRenderState_CullMode (HLE, HLE) | bdisplay |
 | 0x001f6d30 | `D3DDevice_SetTextureState_BorderColor` | D3DDevice_SetTextureState_BorderColor (HLE, HLE) | engine_misc |
@@ -54,13 +54,13 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 | 0x001fc680 | `D3DResource_BlockUntilNotBusy` | D3DResource_BlockUntilNotBusy (HLE, HLE) | bdisplay |
 | 0x001fc800 | `D3DResource_Release` | D3DResource_Release (HLE, HLE) | bdisplay |
 | 0x001fc850 | `D3DResource_IsBusy` | D3DResource_IsBusy (HLE, HLE) | bdisplay |
-| 0x00201390 | `D3DDevice_DrawVerticesUP` | no HLE yet (MISSING): the owning platform module adds it | bdisplay |
+| 0x00201390 | `D3DDevice_DrawVerticesUP` | D3DDevice_DrawVerticesUP (HLE, HLE) | bdisplay |
 | 0x00201570 | `D3DDevice_DrawIndexedVertices` | D3DDevice_DrawIndexedVertices (HLE, HLE) | classlib_fx |
 | 0x002017e0 | `D3DPalette_Lock` | D3DPalette_Lock (HLE, HLE) | bdisplay |
 | 0x00201810 | `D3DVertexBuffer_Lock` | D3DVertexBuffer_Lock (HLE, HLE) | bdisplay |
 | 0x00202150 | `D3DDevice_Present` | D3DDevice_Present (HLE, HLE) | bdisplay |
-| 0x002022e0 | `FUN_002022e0` | no HLE yet (UNKNOWN): the owning platform module adds it | bdisplay |
-| 0x002022f0 | `D3D_GetDeviceCaps` | no HLE yet (MISSING): the owning platform module adds it | bdisplay |
+| 0x002022e0 | `FUN_002022e0` | Direct3DCreate8 (HLE, HLE) | bdisplay |
+| 0x002022f0 | `D3D_GetDeviceCaps` | Direct3D_GetDeviceCaps (HLE, HLE) | bdisplay |
 
 ## DSOUND (23 functions)
 
@@ -72,18 +72,18 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 | 0x00206a70 | `IDirectSoundBuffer_Release` | IDirectSoundBuffer_Release (HLE, HLE) | engine_misc |
 | 0x00206a86 | `DirectSoundUseFullHRTF` | DirectSoundUseFullHRTF (HLE, HLE) | engine_misc |
 | 0x0020726f | `IDirectSound_DownloadEffectsImage` | IDirectSound_DownloadEffectsImage (HLE, HLE) | engine_misc |
-| 0x00207296 | `IDirectSound_SetAllParameters` | no HLE yet (MISSING): the owning platform module adds it | engine_misc |
+| 0x00207296 | `IDirectSound_SetAllParameters` | IDirectSound_SetAllParameters (HLE, HLE) | engine_misc |
 | 0x002072b6 | `IDirectSound_SetDistanceFactor` | IDirectSound_SetDistanceFactor (HLE, HLE) | engine_misc |
 | 0x002072da | `IDirectSound_CommitDeferredSettings` | IDirectSound_CommitDeferredSettings (HLE, HLE) | engine_misc |
 | 0x002072f2 | `IDirectSound_SetI3DL2Listener` | IDirectSound_SetI3DL2Listener (HLE, HLE) | engine_misc |
 | 0x00207312 | `IDirectSoundBuffer_SetVolume` | IDirectSoundBuffer_SetVolume (HLE, HLE) | engine_misc |
-| 0x0020732e | `IDirectSoundBuffer_SetMaxDistance` | no HLE yet (MISSING): the owning platform module adds it | engine_misc |
-| 0x00207352 | `IDirectSoundBuffer_SetMinDistance` | no HLE yet (MISSING): the owning platform module adds it | engine_misc |
-| 0x00207376 | `IDirectSoundBuffer_SetPosition` | no HLE yet (MISSING): the owning platform module adds it | engine_misc |
-| 0x002073ab | `IDirectSoundBuffer_SetVelocity` | no HLE yet (MISSING): the owning platform module adds it | engine_misc |
-| 0x002073e0 | `IDirectSoundBuffer_GetStatus` | no HLE yet (MISSING): the owning platform module adds it | engine_misc |
-| 0x002073fc | `IDirectSoundBuffer_GetCurrentPosition` | no HLE yet (MISSING): the owning platform module adds it | engine_misc |
-| 0x00207953 | `IDirectSoundBuffer_SetFrequency` | no HLE yet (MISSING): the owning platform module adds it | engine_misc |
+| 0x0020732e | `IDirectSoundBuffer_SetMaxDistance` | IDirectSoundBuffer_SetMaxDistance (HLE, HLE) | engine_misc |
+| 0x00207352 | `IDirectSoundBuffer_SetMinDistance` | IDirectSoundBuffer_SetMinDistance (HLE, HLE) | engine_misc |
+| 0x00207376 | `IDirectSoundBuffer_SetPosition` | IDirectSoundBuffer_SetPosition (HLE, HLE) | engine_misc |
+| 0x002073ab | `IDirectSoundBuffer_SetVelocity` | IDirectSoundBuffer_SetVelocity (HLE, HLE) | engine_misc |
+| 0x002073e0 | `IDirectSoundBuffer_GetStatus` | IDirectSoundBuffer_GetStatus (HLE, HLE) | engine_misc |
+| 0x002073fc | `IDirectSoundBuffer_GetCurrentPosition` | IDirectSoundBuffer_GetCurrentPosition (HLE, HLE) | engine_misc |
+| 0x00207953 | `IDirectSoundBuffer_SetFrequency` | IDirectSoundBuffer_SetFrequency (HLE, HLE) | engine_misc |
 | 0x0020796f | `IDirectSoundBuffer_Play` | IDirectSoundBuffer_Play (HLE, HLE) | engine_misc |
 | 0x00207993 | `IDirectSoundBuffer_Stop` | IDirectSoundBuffer_Stop (HLE, HLE) | engine_misc |
 | 0x002079ab | `IDirectSoundBuffer_SetBufferData` | IDirectSoundBuffer_SetBufferData (HLE, HLE) | engine_misc |
@@ -100,10 +100,10 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 
 | address | XBE name | replacement | called from modules |
 |---|---|---|---|
-| 0x0022184b | `FUN_0022184b` | no HLE yet (UNKNOWN): the owning platform module adds it | bactor |
-| 0x00221874 | `FUN_00221874` | no HLE yet (UNKNOWN): the owning platform module adds it | bactor |
-| 0x0022835a | `FUN_0022835a` | no HLE yet (UNKNOWN): the owning platform module adds it | bactor |
-| 0x002285c1 | `XGSetTextureHeader` | no HLE yet (MISSING): the owning platform module adds it | bdisplay |
+| 0x0022184b | `FUN_0022184b` | XGBuffer_Release (HLE, HLE) | bactor |
+| 0x00221874 | `FUN_00221874` | XGBuffer_GetBufferPointer (HLE, HLE) | bactor |
+| 0x0022835a | `FUN_0022835a` | XGAssembleShader (HLE, HLE) | bactor |
+| 0x002285c1 | `XGSetTextureHeader` | XGSetTextureHeader (HLE, HLE) | bdisplay |
 
 ## XPP (7 functions)
 
@@ -114,16 +114,16 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 | 0x0024d2ae | `XInputGetState` | XInputGetState (HLE, HLE) | bkernel |
 | 0x0024d31f | `XInputSetState` | XInputSetState (HLE, HLE) | bkernel |
 | 0x0024d379 | `XInitDevices` | XInitDevices (HLE, HLE) | bkernel |
-| 0x0024d37e | `XGetDevices` | no HLE yet (MISSING): the owning platform module adds it | bkernel |
+| 0x0024d37e | `XGetDevices` | XGetDevices (HLE, HLE) | bkernel |
 | 0x0024d3a0 | `XGetDeviceChanges` | XGetDeviceChanges (HLE, HLE) | bkernel |
 
 ## bink (3 functions)
 
 | address | XBE name | replacement | called from modules |
 |---|---|---|---|
-| 0x000591c0 | `FUN_000591c0` | BinkOpen (RAD Bink; 'Not a Bink file.'): bink_null.c returns NULL, the game skips the movie | bdisplay |
-| 0x00059f80 | `FUN_00059f80` | unidentified: read export/funcs/00059f80.c and add it to IDENTIFIED | bdisplay |
-| 0x0005a090 | `D3D_SetPushBufferSize` | D3D_SetPushBufferSize (XDK, HLE) | bdisplay |
+| 0x000591c0 | `FUN_000591c0` | BinkOpen (RAD Bink; 'Not a Bink file.'): bink_host.c, decoded by the host with FFmpeg (host_bink.c) | bdisplay |
+| 0x00059f80 | `FUN_00059f80` | BinkClose (RAD Bink): bink_host.c | bdisplay |
+| 0x0005a090 | `D3D_SetPushBufferSize` | RADSetMemory (RAD Bink; XbSymbolDatabase says D3D_SetPushBufferSize): bink_host.c | bdisplay |
 
 ## libc (75 functions)
 

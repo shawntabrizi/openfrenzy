@@ -60,6 +60,7 @@ static struct setting settings[] =
 	{ "debug.gpu_flush_draws", "0" },
 	{ "debug.gpu_trace_frame", "0" },
 	{ "debug.screenshot_every", "0" },
+	{ "debug.skip_videos", "false" },
 	{ "debug.gpu_debug_expression", "" },
 	{ "debug.gpu_dump_shaders", "" },
 	{ "debug.gpu_skip_vertex_shaders", "" },

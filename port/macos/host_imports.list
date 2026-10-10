@@ -49,6 +49,11 @@ host_gl_buffer_write
 host_gl_read_buffer
 host_gl_fence_frame
 host_gl_wait_frame
+host_bink_open
+host_bink_decode_frame
+host_bink_copy_frame
+host_bink_read_audio
+host_bink_close
 host_android_path
 
 host_errno

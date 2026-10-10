@@ -3,8 +3,8 @@ XBVIDEO.C  <-  C:\Babel\Xbox\Src\BDISPLAY\xbVideo.cpp
 
 Bink video playback into a texture. 0x00046390-0x00046c86. The file name
 is the one the allocator callback passes (0x00259344). In the port, Bink is
-replaced by src/dsound/bink_null.c: BinkOpen fails, so bdVideoPlayStream
-returns 6 and the game skips the video.
+replaced by src/dsound/bink_host.c (FFmpeg on the host). Without FFmpeg
+BinkOpen fails, so bdVideoPlayStream returns 6 and the game skips the video.
 */
 
 #include "bdisplay_internal.h"

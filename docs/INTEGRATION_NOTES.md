@@ -296,10 +296,38 @@ integration round 2 (921ec75); see below.
   buffer counts show menu activity, not which screens); the 6-stage tournament was not run
   again; a run with a real audio device (outside the sandbox) was not made with the capture.
 
+## Bink video (integration round 3)
+
+- `src/dsound/bink_host.c` implements the Bink entry points; the host decodes with FFmpeg 8
+  (`port/macos/host/host_bink.c`, imports `host_bink_*`). The guest passes the disc image's
+  file descriptor and the .bik byte range; the host reads it with pread (no copy in guest
+  memory). Frames go to the game's LIN_ARGB8888 texture as B, G, R, A (BINKSURFACE32, flag 3).
+  The first audio track (44.1 kHz stereo in BLITZ60.bik and ATTRACT.bik; MICROSOFT.bik has
+  none) goes to a DirectSound stream (16-bit PCM packets); BinkDoFrame calls
+  DirectSoundDoWork, since the game's loop waits in bdVideoPlayStream. Frame timing is the
+  wall clock from the first BinkDoFrame.
+- Verified (window, frame dumps every 30 frames, timestamped log): boot shows MICROSOFT.bik
+  (105 frames, 3500 ms), BLITZ60.bik (172 frames, 5733 ms), ATTRACT.bik (1599 frames at 25
+  fps), then "Press START to play". After 30 s idle at the title (DAT_00283760 = 1800
+  frames) ATTRACT.bik plays again. START at 25 s stopped the boot ATTRACT.bik after 395
+  frames; START at 80 s stopped the idle one after 628 frames; both return to the title.
+  The DirectSound log shows one voice with real peaks during BLITZ60 and ATTRACT. Nobody
+  listened to the sound; lip sync was not checked.
+- Boot now takes about 75 s to the title without input. Scripted runs that assume the title
+  at once need `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` (or a START press per video).
+- New path, open fault: the attract cycle now goes on to a demo minigame (CGameMode_AttractMode
+  alternates video and demo). In 4 of 4 runs that reached a demo it chose RollerBall, which faults at
+  NULL + 0x78 during loading: baInitActorInstance <- CRollerBallGoal_Init <- FUN_00195930 <-
+  FUN_001965a0 <- CRollerballWorld_LoadLOM <- CRollerBallGame_Initialise <-
+  CGameMode_MiniGameIntro_Render (about 30 s after the second title). Direct launch of
+  RollerBall does not fault (round 3 sweep), so the demo set-up differs. Not fixed (rollerball).
+
 ## Library identifications
 
 - 0x1e0323 `_purecall`; 0xa6fa0 returns 1; 0xf8ab0 returns 0 (stdcall, 1 argument).
 - 0x0005a090 `RADSetMemory` (XbSymbolDatabase names it D3D_SetPushBufferSize); 0x000591c0
-  `BinkOpen`; 0x00059f80 `BinkClose`. Bink is the null stub; videos are skipped.
+  `BinkOpen`; 0x00059f80 `BinkClose`; from bdVideoPlayStream's calls: 0x000585c0
+  `BinkDoFrame`, 0x00057fb0 `BinkCopyToBuffer`, 0x00059e20 `BinkNextFrame`, 0x00058b60
+  `BinkWait`, 0x00058e00 `BinkGetSummary`. All in `src/dsound/bink_host.c` (see "Bink video").
 - Register `src/dsound/tests/run_tests.sh` in ctest. Update docs/LIBRARY_CALLS.md for the 10 dsound
   entry points that are now implemented.

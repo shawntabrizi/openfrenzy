@@ -293,7 +293,7 @@ OF_ASSERT_SIZE(D3DMATERIAL8, 0x44);
 
 /* XPhysicalProtect is the XBE's 0x001e8823; xdk_pdb.h declares it */
 
-/* RAD Bink (the XBE's bink region, replaced by src/dsound/bink_null.c) */
+/* RAD Bink (the XBE's bink region, replaced by src/dsound/bink_host.c) */
 typedef struct BINK *HBINK;
 /* 0x0005a090 (XbSymbolDatabase calls it D3D_SetPushBufferSize; it stores the
 two allocator callbacks) */

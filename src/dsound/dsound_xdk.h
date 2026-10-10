@@ -127,7 +127,8 @@ HRESULT WINAPI WmaCreateDecoder(LPFNWMAXMODATACALLBACK pCallback, LPVOID pCallba
 	WAVEFORMATEX *pwfxOutput, LPXMEDIAOBJECT *ppMediaObject);
 
 /* ---------- RAD Bink (XBE region LIB:bink 0x00057980-0x000703a0, replaced by
-bink_null.c: no movie opens, the game skips it) */
+bink_host.c: the host decodes the movie with FFmpeg; without FFmpeg no movie
+opens and the game skips it) */
 
 typedef struct BINK *HBINK;
 typedef void *(__stdcall *rad_memory_allocate_proc)(unsigned long size);

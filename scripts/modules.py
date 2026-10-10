@@ -116,7 +116,7 @@ PLATFORM_FILES = {
     "vfs": "src/vfs/ (xiso_fs.c, xbox_files.c, xiso.c, posix.h)",
     "xkernel": "src/xkernel/ (xbox_kernel.c, xbox_xapi.c, xbox_memory.c)",
     "d3d8": "src/d3d8/ (d3d8_gl.c, d3d8_resources.c, nv2a_*.c, xbox_textures.c, gl.h, xgpu*.{c,h})",
-    "dsound": "src/dsound/ (dsound_sdl.c; bink_null.c; WMA decoder to add)",
+    "dsound": "src/dsound/ (dsound_sdl.c; bink_host.c; WMA decoder to add)",
     "input": "src/input/ (xinput_sdl.c)",
 }
 

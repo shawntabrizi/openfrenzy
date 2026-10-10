@@ -87,6 +87,26 @@ target_link_options(openfrenzy PRIVATE
   "-Wl,-rpath,${OPENFRENZY_EGL_FRAMEWORKS}" "-Wl,-rpath,${OPENFRENZY_GLES_FRAMEWORKS}")
 set_target_properties(openfrenzy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
+# Bink video (port/macos/host/host_bink.c) decodes with FFmpeg (brew install ffmpeg). Without it
+# (or with -DOPENFRENZY_BINK_FFMPEG=OFF) every BinkOpen fails and the game skips its videos.
+option(OPENFRENZY_BINK_FFMPEG "Play Bink videos with FFmpeg (libavformat, libavcodec, libswscale)" ON)
+set(_bink_ffmpeg 0)
+if(OPENFRENZY_BINK_FFMPEG)
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    set(ENV{PKG_CONFIG_PATH} "/opt/homebrew/opt/ffmpeg/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    pkg_check_modules(OPENFRENZY_FFMPEG IMPORTED_TARGET libavformat libavcodec libswscale libavutil)
+  endif()
+  if(OPENFRENZY_FFMPEG_FOUND)
+    set(_bink_ffmpeg 1)
+    target_link_libraries(openfrenzy PRIVATE PkgConfig::OPENFRENZY_FFMPEG)
+    message(STATUS "Bink video: FFmpeg ${OPENFRENZY_FFMPEG_libavcodec_VERSION}")
+  else()
+    message(WARNING "Bink video: FFmpeg not found (brew install ffmpeg); videos will be skipped")
+  endif()
+endif()
+target_compile_definitions(openfrenzy PRIVATE OPENFRENZY_BINK_FFMPEG=${_bink_ffmpeg})
+
 # ---------- guest images
 
 include(ExternalProject)

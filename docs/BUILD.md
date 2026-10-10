@@ -5,7 +5,7 @@ Exact setup, build, run and test commands for Apple Silicon macOS. Design: `docs
 ## 1. One-time setup
 
 ```sh
-brew install python cmake ninja llvm@22 lld@22 sdl3
+brew install python cmake ninja llvm@22 lld@22 sdl3 ffmpeg
 ```
 
 - `llvm@22` is required for the guest (the `of-rebase` pass is built against it). Homebrew's
@@ -55,6 +55,11 @@ Rebuild after editing: `cmake --build build-<id>` (new files under `src/` are fo
 automatically). The guest is an ExternalProject (`build-<id>/guest-main`); to see its errors in
 full, run `cmake --build build-<id>/guest-main`.
 
+Bink videos: the host decodes them with Homebrew FFmpeg (`ffmpeg`: libavformat, libavcodec,
+libswscale; `port/macos/host/host_bink.c`). CMake finds it with pkg-config and prints
+`Bink video: FFmpeg <version>`. Without FFmpeg, or with `-DOPENFRENZY_BINK_FFMPEG=OFF`, the host
+builds without it and the game skips every video (the old `bink_null.c` behaviour).
+
 ## 3. Run
 
 The host needs a data root and a save root. Use `orig/` as the data root, so the disc image is
@@ -85,6 +90,7 @@ Environment:
 | `OPENFRENZY_GAME=<name>` | start that minigame directly (BumperCars, Fireworks, Clusteroids, Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp); `src/runtime/of_launch.c` |
 | `OPENFRENZY_VARIATION=<n>` | its variation (default 1) |
 | `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
+| `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` | skip the Bink videos (boot logos, attract video), as builds without FFmpeg do. Boot reaches the title in a few seconds instead of about 75 s; use it for scripted runs whose presses assume the title at once (`START@6000`) |
 | `OPENFRENZY_DSOUND_CAPTURE=<path>` | write the final audio output (after the limiter) to a WAV file: 48 kHz, stereo, 16-bit. It works without an audio device too (sandbox). See "Audio capture" below |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
 

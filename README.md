@@ -49,7 +49,7 @@ See `docs/ARCHITECTURE.md` (design and rules), `docs/BUILD.md` (setup, build, ru
 `docs/MODULES.md` (work modules), `docs/LIBRARY_CALLS.md` and `docs/STATUS.md`.
 
 ```sh
-brew install python cmake ninja llvm@22 lld@22 sdl3
+brew install python cmake ninja llvm@22 lld@22 sdl3 ffmpeg
 cmake -S . -B build -G Ninja && cmake --build build && ctest --test-dir build
 ```
 

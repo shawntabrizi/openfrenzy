@@ -103,6 +103,25 @@ the GPU to finish the work last fenced for a slot */
 void host_gl_fence_frame(unsigned int slot);
 void host_gl_wait_frame(unsigned int slot);
 
+/* ---------- Bink video (openfrenzy: port/macos/host/host_bink.c, FFmpeg)
+
+The guest (src/dsound/bink_host.c) passes an open file descriptor (the
+disc image) and the byte range of a .bik file in it. */
+
+/* fills info[0..6]: width, height, frames, frame rate, rate divisor, audio
+channels (0, 1 or 2), audio sample rate; returns a handle, or 0 (not a
+Bink file, or a build without FFmpeg) */
+unsigned int host_bink_open(int descriptor, long long offset, long long size, unsigned int *info);
+/* decodes the next video frame and the audio stored before it; 1, or 0 at
+the end */
+int host_bink_decode_frame(unsigned int bink);
+/* copies the last decoded frame as 32-bit B, G, R, A pixels; 1 on success */
+int host_bink_copy_frame(unsigned int bink, void *destination, int pitch, int width, int height);
+/* moves up to size bytes of decoded audio (16-bit PCM, interleaved);
+returns the count */
+int host_bink_read_audio(unsigned int bink, void *buffer, int size);
+void host_bink_close(unsigned int bink);
+
 /* ---------- Android */
 
 /* the storage directories the port uses, copied into buffer */

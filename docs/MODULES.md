@@ -73,7 +73,7 @@ Owns: src/d3d8/ (d3d8_gl.c, d3d8_resources.c, nv2a_*.c, xbox_textures.c, gl.h, x
 
 DirectSound HLE on SDL3 audio, WMA decoder (music), Bink null; replaces XBE bink region (not decompiled).
 
-Owns: src/dsound/ (dsound_sdl.c; bink_null.c; WMA decoder to add).
+Owns: src/dsound/ (dsound_sdl.c; bink_host.c; WMA decoder to add).
 Replaces 222 XBE library functions (LIB:bink): do not decompile them.
 
 ## 6. `input` (platform)
