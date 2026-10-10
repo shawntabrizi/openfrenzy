@@ -4,8 +4,9 @@ bKernel timer: 64-bit timestamps, their frequency and differences, and a sleep.
 The original source file is not known (gap functions in C:\Babel\Xbox\Src\bKernel).
 
 Port note: the Xbox read the CPU's time stamp counter (rdtsc). The port reads
-QueryPerformanceCounter instead; bInitTimer still measures the counter against the
-performance counter over half a second, so bkTimerFrequency stays the measured rate.
+QueryPerformanceCounter instead, scaled to the Xbox rate (see bkTimerRead); bInitTimer
+still measures the counter against the performance counter over half a second, so
+bkTimerFrequency stays the measured rate.
 */
 
 #include "bkernel_core.h"
@@ -38,13 +39,29 @@ void bInitTimer(void)
 }
 
 /* 0x0004c5f0
-bkTimerRead: the current timestamp. */
+bkTimerRead: the current timestamp.
+
+Port: the original returns rdtsc, which runs at the Xbox CPU clock (733 MHz). The port's
+performance counter runs at 1 MHz (src/xkernel/xbox_kernel.c), so it is scaled to the
+Xbox rate here. The rate matters: bkTimerDelta adds 0xffffffff ticks to a negative
+interval. At 733 MHz that is 5.9 s; at 1 MHz it was 71 minutes. Hopper's clock
+(0x0014c4a0) takes such an interval while the game is paused before the round starts
+(its start time is one frame newer than its "now"), and at 1 MHz the round ended at once
+as a 4-way draw with the clock at 1:00. */
+#define BK_TIMER_XBOX_RATE 733333333ull
+
 ulonglong bkTimerRead(void)
 {
 	LARGE_INTEGER count;
+	LARGE_INTEGER frequency;
+	ulonglong ticks;
+	ulonglong rate;
 
 	QueryPerformanceCounter(&count);
-	return (ulonglong)count.QuadPart;
+	QueryPerformanceFrequency(&frequency);
+	ticks = (ulonglong)count.QuadPart;
+	rate = (ulonglong)frequency.QuadPart;
+	return ticks / rate * BK_TIMER_XBOX_RATE + ticks % rate * BK_TIMER_XBOX_RATE / rate;
 }
 
 /* 0x0004c620

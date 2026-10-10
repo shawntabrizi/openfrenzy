@@ -150,6 +150,15 @@ Open faults, all in minigame modules (not fixed here):
 - Class of bug to check in every module: objects that core's crt/static_init.c constructs on
   DAT_<addr> commons but that a module maps into its own block without DAT_ aliases
   (ScratchMatch above). check_split_globals.py does not catch it.
+- Fixed (bkernel timer): Hopper ended at once as "Players 1, 2, 3 and 4 draw!" (clock 1:00)
+  when START paused it before the countdown. bkTimerRead now runs at the Xbox's 733 MHz (it
+  was the 1 MHz performance counter); bkTimerDelta's 0xffffffff wrap was then 71 minutes.
+  Any bkTimer user that compares tick counts with numbers now sees Xbox-sized ticks.
+- Open (Hopper, direct launch only): after round 1, HopGame_Restart (0x0013f2c0) deletes every
+  extra system, also the floaty score system at 0x002aeac0 (resources + 0x178), and does not
+  make it again. A token pickup in round 2 can then fault in baAddExtraItem (seen once:
+  read of 0 <- HopFx_TokenUpdate). The original does the same; on the board (Meta on the
+  stack) the round does not restart.
 
 ## Library identifications
 

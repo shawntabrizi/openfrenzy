@@ -124,6 +124,18 @@ __attribute__((noinline)) static void test_crc(void)
 	/* a timestamp that went backward is taken as wrapped */
 	CHECK(bkTimerDelta(5, 10) == 5, "forward delta");
 	CHECK(bkTimerDelta(10, 5) == 0xffffffffull - 5, "backward delta 0x%llx", bkTimerDelta(10, 5));
+	/* the timestamps run at the Xbox's 733 MHz: a backward delta then adds 5.9 s, as on the
+	Xbox. At the 1 MHz performance counter it added 71 minutes, and Hopper ended its round
+	at once when paused before the start. */
+	{
+		ulonglong start = bkTimerRead();
+		ulonglong ticks;
+
+		bkSleep(20);
+		ticks = bkTimerRead() - start;
+		CHECK(ticks > 733333333ull / 50 * 9 / 10 && ticks < 733333333ull / 50 * 3,
+			"20 ms is 0x%llx ticks", ticks);
+	}
 }
 
 /* ---------- events */
