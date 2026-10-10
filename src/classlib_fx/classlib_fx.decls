@@ -151,3 +151,64 @@
 000ab120 void CSparkPointSystem_Emit(struct CSparkPointSystem *self, struct CParticle *p);
 000ab340 void CSparkPointSystem_Release(struct CSparkPointSystem *self);
 000ab390 void CSparkPointSystem_Update(struct CSparkPointSystem *self, float dt);
+
+# ---- CollectableEffects.cpp
+000bf080 void CCollectEffect_UpdateRays(struct CCollectEffect *self);
+000bf1f0 void CCollectEffect_Init(struct CCollectEffect *self, float *pos, int numRays);
+000bf5b0 float CCollectEffect_Update(struct CCollectEffect *self);
+
+# ---- CToken.cpp (and the token gap functions)
+0010c230 void CToken_ShadowQuad(struct CTokenVertex *v, float *pos, float *up, float size, float angle);
+0010c420 void CToken_DrawGlowAll(void);
+0010c520 struct CToken *CToken_FindNearest(float *pos, float maxDist, uint stateMask, int flat);
+0010c5c0 int CSpring_Update(struct CSpring *self);
+0010c690 struct CToken *CToken_Init(struct CToken *self, float *pos, int type, float size, float *up);
+0010cb40 void CToken_DrawShadow(struct CToken *self);
+0010cbb0 void CToken_Collect(struct CToken *self);
+0010cc00 void *CToken_Delete(struct CToken *self);
+0010cc30 void CToken_DrawShadowAll(void);
+0010cd00 void CToken_DrawAll(void);
+0010cd10 void CToken_DeleteAll(void);
+0010cd60 void *CToken_Update(struct CToken *self);
+
+# ---- CWaterField.cpp (and its two gap helpers)
+001387d0 int CWaterField_BuildIndices(struct CWaterField *self);
+001389f0 void CWaterField_ConstructArray(void *mem, int size, int count, void *ctor);
+00138a20 void CWaterField_Ripple(struct CWaterField *self);
+00138b80 void CWaterField_Scroll(struct CWaterField *self, float dist);
+00138c40 void CWaterField_Rebuild(struct CWaterField *self);
+00138c50 void CWaterField_ScrollUV(struct CWaterField *self, float du, float dv);
+00138d40 void CWaterField_DrawFan(struct CWaterField *self, float *xs, float *zs, int count, struct CWaterVertex *v);
+00138de0 int CWaterField_Splash(struct CWaterField *self, float x, float z, float depth, float inner, float outer);
+00138ff0 void CWaterField_Destruct(struct CWaterField *self);
+00139080 void CWaterField_BuildNormals(struct CWaterField *self);
+00139170 void CWaterField_SetMaterial(uint diffuse, uint specular, float power, int specularOn);
+00139340 void CWaterField_ResetMaterial(void);
+00139400 int CWaterField_UpdateVertices(struct CWaterField *self);
+00139590 int CWaterField_BuildVertices(struct CWaterField *self);
+00139790 int CWaterField_Draw(struct CWaterField *self, int blend);
+00139850 int CWaterField_DrawEdges(struct CWaterField *self, float height, int blend);
+00139ab0 int CWaterField_RandomDrop(struct CWaterField *self, float depth);
+00139b40 struct CWaterField *CWaterField_DeletingDtor(struct CWaterField *self, byte flags);
+00139b60 int CWaterField_Init(struct CWaterField *self, struct CWaterParams *params);
+
+# ---- unplaced: AI conditions and states (0x00139e00-0x0013af80)
+00139e00 int AICond_Walk(void *ai);
+00139e70 int AICond_Jump(void *ai);
+00139ea0 int AICond_Attack(void *ai);
+0013a180 int AICond_Fall(void *ai);
+0013a1d0 int AIState_Land(void *ai, int entered);
+0013a260 int AIState_Taunt(void *ai, int entered);
+0013a2e0 int AIState_Pickup(void *ai, int entered);
+0013a360 int AIState_Drown(void *ai, int entered);
+0013a420 int AIState_Press(void *ai, int entered);
+0013a4c0 int AIState_Idle(void *ai, int entered);
+0013a570 int AIState_Stand(void *ai, int entered);
+0013a650 int AIState_Walk(void *ai, int entered);
+0013a890 int AIState_Jump(void *ai, int entered);
+0013a9f0 int AIState_Attack(void *ai, int entered);
+0013acf0 int AIState_Throw(void *ai, int entered);
+0013ada0 int AIState_JumpAttack(void *ai, int entered);
+0013ae50 int AIState_Fall(void *ai, int entered);
+0013ae80 int AIState_Hurt(void *ai, int entered);
+0013af80 int AIState_Knockout(void *ai, int entered);

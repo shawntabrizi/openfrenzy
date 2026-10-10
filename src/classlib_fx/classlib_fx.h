@@ -723,11 +723,185 @@ extern unsigned int DAT_002bce18[256];
 extern unsigned int DAT_002bc490[256];
 extern unsigned int DAT_002bd640[256];
 extern unsigned int DAT_002bc898[256];
+/* 0x002bc48c  triangles drawn this frame (bdisplay) */
+extern int DAT_002bc48c;
 /* 0x00284b10  ambient light colour (bactor) */
 extern int DAT_00284b10;
 extern int DAT_00284b14;
 extern int DAT_00284b18;
 /* 0x002ba99c  game flags (core): bit 0 keeps the previous particle positions */
 extern int DAT_002ba99c;
+
+/* ======================================================================== CollectableEffects.cpp */
+
+/* one ray of a collectable effect (0x54 bytes) */
+typedef struct CCollectRay
+{
+	float base[4];     /* 0x00 */
+	float tip[4];      /* 0x10 base + direction * radius */
+	int unknown20[4];  /* 0x20 */
+	float rot[4];      /* 0x30 Euler angles that turn (0, 0, 1) into the direction */
+	int colour[4];     /* 0x40 random 0..126 */
+	int pad50;
+} CCollectRay;
+OF_ASSERT_SIZE(CCollectRay, 0x54);
+
+/* rays that burst out of a collected item, then fade (charlib uses it) */
+typedef struct CCollectEffect
+{
+	CCollectRay *rays;   /* 0x00 */
+	int colour[4];       /* 0x04 random 0..126 */
+	int unknown14[4];    /* 0x14 */
+	int iter;            /* 0x24 the update loop counter (a member in the original) */
+	int numRays;         /* 0x28 */
+	float unknown2c;     /* 0x2c 6.0 */
+	float pos[4];        /* 0x30 */
+	float spin[4];       /* 0x40 random */
+	float rot[4];        /* 0x50 random */
+	int texture;         /* 0x60 "projray3.bmp" */
+	float top[4];        /* 0x64 pos raised by 70 */
+	int fadeColour[4];   /* 0x74 */
+	int unknown84;       /* 0x84 */
+	int state;           /* 0x88 0 grow, 1 hold, 2 shrink and fade, 3 done */
+	float radius;        /* 0x8c */
+	float maxRadius;     /* 0x90 */
+	float progress;      /* 0x94 */
+} CCollectEffect;
+OF_ASSERT_OFFSET(CCollectEffect, progress, 0x94);
+
+/* ======================================================================== CToken.cpp */
+
+/* a damped spring on up to 4 values (0x3c bytes) */
+typedef struct CSpring
+{
+	float cur[4];      /* 0x00 */
+	float target[4];   /* 0x10 */
+	float vel[4];      /* 0x20 */
+	float stiffness;   /* 0x30 */
+	float damping;     /* 0x34 */
+	int count;         /* 0x38 values used */
+} CSpring;
+OF_ASSERT_SIZE(CSpring, 0x3c);
+
+/* a shadow quad vertex (0x24 bytes) */
+typedef struct CTokenVertex
+{
+	float pos[3];      /* 0x00 */
+	float unknown0c[3];/* 0x0c */
+	uint colour;       /* 0x18 */
+	float uv[2];       /* 0x1c */
+} CTokenVertex;
+OF_ASSERT_SIZE(CTokenVertex, 0x24);
+
+/* a bronze, silver or gold token that springs up, spins and vanishes when collected */
+typedef struct CToken
+{
+	void *next;               /* 0x000 node in DAT_002ff9d4 */
+	void *prev;               /* 0x004 */
+	int unknown08[2];         /* 0x008 */
+	byte actor[0x170];        /* 0x010 the token's actor instance (bactor BActorInstance) */
+	float pos[4];             /* 0x180 */
+	float up[4];              /* 0x190 */
+	CSpring scale;            /* 0x1a0 the actor's scale */
+	float size;               /* 0x1dc */
+	float spinSpeed;          /* 0x1e0 */
+	float angle;              /* 0x1e4 */
+	int state;                /* 0x1e8 1 appearing, 2 idle, 4 vanishing */
+	int type;                 /* 0x1ec 0 bronze, 1 silver, 2 gold */
+	int glow;                 /* 0x1f0 drawn in the glow pass */
+	CTokenVertex shadow[4];   /* 0x1f4 */
+} CToken;
+OF_ASSERT_OFFSET(CToken, pos, 0x180);
+OF_ASSERT_OFFSET(CToken, shadow, 0x1f4);
+
+/* a token model ("bronzetoken.obe", ...) and its loaded actor */
+typedef struct CTokenModel
+{
+	char *name;   /* 0x0 */
+	int actor;    /* 0x4 loaded by demolition_d */
+} CTokenModel;
+
+/* 0x00298d1c-0x00298d48  token tunables (scale spring damping, stiffness, start height,
+glow factor, shadow size, models, actor height) */
+extern float DAT_00298d1c;
+extern float DAT_00298d20;
+extern float DAT_00298d24;
+extern uint DAT_00298d28;
+extern float DAT_00298d2c;
+extern CTokenModel DAT_00298d30[3];
+extern float DAT_00298d48;
+/* 0x002ff9c8  shadow mode (0 none, 1 alpha, else additive); 0x002ff9d0 shadow texture */
+extern int DAT_002ff9c8;
+extern int DAT_002ff9d0;
+/* 0x002ff9d4  every token (constructed by core's static constructor 0x001f2c20) */
+extern CLFList DAT_002ff9d4;
+
+/* ======================================================================== CWaterField.cpp */
+
+/* the parameters of a water field (0x40 bytes; defaults at 0x002ae578) */
+typedef struct CWaterParams
+{
+	float x0;            /* 0x04 corner */
+	float y;             /* 0x08 surface height */
+	float z0;            /* 0x0c */
+	float sizeX;         /* 0x10 */
+	float sizeZ;         /* 0x14 recomputed from the cell counts */
+	int nx;              /* 0x18 cells across (made even) */
+	int nz;              /* 0x1c cells deep (made even) */
+	int wrap;            /* 0x20 the left and right edges wrap */
+	float damping;       /* 0x24 */
+	float tension;       /* 0x28 */
+	float heightScale;   /* 0x2c */
+	float normalScale;   /* 0x30 slope to normal table index */
+	float slopeUV;       /* 0x34 slope to texture offset */
+	uint colour;         /* 0x38 */
+	char *textureName;   /* 0x3c */
+	float uvScale;       /* 0x40 */
+} CWaterParams;
+OF_ASSERT_SIZE(CWaterParams, 0x40);
+
+/* a water vertex (FVF 0x152: position, normal, colour, uv; 0x24 bytes) */
+typedef struct CWaterVertex
+{
+	float pos[3];
+	float normal[3];
+	uint colour;
+	float uv[2];
+} CWaterVertex;
+OF_ASSERT_SIZE(CWaterVertex, 0x24);
+
+/* a rippling water surface (vtable 0x0026e05c) */
+typedef struct CWaterField
+{
+	const void *const *vtable;   /* 0x0000 */
+	CWaterParams p;              /* 0x0004 */
+	byte *flags;                 /* 0x0044 per cell: 0 water, 1 fixed, 2 left edge, 3 right edge */
+	CWaterVertex edges[4][5];    /* 0x0048 the four edge fans */
+	byte unknown318[0x9048 - 0x318];
+	int texture;                 /* 0x9048 */
+	float cellX;                 /* 0x904c */
+	float cellZ;                 /* 0x9050 */
+	int numCells;                /* 0x9054 */
+	float uOffset;               /* 0x9058 */
+	float vOffset;               /* 0x905c */
+	float unknown9060;           /* 0x9060 */
+	int unknown9064;             /* 0x9064 */
+	int unknown9068;             /* 0x9068 */
+	float unknown906c;           /* 0x906c */
+	float uvPerUnit;             /* 0x9070 */
+	float uvStep;                /* 0x9074 per cell */
+	float (*cells)[2];           /* 0x9078 height, velocity */
+	int numIndices;              /* 0x907c */
+	int numVerts;                /* 0x9080 */
+	int vb;                      /* 0x9084 */
+	int ib;                      /* 0x9088 */
+	float (*normals)[3];         /* 0x908c 32 x 32 table */
+} CWaterField;
+OF_ASSERT_OFFSET(CWaterField, texture, 0x9048);
+OF_ASSERT_OFFSET(CWaterField, normals, 0x908c);
+
+extern const void *const vtable_0026e05c[11];
+/* 0x002ae578  default parameters */
+extern CWaterParams DAT_002ae578;
 
 #endif

@@ -12,6 +12,10 @@ static const char str_0026361c[] = "tracey";  /* 0x0026361c */
 static const char str_00263710[] = "eye";  /* 0x00263710 */
 static const char str_00263714[] = "idle";  /* 0x00263714 */
 static const char str_0026371c[] = "refrobot2.obe";  /* 0x0026371c */
+static const char str_0026bca8[] = "goldtoken.obe";  /* 0x0026bca8 */
+static const char str_0026bcb8[] = "silvertoken.obe";  /* 0x0026bcb8 */
+static const char str_0026bcc8[] = "bronzetoken.obe";  /* 0x0026bcc8 */
+static const char str_0026e04c[] = "waterfield.bmp";  /* 0x0026e04c */
 
 /* other modules' data the tables point at (tentative definitions in clf_extern.c) */
 extern int DAT_002916dc[];
@@ -59,6 +63,38 @@ __attribute__((aligned(16))) uint32_t of_clf_ray_data[0x1] = {
 
 /* 0x002f27c8-0x002f27d4 */
 __attribute__((nocommon, aligned(16))) unsigned char of_clf_ray_bss[0xc];
+
+/* 0x00298d1c-0x00298d4c */
+__attribute__((aligned(16))) uint32_t of_clf_token_data[0xc] = {
+	/* 0x00298d1c */ 0x3f6b851f, 0x3e2e147b, 0x40000000, 0x000000c3,
+	/* 0x00298d2c */ 0x42c80000, (uint32_t)str_0026bcc8, 0x00000000, (uint32_t)str_0026bcb8,
+	/* 0x00298d3c */ 0x00000000, (uint32_t)str_0026bca8, 0x00000000, 0x42a00000,
+};
+
+/* 0x002ff9c8-0x002ff9e0 */
+__attribute__((nocommon, aligned(16))) unsigned char of_clf_token_bss[0x18];
+
+/* 0x002ae578-0x002ae5c0 */
+__attribute__((aligned(16))) uint32_t of_clf_water_data[0x12] = {
+	/* 0x002ae578 */ 0xc4fa0000, 0x00000000, 0xc4fa0000, 0x457a0000,
+	/* 0x002ae588 */ 0x457a0000, 0x00000080, 0x00000080, 0x00000000,
+	/* 0x002ae598 */ 0x3f70a3d7, 0x3e800000, 0x00000000, 0x40800000,
+	/* 0x002ae5a8 */ 0x3dcccccd, 0xff272727, (uint32_t)str_0026e04c, 0x3f800000,
+	/* 0x002ae5b8 */ 0x41200000, 0x41000000,
+};
+
+/* 0x00302340-0x003023d4 */
+__attribute__((nocommon, aligned(16))) unsigned char of_clf_water_bss[0x94];
+
+/* 0x002ae7b4-0x002ae814 */
+__attribute__((aligned(16))) uint32_t of_clf_ai_data[0x18] = {
+	/* 0x002ae7b4 */ 0x3e4ccccd, 0x42c80000, 0x43960000, 0x00000400,
+	/* 0x002ae7c4 */ 0x00000200, 0x3ca3d70a, 0xbca3d70a, 0x00000014,
+	/* 0x002ae7d4 */ 0x41200000, 0x40400000, 0x3dcccccd, 0x3dcccccd,
+	/* 0x002ae7e4 */ 0x3ecccccd, 0x3dcccccd, 0x40000000, 0x40000000,
+	/* 0x002ae7f4 */ 0x40000000, 0x3f800000, 0x40000000, 0x428c0000,
+	/* 0x002ae804 */ 0x41a00000, 0x40a00000, 0x40400000, 0x42700000,
+};
 
 /* names of addresses inside the blocks, for this and other modules */
 __asm__(
@@ -218,4 +254,147 @@ __asm__(
 	".globl DAT_002f27c8\n.set DAT_002f27c8, of_clf_ray_bss + 0x0\n"  /* 0x002f27c8 */
 	".globl DAT_002f27cc\n.set DAT_002f27cc, of_clf_ray_bss + 0x4\n"  /* 0x002f27cc */
 	".globl DAT_002f27d0\n.set DAT_002f27d0, of_clf_ray_bss + 0x8\n"  /* 0x002f27d0 */
+	".globl DAT_00298d1c\n.set DAT_00298d1c, of_clf_token_data + 0x0\n"  /* 0x00298d1c */
+	".globl DAT_00298d20\n.set DAT_00298d20, of_clf_token_data + 0x4\n"  /* 0x00298d20 */
+	".globl DAT_00298d24\n.set DAT_00298d24, of_clf_token_data + 0x8\n"  /* 0x00298d24 */
+	".globl DAT_00298d28\n.set DAT_00298d28, of_clf_token_data + 0xc\n"  /* 0x00298d28 */
+	".globl DAT_00298d2c\n.set DAT_00298d2c, of_clf_token_data + 0x10\n"  /* 0x00298d2c */
+	".globl _DAT_00298d2c\n.set _DAT_00298d2c, of_clf_token_data + 0x10\n"  /* 0x00298d2c */
+	".globl DAT_00298d30\n.set DAT_00298d30, of_clf_token_data + 0x14\n"  /* 0x00298d30 */
+	".globl DAT_00298d34\n.set DAT_00298d34, of_clf_token_data + 0x18\n"  /* 0x00298d34 */
+	".globl DAT_00298d38\n.set DAT_00298d38, of_clf_token_data + 0x1c\n"  /* 0x00298d38 */
+	".globl DAT_00298d3c\n.set DAT_00298d3c, of_clf_token_data + 0x20\n"  /* 0x00298d3c */
+	".globl DAT_00298d40\n.set DAT_00298d40, of_clf_token_data + 0x24\n"  /* 0x00298d40 */
+	".globl DAT_00298d44\n.set DAT_00298d44, of_clf_token_data + 0x28\n"  /* 0x00298d44 */
+	".globl DAT_00298d48\n.set DAT_00298d48, of_clf_token_data + 0x2c\n"  /* 0x00298d48 */
+	".globl _DAT_00298d48\n.set _DAT_00298d48, of_clf_token_data + 0x2c\n"  /* 0x00298d48 */
+	".globl DAT_002ff9c8\n.set DAT_002ff9c8, of_clf_token_bss + 0x0\n"  /* 0x002ff9c8 */
+	".globl DAT_002ff9cc\n.set DAT_002ff9cc, of_clf_token_bss + 0x4\n"  /* 0x002ff9cc */
+	".globl DAT_002ff9d0\n.set DAT_002ff9d0, of_clf_token_bss + 0x8\n"  /* 0x002ff9d0 */
+	".globl DAT_002ff9d4\n.set DAT_002ff9d4, of_clf_token_bss + 0xc\n"  /* 0x002ff9d4 */
+	".globl DAT_002ff9d8\n.set DAT_002ff9d8, of_clf_token_bss + 0x10\n"  /* 0x002ff9d8 */
+	".globl DAT_002ff9dc\n.set DAT_002ff9dc, of_clf_token_bss + 0x14\n"  /* 0x002ff9dc */
+	".globl DAT_002ae578\n.set DAT_002ae578, of_clf_water_data + 0x0\n"  /* 0x002ae578 */
+	".globl DAT_002ae57c\n.set DAT_002ae57c, of_clf_water_data + 0x4\n"  /* 0x002ae57c */
+	".globl DAT_002ae580\n.set DAT_002ae580, of_clf_water_data + 0x8\n"  /* 0x002ae580 */
+	".globl DAT_002ae584\n.set DAT_002ae584, of_clf_water_data + 0xc\n"  /* 0x002ae584 */
+	".globl DAT_002ae588\n.set DAT_002ae588, of_clf_water_data + 0x10\n"  /* 0x002ae588 */
+	".globl DAT_002ae58c\n.set DAT_002ae58c, of_clf_water_data + 0x14\n"  /* 0x002ae58c */
+	".globl DAT_002ae590\n.set DAT_002ae590, of_clf_water_data + 0x18\n"  /* 0x002ae590 */
+	".globl DAT_002ae594\n.set DAT_002ae594, of_clf_water_data + 0x1c\n"  /* 0x002ae594 */
+	".globl DAT_002ae598\n.set DAT_002ae598, of_clf_water_data + 0x20\n"  /* 0x002ae598 */
+	".globl DAT_002ae59c\n.set DAT_002ae59c, of_clf_water_data + 0x24\n"  /* 0x002ae59c */
+	".globl DAT_002ae5a0\n.set DAT_002ae5a0, of_clf_water_data + 0x28\n"  /* 0x002ae5a0 */
+	".globl DAT_002ae5a4\n.set DAT_002ae5a4, of_clf_water_data + 0x2c\n"  /* 0x002ae5a4 */
+	".globl DAT_002ae5a8\n.set DAT_002ae5a8, of_clf_water_data + 0x30\n"  /* 0x002ae5a8 */
+	".globl DAT_002ae5ac\n.set DAT_002ae5ac, of_clf_water_data + 0x34\n"  /* 0x002ae5ac */
+	".globl DAT_002ae5b0\n.set DAT_002ae5b0, of_clf_water_data + 0x38\n"  /* 0x002ae5b0 */
+	".globl DAT_002ae5b4\n.set DAT_002ae5b4, of_clf_water_data + 0x3c\n"  /* 0x002ae5b4 */
+	".globl DAT_002ae5b8\n.set DAT_002ae5b8, of_clf_water_data + 0x40\n"  /* 0x002ae5b8 */
+	".globl _DAT_002ae5b8\n.set _DAT_002ae5b8, of_clf_water_data + 0x40\n"  /* 0x002ae5b8 */
+	".globl DAT_002ae5bc\n.set DAT_002ae5bc, of_clf_water_data + 0x44\n"  /* 0x002ae5bc */
+	".globl _DAT_002ae5bc\n.set _DAT_002ae5bc, of_clf_water_data + 0x44\n"  /* 0x002ae5bc */
+	".globl DAT_00302340\n.set DAT_00302340, of_clf_water_bss + 0x0\n"  /* 0x00302340 */
+	".globl DAT_00302344\n.set DAT_00302344, of_clf_water_bss + 0x4\n"  /* 0x00302344 */
+	".globl DAT_00302348\n.set DAT_00302348, of_clf_water_bss + 0x8\n"  /* 0x00302348 */
+	".globl _DAT_00302348\n.set _DAT_00302348, of_clf_water_bss + 0x8\n"  /* 0x00302348 */
+	".globl DAT_0030234c\n.set DAT_0030234c, of_clf_water_bss + 0xc\n"  /* 0x0030234c */
+	".globl _DAT_0030234c\n.set _DAT_0030234c, of_clf_water_bss + 0xc\n"  /* 0x0030234c */
+	".globl DAT_00302350\n.set DAT_00302350, of_clf_water_bss + 0x10\n"  /* 0x00302350 */
+	".globl _DAT_00302350\n.set _DAT_00302350, of_clf_water_bss + 0x10\n"  /* 0x00302350 */
+	".globl DAT_00302354\n.set DAT_00302354, of_clf_water_bss + 0x14\n"  /* 0x00302354 */
+	".globl _DAT_00302354\n.set _DAT_00302354, of_clf_water_bss + 0x14\n"  /* 0x00302354 */
+	".globl DAT_00302358\n.set DAT_00302358, of_clf_water_bss + 0x18\n"  /* 0x00302358 */
+	".globl _DAT_00302358\n.set _DAT_00302358, of_clf_water_bss + 0x18\n"  /* 0x00302358 */
+	".globl DAT_0030235c\n.set DAT_0030235c, of_clf_water_bss + 0x1c\n"  /* 0x0030235c */
+	".globl _DAT_0030235c\n.set _DAT_0030235c, of_clf_water_bss + 0x1c\n"  /* 0x0030235c */
+	".globl DAT_00302360\n.set DAT_00302360, of_clf_water_bss + 0x20\n"  /* 0x00302360 */
+	".globl _DAT_00302360\n.set _DAT_00302360, of_clf_water_bss + 0x20\n"  /* 0x00302360 */
+	".globl DAT_00302364\n.set DAT_00302364, of_clf_water_bss + 0x24\n"  /* 0x00302364 */
+	".globl _DAT_00302364\n.set _DAT_00302364, of_clf_water_bss + 0x24\n"  /* 0x00302364 */
+	".globl DAT_00302368\n.set DAT_00302368, of_clf_water_bss + 0x28\n"  /* 0x00302368 */
+	".globl _DAT_00302368\n.set _DAT_00302368, of_clf_water_bss + 0x28\n"  /* 0x00302368 */
+	".globl DAT_0030236c\n.set DAT_0030236c, of_clf_water_bss + 0x2c\n"  /* 0x0030236c */
+	".globl _DAT_0030236c\n.set _DAT_0030236c, of_clf_water_bss + 0x2c\n"  /* 0x0030236c */
+	".globl DAT_00302370\n.set DAT_00302370, of_clf_water_bss + 0x30\n"  /* 0x00302370 */
+	".globl _DAT_00302370\n.set _DAT_00302370, of_clf_water_bss + 0x30\n"  /* 0x00302370 */
+	".globl DAT_00302374\n.set DAT_00302374, of_clf_water_bss + 0x34\n"  /* 0x00302374 */
+	".globl _DAT_00302374\n.set _DAT_00302374, of_clf_water_bss + 0x34\n"  /* 0x00302374 */
+	".globl DAT_00302378\n.set DAT_00302378, of_clf_water_bss + 0x38\n"  /* 0x00302378 */
+	".globl _DAT_00302378\n.set _DAT_00302378, of_clf_water_bss + 0x38\n"  /* 0x00302378 */
+	".globl DAT_0030237c\n.set DAT_0030237c, of_clf_water_bss + 0x3c\n"  /* 0x0030237c */
+	".globl _DAT_0030237c\n.set _DAT_0030237c, of_clf_water_bss + 0x3c\n"  /* 0x0030237c */
+	".globl DAT_00302380\n.set DAT_00302380, of_clf_water_bss + 0x40\n"  /* 0x00302380 */
+	".globl _DAT_00302380\n.set _DAT_00302380, of_clf_water_bss + 0x40\n"  /* 0x00302380 */
+	".globl DAT_00302384\n.set DAT_00302384, of_clf_water_bss + 0x44\n"  /* 0x00302384 */
+	".globl DAT_00302388\n.set DAT_00302388, of_clf_water_bss + 0x48\n"  /* 0x00302388 */
+	".globl DAT_0030238c\n.set DAT_0030238c, of_clf_water_bss + 0x4c\n"  /* 0x0030238c */
+	".globl DAT_00302390\n.set DAT_00302390, of_clf_water_bss + 0x50\n"  /* 0x00302390 */
+	".globl _DAT_00302390\n.set _DAT_00302390, of_clf_water_bss + 0x50\n"  /* 0x00302390 */
+	".globl DAT_00302394\n.set DAT_00302394, of_clf_water_bss + 0x54\n"  /* 0x00302394 */
+	".globl _DAT_00302394\n.set _DAT_00302394, of_clf_water_bss + 0x54\n"  /* 0x00302394 */
+	".globl DAT_00302398\n.set DAT_00302398, of_clf_water_bss + 0x58\n"  /* 0x00302398 */
+	".globl _DAT_00302398\n.set _DAT_00302398, of_clf_water_bss + 0x58\n"  /* 0x00302398 */
+	".globl DAT_0030239c\n.set DAT_0030239c, of_clf_water_bss + 0x5c\n"  /* 0x0030239c */
+	".globl _DAT_0030239c\n.set _DAT_0030239c, of_clf_water_bss + 0x5c\n"  /* 0x0030239c */
+	".globl DAT_003023a0\n.set DAT_003023a0, of_clf_water_bss + 0x60\n"  /* 0x003023a0 */
+	".globl _DAT_003023a0\n.set _DAT_003023a0, of_clf_water_bss + 0x60\n"  /* 0x003023a0 */
+	".globl DAT_003023a4\n.set DAT_003023a4, of_clf_water_bss + 0x64\n"  /* 0x003023a4 */
+	".globl _DAT_003023a4\n.set _DAT_003023a4, of_clf_water_bss + 0x64\n"  /* 0x003023a4 */
+	".globl DAT_003023a8\n.set DAT_003023a8, of_clf_water_bss + 0x68\n"  /* 0x003023a8 */
+	".globl _DAT_003023a8\n.set _DAT_003023a8, of_clf_water_bss + 0x68\n"  /* 0x003023a8 */
+	".globl DAT_003023ac\n.set DAT_003023ac, of_clf_water_bss + 0x6c\n"  /* 0x003023ac */
+	".globl _DAT_003023ac\n.set _DAT_003023ac, of_clf_water_bss + 0x6c\n"  /* 0x003023ac */
+	".globl DAT_003023b0\n.set DAT_003023b0, of_clf_water_bss + 0x70\n"  /* 0x003023b0 */
+	".globl _DAT_003023b0\n.set _DAT_003023b0, of_clf_water_bss + 0x70\n"  /* 0x003023b0 */
+	".globl DAT_003023b4\n.set DAT_003023b4, of_clf_water_bss + 0x74\n"  /* 0x003023b4 */
+	".globl _DAT_003023b4\n.set _DAT_003023b4, of_clf_water_bss + 0x74\n"  /* 0x003023b4 */
+	".globl DAT_003023b8\n.set DAT_003023b8, of_clf_water_bss + 0x78\n"  /* 0x003023b8 */
+	".globl _DAT_003023b8\n.set _DAT_003023b8, of_clf_water_bss + 0x78\n"  /* 0x003023b8 */
+	".globl DAT_003023bc\n.set DAT_003023bc, of_clf_water_bss + 0x7c\n"  /* 0x003023bc */
+	".globl _DAT_003023bc\n.set _DAT_003023bc, of_clf_water_bss + 0x7c\n"  /* 0x003023bc */
+	".globl DAT_003023c0\n.set DAT_003023c0, of_clf_water_bss + 0x80\n"  /* 0x003023c0 */
+	".globl _DAT_003023c0\n.set _DAT_003023c0, of_clf_water_bss + 0x80\n"  /* 0x003023c0 */
+	".globl DAT_003023c4\n.set DAT_003023c4, of_clf_water_bss + 0x84\n"  /* 0x003023c4 */
+	".globl _DAT_003023c4\n.set _DAT_003023c4, of_clf_water_bss + 0x84\n"  /* 0x003023c4 */
+	".globl DAT_003023c8\n.set DAT_003023c8, of_clf_water_bss + 0x88\n"  /* 0x003023c8 */
+	".globl _DAT_003023c8\n.set _DAT_003023c8, of_clf_water_bss + 0x88\n"  /* 0x003023c8 */
+	".globl DAT_003023cc\n.set DAT_003023cc, of_clf_water_bss + 0x8c\n"  /* 0x003023cc */
+	".globl DAT_003023d0\n.set DAT_003023d0, of_clf_water_bss + 0x90\n"  /* 0x003023d0 */
+	".globl _DAT_003023d0\n.set _DAT_003023d0, of_clf_water_bss + 0x90\n"  /* 0x003023d0 */
+	".globl DAT_002ae7b4\n.set DAT_002ae7b4, of_clf_ai_data + 0x0\n"  /* 0x002ae7b4 */
+	".globl _DAT_002ae7b4\n.set _DAT_002ae7b4, of_clf_ai_data + 0x0\n"  /* 0x002ae7b4 */
+	".globl DAT_002ae7b8\n.set DAT_002ae7b8, of_clf_ai_data + 0x4\n"  /* 0x002ae7b8 */
+	".globl _DAT_002ae7b8\n.set _DAT_002ae7b8, of_clf_ai_data + 0x4\n"  /* 0x002ae7b8 */
+	".globl DAT_002ae7bc\n.set DAT_002ae7bc, of_clf_ai_data + 0x8\n"  /* 0x002ae7bc */
+	".globl _DAT_002ae7bc\n.set _DAT_002ae7bc, of_clf_ai_data + 0x8\n"  /* 0x002ae7bc */
+	".globl DAT_002ae7c0\n.set DAT_002ae7c0, of_clf_ai_data + 0xc\n"  /* 0x002ae7c0 */
+	".globl DAT_002ae7c4\n.set DAT_002ae7c4, of_clf_ai_data + 0x10\n"  /* 0x002ae7c4 */
+	".globl DAT_002ae7c8\n.set DAT_002ae7c8, of_clf_ai_data + 0x14\n"  /* 0x002ae7c8 */
+	".globl DAT_002ae7cc\n.set DAT_002ae7cc, of_clf_ai_data + 0x18\n"  /* 0x002ae7cc */
+	".globl DAT_002ae7d0\n.set DAT_002ae7d0, of_clf_ai_data + 0x1c\n"  /* 0x002ae7d0 */
+	".globl DAT_002ae7d4\n.set DAT_002ae7d4, of_clf_ai_data + 0x20\n"  /* 0x002ae7d4 */
+	".globl _DAT_002ae7d4\n.set _DAT_002ae7d4, of_clf_ai_data + 0x20\n"  /* 0x002ae7d4 */
+	".globl DAT_002ae7d8\n.set DAT_002ae7d8, of_clf_ai_data + 0x24\n"  /* 0x002ae7d8 */
+	".globl _DAT_002ae7d8\n.set _DAT_002ae7d8, of_clf_ai_data + 0x24\n"  /* 0x002ae7d8 */
+	".globl DAT_002ae7dc\n.set DAT_002ae7dc, of_clf_ai_data + 0x28\n"  /* 0x002ae7dc */
+	".globl DAT_002ae7e0\n.set DAT_002ae7e0, of_clf_ai_data + 0x2c\n"  /* 0x002ae7e0 */
+	".globl DAT_002ae7e4\n.set DAT_002ae7e4, of_clf_ai_data + 0x30\n"  /* 0x002ae7e4 */
+	".globl DAT_002ae7e8\n.set DAT_002ae7e8, of_clf_ai_data + 0x34\n"  /* 0x002ae7e8 */
+	".globl DAT_002ae7ec\n.set DAT_002ae7ec, of_clf_ai_data + 0x38\n"  /* 0x002ae7ec */
+	".globl DAT_002ae7f0\n.set DAT_002ae7f0, of_clf_ai_data + 0x3c\n"  /* 0x002ae7f0 */
+	".globl DAT_002ae7f4\n.set DAT_002ae7f4, of_clf_ai_data + 0x40\n"  /* 0x002ae7f4 */
+	".globl DAT_002ae7f8\n.set DAT_002ae7f8, of_clf_ai_data + 0x44\n"  /* 0x002ae7f8 */
+	".globl DAT_002ae7fc\n.set DAT_002ae7fc, of_clf_ai_data + 0x48\n"  /* 0x002ae7fc */
+	".globl _DAT_002ae7fc\n.set _DAT_002ae7fc, of_clf_ai_data + 0x48\n"  /* 0x002ae7fc */
+	".globl DAT_002ae800\n.set DAT_002ae800, of_clf_ai_data + 0x4c\n"  /* 0x002ae800 */
+	".globl _DAT_002ae800\n.set _DAT_002ae800, of_clf_ai_data + 0x4c\n"  /* 0x002ae800 */
+	".globl DAT_002ae804\n.set DAT_002ae804, of_clf_ai_data + 0x50\n"  /* 0x002ae804 */
+	".globl _DAT_002ae804\n.set _DAT_002ae804, of_clf_ai_data + 0x50\n"  /* 0x002ae804 */
+	".globl DAT_002ae808\n.set DAT_002ae808, of_clf_ai_data + 0x54\n"  /* 0x002ae808 */
+	".globl _DAT_002ae808\n.set _DAT_002ae808, of_clf_ai_data + 0x54\n"  /* 0x002ae808 */
+	".globl DAT_002ae80c\n.set DAT_002ae80c, of_clf_ai_data + 0x58\n"  /* 0x002ae80c */
+	".globl _DAT_002ae80c\n.set _DAT_002ae80c, of_clf_ai_data + 0x58\n"  /* 0x002ae80c */
+	".globl DAT_002ae810\n.set DAT_002ae810, of_clf_ai_data + 0x5c\n"  /* 0x002ae810 */
+	".globl _DAT_002ae810\n.set _DAT_002ae810, of_clf_ai_data + 0x5c\n"  /* 0x002ae810 */
 );

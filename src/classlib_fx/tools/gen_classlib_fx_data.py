@@ -17,6 +17,13 @@ Blocks:
   of_clf_bss    [0x002ed3a0, 0x002ed454)  .bss of CProjector.cpp / RefBot.cpp (zero)
   of_clf_ray_data [0x00292c44, 0x00292c48)  .data of CRay.cpp (XBE values)
   of_clf_ray_bss  [0x002f27c8, 0x002f27d4)  .bss of CRay.cpp: the ray control list (zero)
+  of_clf_token_data [0x00298d1c, 0x00298d4c)  .data of CToken.cpp: tunables, model table
+  of_clf_token_bss  [0x002ff9c8, 0x002ff9e0)  .bss of CToken.cpp: shadow mode/texture, list
+  of_clf_water_data [0x002ae578, 0x002ae5c0)  .data of CWaterField.cpp: default parameters, and
+                                          two constants of the state handlers at 0x0013a650
+  of_clf_water_bss  [0x00302340, 0x003023d4)  .bss: the two water materials, and two words of
+                                          the state handlers (0x003023cc, 0x003023d0)
+  of_clf_ai_data    [0x002ae7b4, 0x002ae814)  .data of the AI state handlers (0x00139e00-)
 
 EXCLUDE: [0x00290d14, 0x00290d54) lies inside the ray type table (entry 1's colours) but
 classlib_ui already defines those names (its block of_clu_data2). Two definitions of a name
@@ -42,6 +49,11 @@ BLOCKS = [
     ("of_clf_bss", 0x002ED3A0, 0x002ED454, False),
     ("of_clf_ray_data", 0x00292C44, 0x00292C48, True),
     ("of_clf_ray_bss", 0x002F27C8, 0x002F27D4, False),
+    ("of_clf_token_data", 0x00298D1C, 0x00298D4C, True),
+    ("of_clf_token_bss", 0x002FF9C8, 0x002FF9E0, False),
+    ("of_clf_water_data", 0x002AE578, 0x002AE5C0, True),
+    ("of_clf_water_bss", 0x00302340, 0x003023D4, False),
+    ("of_clf_ai_data", 0x002AE7B4, 0x002AE814, True),
 ]
 
 EXCLUDE = [(0x00290D14, 0x00290D54)]

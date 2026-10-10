@@ -28,3 +28,6 @@ int DAT_00284b10;               /* 0x00284b10 ambient light (bactor; initial 30)
 int DAT_00284b14;               /* 0x00284b14 */
 int DAT_00284b18;               /* 0x00284b18 */
 int DAT_002ba99c;               /* 0x002ba99c game flags (core) */
+int DAT_002bc48c;               /* 0x002bc48c triangle counter (bdisplay) */
+int DAT_00302210[4];            /* 0x00302210 Fox Hunt: the AI of each player (foxhunt) */
+int DAT_003022c8;               /* 0x003022c8 Fox Hunt: speech (foxhunt) */
