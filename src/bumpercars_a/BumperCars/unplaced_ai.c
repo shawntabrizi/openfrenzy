@@ -83,7 +83,9 @@ OF_ASSERT_SIZE(struct CBCarAI, 0x128);
 #define Ent_SameSide(a, b) BCA_FN(FUN_000a5180, int, (void *, void *, int *, int *))((a), (b), NULL, NULL)
 #define Heading(x, z) BCA_FN(FUN_000a5540, float, (float, float))((x), (z))
 #define Car_Steer(car, h) BCA_FN(FUN_0009adc0, void, (void *, float))((car), (h))
-#define Car_Throttle(car, s) BCA_FN(FUN_0009b4c0, void, (void *, float))((car), (s))
+/* every call site pushes force = 0 (the 0 left on the stack by the 0x00096c30 call); without
+   it the third argument is garbage and a car out of play (+0x894 == 0) could be pushed */
+#define Car_Throttle(car, s) FUN_0009b4c0((void *)(car), (s), 0)
 #define Player_Speed(p) BCA_FN(FUN_00096c30, float, (void *, int))((p), 0)
 #define Player_Brake(p) BCA_FN(FUN_00097c10, void, (void *))(p)
 #define Player_Boost(p) BCA_FN(FUN_00098030, void, (void *))(p)

@@ -63,7 +63,7 @@ void *CBCar_Sound_Ctor(struct CBCar_Sound *self)
 }
 
 /* 0x00091fd0  BumperCars/CBCar_Sound.cpp: CBCar_Sound::Initialise: loads the samples and sets
-the 3D sound distances (500, 40000; the old ones are kept). Returns 1. */
+the 3D sound distances (2000, 40000; the old ones are kept). Returns 1. */
 int CBCar_Sound_Initialise(struct CBCar_Sound *self)
 {
 	char name[512];
@@ -83,7 +83,7 @@ int CBCar_Sound_Initialise(struct CBCar_Sound *self)
 		self->voices[i].delay = -1.0f;
 	self->savedDistance[0] = DAT_0028ffa8;
 	self->savedDistance[1] = DAT_0028ffac;
-	DAT_0028ffa8 = 500.0f;
+	DAT_0028ffa8 = 2000.0f; /* 0x44fa0000 */
 	DAT_0028ffac = 40000.0f;
 	return 1;
 }
@@ -218,7 +218,7 @@ void CBCar_Sound_StopAll(struct CBCar_Sound *self)
 			bsSetChannelFrequency(self->samples[i].channel, 0);
 			bsStopChannel(self->samples[i].channel);
 			self->samples[i].channel = -1;
-			self->samples[i].played = 0;
+			self->samples[i].cooldown = 0; /* +0x80 (slot + 4), not the play count */
 		}
 	}
 	for (i = 0; i < bsGetNumChannels(); i++)
