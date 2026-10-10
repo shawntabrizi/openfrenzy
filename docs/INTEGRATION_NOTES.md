@@ -66,11 +66,17 @@ before you fix the build, and remove an item when it is fixed.
   `OPENFRENZY_BKLOG=1` (Babel log to stderr). The host prints a guest backtrace on a fault;
   symbolize with `llvm-symbolizer --obj=build/openfrenzy_guest.elf 0x<addr>`.
 - `scripts/check_split_globals.py build/openfrenzy_guest.elf` lists DAT_ names whose storage
-  is split from the owner's data block. Remaining: of_co_data2 names (carryon_b has its own
-  strong copies) and DAT_002f27d0 (of_clf_ray_bss overlaps of_chl_bss by 4 bytes).
+  is split from the owner's data block. It now also checks blocks named `of_*_bss2`, `_bss3`.
+  No splits remain: carryon_a's of_co_data2 / of_co_bss2 own carryon_b's tables and globals
+  (carryon_b declares them extern; the values matched the XBE), and charlib's of_chl_bss
+  starts at 0x002f27d4 (0x002f27c8-0x002f27d4 is the CRay list, classlib_fx of_clf_ray_bss).
 - File-scope asm uses Mach-O names: asm_convert.py strips one leading underscore. Write the C
-  name `_DAT_x` as `__DAT_x`. The core and classlib_ui generators do; the generators of
-  hopper, charlib, classlib_fx, bumpercars_a and meta_a still write `_DAT_x` (= C `DAT_x`).
+  name `_DAT_x` as `__DAT_x`, and keep a plain `DAT_x` alias too. The generators of core,
+  classlib_ui, hopper, charlib, classlib_fx, bumpercars_a, carryon_a and meta_a do this;
+  the other modules' generators were not checked.
+- The Z: drive file cache (bKernel/xbCache.c) is off: bInitCache reports it DISABLED and
+  bkCacheEnable keeps it off. Build with `-DOPENFRENZY_Z_CACHE=1` for the original cache
+  (it copies every package to `$OPENFRENZY_SAVE_ROOT/z`, about 300 MB per minute of play).
 - Tool changes (port/macos/tools/*.py, the pass) are build dependencies of every guest C
   object (guest_cc.py adds them to the depfile). A build directory made before this change
   needs one clean build.

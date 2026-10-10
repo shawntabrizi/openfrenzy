@@ -192,7 +192,10 @@ def main():
     out.append("/* names of addresses inside the blocks, for this and other modules */")
     out.append("__asm__(")
     for n, block, off, addr in aliases:
-        out.append('\t".globl %s\\n.set %s, %s + 0x%x\\n"  /* 0x%08x */' % (n, n, block, off, addr))
+        # file-scope asm names are Mach-O names: asm_convert.py strips one leading
+        # underscore, so the C name _DAT_x is written __DAT_x (integration round 1)
+        sym = "_" + n if n.startswith("_") else n
+        out.append('\t".globl %s\\n.set %s, %s + 0x%x\\n"  /* 0x%08x */' % (sym, sym, block, off, addr))
     out.append(");")
     path = os.path.join(ROOT, "src", "hopper", "Hopper", "hopper_data.c")
     with open(path, "w") as f:

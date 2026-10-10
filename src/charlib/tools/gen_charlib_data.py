@@ -15,7 +15,8 @@ Blocks (chosen from which modules' functions read each address; see charlib_data
   of_chl_data   [0x00292c48, 0x00293a50)  .data of CharLib text block 1 (XBE values)
   of_chl_data2  [0x00293e80, 0x00293f14)  .data of CharLibShadow.cpp (XBE values)
   of_chl_data3  [0x00294afc, 0x00294bd0)  .data of the CCamera.cpp block (XBE values)
-  of_chl_bss    [0x002f27d0, 0x002f6b80)  .bss of CharLib text block 1 (zero)
+  of_chl_bss    [0x002f27d4, 0x002f6b80)  .bss of CharLib text block 1 (zero; 0x002f27c8-
+                0x002f27d4 is the CRay list of classlib_fx's of_clf_ray_bss)
   of_chl_bss2   [0x002f6c10, 0x002f6d20)  .bss of CharLibShadow.cpp (zero)
   of_chl_bss3   [0x002f7a20, 0x002f7a44)  .bss of the CCamera.cpp block (zero)
 
@@ -37,7 +38,7 @@ BLOCKS = [
     ("of_chl_data", 0x00292C48, 0x00293A50, True),
     ("of_chl_data2", 0x00293E80, 0x00293F14, True),
     ("of_chl_data3", 0x00294AFC, 0x00294BD0, True),
-    ("of_chl_bss", 0x002F27D0, 0x002F6B80, False),
+    ("of_chl_bss", 0x002F27D4, 0x002F6B80, False),
     ("of_chl_bss2", 0x002F6C10, 0x002F6D20, False),
     ("of_chl_bss3", 0x002F7A20, 0x002F7A44, False),
 ]
@@ -168,7 +169,10 @@ def main():
     out.append("/* Ghidra names of addresses inside the blocks, for other modules */")
     out.append("__asm__(")
     for n, block, off, addr in aliases:
-        out.append('\t".globl %s\\n.set %s, %s + 0x%x\\n"  /* 0x%08x */' % (n, n, block, off, addr))
+        # file-scope asm names are Mach-O names: asm_convert.py strips one leading
+        # underscore, so the C name _DAT_x is written __DAT_x (integration round 1)
+        sym = "_" + n if n.startswith("_") else n
+        out.append('\t".globl %s\\n.set %s, %s + 0x%x\\n"  /* 0x%08x */' % (sym, sym, block, off, addr))
     out.append(");")
     path = os.path.join(ROOT, "src", "charlib", "CharLib", "charlib_data.c")
     with open(path, "w") as f:

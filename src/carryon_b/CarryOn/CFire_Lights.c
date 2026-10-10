@@ -16,15 +16,16 @@ others lie between them (bracketed).
 
 #define CB_FILE "C:\\BlitzParty\\Game\\Src\\CarryOn\\CFire_Lights.cpp"
 
+/* storage: carryon_a's of_co_data2 / of_co_bss2 (gen_carryon_data.py); declarations only */
 /* 0x002f7988  the light manager */
-struct CFire_Lights *DAT_002f7988;
+extern struct CFire_Lights *DAT_002f7988;
 
 /* 0x00294968  default position of a point light (0, 100, 0) */
-float DAT_00294968[4] = { 0.0f, 100.0f, 0.0f, 1.0f };
+extern float DAT_00294968[4];  /* 0.0f, 100.0f, 0.0f, 1.0f */
 /* 0x00294978  default position of a spot light (0, 100, 0) */
-float DAT_00294978[4] = { 0.0f, 100.0f, 0.0f, 1.0f };
+extern float DAT_00294978[4];  /* 0.0f, 100.0f, 0.0f, 1.0f */
 /* 0x00294988  default target of a spot light (0, 0, 0) */
-float DAT_00294988[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+extern float DAT_00294988[4];  /* 0.0f, 0.0f, 0.0f, 1.0f */
 
 /* switches the engine light of `light` off (flag 1 cleared) */
 static void cb_light_off(struct CFire_Light *light)

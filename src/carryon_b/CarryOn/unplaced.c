@@ -301,8 +301,9 @@ void CFire_Rocket_Draw(struct CFire_Rocket *self, unsigned int passes)
 
 /* ======================================================================== smoke */
 
+/* storage: carryon_a's of_co_data2 / of_co_bss2 (gen_carryon_data.py); declarations only */
 /* 0x002f798c  the smoke */
-struct CFire_Smoke *DAT_002f798c;
+extern struct CFire_Smoke *DAT_002f798c;
 
 /* 0x000d19f0  (gap)
 Moves, fades and grows the puffs; a puff whose life is over goes back to the free list. */
@@ -501,8 +502,9 @@ void CFire_Timer_Mark(struct CFire_Timer *self, unsigned int colour)
 	self->marks++;
 }
 
+/* storage: carryon_a's of_co_data2 / of_co_bss2 (gen_carryon_data.py); declarations only */
 /* 0x002f7990  the rectangle's 4 vertices (FVF 0x152: position, normal, colour, uv) */
-static struct {
+extern struct {
 	float pos[3];
 	float normal[3];
 	unsigned int colour;

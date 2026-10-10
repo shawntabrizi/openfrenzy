@@ -15,20 +15,15 @@ same object (file inferred).
 
 #define CB_FILE "C:\\BlitzParty\\Game\\Src\\CarryOn\\CFire_V2_Glitter.cpp"
 
+/* storage: carryon_a's of_co_data2 / of_co_bss2 (gen_carryon_data.py); declarations only */
 /* 0x002f7968  the glitter world */
-struct CFire_V2Glitter *DAT_002f7968;
+extern struct CFire_V2Glitter *DAT_002f7968;
 /* 0x002f796c  a slowly running phase (0-100) */
-float DAT_002f796c;
+extern float DAT_002f796c;
 
-/* 0x002943e0  the glow pot models of the six characters */
-static const char *const DAT_002943e0[6] = {
-	"objects\\glowpot_dub.obe",     /* 0x00268864 */
-	"objects\\glowpot_fly.obe",     /* 0x0026884c */
-	"objects\\glowpot_gee.obe",     /* 0x00268834 */
-	"objects\\glowpot_zak.obe",     /* 0x0026881c */
-	"objects\\glowpot_jade.obe",    /* 0x00268800 */
-	"objects\\glowpot_jet.obe",     /* 0x002687e8 */
-};
+/* 0x002943e0  the glow pot models of the six characters: "objects\\glowpot_dub.obe",
+   "..._fly", "..._gee", "..._zak", "..._jade", "..._jet" (0x00268864-0x002687e8) */
+extern const char *const DAT_002943e0[6];
 
 /* the character of a player (0-5) */
 #define CB_CHARACTER(player) (DAT_002baed4[(player) * 10])

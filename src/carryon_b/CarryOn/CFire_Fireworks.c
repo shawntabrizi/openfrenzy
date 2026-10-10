@@ -25,46 +25,45 @@ function table.
 #define CB_RAND01 3.0518509e-05f    /* 1/32767 (0x00253740) */
 
 /* ---------- the shell tables (.data 0x00294688-0x00294928) */
+/* storage: carryon_a's of_co_data2 (gen_carryon_data.py); declarations only */
 
 /* by spark burst type (shell types[0]): sparks, their fade-in (and by trail type: spread) */
-int DAT_00294688[8] = { 0, 30, 100, 600, 600, 1000, 400, 600 };
-float DAT_002946a8[8] = { 45.0f, 45.0f, 45.0f, 45.0f, 60.0f, 80.0f, 45.0f, 45.0f };
-float DAT_002946c8[8] = { 0.01f, 0.01f, 0.1f, 0.3f, 0.3f, 0.3f, 0.01f, 0.01f };
+extern int DAT_00294688[8];  /* 0, 30, 100, 600, 600, 1000, 400, 600 */
+extern float DAT_002946a8[8];  /* 45.0f, 45.0f, 45.0f, 45.0f, 60.0f, 80.0f, 45.0f, 45.0f */
+extern float DAT_002946c8[8];  /* 0.01f, 0.01f, 0.1f, 0.3f, 0.3f, 0.3f, 0.01f, 0.01f */
 /* by ring type (types[1]): stars per ring, their size, rings, ring speed */
-int DAT_002946e8[8] = { 0, 30, 100, 500, 500, 700, 600, 600 };
-float DAT_00294708[8] = { 40.0f, 40.0f, 35.0f, 30.0f, 25.0f, 25.0f, 30.0f, 30.0f };
-int DAT_00294728[8] = { 1, 1, 1, 1, 2, 3, 1, 1 };
-float DAT_00294748[8] = { 10.0f, 10.0f, 10.0f, 20.0f, 20.0f, 40.0f, 20.0f, 20.0f };
+extern int DAT_002946e8[8];  /* 0, 30, 100, 500, 500, 700, 600, 600 */
+extern float DAT_00294708[8];  /* 40.0f, 40.0f, 35.0f, 30.0f, 25.0f, 25.0f, 30.0f, 30.0f */
+extern int DAT_00294728[8];  /* 1, 1, 1, 1, 2, 3, 1, 1 */
+extern float DAT_00294748[8];  /* 10.0f, 10.0f, 10.0f, 20.0f, 20.0f, 40.0f, 20.0f, 20.0f */
 /* the same for variant 2 with 3 parts a firework (types[1] 0-3) */
-int DAT_00294768[4] = { 0, 100, 600, 1800 };
-float DAT_00294778[4] = { 40.0f, 40.0f, 35.0f, 30.0f };
-int DAT_00294788[4] = { 1, 1, 1, 1 };
-float DAT_00294798[4] = { 10.0f, 20.0f, 25.0f, 30.0f };
+extern int DAT_00294768[4];  /* 0, 100, 600, 1800 */
+extern float DAT_00294778[4];  /* 40.0f, 40.0f, 35.0f, 30.0f */
+extern int DAT_00294788[4];  /* 1, 1, 1, 1 */
+extern float DAT_00294798[4];  /* 10.0f, 20.0f, 25.0f, 30.0f */
 /* by trail type: glitter at the burst, its size and speed */
-int DAT_002947a8[8] = { 0, 0, 0, 20, 150, 800, 300, 0 };
-float DAT_002947c8[8] = { 20.0f, 20.0f, 20.0f, 30.0f, 30.0f, 30.0f, 30.0f, 20.0f };
-float DAT_002947e8[8] = { 1.0f, 1.0f, 1.0f, 5.0f, 15.0f, 40.0f, 30.0f, 30.0f };
+extern int DAT_002947a8[8];  /* 0, 0, 0, 20, 150, 800, 300, 0 */
+extern float DAT_002947c8[8];  /* 20.0f, 20.0f, 20.0f, 30.0f, 30.0f, 30.0f, 30.0f, 20.0f */
+extern float DAT_002947e8[8];  /* 1.0f, 1.0f, 1.0f, 5.0f, 15.0f, 40.0f, 30.0f, 30.0f */
 /* by split type (types[2]): the shells it splits into */
-int DAT_00294808[8] = { 0, 3, 8, 16, 32, 64, 0, 0 };
+extern int DAT_00294808[8];  /* 0, 3, 8, 16, 32, 64, 0, 0 */
 /* [parts a firework (0-4)][part]: the trail type of a part */
-int DAT_00294828[5][8] = {
-	{ 0, 0, 0, 0, 0, 0, 6, 7 },
-	{ 0, 5, 0, 0, 0, 0, 6, 7 },
-	{ 0, 3, 5, 0, 0, 0, 6, 7 },
-	{ 0, 2, 3, 5, 0, 0, 6, 7 },
-	{ 0, 2, 3, 4, 5, 0, 6, 7 },
-};
+extern int DAT_00294828[5][8];
+/* { 0, 0, 0, 0, 0, 0, 6, 7 }
+   { 0, 5, 0, 0, 0, 0, 6, 7 }
+   { 0, 3, 5, 0, 0, 0, 6, 7 }
+   { 0, 2, 3, 5, 0, 0, 6, 7 }
+   { 0, 2, 3, 4, 5, 0, 6, 7 } */
 /* 0x002948e8, 0x002948f8, 0x00294908  the x, y and z axes */
-float DAT_002948e8[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
-float DAT_002948f8[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
-float DAT_00294908[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+extern float DAT_002948e8[4];  /* 1.0f, 0.0f, 0.0f, 1.0f */
+extern float DAT_002948f8[4];  /* 0.0f, 1.0f, 0.0f, 1.0f */
+extern float DAT_00294908[4];  /* 0.0f, 0.0f, 1.0f, 1.0f */
 /* 0x00294918  the types[0..4] of the four shell kinds of CFire_Fireworks_AddShellOfType */
-int DAT_00294918[4][5] = {
-	{ 0, 0, 0, 0, 0 },
-	{ 0, 6, 0, 0, 0 },
-	{ 6, 0, 0, 6, 0 },
-	{ 0, 0, 0, 7, 6 },
-};
+extern int DAT_00294918[4][5];
+/* { 0, 0, 0, 0, 0 }
+   { 0, 6, 0, 0, 0 }
+   { 6, 0, 0, 6, 0 }
+   { 0, 0, 0, 7, 6 } */
 
 /* the arguments of a light flash: (channel + 127) / 2 */
 #define CB_HALF(x) ((x) / 2)

@@ -44,6 +44,7 @@ for word in $(printf '%s\n' "$link"); do
 	*/src/runtime/*|*/src/vfs/*|*/src/xkernel/*|*/src/d3d8/*|*/src/dsound/*|*/src/input/*) ;;
 	*/src/carryon_b/tests/*) continue ;;
 	*/src/carryon_b/*) ;;
+	*/src/carryon_a/CarryOn/carryon_a_data.c.obj) ;;   # owns carryon_b's .data tables
 	*/src/*.obj) continue ;;
 	*openfrenzy_guest.elf.map) word="$out/openfrenzy_carryon_b_test.elf.map" ;;
 	*openfrenzy_guest.elf) word="$image" ;;

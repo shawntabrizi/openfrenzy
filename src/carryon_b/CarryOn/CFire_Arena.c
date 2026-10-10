@@ -15,65 +15,43 @@ as one firework shell, and the player scores by the mix of rocket types.
 
 #define CB_FILE "C:\\BlitzParty\\Game\\Src\\CarryOn\\CFire_Arena.cpp"
 
-/* 0x002f7970  the arena */
-struct CFire_Arena *DAT_002f7970;
-/* 0x002f7984  the shadow vertex being written */
-float *DAT_002f7984;
+/* Storage: the globals below lie in carryon_a's blocks of_co_data2 / of_co_bss2 (original
+   layout and XBE values, src/carryon_a/tools/gen_carryon_data.py); carryon_a owns them and
+   these are declarations only (integration round 1: carryon_b had its own copies). */
 
-/* 0x002943f8  the launch pad models of the six characters */
-static const char *const DAT_002943f8[6] = {
-	"objects\\launch_dub.obe",      /* 0x00268994 */
-	"objects\\launch_fly.obe",      /* 0x0026897c */
-	"objects\\launch_geena.obe",    /* 0x00268960 */
-	"objects\\launch_zak.obe",      /* 0x00268948 */
-	"objects\\launch_jade.obe",     /* 0x00268930 */
-	"objects\\launch_jet.obe",      /* 0x00268918 */
-};
+/* 0x002f7970  the arena */
+extern struct CFire_Arena *DAT_002f7970;
+/* 0x002f7984  the shadow vertex being written */
+extern float *DAT_002f7984;
+
+/* 0x002943f8  the launch pad models of the six characters: "objects\\launch_dub.obe",
+   "..._fly", "..._geena", "..._zak", "..._jade", "..._jet" (0x00268994-0x00268918) */
+extern const char *const DAT_002943f8[6];
 
 /* 0x00294410  the score of a launch by its rockets: [c0 + 4 * (c1 + 4 * c3)] with cN the
-   number of rockets of type N (type 2 does not count) */
-int DAT_00294410[64] = {
-	0x00, 0x00, 0x00, 0x32, 0x00, 0x00, 0x1e, 0x00, 0x00, 0x12, 0x00, 0x00, 0x23, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x19, 0x00, 0x00, 0x05, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x0f, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+   number of rockets of type N (type 2 does not count); nonzero: [3] 50, [6] 30, [9] 18,
+   [12] 35, [18] 25, [21] 5, [24] 12, [33] 15, [36] 10, [48] 20 */
+extern int DAT_00294410[64];
 
-/* 0x00294510  where the rocket models sit on a pad's node */
-float DAT_00294510[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+/* 0x00294510  where the rocket models sit on a pad's node (0, 0, 0, 1) */
+extern float DAT_00294510[4];
 
 /* 0x00294520-0x00294578 and 0x002f7974-0x002f7980: the rocket types a spawner throws
-   (scripted, DAT_00294110), by parts a firework and direction (DAT_00294608) */
-static int DAT_002f7974[1];
-static int DAT_002f7978[1];
-static int DAT_002f797c[1];
-static int DAT_002f7980[1];
-static int DAT_00294520[1] = { 4 };
-static int DAT_00294524[2] = { 3, 2 };
-static int DAT_0029452c[2] = { 0, 1 };
-static int DAT_00294534[2] = { 0, 1 };
-static int DAT_0029453c[2] = { 0, 1 };
-static int DAT_00294544[2] = { 4, 3 };
-static int DAT_0029454c[2] = { 0, 1 };
-static int DAT_00294554[2] = { 0, 1 };
-static int DAT_0029455c[3] = { 3, 3, 1 };
-static int DAT_00294568[3] = { 3, 3, 1 };
-static int DAT_00294574[1] = { 1 };
-static int DAT_00294578[1] = { 1 };
-/* 0x0029457c, 0x00294594, 0x002945b4, 0x002945d8: random rocket types for 2-5 types */
-static const int DAT_0029457c[6] = { 0, 0, 0, 1, 1, 1 };
-static const int DAT_00294594[8] = { 0, 0, 0, 1, 1, 1, 3, 3 };
-static const int DAT_002945b4[9] = { 0, 0, 0, 1, 1, 1, 3, 3, 4 };
-static const int DAT_002945d8[11] = { 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 4 };
-/* 0x00294608 */
-int *DAT_00294608[16] = {
-	DAT_002f7980, DAT_002f797c, DAT_00294578, DAT_00294574,
-	DAT_00294568, DAT_0029455c, DAT_002f7978, DAT_002f7974,
-	DAT_00294554, DAT_0029454c, DAT_00294544, DAT_0029453c,
-	DAT_00294534, DAT_0029452c, DAT_00294524, DAT_00294520,
-};
-/* 0x00294648  the number of entries of each list */
-int DAT_00294648[16] = { 1, 1, 1, 1, 3, 3, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1 };
+   (scripted, DAT_00294110), by parts a firework and direction (DAT_00294608). Values:
+   0x00294520 {4}, 0x00294524 {3, 2}, 0x0029452c / 34 / 3c {0, 1}, 0x00294544 {4, 3},
+   0x0029454c / 54 {0, 1}, 0x0029455c / 68 {3, 3, 1}, 0x00294574 / 78 {1}; the four .bss
+   lists 0x002f7974-0x002f7980 {0}. */
+/* 0x0029457c, 0x00294594, 0x002945b4, 0x002945d8: random rocket types for 2-5 types
+   {0,0,0,1,1,1}, {..,3,3}, {..,3,3,4}, {0,0,0,1,1,1,2,2,3,3,4} */
+extern const int DAT_0029457c[6];
+extern const int DAT_00294594[8];
+extern const int DAT_002945b4[9];
+extern const int DAT_002945d8[11];
+/* 0x00294608  the lists above: 7980, 797c, 4578, 4574, 4568, 455c, 7978, 7974, 4554,
+   454c, 4544, 453c, 4534, 452c, 4524, 4520 */
+extern int *DAT_00294608[16];
+/* 0x00294648  the number of entries of each list {1,1,1,1,3,3,1,1,2,2,2,2,2,2,2,1} */
+extern int DAT_00294648[16];
 
 /* the player in slot i (CCarryOn_Player of carryon_a) */
 #define CB_PLAYER(i) (DAT_002f6d28[i])

@@ -22,11 +22,15 @@ The game build compiles every .c under src/carryon_b: without OPENFRENZY_CARRYON
 #include "carryon_b.h"
 
 /* ---------- globals of modules that this image does not link: zeroed 0x400-byte blocks,
-   except the ones the tests set */
+   except the ones the tests set. carryon_a's data blocks (of_co_*, which hold carryon_b's
+   tables too) are linked: run_tests.sh adds carryon_a_data.c.obj. */
+
+extern void *DAT_002f6d28[4];
+extern void *DAT_002f6d5c;
+/* the CFire_Game vtable that carryon_a_data.c points at (as src/core/crt/core_foreign.c) */
+__attribute__((weak)) const void *const vtable_00267468[1] = { 0 };
 
 unsigned int DAT_00285630 = 1;
-void *DAT_002f6d28[4];
-void *DAT_002f6d5c;
 int DAT_002bae94;
 long long DAT_002cd7a0;
 
@@ -41,23 +45,6 @@ __asm__(
 	".globl DAT_00292c68\n.set DAT_00292c68, of_cb_test_foreign + 0x1800\n"
 	".globl DAT_00292c6c\n.set DAT_00292c6c, of_cb_test_foreign + 0x1c00\n"
 	".globl DAT_00293928\n.set DAT_00293928, of_cb_test_foreign + 0x2000\n"
-	".globl DAT_00293ad8\n.set DAT_00293ad8, of_cb_test_foreign + 0x2400\n"
-	".globl DAT_00293ae8\n.set DAT_00293ae8, of_cb_test_foreign + 0x2800\n"
-	".globl DAT_00293b44\n.set DAT_00293b44, of_cb_test_foreign + 0x2c00\n"
-	".globl DAT_00294108\n.set DAT_00294108, of_cb_test_foreign + 0x3000\n"
-	".globl DAT_0029410c\n.set DAT_0029410c, of_cb_test_foreign + 0x3400\n"
-	".globl DAT_00294110\n.set DAT_00294110, of_cb_test_foreign + 0x3800\n"
-	".globl DAT_00294114\n.set DAT_00294114, of_cb_test_foreign + 0x3c00\n"
-	".globl DAT_00294118\n.set DAT_00294118, of_cb_test_foreign + 0x4000\n"
-	".globl DAT_00294120\n.set DAT_00294120, of_cb_test_foreign + 0x4400\n"
-	".globl DAT_00294124\n.set DAT_00294124, of_cb_test_foreign + 0x4800\n"
-	".globl DAT_00294128\n.set DAT_00294128, of_cb_test_foreign + 0x4c00\n"
-	".globl DAT_00294390\n.set DAT_00294390, of_cb_test_foreign + 0x5000\n"
-	".globl DAT_00294394\n.set DAT_00294394, of_cb_test_foreign + 0x5400\n"
-	".globl DAT_00294398\n.set DAT_00294398, of_cb_test_foreign + 0x5800\n"
-	".globl DAT_002943b4\n.set DAT_002943b4, of_cb_test_foreign + 0x5c00\n"
-	".globl DAT_002943b8\n.set DAT_002943b8, of_cb_test_foreign + 0x6000\n"
-	".globl DAT_002943d0\n.set DAT_002943d0, of_cb_test_foreign + 0x6400\n"
 	".globl DAT_002ba940\n.set DAT_002ba940, of_cb_test_foreign + 0x6800\n"
 	".globl DAT_002ba944\n.set DAT_002ba944, of_cb_test_foreign + 0x6c00\n"
 	".globl DAT_002ba948\n.set DAT_002ba948, of_cb_test_foreign + 0x7000\n"
@@ -72,8 +59,6 @@ __asm__(
 	".globl DAT_002be330\n.set DAT_002be330, of_cb_test_foreign + 0x9400\n"
 	".globl DAT_002db808\n.set DAT_002db808, of_cb_test_foreign + 0x9800\n"
 	".globl DAT_002ecfac\n.set DAT_002ecfac, of_cb_test_foreign + 0x9c00\n"
-	".globl DAT_002f6d60\n.set DAT_002f6d60, of_cb_test_foreign + 0xa000\n"
-	".globl DAT_002f7960\n.set DAT_002f7960, of_cb_test_foreign + 0xa400\n"
 );
 
 /* ---------- test doubles of other modules' functions (replace the weak stubs) */

@@ -9,7 +9,8 @@ from orig/default.xbe:
   of_chl_data   0x00292c48-0x00293a50  .data of CharLib text block 1 (XBE values)
   of_chl_data2  0x00293e80-0x00293f14  .data of CharLibShadow.cpp (XBE values)
   of_chl_data3  0x00294afc-0x00294bd0  .data of the CCamera.cpp block (XBE values)
-  of_chl_bss    0x002f27d0-0x002f6b80  .bss of CharLib text block 1 (zero)
+  of_chl_bss    0x002f27d4-0x002f6b80  .bss of CharLib text block 1 (zero; 0x002f27c8-0x002f27d4
+                is the CRay list, classlib_fx of_clf_ray_bss)
   of_chl_bss2   0x002f6c10-0x002f6d20  .bss of CharLibShadow.cpp (zero)
   of_chl_bss3   0x002f7a20-0x002f7a44  .bss of the CCamera.cpp block (zero)
 
@@ -43,7 +44,7 @@ extern unsigned char of_chl_bss3[];
 #define OF_CHL_DATA2_END 0x00293f14u
 #define OF_CHL_DATA3_START 0x00294afcu
 #define OF_CHL_DATA3_END 0x00294bd0u
-#define OF_CHL_BSS_START 0x002f27d0u
+#define OF_CHL_BSS_START 0x002f27d4u
 #define OF_CHL_BSS_END 0x002f6b80u
 #define OF_CHL_BSS2_START 0x002f6c10u
 #define OF_CHL_BSS2_END 0x002f6d20u

@@ -18,15 +18,10 @@ const void *const vtable_00268788[1] = {
 	(const void *)CFire_LaunchRack_dtor,
 };
 
-/* 0x0029439c  the rocket models of the six team colours */
-static const char *const DAT_0029439c[6] = {
-	"objects\\rack_rocket_green.obe",   /* 0x002685f4 */
-	"objects\\rack_rocket_red.obe",     /* 0x002685d8 */
-	"objects\\rack_rocket_blue.obe",    /* 0x002685b8 */
-	"objects\\rack_rocket_yellow.obe",  /* 0x00268598 */
-	"objects\\rack_rocket_orange.obe",  /* 0x00268578 */
-	"objects\\rack_rocket_pink.obe",    /* 0x00268558 */
-};
+/* 0x0029439c  the rocket models of the six team colours: "objects\\rack_rocket_green.obe",
+   "..._red", "..._blue", "..._yellow", "..._orange", "..._pink" (0x002685f4-0x00268558);
+   storage: carryon_a's of_co_data2 (gen_carryon_data.py) */
+extern const char *const DAT_0029439c[6];
 
 /* the slot that is filled or launched as the i-th: from the middle outwards */
 static int cb_rack_slot(int i)

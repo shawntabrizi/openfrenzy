@@ -14,6 +14,11 @@ parser 0x0004d9c0 that only this file uses, are placed here too.
 
 #include <string.h>
 
+/* port: 1 turns the Z: cache on as in the original (see bInitCache); 0 (default) keeps it off */
+#ifndef OPENFRENZY_Z_CACHE
+#define OPENFRENZY_Z_CACHE 0
+#endif
+
 /* 0x002d15b8: copy state: 0 idle, 1 reading a block, 2 writing it */
 int DAT_002d15b8;
 /* 0x002d15bc: a file is being copied */
@@ -263,6 +268,11 @@ int bkCacheFindFile(const char *source)
 bkCacheEnable: turns the cache on (with a new copy buffer) or off. */
 void bkCacheEnable(int enable)
 {
+#if !OPENFRENZY_Z_CACHE
+	/* port: the game turns the cache on and off around its modes (PressStart,
+	MiniGameSelect, core.c); keep it off (see bInitCache) */
+	enable = 0;
+#endif
 	if (DAT_002d73ac == enable)
 		return;
 	DAT_002d73ac = enable;
@@ -509,11 +519,18 @@ void bInitCache(void)
 	DAT_002d15dc = 0;
 	DAT_002d15e0 = NULL;
 	bkCacheBuildFileList();
+#if OPENFRENZY_Z_CACHE
 	test = bkFopen("d:\\_T_E_S_T.___", "wb");
 	if (test == NULL)
 		DAT_002d73ac = 1;
 	else
 		fclose(test);
+#else
+	/* port: the cache stays off, as on a development kit. Disc reads on the host are fast,
+	and the cache copied every package to $OPENFRENZY_SAVE_ROOT/z (about 300 MB per minute
+	of play). Build with -DOPENFRENZY_Z_CACHE=1 for the original behaviour above. */
+	(void)test;
+#endif
 	bkCreateEvent("_FileCacheRead");
 	DAT_002d73b0 = bkAddEventQueue("_FileCacheRead", 4, 0);
 	bkCreateEvent("_FileCacheWrite");

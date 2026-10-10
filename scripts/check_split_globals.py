@@ -32,7 +32,7 @@ KNOWN = {
 
 def block_sizes():
     sizes = {}
-    decl = re.compile(r"(unsigned char|uint32_t)\s+(of_[a-z0-9_]+_(?:bss|data\d*|tweaks))\[(0x[0-9a-fA-F]+|\d+)\]")
+    decl = re.compile(r"(unsigned char|uint32_t)\s+(of_[a-z0-9_]+_(?:bss\d*|data\d*|tweaks))\[(0x[0-9a-fA-F]+|\d+)\]")
     for path in glob.glob(os.path.join(ROOT, "src", "**", "*.c"), recursive=True):
         if os.sep + "tests" + os.sep in path:
             continue

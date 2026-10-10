@@ -84,6 +84,10 @@ def source_names(names):
             if f.endswith((".c", ".h")):
                 for full, addr in pattern.findall(open(os.path.join(base, f), errors="replace").read()):
                     names.setdefault(int(addr, 16), set()).add(full)
+    # before __DAT_ was written for _DAT_ names, every _DAT_x alias became DAT_x; keep both
+    for addr, group in names.items():
+        if any(n.startswith("_DAT_") for n in group):
+            group.add("DAT_%08x" % addr)
     return names
 
 
@@ -236,7 +240,10 @@ def main():
     out.append("__asm__(")
     for n, block, off, addr in aliases:
         bind = ".globl" if addr in used else ".weak_definition"
-        out.append('\t"%s %s\\n.set %s, %s + 0x%x\\n"  /* 0x%08x */' % (bind, n, n, block, off, addr))
+        # file-scope asm names are Mach-O names: asm_convert.py strips one leading
+        # underscore, so the C name _DAT_x is written __DAT_x (integration round 1)
+        sym = "_" + n if n.startswith("_") else n
+        out.append('\t"%s %s\\n.set %s, %s + 0x%x\\n"  /* 0x%08x */' % (bind, sym, sym, block, off, addr))
     out.append(");")
     path = os.path.join(ROOT, "src", "carryon_a", "CarryOn", "carryon_a_data.c")
     with open(path, "w") as f:
