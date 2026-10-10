@@ -1544,3 +1544,200 @@ void FUN_001abb70(void *self, int simple, int unused)
 	}
 	PL_PTR(0xc4) = to;
 }
+
+/* a new actor instance with the players' scale 0.55 */
+static struct BActorInstance *ra_NewInstance(void *actor, int line)
+{
+	struct BActorInstance *inst = baInitActorInstance(NULL, (struct BActor *)actor, 2, RA_FILE_PLAYER, line);
+
+	baPrepActorInstance(inst, 1);
+	RA_F32(inst, 0xd8) = 0.550000012f;
+	RA_F32(inst, 0xd4) = 0.550000012f;
+	RA_F32(inst, 0xd0) = 0.550000012f;
+	return inst;
+}
+
+/* 0x001abc70  Rowing/CRowing_Player.cpp
+Sets up player INDEX: clears it, its input channels, (player 0) the random table 0x0030f440,
+the cone, the driver models by character (.data 0x002b56d8 full, 0x002b56f0 simple), the
+boat (0x002b5708) and the plug from PACKAGE, the body on start slot START of the world,
+its collider, the eight hull deformations, the bones and animation ranges, the driver's 18
+animations (.data 0x002b5680), the AI and wobble state, the sun texture and the two helix
+trails in the character's colour. UNUSED (the game's variant package) is not read.
+Returns 1. */
+int FUN_001abc70(void *self, void *unused, void *package, int index, int start, int handicap)
+{
+	char *name = (char *)RW_ADDR(0x0030f4d8);
+	char texName[16];
+	float pos[4], rot[4];
+	void *seg, *mem, *world = g_RowWorld;
+	int character, i, mid, r, g, b;
+
+	(void)unused;
+	memset(self, 0, 1000);
+	PL_I32(0x374) = handicap;
+	PL_I32(0x370) = index;
+	PL_I32(0x378) = start;
+	PL_I32(0x3a0) = 0;
+	character = RA_CHARACTER(index);
+	FUN_001af720(RA_P(self, 0x170), index);
+	PL_I32(0x198) = 0;
+	PL_I32(0x19c) = 0;
+	PL_I32(0x1a0) = 0;
+	PL_I32(0x1a4) = 0;
+	PL_I32(0x38c) = 0;
+	PL_I32(0x390) = 0;
+	PL_I32(0xe0) = 0;
+	PL_I32(0xf4) = 1;
+	PL_I32(0xf8) = 0;
+	PL_I32(0xfc) = 0;
+	PL_U8(0x100) = 0;
+	PL_I32(0xe8) = 0;
+	PL_I32(0x10c) = 0;
+	PL_I32(0x124) = 0;
+	PL_I32(0x128) = 0;
+	PL_I32(0x130) = 0;
+	PL_I32(0x134) = 0;
+	PL_I32(0x110) = 0;
+	PL_I32(0x114) = 0;
+	PL_I32(0x118) = 0;
+	PL_I32(0x11c) = 0;
+	PL_I32(0x120) = 0;
+	if (PL_I32(0x370) == 0) {
+		for (i = 0; i < 20; i++) {
+			DAT_00285630 = DAT_00285630 * 0x343fdu + 0x269ec3u;
+			RW_VAR(unsigned int, 0x0030f440 + i * 4) = (DAT_00285630 >> 16) & 3;
+		}
+	}
+
+	FUN_001a7ac0(package);
+	sprintf(name, "%s.obe", RW_VAR(const char *, 0x002b56d8 + character * 4));
+	PL_PTR(0x0) = bLoadResource((struct bkPackage *)package, name, RA_RES_ACTOR, 0xdefa);
+	sprintf(name, "%s.obe", RW_VAR(const char *, 0x002b56f0 + character * 4));
+	PL_PTR(0x4) = bLoadResource((struct bkPackage *)package, name, RA_RES_ACTOR, 0xdefa);
+	PL_I32(0x3b4) = 0;
+	if (PL_PTR(0x0) == NULL) {
+		bkPrintf("*** No Character Model %s ***\n", name);
+		PL_PTR(0xc4) = NULL;
+	} else {
+		PL_PTR(0xc4) = ra_NewInstance(PL_PTR(0x0), 0x14a);
+		if (DAT_00283ea4 != 0)
+			Core_SetCharacterColours(PL_PTR(0xc4), DAT_00283ea4);
+		PL_PTR(0xcc) = PL_PTR(0xc4);
+		PL_PTR(0xc8) = ra_NewInstance(PL_PTR(0x4), 0x152);
+		baSetInstanceAnimations((struct BActor *)PL_PTR(0x0), (struct BActorInstance *)PL_PTR(0xc8));
+	}
+	sprintf(name, "%s.obe", RW_VAR(const char *, 0x002b5708 + character * 4));
+	PL_PTR(0x8) = bLoadResource((struct bkPackage *)package, name, RA_RES_ACTOR, 0xdefa);
+	if (PL_PTR(0x8) == NULL) {
+		bkPrintf("*** No Boat Model %s ***\n", name);
+		PL_PTR(0xc) = NULL;
+	} else
+		PL_PTR(0xc) = ra_NewInstance(PL_PTR(0x8), 0x16b);
+	PL_PTR(0x10) = bLoadResource(NULL, "boat_plug.obe", RA_RES_ACTOR, 0xdefa);
+	if (PL_PTR(0x10) == NULL)
+		PL_PTR(0x10) = bLoadResource((struct bkPackage *)package, "boat_plug.obe", RA_RES_ACTOR, 0xdefa);
+	if (PL_PTR(0x10) != NULL)
+		PL_PTR(0x14) = ra_NewInstance(PL_PTR(0x10), 0x17b);
+
+	/* the body on the start slot (world +0x84: 0x14 bytes each: position, heading) */
+	pos[0] = RA_F32(world, 0x84 + PL_I32(0x378) * 0x14);
+	pos[1] = RA_F32(world, 0x88 + PL_I32(0x378) * 0x14);
+	pos[2] = RA_F32(world, 0x8c + PL_I32(0x378) * 0x14);
+	pos[3] = RA_F32(world, 0x90 + PL_I32(0x378) * 0x14);
+	rot[0] = 0.0f;
+	rot[1] = RA_F32(world, 0x94 + PL_I32(0x378) * 0x14);
+	rot[2] = 0.0f;
+	rot[3] = 0.0f;
+	FUN_001a59f0(RA_P(self, 0x2a8), PL_PTR(0xc), pos, rot, 0);
+	PL_F32(0x2f8) = 0.600000024f;
+	PL_I32(0x3a4) = FUN_001a73c0(index, 90.0f, RA_FP(self, 0x2b4), RA_FP(self, 0x304), 50.0f, NULL, NULL);
+	for (i = 0; i < 8; i++)
+		FUN_001a74b0(RA_P(self, 0x1a8 + i * 0x20), PL_PTR(0xc), i);
+
+	if (PL_PTR(0xc) != NULL) {
+		void *nodes = RA_PTRF(PL_PTR(0xc), 0x134);
+
+		PL_PTR(0x18) = baFindNode((struct BActorNode *)nodes, "left engine bone");
+		PL_PTR(0x1c) = baFindNode((struct BActorNode *)RA_PTRF(PL_PTR(0xc), 0x134), "right engine bone");
+		PL_PTR(0x20) = baFindNode((struct BActorNode *)RA_PTRF(PL_PTR(0xc), 0x134), "left stick");
+		PL_PTR(0x24) = baFindNode((struct BActorNode *)RA_PTRF(PL_PTR(0xc), 0x134), "right stick");
+		PL_PTR(0x28) = baFindSubObject((struct BActorInstance *)PL_PTR(0xc), "push_forward");
+		PL_PTR(0x38) = baFindSubObject((struct BActorInstance *)PL_PTR(0xc), "boing");
+		if (PL_PTR(0x38) == NULL) {
+			PL_I32(0x3c) = 0;
+			PL_I32(0x40) = 0;
+		} else {
+			PL_I32(0x3c) = RA_I32(PL_PTR(0x38), 4);
+			PL_I32(0x40) = RA_I32(PL_PTR(0x38), 8);
+		}
+	}
+	if (PL_PTR(0x28) == NULL) {
+		bkPrintf("Where's this anim segment then?\n");
+	} else {
+		seg = baFindSubObject((struct BActorInstance *)PL_PTR(0xc), "neutral_back");
+		PL_I32(0x34) = RA_I32(PL_PTR(0x28), 8);
+		PL_I32(0x2c) = RA_I32(PL_PTR(0x28), 4);
+		if (seg == NULL || (mid = RA_I32(seg, 4)) < PL_I32(0x2c) || mid > PL_I32(0x34))
+			mid = (PL_I32(0x34) + PL_I32(0x2c)) / 2;
+		PL_I32(0x30) = mid;
+		bkPrintf("rev, mid, fore = %d %d %d\n", PL_I32(0x2c), mid, PL_I32(0x34));
+	}
+	if (PL_PTR(0xc4) != NULL) {
+		PL_PTR(0xa0) = baFindNode((struct BActorNode *)RA_PTRF(PL_PTR(0xc4), 0x134), "lshoulder");
+		PL_PTR(0xa4) = baFindNode((struct BActorNode *)RA_PTRF(PL_PTR(0xc4), 0x134), "rshoulder");
+		PL_PTR(0x44) = baFindSubObject((struct BActorInstance *)PL_PTR(0xc4), "push_forward");
+		PL_I32(0x9c) = 0;
+		for (i = 0; i < 18; i++)
+			PL_PTR(0x48 + i * 4) = baFindSubObject((struct BActorInstance *)PL_PTR(0xc4),
+				RW_VAR(const char *, 0x002b5680 + i * 4));
+	}
+	if (PL_PTR(0x44) == NULL) {
+		bkPrintf("Where's this charanim segment then?\n");
+	} else {
+		seg = baFindSubObject((struct BActorInstance *)PL_PTR(0xc4), "neutral_back");
+		PL_I32(0xb0) = RA_I32(PL_PTR(0x44), 8);
+		PL_I32(0xa8) = RA_I32(PL_PTR(0x44), 4);
+		/* the fallback uses the boat's range, as the original does */
+		if (seg == NULL || (mid = RA_I32(seg, 4)) < PL_I32(0xa8) || mid > PL_I32(0xb0))
+			mid = (PL_I32(0x34) + PL_I32(0x2c)) / 2;
+		PL_I32(0xac) = mid;
+		bkPrintf("rev, mid, fore = %d %d %d\n", PL_I32(0x2c), PL_I32(0x30), PL_I32(0x34));
+		baSetNodeTime((struct BActorInstance *)PL_PTR(0xc4),
+			(struct BActorNode *)RA_PTRF(PL_PTR(0xc4), 0x134), PL_I32(0xac), 1);
+	}
+
+	FUN_001a8830(self, 10, 0.0f);
+	PL_U8(0x37c) = 1;
+	PL_I32(0x380) = 0;
+	PL_I32(0x384) = 0;
+	PL_I32(0x388) = 0;
+	PL_U8(0x34b) = 1;
+	PL_I32(0x150) = 0;
+	PL_U8(0x154) = 0;
+	if ((g_RowGameFlags & 0xc) == 4 && RA_I32(world, 0x154) != 0)
+		PL_I32(0x158) = (PL_I32(0x370) + RW_VAR(int, 0x0030f440)) & 3;
+	else
+		PL_I32(0x158) = -1;
+	r = rw_rand();
+	PL_PTR(0x15c) = NULL;
+	PL_I32(0x160) = 0;
+	PL_I32(0xb4) = -1;
+	PL_I32(0x108) = 0;
+	PL_I32(0x39c) = 0;
+	PL_F32(0x164) = (float)r * 0.000191753439f;
+
+	memcpy(texName, "tex_map\\sun.bmp", 16);
+	PL_PTR(0x3a8) = bLoadResource(NULL, texName, RA_RES_TEXTURE, 0xdefa);
+	r = (int)((unsigned int)(RA_DEBUG_COLOUR(self)[0] << 6) / 0xff) + 0x20;
+	g = (int)((unsigned int)(RA_DEBUG_COLOUR(self)[1] << 6) / 0xff) + 0x20;
+	b = (int)((unsigned int)(RA_DEBUG_COLOUR(self)[2] << 6) / 0xff) + 0x20;
+	mem = RA_NEW(0x68, RA_FILE_PLAYER, 0x284);
+	PL_PTR(0x3ac) = mem != NULL ? FUN_001b1870((struct RowHelix *)mem, r, g, b, 0x3e860a91) : NULL;
+	mem = RA_NEW(0x68, RA_FILE_PLAYER, 0x285);
+	PL_PTR(0x3b0) = mem != NULL ? FUN_001b1870((struct RowHelix *)mem, r, g, b, (int)0xbe860a91) : NULL;
+	PL_I32(0x3dc) = 0;
+	PL_I32(0x3e4) = 0;
+	PL_F32(0x3e0) = (float)rw_rand() * 0.000152592547f + 5.0f;
+	return 1;
+}

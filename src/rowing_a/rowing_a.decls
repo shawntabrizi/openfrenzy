@@ -154,3 +154,6 @@
 001afc80 void FUN_001afc80(float *from, float *to, int r, int g, int b);
 001ab0c0 void FUN_001ab0c0(void *self, int lx, int ly, int rx, int ry, float dt);
 001aba70 void FUN_001aba70(void *self);
+001a74b0 int FUN_001a74b0(void *slot, void *inst, int index);
+001af720 void FUN_001af720(void *self, int index);
+001a7710 void FUN_001a7710(void *self, int *lx, int *ly, int *rx, int *ry);
