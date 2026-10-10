@@ -150,7 +150,10 @@ integration round 2 (921ec75); see below.
   title, menus, character select, Stage 1 (Tube Tremors/MouseWhack, Hopper, MouseWhack), the
   first Meta stage and its vote, Stage 2 (TankedUp, Team Clusteroids, TankedUp), into the second
   Meta stage (about 640 s, 60 fps). There it faults: read of 0xd0 in CLRoute_Start <-
-  FUN_001586d0 (meta_a AI plan) <- AI_ThinkTail. Not fixed.
+  FUN_001586d0 (meta_a AI plan) <- AI_ThinkTail. Fixed: the AI's position was NaN, so
+  Pickup_Nearest returned 0 (case 5). Root cause: charlib CRColl_Step 0x000b4dd0 reflected
+  the velocity on an uninitialised normal when the total push was zero (the original keeps
+  n in sum's stack slot, so n = 0 there). Velocities of 1e8 happened in every board run.
 - The character select needs START about 7 s after the character is picked; earlier presses
   are lost (not a bug: the selection animation).
 - Fixed: Drillers ctor list (+0x90), ScratchMatch root list alias, foxhunt 0x003022cc block and

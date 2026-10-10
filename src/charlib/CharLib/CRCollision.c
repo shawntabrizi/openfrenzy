@@ -1455,6 +1455,12 @@ void CRColl_Step(void *actor)
 		v[1] = CHL_F32(actor, ACT_VEL + 0x4);
 		v[0] = CHL_F32(actor, ACT_VEL + 0x0);
 		speed = sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+		/* The original keeps n in sum's stack slot ([esp+0x28]: set to 0,0,0,1 at 0x000b4ee4,
+		passed as n at 0x000b57aa), and FUN_000514a0 leaves its output unchanged for a zero
+		vector. So a zero total push (contacts but no push) gives n = sum = 0: no bounce.
+		An uninitialised n reflected the velocity on stack garbage (1e8, then NaN positions;
+		the Meta AI then routed to NULL + 0xd0 in CLRoute_Start). */
+		memcpy(n, sum, sizeof n);
 		FUN_000514a0(n, coll_total_push);
 		if (0.0f <= CHL_F32(CHL_PTR(actor, ACT_BLOCK188), 0x24)) {
 			float bounce = CHL_F32(CHL_PTR(actor, ACT_BLOCK188), 0x24);
