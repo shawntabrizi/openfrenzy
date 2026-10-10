@@ -614,3 +614,97 @@ void FUN_001ac8f0(void *self, float dt)
 		RA_VFN(g_RowWater, 0x28, void (*)(void *, float, float, float, float, float))(g_RowWater,
 			PL_F32(0x2b4), PL_F32(0x2bc), -5.0f, 32.4410019f, 62.4410019f);
 }
+
+/* 0x001ada40  Rowing (gap; after CRowing_Player.cpp's last tagged function)
+Draws the player's extras: the cone (when 0x0030f0ec is set), the two helix trails and two
+sun sprites on the boat (.data 0x002b5910 in the character's colour; .data 0x002b5900 grey,
+its z following the front dent: depth x 11 - 62), turned with the boat. */
+void FUN_001ada40(void *self)
+{
+	float m[16], a[4], b[4];
+	int colour[4];
+	void *inst;
+
+	if (RW_VAR(int, 0x0030f0ec) != 0)
+		FUN_001aba70(self);
+	FUN_001b1ac0((struct RowHelix *)PL_PTR(0x3ac));
+	FUN_001b1ac0((struct RowHelix *)PL_PTR(0x3b0));
+	bdSetWorldMatrix((float *)DAT_002855f0);
+	bmQuaternionToMatrix(m, RA_FP(PL_PTR(0x358), 0xe0));
+	bmTransformVector4(a, m, (const float *)RW_ADDR(0x002b5910));
+	inst = PL_PTR(0x358);
+	a[0] += RA_F32(inst, 0xc0);
+	a[1] += RA_F32(inst, 0xc4);
+	a[2] += RA_F32(inst, 0xc8);
+	a[3] = 1.0f;
+	RW_VAR(float, 0x002b5908) = PL_F32(0x1b4) * 11.0f - 62.0f;
+	bmTransformVector4(b, m, (const float *)RW_ADDR(0x002b5900));
+	inst = PL_PTR(0x358);
+	b[0] += RA_F32(inst, 0xc0);
+	b[1] += RA_F32(inst, 0xc4);
+	b[2] += RA_F32(inst, 0xc8);
+	b[3] = 1.0f;
+	colour[0] = ra_CharacterColour[RA_CHARACTER(PL_I32(0x370))][0];
+	colour[1] = ra_CharacterColour[RA_CHARACTER(PL_I32(0x370))][1];
+	colour[2] = ra_CharacterColour[RA_CHARACTER(PL_I32(0x370))][2];
+	colour[3] = 0x7f;
+	FUN_001b1360(2, a, 15.0f, 15.0f, 0.0f, PL_PTR(0x3a8), colour, 0.0f);
+	colour[0] = 0x7f;
+	colour[1] = 0x7f;
+	colour[2] = 0x7f;
+	colour[3] = 0x7f;
+	FUN_001b1360(2, b, 15.0f, 15.0f, 0.0f, PL_PTR(0x3a8), colour, 0.0f);
+}
+
+/* 0x001adbf0  Rowing (gap; after CRowing_Player.cpp's last tagged function)
+Frees the player: its input map, its body, the driver, boat and plug instances and models
+(the shared plug model once, clearing every player's pointer to it), the shared cone and the
+two helix trails. */
+void FUN_001adbf0(void *self)
+{
+	struct RowHelix *helix;
+
+	FUN_001af950(RA_P(self, 0x170));
+	FUN_001a5780(RA_P(self, 0x2a8));
+	if (PL_PTR(0xc4) != NULL) {
+		baDeleteActorInstance((struct BActorInstance *)PL_PTR(0xc8));
+		baDeleteActorInstance((struct BActorInstance *)PL_PTR(0xcc));
+		bkDeleteResource((struct bkResource *)PL_PTR(0x0));
+		if (PL_PTR(0x4) != NULL)
+			bkDeleteResource((struct bkResource *)PL_PTR(0x4));
+	}
+	if (PL_PTR(0xc) != NULL) {
+		baDeleteActorInstance((struct BActorInstance *)PL_PTR(0xc));
+		bkDeleteResource((struct bkResource *)PL_PTR(0x8));
+	}
+	if (PL_PTR(0x14) != NULL) {
+		baDeleteActorInstance((struct BActorInstance *)PL_PTR(0x14));
+		if (PL_PTR(0x10) != NULL) {
+			bkDeleteResource((struct bkResource *)PL_PTR(0x10));
+			RA_PTRF(g_RowPlayer(0), 0x10) = NULL;
+			RA_PTRF(g_RowPlayer(1), 0x10) = NULL;
+			RA_PTRF(g_RowPlayer(2), 0x10) = NULL;
+			RA_PTRF(g_RowPlayer(3), 0x10) = NULL;
+		}
+	}
+	if (RW_VAR(void *, 0x0030f4b0) != NULL) {
+		baDeleteActorInstance((struct BActorInstance *)RW_VAR(void *, 0x0030f4b0));
+		RW_VAR(void *, 0x0030f4b0) = NULL;
+	}
+	if (RW_VAR(void *, 0x0030f4ac) != NULL) {
+		bkDeleteResource((struct bkResource *)RW_VAR(void *, 0x0030f4ac));
+		RW_VAR(void *, 0x0030f4ac) = NULL;
+	}
+	helix = (struct RowHelix *)PL_PTR(0x3ac);
+	if (helix != NULL) {
+		FUN_001b1a10(helix);
+		bkHeapFree(helix);
+		helix = (struct RowHelix *)PL_PTR(0x3b0);
+		if (helix != NULL) {
+			FUN_001b1a10(helix);
+			bkHeapFree(helix);
+		}
+		PL_PTR(0x3ac) = NULL;
+		PL_PTR(0x3b0) = NULL;
+	}
+}

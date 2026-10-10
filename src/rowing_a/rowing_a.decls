@@ -36,10 +36,8 @@
 001afaa0 void FUN_001afaa0(void *self, float x, float y, int r, int g, int b, int a, const char *format, ...);
 001ae290 void FUN_001ae290(void *self);
 001ae2f0 void FUN_001ae2f0(void *self);
-001ae050 void FUN_001ae050(void *self, int flag);
 001afd20 void FUN_001afd20(void *self);
 001af570 void FUN_001af570(void *self);
-001ada40 void FUN_001ada40(void *self);
 001aab80 void FUN_001aab80(void *self, int detail);
 001a5770 void FUN_001a5770(void *self);
 0019eaa0 void FUN_0019eaa0(struct CWaterField *water, void *world, float x, float z);
@@ -79,7 +77,6 @@
 001ae2e0 void FUN_001ae2e0(void *self, float fov);
 001a76e0 int FUN_001a76e0(void *self);
 001abb70 void FUN_001abb70(void *self, int simple, int unused);
-001adbf0 void FUN_001adbf0(void *self);
 001af9a0 void FUN_001af9a0(void *self);
 001a5970 void FUN_001a5970(void);
 001af450 void FUN_001af450(void *self);
@@ -89,7 +86,6 @@
 001a57f0 void FUN_001a57f0(void);
 001ac8f0 void FUN_001ac8f0(void *self, float dt);
 001b10a0 void FUN_001b10a0(void *self, float dt);
-001ade80 void FUN_001ade80(void *self, int mode);
 001b0e50 void FUN_001b0e50(void *self);
 001a5610 void FUN_001a5610(void *water, float t);
 001ae420 int FUN_001ae420(void *self);
@@ -158,3 +154,16 @@
 001af720 void FUN_001af720(void *self, int index);
 001a7710 void FUN_001a7710(void *self, int *lx, int *ly, int *rx, int *ry);
 001ac560 void FUN_001ac560(void *self);
+001ada40 void FUN_001ada40(void *self);
+001adbf0 void FUN_001adbf0(void *self);
+001af950 void FUN_001af950(void *self);
+001adef0 void FUN_001adef0(int alpha);
+001ae050 void FUN_001ae050(void *self, int fade);
+001ade80 void FUN_001ade80(void *self, int index);
+001ae190 void FUN_001ae190(void *self);
+001ae310 int FUN_001ae310(void *self);
+001ae470 void FUN_001ae470(void *self);
+001ae510 void FUN_001ae510(void *self, float *pts, int *count);
+001ae6b0 void FUN_001ae6b0(void *self, float pitch, float yaw, float minDist, float margin);
+001aea40 void FUN_001aea40(void *self, float unused);
+001af9b0 int FUN_001af9b0(void);
