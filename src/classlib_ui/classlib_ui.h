@@ -84,4 +84,9 @@ extern float DAT_0028ffac;
 /* 0x0028ffb8  index of the music track that plays now, -1 for none */
 extern int DAT_0028ffb8;
 
+/* ---------- functions missing from of_functions.tsv (defined here, report to the architect) */
+
+/* 0x00072060  draw callback of CLSprite_DrawBlurred (ClassLib/unplaced.c) */
+int FUN_00072060(int pass, int *info);
+
 #endif

@@ -591,3 +591,441 @@ unsigned int CLList_Next(unsigned int *list, unsigned int *node)
 		node = list;
 	return *node & (((unsigned int *)*node == list) - 1);
 }
+
+/* ---------- screen fades, loading screens and music (0x00071c20-0x00072720) */
+
+/* a pre-transformed vertex of the 2D quads below (0x24 bytes) */
+struct CLQuadVertex {
+	float x, y, z;       /* 0x00 */
+	float unused[3];     /* 0x0c */
+	unsigned int colour; /* 0x18 ARGB */
+	float u, v;          /* 0x1c */
+};
+OF_ASSERT_SIZE(struct CLQuadVertex, 0x24);
+
+/* 0x002ec900  the custom soundtrack stream of the music that plays now (0: disc music) */
+#define clu_music_custom CLU_VAR(int, 0x002ec900)
+/* 0x002ec904  the screen fade (CLFade_Draw) runs */
+#define clu_fade_active CLU_VAR(int, 0x002ec904)
+/* 0x002ec908  frames left in the screen fade */
+#define clu_fade_time CLU_VAR(float, 0x002ec908)
+/* 0x002ec910  quad of CLScreen_DrawDarken */
+#define clu_darken_quad CLU_ARR(struct CLQuadVertex, 0x002ec910)
+/* 0x002ec9a0  quad of CLFade_Draw */
+#define clu_fade_quad CLU_ARR(struct CLQuadVertex, 0x002ec9a0)
+/* 0x002eca3c  set by FUN_00072720 */
+#define clu_eca3c CLU_VAR(undefined4, 0x002eca3c)
+/* 0x002900a0  3x3 blur weights of CLSprite_DrawBlurred */
+#define clu_blur_weights CLU_ARR(float, 0x002900a0)
+/* 0x0028ffb8  music track that plays now (-1: none) */
+#define clu_music_track CLU_VAR(int, 0x0028ffb8)
+/* 0x0028ffc4  music track flags (8-byte table entries) */
+#define clu_music_flags(i) CLU_VAR(unsigned int, 0x0028ffc4 + (i) * 8)
+/* 0x002ec890  music stream samples */
+#define clu_music_samples CLU_ARR(int, 0x002ec890)
+
+/* globals of other modules (tentative definitions in classlib_ui_extern.c) */
+extern int DAT_002ba928;                 /* screen width (core) */
+extern int DAT_002ba92c;                 /* screen height (core) */
+extern int DAT_002ba9ac;                 /* loading screen: bytes to load (core) */
+extern int DAT_002ba9b0;                 /* loading screen: files to load (core) */
+extern int DAT_002bae6c;                 /* music volume (core) */
+extern int DAT_002bae80;                 /* custom soundtrack count (core) */
+extern int DAT_002bae84;                 /* custom soundtrack in use (core) */
+extern int DAT_003055e0;                 /* game state: 2 = no music changes */
+extern unsigned int DAT_002bc490[256];   /* colour tables by component value (bdisplay) */
+extern unsigned int DAT_002bc898[256];
+extern unsigned int DAT_002bcc94[256];
+extern unsigned int DAT_002bce18[256];
+extern unsigned int DAT_002bd640[256];
+extern float DAT_002855f0[16];           /* identity matrix (engine) */
+
+/* 0x00072060  ClassLib (file unknown); missing from of_functions.tsv
+Draw callback of CLSprite_DrawBlurred: counts the draws in sprite->0x88 and
+moves the quad off screen once the count passes sprite->0x84. */
+int FUN_00072060(int pass, int *info)
+{
+	int sprite = info[7];
+	float *quad;
+
+	if (pass == 0) {
+		*(int *)(sprite + 0x88) = *(int *)(sprite + 0x88) + 1;
+		if (*(int *)(sprite + 0x84) < *(int *)(sprite + 0x88)) {
+			quad = (float *)info[1];
+			quad[0] = -1000.0f;
+			quad[1] = -1000.0f;
+			quad[2] = 0.0f;
+			quad[9] = -1000.0f;
+			quad[10] = -1000.0f;
+			quad[11] = 0.0f;
+			quad[18] = -1000.0f;
+			quad[19] = -1000.0f;
+			quad[20] = 0.0f;
+			quad[27] = -1000.0f;
+			quad[28] = -1000.0f;
+			quad[29] = 0.0f;
+		}
+	}
+	return 1;
+}
+
+/* 0x00071c20  ClassLib (file unknown)
+Darkens the whole screen with a black quad of alpha `alpha` (0-255); with
+`music` set, the music volume goes down by the same amount. */
+void CLScreen_DrawDarken(int alpha, int music)
+{
+	unsigned int colour;
+
+	if (alpha < 0x100) {
+		if (alpha < 0)
+			alpha = 0;
+	} else {
+		alpha = 0xff;
+	}
+	if (music != 0)
+		FUN_00054690(((0xff - alpha) * DAT_002bae6c) / 0xff);
+	if (alpha == 0)
+		return;
+	FUN_000438b0();
+	FUN_00043b70(0);
+	FUN_00044b00(7, 1, 0);
+	FUN_00044b00(5, 0, 0);
+	clu_darken_quad[2].x = (float)(DAT_002ba928 >> 1);
+	clu_darken_quad[1].y = (float)(DAT_002ba92c >> 1);
+	clu_darken_quad[0].x = -clu_darken_quad[2].x;
+	colour = DAT_002bc898[alpha] | DAT_002bd640[0] | DAT_002bc490[0] | DAT_002bce18[0];
+	clu_darken_quad[0].colour = colour;
+	clu_darken_quad[0].y = -clu_darken_quad[1].y;
+	clu_darken_quad[0].z = 0.0f;
+	clu_darken_quad[1].z = 0.0f;
+	clu_darken_quad[2].z = 0.0f;
+	clu_darken_quad[3].z = 0.0f;
+	clu_darken_quad[1].x = clu_darken_quad[0].x;
+	clu_darken_quad[1].colour = colour;
+	clu_darken_quad[2].y = clu_darken_quad[0].y;
+	clu_darken_quad[2].colour = colour;
+	clu_darken_quad[3].x = clu_darken_quad[2].x;
+	clu_darken_quad[3].y = clu_darken_quad[1].y;
+	clu_darken_quad[3].colour = colour;
+	FUN_000416c0(0, 0);
+	FUN_00044b00(6, 1, 0);
+	FUN_00044b00(10, 0, 0);
+	FUN_0003f2d0(4, (int)clu_darken_quad, 4);
+	FUN_00044b00(5, 1, 0);
+	FUN_00044b00(6, 0, 0);
+	FUN_00044b00(7, 3, 0);
+	FUN_00043b70(1);
+}
+
+/* 0x00071db0  ClassLib (file unknown)
+Screen fade from black over 60 frames. The first call starts it (and draws,
+unless step is -1). Returns 1 when the fade has ended. */
+int CLFade_Draw(float step)
+{
+	int saved[30];
+	int alpha;
+	int a;
+	unsigned int colour;
+
+	if (clu_fade_active == 0) {
+		clu_fade_active = 1;
+		clu_fade_time = 60.0f;
+		if (step == -1.0f)
+			return 0;
+	} else {
+		clu_fade_time = clu_fade_time - step;
+		if (clu_fade_time <= 0.0f) {
+			clu_fade_active = 0;
+			clu_fade_time = 0.0f;
+			return 1;
+		}
+	}
+	FUN_000438b0();
+	FUN_00046d40((undefined4 *)saved);
+	alpha = (int)((double)clu_fade_time * (double)265.0f * (double)0.016666668f);
+	a = 0xff;
+	if (alpha < 0x100)
+		a = alpha;
+	FUN_00043b70(0);
+	FUN_00044b00(6, 1, 0);
+	FUN_00044b00(3, 0, 0);
+	FUN_00044b00(8, 0, 0);
+	FUN_00044b00(7, 1, 0);
+	FUN_00044b00(10, 1, 0);
+	FUN_00044b00(4, 0, 0);
+	FUN_000416c0(0, 0);
+	colour = DAT_002bd640[a] | DAT_002bc490[a] | DAT_002bce18[a] | DAT_002bcc94[0];
+	clu_fade_quad[0].x = -320.0f;
+	clu_fade_quad[0].y = -240.0f;
+	clu_fade_quad[0].z = 0.0f;
+	clu_fade_quad[1].x = 320.0f;
+	clu_fade_quad[1].y = -240.0f;
+	clu_fade_quad[1].z = 0.0f;
+	clu_fade_quad[2].x = -320.0f;
+	clu_fade_quad[2].y = 240.0f;
+	clu_fade_quad[2].z = 0.0f;
+	clu_fade_quad[3].x = 320.0f;
+	clu_fade_quad[3].y = 240.0f;
+	clu_fade_quad[3].z = 0.0f;
+	clu_fade_quad[0].colour = colour;
+	clu_fade_quad[1].colour = colour;
+	clu_fade_quad[2].colour = colour;
+	clu_fade_quad[3].colour = colour;
+	FUN_0003f2d0(4, (int)clu_fade_quad, 4);
+	FUN_00043b70(1);
+	FUN_00046d60(saved);
+	return 0;
+}
+
+/* 0x00071f90  ClassLib (file unknown)
+Adds the size of the loading-screen resource of a package ("csLoading" for
+cut scenes, else "mgLoading") to the loading totals. */
+void CLLoading_AddPackage(undefined4 package, int cutscene)
+{
+	const char *name;
+	int size;
+
+	if (cutscene == 0)
+		name = "mgLoading";
+	else
+		name = "csLoading";
+	if (FUN_0004d320(0, package, (undefined4)name, &size, 0) != 0) {
+		DAT_002ba9ac = DAT_002ba9ac + size;
+		DAT_002ba9b0 = DAT_002ba9b0 + 1;
+	}
+}
+
+/* 0x00071ff0  ClassLib (file unknown)
+Fades the music out over `frames` frames (stops a custom soundtrack). */
+void CLMusic_FadeOut(int frames)
+{
+	int root;
+
+	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	if (0 < frames)
+		frames = -frames;
+	if (clu_music_custom != 0) {
+		FUN_00055df0(clu_music_custom);
+		clu_music_track = -1;
+	}
+	*(int *)(root + 100) = 0;
+	*(int *)(root + 0x6c) = frames;
+	if (*(int *)(root + 0x54) != 0 && *(int *)(root + 0x5c) + frames < 1) {
+		FUN_000563f0(*(int *)(root + 0x54));
+		*(int *)(root + 0x54) = 0;
+		clu_music_track = -1;
+	}
+}
+
+/* 0x000720e0  ClassLib (file unknown)
+Draws a sprite nine times around `pos` (3x3, spacing scale * spread), with
+the alpha `alpha` weighted by the blur kernel at 0x002900a0. With `sprite`
+set, FUN_00072060 counts the draws. */
+void CLSprite_DrawBlurred(undefined4 a1, undefined4 a2, undefined4 a3, float *pos, undefined4 a5, undefined4 a6,
+			  undefined4 a7, int alpha, float spread, float scale, int sprite)
+{
+	float spacing;
+	float falpha;
+	float dx;
+	float matrix[16];
+	float local_pos[8];
+	const float *weight;
+	int i, j;
+
+	spacing = spread * scale;
+	falpha = (float)alpha;
+	memcpy(matrix, DAT_002855f0, sizeof(matrix));
+	memcpy(local_pos, pos, sizeof(local_pos));
+	local_pos[1] = 0.0f;
+	local_pos[0] = 0.0f;
+	matrix[10] = scale;
+	matrix[5] = scale;
+	matrix[0] = scale;
+	weight = clu_blur_weights;
+	for (i = 0; i < 3; i++) {
+		dx = (float)(((double)i - 1.0) * (double)spacing);
+		for (j = 0; j < 3; j++) {
+			matrix[12] = pos[0] - dx;
+			matrix[13] = (float)((double)pos[1] - ((double)j - 1.0) * (double)spacing);
+			FUN_00043930((undefined4 *)matrix);
+			if (sprite != 0) {
+				*(int *)(sprite + 0x88) = 0;
+				FUN_00043400(a1, a2, a3, (undefined4)local_pos, a5, a6, a7,
+					     (undefined4)(int)((double)falpha * (double)*weight), (undefined4)FUN_00072060,
+					     (undefined4)sprite);
+			} else {
+				FUN_00043400(a1, a2, a3, (undefined4)local_pos, a5, a6, a7,
+					     (undefined4)(int)((double)falpha * (double)*weight), 0, 0);
+			}
+			weight++;
+		}
+	}
+	FUN_000438b0();
+}
+
+/* 0x000722a0  ClassLib (file unknown)
+Restarts the custom soundtrack on a random track. */
+void CLMusic_NextCustomTrack(void)
+{
+	if (DAT_002bae84 != 0) {
+		FUN_00055e30(DAT_002bae84);
+		DAT_002bae84 = (int)FUN_00055c40(DAT_002bae80 + -1);
+	}
+}
+
+/* 0x000722d0  ClassLib (file unknown)
+Plays music track `track` (or a custom soundtrack track when one is in use
+and `disc_only` is 0); the music that played before fades out when
+`crossfade` is set. */
+void CLMusic_Play(int track, undefined4 start, undefined4 volume, undefined4 fade, int crossfade, int disc_only,
+		  unsigned int flags)
+{
+	int root;
+	int limit;
+
+	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	if (DAT_003055e0 == 2 || track < 0)
+		return;
+	if (DAT_002bae84 == 0 || disc_only != 0)
+		limit = 0x1c;
+	else
+		limit = *(int *)(DAT_002bae84 + 0x28);
+	if (track >= limit)
+		return;
+	clu_music_track = track;
+	if (*(int *)(root + 0x54) != 0) {
+		if (*(int *)(root + 0x58) != 0)
+			FUN_000563f0(*(int *)(root + 0x58));
+		*(int *)(root + 0x58) = *(int *)(root + 0x54);
+		*(int *)(root + 0x60) = *(int *)(root + 0x5c);
+		*(int *)(root + 0x68) = *(int *)(root + 100);
+		*(int *)(root + 0x70) = *(int *)(root + 0x6c);
+	}
+	*(undefined4 *)(root + 0x5c) = start;
+	*(undefined4 *)(root + 100) = volume;
+	*(undefined4 *)(root + 0x6c) = fade;
+	if ((DAT_002bae84 == 0 || disc_only != 0) && clu_music_samples[track] != 0)
+		*(int *)(root + 0x54) = clu_music_samples[track];
+	if (crossfade == 0 || *(int *)(root + 0x58) == 0)
+		*(int *)(root + 0x74) = 0;
+	else
+		*(int *)(root + 0x74) = 1;
+	if (DAT_002bae84 != 0 && disc_only == 0) {
+		CLMusic_NextCustomTrack();
+		clu_music_custom = DAT_002bae84;
+		FUN_00055ff0(DAT_002bae84, clu_music_track, 2, volume, 0, 0);
+		return;
+	}
+	clu_music_custom = 0;
+	if (*(int *)(root + 0x74) == 0 && *(int *)(root + 0x54) != 0) {
+		CLMusic_NextCustomTrack();
+		/* the original pushes a seventh argument (0) that the callee does not read */
+		FUN_00056370(*(int *)(root + 0x54), flags, start, 0, 0, 0);
+		if ((clu_music_flags(track) & 0x800000) == 0)
+			FUN_00056590(*(int *)(root + 0x54), 1);
+	}
+}
+
+/* 0x00072440  ClassLib (file unknown)
+Switches to music track `track` unless it plays already: fades the current
+music out over `fade_out` frames and crossfades into the new track. */
+void CLMusic_Switch(int track, undefined4 volume, int fade_out, undefined4 fade, int disc_only, unsigned int flags)
+{
+	if (DAT_002bae84 == 0) {
+	no_custom:
+		if (clu_music_custom == 0)
+			goto check;
+	} else {
+		if (clu_music_custom == DAT_002bae84) {
+			if (disc_only == 0)
+				goto check;
+			goto no_custom;
+		}
+		if (disc_only != 0)
+			goto no_custom;
+	}
+	clu_music_track = -1;
+check:
+	if (track != clu_music_track) {
+		CLMusic_FadeOut(fade_out);
+		CLMusic_Play(track, 0, volume, fade, 1, disc_only, flags);
+	}
+}
+
+/* 0x000724b0  ClassLib (file unknown)
+Plays a random music track whose flags match `kinds` (or a random custom
+soundtrack track). With `force` 0 the current track stays when it matches. */
+void CLMusic_PlayRandom(unsigned int kinds, int force, undefined4 volume, int fade_out, undefined4 fade,
+			unsigned int flags)
+{
+	int root;
+	int track;
+	int same;
+
+	if (DAT_002bae84 == 0 || (kinds & 0x3ffff0) == 0) {
+		if (force != 0 || clu_music_track == -1 || (clu_music_flags(clu_music_track) & kinds) == 0) {
+			do {
+				track = CLU_Rand() % 0x1c;
+			} while ((clu_music_flags(track) & kinds) == 0);
+			CLMusic_Switch(track, volume, fade_out, fade, (kinds & 0x3ffff0) == 0, flags);
+		}
+		return;
+	}
+	track = CLU_Rand();
+	track = track % (int)FUN_00055fd0(DAT_002bae84);
+	if (DAT_002bae84 == 0)
+		same = clu_music_custom == 0;
+	else
+		same = clu_music_custom == DAT_002bae84;
+	if (!same)
+		clu_music_track = -1;
+	if (track == clu_music_track)
+		return;
+	CLMusic_FadeOut(fade_out);
+	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	if (DAT_003055e0 == 2 || track < 0)
+		return;
+	if (DAT_002bae84 == 0) {
+		if (0x1b < track)
+			return;
+	} else if (*(int *)(DAT_002bae84 + 0x28) <= track) {
+		return;
+	}
+	clu_music_track = track;
+	if (*(int *)(root + 0x54) != 0) {
+		if (*(int *)(root + 0x58) != 0)
+			FUN_000563f0(*(int *)(root + 0x58));
+		*(int *)(root + 0x58) = *(int *)(root + 0x54);
+		*(int *)(root + 0x60) = *(int *)(root + 0x5c);
+		*(int *)(root + 0x68) = *(int *)(root + 100);
+		*(int *)(root + 0x70) = *(int *)(root + 0x6c);
+	}
+	*(int *)(root + 0x5c) = 0;
+	*(undefined4 *)(root + 100) = volume;
+	*(undefined4 *)(root + 0x6c) = fade;
+	if (DAT_002bae84 == 0 && clu_music_samples[track] != 0)
+		*(int *)(root + 0x54) = clu_music_samples[track];
+	if (*(int *)(root + 0x58) == 0)
+		*(int *)(root + 0x74) = 0;
+	else
+		*(int *)(root + 0x74) = 1;
+	if (DAT_002bae84 != 0) {
+		CLMusic_NextCustomTrack();
+		clu_music_custom = DAT_002bae84;
+		FUN_00055ff0(DAT_002bae84, clu_music_track, 2, volume, 0, 0);
+		return;
+	}
+	clu_music_custom = 0;
+	if (*(int *)(root + 0x74) == 0 && *(int *)(root + 0x54) != 0) {
+		CLMusic_NextCustomTrack();
+		FUN_00056370(*(int *)(root + 0x54), flags, 0, 0, 0, 0);
+		if ((clu_music_flags(track) & 0x800000) == 0)
+			FUN_00056590(*(int *)(root + 0x54), 1);
+	}
+}
+
+/* 0x00072720  ClassLib (file unknown) */
+void FUN_00072720(undefined4 value)
+{
+	clu_eca3c = value;
+}

@@ -14,3 +14,17 @@ char *DAT_002ba544;              /* core */
 unsigned char DAT_002ba750[0x58]; /* core */
 int DAT_00283d74;                /* core */
 int DAT_00283e0c;                /* core */
+int DAT_002ba928;                 /* core: screen width */
+int DAT_002ba92c;                 /* core: screen height */
+int DAT_002ba9ac;                 /* core */
+int DAT_002ba9b0;                 /* core */
+int DAT_002bae6c;                 /* core */
+int DAT_002bae80;                 /* core */
+int DAT_002bae84;                 /* core */
+int DAT_003055e0;
+unsigned int DAT_002bc490[256];   /* bdisplay */
+unsigned int DAT_002bc898[256];   /* bdisplay */
+unsigned int DAT_002bcc94[256];   /* bdisplay */
+unsigned int DAT_002bce18[256];   /* bdisplay */
+unsigned int DAT_002bd640[256];   /* bdisplay */
+float DAT_002855f0[16];           /* engine: identity matrix (initialised data of its owner) */

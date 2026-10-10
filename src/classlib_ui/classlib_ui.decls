@@ -48,3 +48,13 @@
 00071b10 void CLSamples_Update(void);
 00071b60 void InitMusic(void);
 00071bf0 void CLMusic_Release(void);
+00071c20 void CLScreen_DrawDarken(int alpha, int music);
+00071db0 int CLFade_Draw(float step);
+00071f90 void CLLoading_AddPackage(undefined4 package, int cutscene);
+00071ff0 void CLMusic_FadeOut(int frames);
+000720e0 void CLSprite_DrawBlurred(undefined4 a1, undefined4 a2, undefined4 a3, float *pos, undefined4 a5, undefined4 a6, undefined4 a7, int alpha, float spread, float scale, int sprite);
+000722a0 void CLMusic_NextCustomTrack(void);
+000722d0 void CLMusic_Play(int track, undefined4 start, undefined4 volume, undefined4 fade, int crossfade, int disc_only, unsigned int flags);
+00072440 void CLMusic_Switch(int track, undefined4 volume, int fade_out, undefined4 fade, int disc_only, unsigned int flags);
+000724b0 void CLMusic_PlayRandom(unsigned int kinds, int force, undefined4 volume, int fade_out, undefined4 fade, unsigned int flags);
+00072720 void FUN_00072720(undefined4 value);
