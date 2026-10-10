@@ -79,7 +79,10 @@ presentation. The width and the scale change only between frames, after one
 is presented (halo_screen_commit). */
 
 #define SCREEN_HEIGHT 480
-#define SCREEN_MAXIMUM_WIDTH 1920
+/* Fuzion Frenzy: always 640 columns. Its camera and HUD are not checked for
+a wider screen, so a wider window gets the 4:3 picture, scaled the same both
+ways, with black bars at the sides (screen_mode_choose, D3DDevice_Present). */
+#define SCREEN_MAXIMUM_WIDTH 640
 
 /* the width the game draws, 0 until first asked, and how many pixels a
 render target the size of the screen has per unit of it */
@@ -119,9 +122,15 @@ static const struct
 	{ "fxaa", _anti_aliasing_fxaa, 0 },
 #ifdef HALO_GLES
 	/* (SMAA's three passes and supersampling's four times the pixels are
-	more than a phone's GPU has to spare: FXAA in SMAA's place, and none) */
+	more than a phone's GPU has to spare: FXAA in SMAA's place, and none.
+	Fuzion Frenzy's build has no SMAA, so FXAA too; a Mac has the GPU for
+	supersampling) */
 	{ "smaa", _anti_aliasing_fxaa, 0 },
+#ifdef HALO_ANDROID
 	{ "ssaa2x", _anti_aliasing_off, 0 },
+#else
+	{ "ssaa2x", _anti_aliasing_ssaa, 0 },
+#endif
 #else
 	{ "smaa", _anti_aliasing_smaa, 0 },
 	{ "ssaa2x", _anti_aliasing_ssaa, 0 },
@@ -5174,17 +5183,23 @@ void WINAPI D3DDevice_Clear(DWORD count, CONST D3DRECT *rectangles, DWORD flags,
 
 /* ---------- the anti-aliasing passes */
 
+/* set when this frame has had its pass (cleared at D3DDevice_Present) */
+static BOOL screen_anti_aliased;
+
 /* display.anti_aliasing's pass over a window's 3D view, before the HUD and
 menus are drawn over it (source/render/render.c); the window's bounds in the
-game's units of the screen */
+game's units of the screen. Fuzion Frenzy: once a frame, from
+COverlay_DrawAll (classlib_ui) where the HUD starts; a frame that has no
+HUD gets the pass over all of it at D3DDevice_Present. */
 void halo_screen_anti_alias(short x0, short y0, short x1, short y1)
 {
 	struct render_target_entry *target;
 	GLint corners[4];
 	int mode = anti_aliasing();
 
-	if (!device.gl_ready || (mode != _anti_aliasing_fxaa && mode != _anti_aliasing_smaa))
+	if (!device.gl_ready || (mode != _anti_aliasing_fxaa && mode != _anti_aliasing_smaa) || screen_anti_aliased)
 		return;
+	screen_anti_aliased = TRUE;
 	/* (the primary target's view: the back buffer's) */
 	target = render_target_get(&device.back_buffer);
 	if (!target)
@@ -5395,6 +5410,9 @@ void WINAPI D3DDevice_Present(CONST RECT *source_rectangle, CONST RECT *destinat
 		if (trace_frame())
 			platform_log("present back buffer %08lx texture %u", (unsigned long)device.back_buffer.Data,
 				back_buffer->target.texture);
+		/* (FXAA over the whole frame, if no HUD started this frame) */
+		halo_screen_anti_alias(0, 0, (short)halo_screen_width(), SCREEN_HEIGHT);
+		screen_anti_aliased = FALSE;
 		render_target_resolve(&back_buffer->target);
 #ifndef HALO_GLES
 		visibility_copy_batch();
@@ -5472,6 +5490,9 @@ void WINAPI D3DDevice_Present(CONST RECT *source_rectangle, CONST RECT *destinat
 		device.index_offset = INDEX_BUFFER_SIZE;
 #endif
 	}
+	/* a new window size or anti-aliasing setting, from the next frame (Halo
+	calls this as a frame starts: rasterizer_xbox.c) */
+	halo_screen_commit();
 	device.frame++;
 	stats.presents++;
 	if (debug_settings.statistics && device.frame % 60 == 0)

@@ -52,7 +52,7 @@ the game calls; 54 are unidentified.
 - `sdl_platform.c` is new and small: keyboard/mouse events are handled but untested with input.
 - Audio (`dsound_sdl.c`) is linked but untested. No WMA decoder (music in `Music.xbp` is WMA).
 - `host_sdl_destroy_audio_stream` only pauses the stream (small leak per output-device change).
-- FXAA/SMAA are disabled (`xgpu_post_null.c`).
+- FXAA works (`xgpu_post.c`); SMAA is not in the build, so "smaa" gives FXAA.
 - Settings come from defaults and `OPENFRENZY_*` variables only (no config file).
 - No `.app` bundle; run the host with the image.
 - The `.xbp` package format is not decoded.

@@ -10,7 +10,8 @@ Halo's map extraction, internet-play invites, scoreboard pointer, menus' pointer
 touch input, window icon, updater, rebinding UI. The guest calls SDL through
 port/guest/runtime/guest_sdl.c, so only the SDL functions listed there may be used.
 
-Settings (of_config.c): display.vsync. The host decides the window mode
+Settings (of_config.c): display.vsync, display.resolution_scaling ("native" draws
+at the window's pixels, "original" at 640x480). The host decides the window mode
 (OPENFRENZY_WINDOWED=1 for a window, else borderless fullscreen).
 */
 
@@ -25,7 +26,7 @@ Settings (of_config.c): display.vsync. The host decides the window mode
 #include <stdlib.h>
 #include <string.h>
 
-/* the Xbox picture: the game draws 640x480 (d3d8_gl.c scales it to the drawable) */
+/* the Xbox picture: 640x480 (with "original" resolution scaling, d3d8_gl.c scales it to the drawable) */
 #define XBOX_WIDTH 640
 #define XBOX_HEIGHT 480
 
@@ -74,11 +75,34 @@ BOOL platform_offer_game_data(const char *destination)
 	return FALSE;
 }
 
-/* the size the game draws at: the Xbox's */
+/* the size the game draws at: the window's pixels (on a Retina display, two
+for each point), from OpenCE's platform_screen_mode. d3d8_gl.c keeps the
+picture 4:3 and puts black bars at the sides or the top and bottom. FALSE
+where display.resolution_scaling is "original": the game then draws the
+Xbox's 640x480, which the display blit scales up. */
 BOOL platform_screen_mode(long *width, long *height)
 {
-	*width = XBOX_WIDTH;
-	*height = XBOX_HEIGHT;
+	/* (the size last given, for a window that has none: minimized) */
+	static long last_width, last_height;
+	int pixel_width = 0, pixel_height = 0;
+
+	if (!strcmp(config_string("display.resolution_scaling"), "original"))
+		return FALSE;
+	if (!platform_window)
+	{
+		*width = XBOX_WIDTH;
+		*height = XBOX_HEIGHT;
+		return TRUE;
+	}
+	SDL_GetWindowSizeInPixels(platform_window, &pixel_width, &pixel_height);
+	if (pixel_width <= 0 || pixel_height <= 0)
+	{
+		*width = last_width;
+		*height = last_height;
+		return last_width > 0;
+	}
+	*width = last_width = pixel_width;
+	*height = last_height = pixel_height;
 	return TRUE;
 }
 

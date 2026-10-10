@@ -79,6 +79,10 @@ order): 0 colour fade (0x00072870), 1 scale (0x00072ab0), 2 move (0x00073e00), 3
 /* 0x002ecfac  HUD object (Hud.cpp) */
 #define clu_hud CLU_VAR(int, 0x002ecfac)
 
+/* port (src/d3d8/d3d8_gl.c): display.anti_aliasing's pass (FXAA) over the screen, once a
+frame; the original has no such call */
+void halo_screen_anti_alias(short x0, short y0, short x1, short y1);
+
 /* globals of other modules (tentative definitions in classlib_ui_extern.c) */
 extern unsigned int DAT_002bc490[256];
 extern unsigned int DAT_002bc898[256];
@@ -614,6 +618,8 @@ void COverlay_DrawAll(int no_z)
 	last = 0;
 	if (clu_overlay_pass == 0)
 		return;
+	/* port: the 3D scene ends here and the HUD starts, so FXAA keeps the HUD sharp */
+	halo_screen_anti_alias(0, 0, 640, 480);
 	FUN_00046d40((undefined4 *)saved_state);
 	if (clu_hud != 0)
 		FUN_00078fb0(clu_hud);

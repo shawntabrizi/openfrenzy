@@ -36,6 +36,7 @@ static struct setting settings[] =
 	{ "audio.input_device", "default" },
 	{ "display.anti_aliasing", "off" },
 	{ "display.per_pixel_lighting", "false" },
+	{ "display.resolution_scaling", "native" },
 	{ "display.screen_width", "0" },
 	{ "display.shadow_resolution", "0" },
 	{ "display.vsync", "true" },

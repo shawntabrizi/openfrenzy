@@ -87,6 +87,21 @@ Environment:
 | `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
 
+### Display settings
+
+The game is 4:3 only: it always has 640 columns and 480 lines in its own units. A wider or
+taller window gets black bars.
+
+| Variable | Values | Effect |
+|---|---|---|
+| `OPENFRENZY_DISPLAY_RESOLUTION_SCALING` | `native` (default), `original` | `native` draws at the window's real pixels (Retina: 2 for each point), with the same scale both ways. `original` draws 640x480 and scales it up. |
+| `OPENFRENZY_DISPLAY_ANTI_ALIASING` | `off` (default), `fxaa`, `smaa`, `msaa2x`, `msaa4x`, `msaa8x`, `ssaa2x` | `fxaa`: one pass over the 3D scene before the HUD (`COverlay_DrawAll`), or over the full frame at present when the frame has no HUD (menus). `smaa` gives `fxaa` (no SMAA in this build). `msaaNx`: N samples a pixel. `ssaa2x`: draws at 2 times the size each way, then scales down (with `native` only). |
+| `OPENFRENZY_DISPLAY_VSYNC` | `true` (default), `false` | wait for the display's refresh |
+
+The log line `screen: 640x480 drawn at WxH` gives the size the game draws at. It changes when
+the window size changes. `OPENFRENZY_DEBUG_SCREENSHOT_EVERY=<frames>` with
+`OPENFRENZY_DEBUG_SCREENSHOT_DIRECTORY=<abs dir>` writes BMP frames at that size.
+
 Sandbox note (Claude Code): a window needs the window server, which the sandbox blocks
 ("The video driver did not add any displays"). Run windowed tests outside the sandbox, or use
 `SDL_VIDEO_DRIVER=dummy`.

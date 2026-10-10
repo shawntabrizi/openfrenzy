@@ -183,7 +183,7 @@ equivalent (`ref/OpenCE/port/linux/src/` at `231708d`), split into platform modu
 
 | XBE section / region | Replaced by | Module |
 |---|---|---|
-| `D3D` (D3D8 1.0.3925), `XGRPH` | `d3d8_gl.c`, `d3d8_resources.c`, `nv2a_vsh.c`, `nv2a_psh.c`, `xbox_textures.c`, `gl_functions.c`, `xgpu_text.c`, `xgpu_post_null.c` | d3d8 |
+| `D3D` (D3D8 1.0.3925), `XGRPH` | `d3d8_gl.c`, `d3d8_resources.c`, `nv2a_vsh.c`, `nv2a_psh.c`, `xbox_textures.c`, `gl_functions.c`, `xgpu_text.c`, `xgpu_post.c` | d3d8 |
 | `DSOUND` (3925) | `dsound_sdl.c` | dsound |
 | `WMADEC`, `WMADECXM` | a WMA decoder (to write or port; music in `Music.xbp` is WMA) | dsound |
 | `.text` region `bink` (RAD Bink) | `bink_null.c` (from OpenCE): videos are skipped | dsound |
@@ -357,11 +357,11 @@ the `crt_init`, `crt_exit` and `engine_tail` regions. Ghidra's first analysis mi
 | `port/macos/dependencies.json` (ANGLE, Khronos) | OpenCE-mac-zimm3rmann | `e55684a` | + musl 1.2.5 pin |
 | `src/{runtime,vfs,xkernel,d3d8,dsound,input}/` OpenCE files | OpenCE `port/linux/src/`, `port/include/`, `port/linux/include/` | `231708d` | as is, except `posix.h` (networking removed), `xbox_memory.c` (Halo cache reservation removed), `xbox_textures.c` (include) |
 | `scripts/linux_msvc_semantics.py` | OpenCE `tools/` | `231708d` | as is |
-| new for this game | - | - | `xiso_fs.c`, `sdl_platform.c` (rewritten, smaller), `of_config.c` (no config.toml), `of_math.c`, `of_boot.c`, `of_unimplemented.c`, `xgpu_post_null.c`, `compat/halo_hooks.c` (inert Halo hooks), the generators |
+| new for this game | - | - | `xiso_fs.c`, `sdl_platform.c` (rewritten, smaller), `of_config.c` (no config.toml), `of_math.c`, `of_boot.c`, `of_unimplemented.c`, `compat/halo_hooks.c` (inert Halo hooks), the generators |
 
 Dropped from OpenCE: Halo game code and its build (`configure.py`, ninja graph), networking
 (`posix_net.c`, `xnet.c`, p2p, UPnP, Discord), the updater, touch input and menus, map
-extraction, config.toml (`port_config.c` + tomlc17), FXAA/SMAA (`xgpu_post.c`, needs zlib), the
+extraction, config.toml (`port_config.c` + tomlc17), SMAA (needs zlib; `xgpu_post.c` keeps FXAA only), the
 `.app` bundle and installer (not done yet), iOS/Android/Windows/Linux targets.
 
 The XDK layer still carries Halo names (`HALO_*` macros, `halo_gl*`, `halo_hooks.c`). They are
