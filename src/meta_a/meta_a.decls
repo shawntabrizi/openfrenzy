@@ -22,3 +22,13 @@
 # Meta/unplaced_tiles.c
 00159000 void FUN_00159000(int list);
 001592e0 void FUN_001592e0(int board);
+
+# Meta/Tiles_Meta.c
+0015a040 void *FUN_0015a040(void *board, float *pos, int group, unsigned int mask);
+0015a110 void FUN_0015a110(undefined4 *self, undefined4 *pos, float time);
+
+# Meta/unplaced_board.c
+0015b050 void FUN_0015b050(int list);
+
+# Meta/Effects.c
+0015c400 int FUN_0015c400(float *pos, float width, float height, char *texture, int r, int g, int b, int a, float offset);

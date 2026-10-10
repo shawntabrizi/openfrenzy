@@ -45,8 +45,10 @@ unsigned char DAT_003075d4[0x18] __attribute__((aligned(4))); /* 0x003075d4 .dat
 unsigned char DAT_003075ec[0x4] __attribute__((aligned(4))); /* 0x003075ec .data (bss) */
 unsigned char DAT_003075f0[0x3c0] __attribute__((aligned(4))); /* 0x003075f0 .data (bss) */
 unsigned char DAT_003079b0[0x4] __attribute__((aligned(4))); /* 0x003079b0 .data (bss) */
+unsigned char DAT_003079b8[0x900] __attribute__((aligned(4))); /* 0x003079b8 .data (bss) */
 unsigned char DAT_003082b8[0x4] __attribute__((aligned(4))); /* 0x003082b8 .data (bss) */
 unsigned char DAT_003082c8[0x4] __attribute__((aligned(4))); /* 0x003082c8 .data (bss) */
+unsigned char DAT_003082cc[0x4] __attribute__((aligned(4))); /* 0x003082cc .data (bss) */
 unsigned char DAT_003082e0[0x90] __attribute__((aligned(4))); /* 0x003082e0 .data (bss) */
 unsigned char DAT_00308f38[0x4] __attribute__((aligned(4))); /* 0x00308f38 .data (bss) */
 unsigned char DAT_003082bc[0x4] __attribute__((aligned(4))); /* 0x003082bc .data (bss) */

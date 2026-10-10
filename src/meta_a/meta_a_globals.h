@@ -80,8 +80,9 @@ extern unsigned char DAT_00305630[];
 extern unsigned char DAT_0030563c[]; /* AnimTex list */
 extern unsigned char DAT_00308460[]; /* CLightningMgr (meta_b) */
 extern unsigned char DAT_003075b0[];  /* CLList: the puzzles */
-extern unsigned char DAT_003082d4[];  /* CLList: the tile groups */
-extern unsigned char DAT_00308440[];  /* CLList (meta_b objects with a tag at +0x38) */
+extern unsigned char DAT_003082d4[];  /* CLList: the tiles */
+extern unsigned char DAT_00308440[];  /* CLList: the glow sprites (Effects.cpp) */
+extern unsigned char DAT_0030844c[];  /* CLList: the scrolling-texture actors (Effects.cpp) */
 extern unsigned char DAT_003090a8[];  /* CLList (meta_b objects with a tag at +0x6c) */
 extern unsigned char DAT_003090d8[];  /* CLList (meta_b objects with a tag at +0x5c) */
 extern unsigned char DAT_00308f58[];  /* 8 CLLists of 0x20 bytes (meta_b objects) */
@@ -89,12 +90,21 @@ extern int DAT_00309060[16];        /* the big red buttons (meta_b) */
 extern unsigned char DAT_00308e60[];  /* CLList: the vents (meta_b) */
 extern unsigned char DAT_00308f48[];  /* CLList: the bombs (meta_b) */
 extern unsigned char DAT_002ea478[];
+extern int *DAT_002ea488;            /* CLList of the charlib actors */
 extern int DAT_003055e0;            /* demo mode */
 extern unsigned char DAT_00290ea8[]; /* CSpriteVB (classlib_fx; fallback in Meta/meta_a_foreign.c) */
+
+/* bdisplay */
+extern float DAT_002855f0[16];      /* the identity world matrix */
 
 extern unsigned int DAT_002bc490[], DAT_002bc898[], DAT_002bce18[], DAT_002bd640[]; /* colour tables */
 
 /* ---------- owned elsewhere: charlib */
+
+extern int DAT_00292c4c, DAT_00292c50; /* route grid columns, rows */
+extern float DAT_00292c60, DAT_00292c64; /* route grid origin x, z */
+extern float DAT_00292c68, DAT_00292c6c; /* route grid width, depth */
+extern void *DAT_002f27d8;          /* the route cells in use (0x18 bytes each, +8 height) */
 
 extern int DAT_00292c78;            /* route cells */
 extern float DAT_00292c84;          /* gravity */
@@ -229,9 +239,11 @@ extern int DAT_003075d0;            /* orb glow texture */
 extern int DAT_003075d4[6];
 extern int DAT_003075ec;            /* orb shadow texture */
 extern int DAT_003075f0[0xf0];      /* tile models: 6 types x 20 frames x 2 parts */
-extern int DAT_003079b0;
+extern int DAT_003079b0;            /* flag tiles on the board */
+extern int DAT_003079b8[0x240];     /* route grid cells in use */
 extern int DAT_003082b8;
 extern int DAT_003082c8;            /* token glow texture */
+extern int DAT_003082cc;
 extern unsigned int DAT_003082e0[36]; /* the tile glow quad (4 vertices of 9 dwords) */
 extern int DAT_00308f38;            /* number of meta_b object lists */
 extern int DAT_003082bc;

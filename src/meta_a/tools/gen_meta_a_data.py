@@ -69,17 +69,20 @@ def meta_a_names():
 
 def strong_elsewhere():
     """Names that another module defines strongly (a file-scope definition that is not
-    extern and not weak, or an assembler alias) in the tracked sources: not aliased here,
+    extern and not weak, or an assembler alias) in the committed sources (HEAD): not aliased here,
     so the two modules never define the same symbol."""
     import subprocess
-    files = subprocess.run(["git", "ls-files", "src"], cwd=ROOT, capture_output=True, text=True).stdout.split()
+    # the committed (HEAD) state: other agents' uncommitted edits must not change the output
+    files = subprocess.run(["git", "ls-tree", "-r", "--name-only", "HEAD", "src"], cwd=ROOT,
+                           capture_output=True, text=True).stdout.split()
     defined = set()
     decl = re.compile(r"^(?!extern\b)(?!static\b)[A-Za-z_][^;=(]*?\b((?:_?DAT|PTR_[A-Za-z0-9_]*?|s_[A-Za-z0-9_]*?)_002b[0-9a-f]{4})\b")
     alias = re.compile(r"\.set ((?:_?DAT|PTR_[A-Za-z0-9_]*?|s_[A-Za-z0-9_]*?)_002b[0-9a-f]{4}),")
     for f in files:
         if f.startswith("src/meta_a/") or not f.endswith((".c", ".s", ".S")):
             continue
-        for line in open(os.path.join(ROOT, f), errors="replace"):
+        text = subprocess.run(["git", "show", "HEAD:" + f], cwd=ROOT, capture_output=True).stdout
+        for line in text.decode("utf-8", "replace").splitlines():
             for m in alias.finditer(line):
                 defined.add(m.group(1))
             m = decl.match(line)
