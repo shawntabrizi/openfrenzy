@@ -1,0 +1,104 @@
+# core_modes_a prototype overrides: <addr> <prototype>;  (docs/ARCHITECTURE.md section 11)
+# Prototypes read from the x86 code (thiscall "this" made explicit, float parameters,
+# register parameters). Names are ours.
+
+# ---------- Core/BG_Effects.cpp (and the leading function before it)
+00011000 void BG_DrawRect(float x, float y, float w, float h, int *rgba);
+00011160 void CBGMatrixText_Init(struct CBGMatrixText *self);
+00011170 int CBGMatrixText_Update(struct CBGMatrixText *self);
+00011210 void CBGMatrixText_Render(struct CBGMatrixText *self);
+000112d0 void CBGText_SetText(struct CBGText *self, unsigned short *text);
+000112f0 void CBGText_Render(struct CBGText *self);
+00011370 int CBGTextBuf_Update(struct CBGTextBuf *self);
+00011390 void CBGTextBuf_SetText(struct CBGTextBuf *self, unsigned short *text);
+000113e0 int BG_CountGlyphs(unsigned short *text);
+00011420 void CBGTypeText_Start(struct CBGTypeText *self, float charDelay, float startDelay, int sound);
+000114b0 void CBGTypeText_Select(struct CBGTypeText *self, float pulsePhase);
+000114e0 void CBGTypeText_Reset(struct CBGTypeText *self);
+00011500 void CBGTypeText_Deselect(struct CBGTypeText *self);
+00011520 void CBGTilingBackdrop_Init(struct CBGTilingBackdrop *self);
+00011570 void CBGTilingBackdrop_Render(struct CBGTilingBackdrop *self);
+00011700 void *ExternalObject_New(unsigned int size);
+00011720 void ExternalObject_Delete(void *block);
+00011730 unsigned int Core_Rand(void);
+00011750 float Core_RandUnit(void);
+00011790 struct CBGEffect *CBGEffect_Delete(struct CBGEffect *self, unsigned int flags);
+000117b0 struct CBGMatrixText *CBGMatrixText_ctor(struct CBGMatrixText *self, float x, float y, int cols, int rows, int scroll, float interval, int *color);
+00011890 void CBGMatrixText_dtor(struct CBGMatrixText *self);
+000118e0 void CBGMatrixText_FillLine(struct CBGMatrixText *self, unsigned short *dst, int count);
+00011930 unsigned int CBGMatrixTextGlitch_FillLine(struct CBGMatrixText *self, unsigned short *dst, unsigned int count);
+000119e0 struct CBGText *CBGText_ctor(struct CBGText *self, int x, int y, unsigned short *text, int font, int *color);
+00011a90 void CBGText_dtor(struct CBGText *self);
+00011aa0 struct CBGTextBuf *CBGTextBuf_ctor(struct CBGTextBuf *self, int x, int y, unsigned short *text, int font, int *color, int capacity);
+00011b70 void CBGTextBuf_dtor(struct CBGTextBuf *self);
+00011bc0 void CBGTypeText_dtor(struct CBGTypeText *self);
+00011c30 struct CBGTypeText *CBGTypeText_Delete(struct CBGTypeText *self, unsigned int flags);
+00011c50 struct CBGTypeText *CBGTypeText_ctor(struct CBGTypeText *self, int x, int y, unsigned short *text, int font);
+00011cd0 struct CBGTypeText *CBGTypeText_ctorEmpty(struct CBGTypeText *self, int x, int y, int capacity, int font);
+00011d50 int CBGTypeText_Update(struct CBGTypeText *self);
+00011fd0 void CBGTypeText_Render(struct CBGTypeText *self);
+00012390 void CBGTypeText_Hide(struct CBGTypeText *self, float time);
+00012430 void CBGTypeText_SetGreyStyle(struct CBGTypeText *self);
+00012480 struct CBGTypeTextBox *CBGTypeTextBox_ctor(struct CBGTypeTextBox *self, int x, int y, unsigned short *text, int font);
+000124f0 struct CBGTypeTextBox *CBGTypeTextBox_ctorEmpty(struct CBGTypeTextBox *self, int x, int y, int capacity, int font);
+00012560 void CBGTypeTextBox_Render(struct CBGTypeTextBox *self);
+00012730 struct CBGTilingBackdrop *CBGTilingBackdrop_ctor(struct CBGTilingBackdrop *self);
+00012740 struct CBGMatrixText *CBGMatrixText_Delete(struct CBGMatrixText *self, unsigned int flags);
+
+# ---------- Core (unplaced, between BG_Effects.cpp and CGameMode_AskAgain.cpp)
+00012760 struct CBGText *CBGText_Delete(struct CBGText *self, unsigned int flags);
+00012780 struct CBGTextBuf *CBGTextBuf_Delete(struct CBGTextBuf *self, unsigned int flags);
+000127a0 struct CBGTypeTextBox *CBGTypeTextBox_Delete(struct CBGTypeTextBox *self, unsigned int flags);
+000127c0 void CBGTypeTextBox_dtor(struct CBGTypeTextBox *self);
+000127d0 void Core_OperatorDelete(void *block);
+000127e0 void Core_Vec4Copy(float *dst, float *src);
+00012800 struct CGameMode *CGameMode_ctor(struct CGameMode *self, char *name);
+00012860 void CGameMode_dtor(struct CGameMode *self);
+000128b0 void CGameMode_AddRef(struct CGameMode *self);
+000128c0 int CGameMode_Release(struct CGameMode *self);
+
+# ---------- Core/CGameMode_AskAgain.cpp
+000128e0 void CGameMode_FinishedLoading(struct CGameMode *self);
+00012930 void CGameMode_UpdateLoading(struct CGameMode *self);
+000129d0 void Core_FinishCharacterSelPackage(void);
+00012a40 struct CGameMode *CGameMode_Delete(struct CGameMode *self, unsigned int flags);
+00012a60 void Core_LoadCharacterVoices(int flush);
+00012b50 struct CGameMode_AskAgain *CGameMode_AskAgain_ctor(struct CGameMode_AskAgain *self);
+00012bd0 void CGameMode_AskAgain_Pushed(struct CGameMode_AskAgain *self);
+00012c00 void CGameMode_AskAgain_Suspend(struct CGameMode_AskAgain *self);
+00012c60 int CGameMode_AskAgain_HandleButton(struct CGameMode_AskAgain *self, int button, int player);
+00012e00 void CGameMode_AskAgain_Render(struct CGameMode_AskAgain *self, int active);
+00012e40 void CGameMode_AskAgain_Update(struct CGameMode_AskAgain *self, int active);
+00012e70 struct CGameMode_AskAgain *CGameMode_AskAgain_Delete(struct CGameMode_AskAgain *self, unsigned int flags);
+00012e90 void CGameMode_AskAgain_dtor(struct CGameMode_AskAgain *self);
+00012ee0 void CGameMode_AskAgain_Resume(struct CGameMode_AskAgain *self);
+00013110 struct CGameMode_AttractMode *CGameMode_AttractMode_ctor(struct CGameMode_AttractMode *self);
+00013140 struct CGameMode_AttractMode *CGameMode_AttractMode_Delete(struct CGameMode_AttractMode *self, unsigned int flags);
+00013160 void CGameMode_AttractMode_dtor(struct CGameMode_AttractMode *self);
+00013170 void CGameMode_AttractMode_Resume(struct CGameMode_AttractMode *self);
+000133c0 void CGameMode_BGEffects_Pushed(struct CGameMode_BGEffects *self);
+00013400 void CGameMode_BGEffects_Popped(struct CGameMode_BGEffects *self);
+00013420 void CGameMode_BGEffects_Update(struct CGameMode_BGEffects *self, int active);
+00013480 void CGameMode_BGEffects_Render(struct CGameMode_BGEffects *self, int active);
+00013560 void CGameMode_BGEffects_LoadingStarted(struct CGameMode_BGEffects *self);
+000135b0 void CGameMode_ClearLoadFlags(struct CGameMode *self);
+000135c0 void CBGEffect_Show(struct CBGEffect *self, float time);
+000135d0 void CBGEffect_Hide(struct CBGEffect *self, float time);
+000135e0 void CBGEffectGroup_DeleteAll(struct CBGEffectGroup *self);
+00013620 int CBGEffectGroup_Update(struct CBGEffectGroup *self);
+000136c0 void CBGEffectGroup_Render(struct CBGEffectGroup *self);
+000136f0 void CBGEffectGroup_Show(struct CBGEffectGroup *self, float time);
+00013740 void CBGEffectGroup_Hide(struct CBGEffectGroup *self, float time);
+00013790 void CGameMode_BGEffects_Resume(struct CGameMode_BGEffects *self);
+000137e0 void CBGEffect_AddToBackground(struct CBGEffect *self, int init);
+00013820 struct CBGEffectGroup *CBGEffectGroup_ctor(struct CBGEffectGroup *self);
+00013870 void CBGEffectGroup_dtor(struct CBGEffectGroup *self);
+000138d0 struct CGameMode_BGEffects *CGameMode_BGEffects_ctor(struct CGameMode_BGEffects *self);
+00013970 void CGameMode_BGEffects_dtor(struct CGameMode_BGEffects *self);
+000139d0 struct CBGEffectGroup *CBGEffectGroup_Delete(struct CBGEffectGroup *self, unsigned int flags);
+000139f0 struct CGameMode_BGEffects *CGameMode_BGEffects_Delete(struct CGameMode_BGEffects *self, unsigned int flags);
+00013a10 struct CGameMode *CGameMode_BootSequence_ctor(struct CGameMode *self);
+00013a30 void CGameMode_BootSequence_dtor(struct CGameMode *self);
+00013a40 struct CGameMode *CGameMode_BootSequence_Delete(struct CGameMode *self, unsigned int flags);
+00013a60 int Core_PlayVideo(char *name, int flags);
+00013b60 void CGameMode_BootSequence_Resume(struct CGameMode *self);
