@@ -19,8 +19,8 @@ time at 48 kHz, so the checks on play cursors wait and allow a margin.
    the disc image through a callback over a 128 KB ring (0x00056780), WmaCreateDecoder
    (0x00057060), a looping 256 KB 16-bit stereo buffer at the returned rate, Process into
    it ahead of GetCurrentPosition (0x00056d20) while it plays, then the whole stream
-   decoded; prints the samples' FNV-1a hash for run_tests.sh to compare with the native
-   decoder's (tests/test_wma.c)
+   decoded; writes the samples to OPENFRENZY_DSOUND_TEST_PCM for run_tests.sh to compare with the
+   native decoder's (to 1 LSB: musl's sin and cos are not Apple's) (tests/test_wma.c)
 */
 
 #include <math.h>
@@ -137,6 +137,8 @@ static void music_check(LPDIRECTSOUND sound)
 	long start;
 	DWORD moved;
 	int loops = 0;
+	const char *dump_path = getenv("OPENFRENZY_DSOUND_TEST_PCM");
+	FILE *dump = dump_path ? fopen(dump_path, "wb") : NULL;
 
 	if (!path || xiso_fs_open(&fs, path))
 	{
@@ -198,6 +200,8 @@ static void music_check(LPDIRECTSOUND sound)
 	write_position = completed;
 	total = completed;
 	hash = fnv1a(hash, pcm, completed);
+	if (dump)
+		fwrite(pcm, 1, completed, dump);
 	IDirectSoundBuffer_Play(buffer, 0, 0, DSBPLAY_LOOPING);
 	start = now_ms();
 	while (now_ms() - start < 1000)
@@ -215,6 +219,8 @@ static void music_check(LPDIRECTSOUND sound)
 			packet.dwMaxSize = bytes;
 			decoder->lpVtbl->Process(decoder, NULL, &packet);
 			hash = fnv1a(hash, pcm + write_position, completed);
+			if (dump)
+				fwrite(pcm + write_position, 1, completed, dump);
 			total += completed;
 			write_position = (write_position + bytes) & 0x3ffff;
 			loops++;
@@ -236,6 +242,8 @@ static void music_check(LPDIRECTSOUND sound)
 		packet.dwMaxSize = 0x10000;
 		decoder->lpVtbl->Process(decoder, NULL, &packet);
 		hash = fnv1a(hash, pcm, completed);
+		if (dump)
+			fwrite(pcm, 1, completed, dump);
 		total += completed;
 		if (completed < 0x10000)
 			break;
@@ -246,6 +254,8 @@ static void music_check(LPDIRECTSOUND sound)
 	check(5, decoder->lpVtbl->Discontinuity(decoder) >= 0 && decoder->lpVtbl->Release(decoder) == 0,
 		"Discontinuity and Release");
 	check(5, IDirectSoundBuffer_Release(buffer) == 0, "release the music buffer");
+	if (dump)
+		fclose(dump);
 	free(pcm);
 	free(ring);
 	free(package);

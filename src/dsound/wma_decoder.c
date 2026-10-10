@@ -27,22 +27,6 @@ No platform headers: this file also builds natively (src/dsound/tests/test_wma.c
 #include <stdlib.h>
 #include <string.h>
 
-/* The platform build force-includes halo_math.h, whose macros send sin, cos, pow and
-the others to src/runtime/of_math.c's halo_* wrappers. Those currently call
-themselves and never return (reported to the runtime owner). Audio needs no
-cross-machine bit-exactness, so this file calls musl's own functions. */
-#undef sin
-#undef cos
-#undef tan
-#undef asin
-#undef acos
-#undef atan
-#undef atan2
-#undef exp
-#undef log
-#undef log2
-#undef log10
-#undef pow
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

@@ -48,22 +48,6 @@ turns the reverb off; audio.enabled = false skips opening a device
 #include <time.h>
 #include <unistd.h>
 
-/* The platform build force-includes halo_math.h, whose macros send sin, cos, pow and
-the others to src/runtime/of_math.c's halo_* wrappers. Those currently call
-themselves and never return (reported to the runtime owner). Audio needs no
-cross-machine bit-exactness, so this file calls musl's own functions. */
-#undef sin
-#undef cos
-#undef tan
-#undef asin
-#undef acos
-#undef atan
-#undef atan2
-#undef exp
-#undef log
-#undef log2
-#undef log10
-#undef pow
 
 #define OUTPUT_RATE 48000
 #define OUTPUT_CHANNELS 2
