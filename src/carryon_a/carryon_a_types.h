@@ -211,6 +211,12 @@ struct CFireCarry
 };
 OF_ASSERT_SIZE(struct CFireCarry, 0x68);
 
+/* ---------- CFire_World.cpp: functions missing from the function table (ParseMap
+callbacks; reported to the architect) */
+int FUN_000c5610(int node, unsigned char *world);
+int FUN_000c59a0(int node, unsigned char *world);
+int FUN_000c6c00(int node, unsigned char *world);
+
 /* ---------- the text reader used by the ASE import (vtable 0x00267bb8; other minigames
 use it too: rollerball_b 0x001989c0 sets it up on a file buffer) */
 struct CoTextReader

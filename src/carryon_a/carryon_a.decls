@@ -116,6 +116,7 @@
 000c6a20 void CFire_World_DrawNear(void *self);
 000c6a80 void CFire_World_DrawObjects(void *self);
 000c6af0 void CFire_World_DrawAlpha(void *self);
+000c6c50 int CFire_World_LoadLOM(void *self, void *package, const char *name);
 000c6d00 int CFire_World_Load(void *self, void *package, int variant, const char *name);
 
 # CarryOn/CFire_Resource.cpp
