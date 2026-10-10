@@ -327,7 +327,7 @@ void FUN_0019dc80(void *self, int top)
 				RA_I32(light, 0x28) != g_LightB(i)))
 			rwb_Lights_SetColour(GAME_PTR(0xa4), light, g_LightR(i), g_LightG(i), g_LightB(i));
 	}
-	rwb_World_Update(GAME_PTR(0x7c));
+	rwb_World_SetFog();
 	if (DAT_002baeb8 != 0) {
 		FUN_001ae290(GAME_PTR(0x84));
 	} else {
@@ -349,7 +349,7 @@ camera_done:
 	bdSetRenderState(0, 1, 0);
 	baSetAmbientLight(RA_U8(self, 0xa9), RA_U8(self, 0xaa), RA_U8(self, 0xab));
 	bdSetRenderState(8, 0, 0);
-	rwb_Sprites_DrawOpaque(GAME_PTR(0x88));
+	rwb_Sprites_DrawOpaque();
 	FUN_001af680(GAME_PTR(0x98), 0xff008000);
 	rwb_Lights_SetMode(GAME_PTR(0xa4), 0);
 	ra_EnableLights(GAME_PTR(0xa4), lightsA, 8);
@@ -451,10 +451,10 @@ camera_done:
 		break;
 	case 2:
 		if (GAME_I32(0x04) != 6) {
-			rwb_Tokens_Draw(GAME_PTR(0xa0));
+			rwb_Tokens_Draw();
 			bdSetRenderState(8, 0, 0);
 			bdSetRenderState(3, 0, 0);
-			rwb_Tokens_DrawBlended(GAME_PTR(0xa0));
+			rwb_Tokens_DrawBlended();
 		}
 		break;
 	case 3:
@@ -507,7 +507,7 @@ camera_done:
 	FUN_001af680(GAME_PTR(0x98), 0xff000000);
 	if (RW_VAR(int, 0x002b54a0) != 0)
 		rwb_Particles_Draw(GAME_PTR(0x90));
-	rwb_Sprites_DrawBlended(GAME_PTR(0x88));
+	rwb_Sprites_DrawBlended();
 	FUN_001af680(GAME_PTR(0x98), 0xff00ffff);
 	FUN_001af680(GAME_PTR(0x98), 0xffffff00);
 	bdSetRenderState(6, 0, 0);
@@ -606,7 +606,7 @@ segment from (X, Z) to the cell crosses the world's outlines (world +0x13c outli
 void FUN_0019eaa0(CWaterField *water, void *world, float x, float z)
 {
 	float seg[4], edge[4];
-	unsigned char hit[16];
+	struct BHit2D hit;
 	float px, pz, cellX, cellZ;
 	int nx, nz, i, j, k, n, inside;
 	char *outline;
@@ -620,6 +620,7 @@ void FUN_0019eaa0(CWaterField *water, void *world, float x, float z)
 	nz = water->p.nz;
 	seg[0] = x;
 	seg[1] = z;
+	hit.flags = 0;
 	for (i = 0; i < nx; i++) {
 		float cz = pz;
 
@@ -643,7 +644,7 @@ void FUN_0019eaa0(CWaterField *water, void *world, float x, float z)
 					edge[1] = a[1];
 					edge[2] = b[0];
 					edge[3] = b[1];
-					if (bmSegmentSegment(seg, edge, (struct BHit2D *)hit) != 0)
+					if (bmSegmentSegment(seg, edge, &hit) != 0)
 						inside ^= 1;
 					a = b;
 					b += 2;
@@ -1406,7 +1407,7 @@ void CRowingGame_Initialise(void *self)
 	bkPrintf("Timer ok\n");
 	if ((RA_U8(self, 0) & 0xc) == 8) {
 		GAME_PTR(0xa0) = RA_NEW(1, RA_FILE_GAME, 0x712);
-		rwb_Tokens_Init(GAME_PTR(0xa0), GAME_PTR(0x14));
+		rwb_Tokens_Init(GAME_PTR(0x14));
 		bkPrintf("Tokens ok\n");
 	}
 	GAME_PTR(0xac) = RA_NEW(0x90, RA_FILE_GAME, 0x717);
@@ -1509,7 +1510,7 @@ void CRowingGame_Begin(void *self)
 	for (i = 0; i < RA_I32(GAME_PTR(0x7c), 0x268); i++) {
 		memory = RA_NEW(0xe0, RA_FILE_GAME, 0x7d2);
 		buoy = memory != NULL
-			? rwb_Buoy_Ctor(memory, RA_FP(GAME_PTR(0x7c), 0x1c8 + i * 0x10), RA_I32(GAME_PTR(0x7c), 0x248 + i * 4))
+			? rwb_Buoy_Ctor(memory, RA_FP(GAME_PTR(0x7c), 0x1c8 + i * 0x10), RA_F32(GAME_PTR(0x7c), 0x248 + i * 4))
 			: NULL;
 		RA_PTRF(self, 0x274 + i * 4) = buoy;
 	}
@@ -1869,7 +1870,7 @@ void CRowingGame_Shutdown(void *self)
 	}
 	FUN_001a5970();
 	if (g_RowSound != NULL)
-		rwb_Sound_Shutdown(g_RowSound);
+		rwb_Sound_Shutdown();
 	bkDeletePackageResources((uint)GAME_I32(0x18), 1);
 	bkDeletePackageResources((uint)GAME_I32(0x20), 1);
 	DebugCam_Shutdown();
@@ -1979,7 +1980,7 @@ void FUN_001a2890(void *self, int top)
 	*(int *)GAME_PTR(0x84) = RW_VAR(int, 0x0030f0a4);
 	CRowingGame_UpdateCamera(self);
 	if (GAME_PTR(0xa0) != NULL)
-		rwb_Tokens_Update(GAME_PTR(0xa0));
+		rwb_Tokens_Update();
 	rwb_World_Tick(GAME_PTR(0x7c), g_CurrentFrameTime(self));
 	for (i = 0; i < 2; i++) {
 		p = RA_PTRF(self, 0x30c + i * 4);

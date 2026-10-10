@@ -44,6 +44,7 @@ Conventions (docs/ARCHITECTURE.md):
 #include "xtl.h"
 #include "rowing_b_data.h"
 #include "classlib_fx.h"
+#include "engine_misc_maths.h"
 
 /* ---------- raw field access at original offsets */
 

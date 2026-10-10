@@ -58,7 +58,6 @@
 001afa60 int FUN_001afa60(void *self, void *package);
 001a5950 void FUN_001a5950(void);
 001a57b0 void FUN_001a57b0(float phase, float b, float amplitude, float speed, float e);
-001a5750 void FUN_001a5750(void *self);
 001abc70 int FUN_001abc70(void *self, void *package, void *genPackage, int index, int start, int handicap);
 001af960 int FUN_001af960(void *self);
 001add20 void *FUN_001add20(void *self);
@@ -112,3 +111,23 @@
 # Rowing/CRowing_Water.c
 001a5400 void FUN_001a5400(void *self);
 001a56f0 int FUN_001a56f0(void *self, struct CWaterParams *params);
+
+# Rowing/unplaced_body.c (the floating bodies and the colliders)
+001a5750 void FUN_001a5750(void *self);
+001a5780 void FUN_001a5780(void *self);
+001a5830 int FUN_001a5830(float *out, float *from, float *to, float maxAngle);
+001a5990 void FUN_001a5990(int index, int on);
+001a59b0 void FUN_001a59b0(int index, float *pos, float *impulse);
+001a59d0 void *FUN_001a59d0(void *self, unsigned int flags);
+001a59f0 int FUN_001a59f0(void *self, void *inst, float *pos, float *rot, int kind);
+001a5ad0 void FUN_001a5ad0(void *self);
+001a5b00 void FUN_001a5b00(void *self);
+001a5f00 void FUN_001a5f00(void *self, float dt);
+001a6500 int FUN_001a6500(void *self, int count, unsigned char *outlines, float radius);
+001a6b50 int FUN_001a6b50(float *seg, float *centre, float radius, float *t);
+001a6bf0 int FUN_001a6bf0(void *who, float *seg, float *t, float *impulse, int skip);
+001a6e40 void FUN_001a6e40(void);
+001a6f20 void FUN_001a6f20(int index);
+001a6f50 int FUN_001a6f50(void *self, float radius, int skip);
+001a73c0 int FUN_001a73c0(int kind, float radius, float *pos, float *impulse, float bodyRadius, void *hitTest, void *context);
+001afba0 void FUN_001afba0(float *pos, float radius, int r, int g, int b);

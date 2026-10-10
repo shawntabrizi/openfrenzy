@@ -1,14 +1,12 @@
 /*
 ROWING_A_EXT.H
 
-Calls from rowing_a into other modules whose prototype in of_decls.h (Ghidra's guess) does
-not have the real shape: thiscall `this` (ECX) missing, float parameters shown as integers,
-results that are pointers. Each macro casts the FUN_<addr> symbol to the shape found in the
-disassembly at the call sites (docs/ARCHITECTURE.md: "go through a cast to the real shape").
-
-The rowing_b functions (0x001b12c0-0x001ba160) are listed here with the shapes rowing_a
-uses; rowing_b should declare the same shapes in rowing_b.decls (see COORDINATION.txt).
-A `float` below is a parameter whose value is a float constant at every call site.
+Calls from rowing_a into rowing_b (0x001b12c0-0x001ba160) and other modules, by role.
+rowing_b functions are called by their FUN_<addr> names with the prototypes rowing_b gives
+in rowing_b.decls (checked against the disassembly at rowing_a's call sites, 2026-10-10);
+where `this` (ECX) is passed but not used, rowing_b's prototype has no `this` and neither
+does the macro. Functions of other modules whose of_decls.h prototype is a Ghidra guess go
+through a cast to the real shape (RA_CALL, docs/ARCHITECTURE.md).
 
 Owner: rowing_a.
 */
@@ -17,81 +15,76 @@ Owner: rowing_a.
 #define OPENFRENZY_ROWING_A_EXT_H
 
 /* ---------- rowing_b: CRowing_Lights.cpp (the lights object, game +0xa4) */
-#define rwb_Lights_Ctor(self) RA_CALL(FUN_001b4f90, void *(*)(void *))(self)
-/* a point light: type, position, colour 0-127, falloff, flag (bit 0: on) */
+#define rwb_Lights_Ctor(self) FUN_001b4f90((struct RowLights *)(self))
 #define rwb_Lights_AddPoint(lights, type, pos, r, g, b, falloff, flag) \
-	RA_CALL(FUN_001b52e0, void *(*)(void *, int, float *, int, int, int, float, int)) \
-	((lights), (type), (pos), (r), (g), (b), (falloff), (flag))
-/* a directional light */
+	(void *)FUN_001b52e0((struct RowLights *)(lights), (type), (pos), (r), (g), (b), (falloff), \
+		(unsigned char)(flag))
 #define rwb_Lights_AddDirectional(lights, type, dir, r, g, b, flag) \
-	RA_CALL(FUN_001b5370, void *(*)(void *, int, float *, int, int, int, int)) \
-	((lights), (type), (dir), (r), (g), (b), (flag))
-/* light texture and size (cdecl, no `this`) */
+	(void *)FUN_001b5370((struct RowLights *)(lights), (type), (dir), (r), (g), (b), (unsigned char)(flag))
+/* light sprite and size (`this` in ECX is the lights object and not used) */
 #define rwb_Light_SetTexture(light, texture, size) \
-	RA_CALL(FUN_001b5010, void (*)(void *, void *, float))((light), (texture), (size))
+	FUN_001b5010((struct RowLight *)(light), (void *)(texture), (size))
 #define rwb_Lights_SetFlags(lights, type, set, toggle) \
-	RA_CALL(FUN_001b56a0, int (*)(void *, int, unsigned int, unsigned int))((lights), (type), (set), (toggle))
+	FUN_001b56a0((struct RowLights *)(lights), (type), (set), (toggle))
 #define rwb_Lights_SetColour(lights, light, r, g, b) \
-	RA_CALL(FUN_001b5590, void (*)(void *, void *, int, int, int))((lights), (light), (r), (g), (b))
-#define rwb_Lights_SetMode(lights, mode) RA_CALL(FUN_001b5630, void (*)(void *, int))((lights), (mode))
-#define rwb_Lights_Enable(lights, type, on) RA_CALL(FUN_001b5660, void (*)(void *, int, int))((lights), (type), (on))
-#define rwb_Lights_Draw(lights) RA_CALL(FUN_001b5040, void (*)(void *))(lights)
+	FUN_001b5590((struct RowLights *)(lights), (struct RowLight *)(light), (r), (g), (b))
+#define rwb_Lights_SetMode(lights, mode) FUN_001b5630((struct RowLights *)(lights), (mode))
+#define rwb_Lights_Enable(lights, type, on) FUN_001b5660((struct RowLights *)(lights), (type), (on))
+#define rwb_Lights_Draw(lights) FUN_001b5040((struct RowLights *)(lights))
+#define rwb_Lights_Dtor(lights) FUN_001b4fb0((struct RowLights *)(lights))
+#define rwb_Lights_SetPosition(lights, light, pos) \
+	FUN_001b55d0((struct RowLights *)(lights), (struct RowLight *)(light), (pos))
 
 /* ---------- rowing_b: the world (game +0x7c, 0x37c bytes) */
-#define rwb_World_Ctor(self) RA_CALL(FUN_001b2c10, void *(*)(void *))(self)
-#define rwb_World_Init(world, package, name) \
-	RA_CALL(FUN_001b43c0, int (*)(void *, void *, const char *))((world), (package), (name))
-#define rwb_World_Update(world) RA_CALL(FUN_001b31d0, void (*)(void *))(world)
-#define rwb_World_DrawA(world, detail) RA_CALL(FUN_001b4720, void (*)(void *, int))((world), (detail))
-#define rwb_World_DrawB(world, detail) RA_CALL(FUN_001b3230, void (*)(void *, int))((world), (detail))
-#define rwb_World_DrawDetail(world) RA_CALL(FUN_001b3280, void (*)(void *))(world)
+#define rwb_World_Ctor(self) FUN_001b2c10(self)
+#define rwb_World_Init(world, package, name) FUN_001b43c0((world), (void *)(package), (name))
+#define rwb_World_SetFog() FUN_001b31d0()
+#define rwb_World_DrawA(world, detail) FUN_001b4720((world), (detail))
+#define rwb_World_DrawB(world, detail) FUN_001b3230((world), (detail))
+#define rwb_World_DrawDetail(world) FUN_001b3280(world)
 #define rwb_World_AddObject(objects, package, name, pos, rot) \
-	RA_CALL(FUN_001b6a90, void *(*)(void *, void *, const char *, float *, float *)) \
-	((objects), (package), (name), (pos), (rot))
-/* the sound banks (cdecl) */
-#define rwb_Sound_Init(package, genPackage) RA_CALL(FUN_001b6da0, void (*)(void *, void *))((package), (genPackage))
+	FUN_001b6a90((objects), (void *)(package), (name), (pos), (rot))
+#define rwb_World_Tick(world, dt) FUN_001b3170((world), (dt))
+#define rwb_World_Shutdown(world) FUN_001b4530(world)
+/* the sound banks */
+#define rwb_Sound_Init(package, genPackage) FUN_001b6da0((void *)(package), (void *)(genPackage))
 
-/* ---------- rowing_b: other objects */
-#define rwb_GameMode_Ctor(self) RA_CALL(FUN_001b60c0, void *(*)(void *))(self)
-#define rwb_Tokens_Init(tokens, package) RA_CALL(FUN_001b5730, void (*)(void *, void *))((tokens), (package))
-#define rwb_Tokens_Draw(tokens) RA_CALL(FUN_001b5790, void (*)(void *))(tokens)
-#define rwb_Tokens_DrawBlended(tokens) RA_CALL(FUN_001b57b0, void (*)(void *))(tokens)
-#define rwb_Buoy_Draw(buoy, alpha) RA_CALL(FUN_001b5ea0, void (*)(void *, float))((buoy), (alpha))
-#define rwb_Obj270_Ctor(self) RA_CALL(FUN_001b47b0, void *(*)(void *))(self)
-#define rwb_Obj270_Init(obj, texture, count) RA_CALL(FUN_001b4c60, int (*)(void *, void *, int))((obj), (texture), (count))
-#define rwb_Obj270_Draw(obj) RA_CALL(FUN_001b4800, void (*)(void *))(obj)
-#define rwb_Sprites_DrawOpaque(sprites) RA_CALL(FUN_001b1430, void (*)(void *))(sprites)
-#define rwb_Sprites_DrawBlended(sprites) RA_CALL(FUN_001b1490, void (*)(void *))(sprites)
-#define rwb_Particles_Init(vents, sprites, steam, blobs) \
-	RA_CALL(FUN_001b1c60, int (*)(void *, void *, int, int))((vents), (sprites), (steam), (blobs))
-#define rwb_Particles_Draw(vents) RA_CALL(FUN_001b2b10, void (*)(void *))(vents)
-
-
-/* ---------- rowing_b: Rowing_Sound.cpp (the sound object, 0x0030fc80) */
-#define rwb_Sound_Play(id, volume) RA_CALL(FUN_001b6ba0, int (*)(int, int))((id), (volume))
-#define rwb_Sound_PlayAt(id, pos, volume) RA_CALL(FUN_001b6be0, int (*)(int, float *, int))((id), (pos), (volume))
-#define rwb_Sound_PlayRandom(id, volume) RA_CALL(FUN_001b6c30, void (*)(int, int))((id), (volume))
-#define rwb_Sound_SetPitch(handle, channel, pitch) \
-	RA_CALL(FUN_001b6c80, void (*)(int, int, float))((handle), (channel), (pitch))
-#define rwb_Sound_Track(sound, handle) RA_CALL(FUN_001b6d60, void (*)(void *, int))((sound), (handle))
-#define rwb_Sound_Update(sound) RA_CALL(FUN_001b6cc0, void (*)(void *))(sound)
-#define rwb_Sound_Shutdown(sound) RA_CALL(FUN_001b6f50, void (*)(void *))(sound)
+/* ---------- rowing_b: Rowing_Sound.cpp (the sound queue, 0x0030fc80) */
+#define rwb_Sound_Play(id, volume) FUN_001b6ba0((id), (volume))
+#define rwb_Sound_PlayAt(id, pos, volume) FUN_001b6be0((id), (pos), (volume))
+#define rwb_Sound_PlayRandom(id, volume) FUN_001b6c30((id), (volume))
+#define rwb_Sound_SetPitch(handle, channel, pitch) FUN_001b6c80((handle), (channel), (pitch))
+#define rwb_Sound_Track(sound, handle) FUN_001b6d60((sound), (handle))
+#define rwb_Sound_Update(sound) FUN_001b6cc0(sound)
+#define rwb_Sound_Shutdown() FUN_001b6f50()
 #define g_RowSound RW_VAR(void *, 0x0030fc80)
 
-/* ---------- rowing_b: buoys (variant 2), mines (variant 4), the world's ticks */
-#define rwb_Buoy_Ctor(self, pos, data) RA_CALL(FUN_001b5b30, void *(*)(void *, float *, int))((self), (pos), (data))
-#define rwb_Buoy_Dtor(self) RA_CALL(FUN_001b5b10, void (*)(void *))(self)
-#define rwb_Buoy_Update(self, dt) RA_CALL(FUN_001b5c50, void (*)(void *, float))((self), (dt))
-#define rwb_Mine_Trigger(self, a, b, flag) \
-	RA_CALL(FUN_001b8760, void (*)(void *, float, float, int))((self), (a), (b), (flag))
-#define rwb_Tokens_Update(tokens) RA_CALL(FUN_001b5a00, void (*)(void *))(tokens)
-#define rwb_World_Tick(world, dt) RA_CALL(FUN_001b3170, void (*)(void *, float))((world), (dt))
-#define rwb_World_Shutdown(world) RA_CALL(FUN_001b4530, void (*)(void *))(world)
-#define rwb_Obj270_Update(obj, dt) RA_CALL(FUN_001b4d40, void (*)(void *, float))((obj), (dt))
-#define rwb_Obj270_Dtor(obj) RA_CALL(FUN_001b47c0, void (*)(void *))(obj)
-#define rwb_Lights_Dtor(lights) RA_CALL(FUN_001b4fb0, void (*)(void *))(lights)
-#define rwb_Lights_SetPosition(lights, light, pos) \
-	RA_CALL(FUN_001b55d0, void (*)(void *, void *, float *))((lights), (light), (pos))
+/* ---------- rowing_b: other objects */
+#define rwb_GameMode_Ctor(self) FUN_001b60c0(self)
+/* the tokens of variant 3 (`this` in ECX is not used) */
+#define rwb_Tokens_Init(package) FUN_001b5730((int)(uintptr_t)(package))
+#define rwb_Tokens_Draw() FUN_001b5790()
+#define rwb_Tokens_DrawBlended() FUN_001b57b0()
+#define rwb_Tokens_Update() FUN_001b5a00()
+/* the gate arrows ("buoys") of variant 2 */
+#define rwb_Buoy_Ctor(self, pos, yaw) (void *)FUN_001b5b30((struct RowArrow *)(self), (pos), (yaw))
+#define rwb_Buoy_Dtor(self) FUN_001b5b10((struct RowArrow *)(self))
+#define rwb_Buoy_Update(self, dt) FUN_001b5c50((struct RowArrow *)(self), (dt))
+#define rwb_Buoy_Draw(buoy, alpha) FUN_001b5ea0((struct RowArrow *)(buoy), (alpha))
+/* the floating mines/debris of variant 4 */
+#define rwb_Mine_Trigger(self, a, b, flag) FUN_001b8760((self), (a), (b), (flag))
+/* the sparks of variant 3 (game +0x270) */
+#define rwb_Obj270_Ctor(self) (void *)FUN_001b47b0((struct RowSparks *)(self))
+#define rwb_Obj270_Init(obj, texture, count) FUN_001b4c60((struct RowSparks *)(obj), (void *)(texture), (count))
+#define rwb_Obj270_Draw(obj) FUN_001b4800((struct RowSparks *)(obj))
+#define rwb_Obj270_Update(obj, dt) FUN_001b4d40((struct RowSparks *)(obj), (dt))
+#define rwb_Obj270_Dtor(obj) FUN_001b47c0(obj)
+/* the sprites (`this` in ECX, the sprite manager, is not used) */
+#define rwb_Sprites_DrawOpaque() FUN_001b1430()
+#define rwb_Sprites_DrawBlended() FUN_001b1490()
+#define rwb_Particles_Init(vents, sprites, steam, blobs) \
+	FUN_001b1c60((struct RowParticles *)(vents), (int)(uintptr_t)(sprites), (steam), (blobs))
+#define rwb_Particles_Draw(vents) FUN_001b2b10((struct RowParticles *)(vents))
 
 /* ---------- other modules */
 
