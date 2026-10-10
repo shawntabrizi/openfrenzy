@@ -34,7 +34,7 @@
 00097b20 void BCarPlayer_StopBrake(struct BCarPlayer *self);
 00097c10 void BCarPlayer_Brake(struct BCarPlayer *self);
 00098030 void BCarPlayer_Boost(struct BCarPlayer *self);
-000981c0 void BCarPlayer_DriveToGoal(struct BCarPlayer *self);
+000981c0 void BCarPlayer_DriveToPodium(struct BCarPlayer *self);
 000982f0 void BCarPlayers_Update(float dt, int control);
 000991f0 void BCarPlayers_UpdateLead(int speak);
 000994b0 void BCarPlayers_DrawLead(int shadow);
@@ -126,17 +126,17 @@
 # BumperCars/CBCar_Headlight.c
 000a6930 void BCarHeadlight_Destruct(struct BCarHeadlight *self);
 000a6950 void BCarHeadlight_Draw(struct BCarHeadlight *self, float alpha);
-000a6b50 void BCarHeadlight_SetFade(struct BCarHeadlight *self, float fade);
+000a6b50 void BCarHeadlight_SetTilt(struct BCarHeadlight *self, float degrees);
 000a6bc0 struct BCarHeadlight *BCarHeadlight_Construct(struct BCarHeadlight *self, float *pos, float *rot, struct bdTexture *texture, float range, float width, int segments);
 000a6d60 void BCarHeadlight_Update(struct BCarHeadlight *self);
 
 # ---- agent A (from B's range, 0x000a6260-0x000a8250)
 # BumperCars/CBCar_GenericGoal.c
-000a8020 void BCarGoal_SetActive(struct BCarGoal *goal, int active);
-000a8030 struct BCarGenericGoal *BCarGenericGoal_Construct(struct BCarGenericGoal *self, int count);
-000a8170 void BCarGenericGoal_DeleteGoal(struct BCarGenericGoal *self, struct BCarGoal *goal);
-000a8200 void BCarGenericGoal_Destruct(struct BCarGenericGoal *self);
-000a8250 struct BCarGoal *BCarGenericGoal_AddGoal(struct BCarGenericGoal *self, float *pos, int arg2, int arg1);
+000a8020 void BCarGoal_SetTexture(struct CParticleEmitter *goal, int texture);
+000a8030 struct CParticleEffect *BCarGenericGoal_Construct(struct CParticleEffect *self, int count);
+000a8170 void BCarGenericGoal_DeleteGoal(struct CParticleEffect *self, struct CParticleEmitter *goal);
+000a8200 void BCarGenericGoal_Destruct(struct CParticleEffect *self);
+000a8250 struct CParticleEmitter *BCarGenericGoal_AddGoal(struct CParticleEffect *self, float *pos, float scale, int id);
 
 # ---- agent B (0x000a0cc0-0x000a8250); A's lines above for this range are kept
 # BumperCars/CBCar_Puck.c

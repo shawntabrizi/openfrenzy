@@ -270,7 +270,7 @@ struct BCarEntity *BCarEntity_Create(struct BActor *actor, struct BActor *extraA
 	self->carrier = NULL;
 	self->carryCounter = 0;
 	self->lap = 0;
-	self->team = -1;
+	self->place = -1;
 	self->frozen = 0;
 	self->unk048 = 0;
 	self->lag = 0;

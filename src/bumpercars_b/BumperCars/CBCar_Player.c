@@ -185,6 +185,19 @@ void BCarPlayers_CreateInputs(void)
 	}
 }
 
+/* 0x00096c00  (gap; file inferred; missing from the function table)
+Deletes the input maps of the human players. */
+void FUN_00096c00(void)
+{
+	int i;
+
+	for (i = 0; i < BCB_NUM_PLAYERS; i++)
+	{
+		if (g_BCarPlayers[i].human != 0)
+			BCarPlayer_DeleteInput(i);
+	}
+}
+
 /* 0x00096c30  (gap; file inferred)
 The top speed of a player: ENTITYSPEED plus the catch-up bonus (WP_LAG_SPEED_OFFSET per
 waypoint behind, at most WP_LAG_MAX_OFFSET), times the entity's speed scale (powerups) and, for the AI,
@@ -752,9 +765,9 @@ void BCarPlayer_Boost(struct BCarPlayer *self)
 }
 
 /* 0x000981c0  BumperCars/CBCar_Player.cpp (bracketed)
-In the team variant (4) an AI car with a goal drives at its goal: (3200, 270, -800) for team
-1, (3200, 470, -1500) for team 2, braking when it is close. */
-void BCarPlayer_DriveToGoal(struct BCarPlayer *self)
+In the race variant (4) a car that has finished drives to its podium place: (3200, 270, -800)
+for the winner, (3200, 470, -1500) for the second, braking when it is close. */
+void BCarPlayer_DriveToPodium(struct BCarPlayer *self)
 {
 	struct BCarEntity *entity = self->entity;
 	float dx;
@@ -762,15 +775,15 @@ void BCarPlayer_DriveToGoal(struct BCarPlayer *self)
 	float dz;
 	float heading;
 
-	if (entity->team == -1)
+	if (entity->place == -1)
 		return;
-	if (entity->team == 1)
+	if (entity->place == 1)
 	{
 		dx = 3200.0f;                               /* 0x00265578 */
 		dy = 270.0f;                                /* 0x00262f48 */
 		dz = -800.0f;
 	}
-	else if (entity->team == 2)
+	else if (entity->place == 2)
 	{
 		dx = 3200.0f;
 		dy = 470.0f;                                /* 0x00265574 */
@@ -834,7 +847,8 @@ static void bcb_player_swap_car(struct BCarPlayer *player, struct BActor *car, i
 Updates the players once per frame (`dt` frames; `control`: the game is running): the car
 models at the end of the game, ranks and their speech, the HUD, the skid marks, falling off
 the arena (variant 3), scoring and respawning, boost recharge, the engine sound and the
-driving: the AI, a pad (the camera-relative or the classic steering) or the team goal. */
+driving: the AI, a pad (the camera-relative or the classic steering) or, after the finish of a
+race, the podium. */
 void BCarPlayers_Update(float dt, int control)
 {
 	int i;
@@ -911,7 +925,7 @@ void BCarPlayers_Update(float dt, int control)
 		/* the laps on the HUD */
 		if ((unsigned int)g_BCarGameState <= 3)
 		{
-			if (player->entity->team == -1)
+			if (player->entity->place == -1)
 			{
 				if (g_BCarVariant == 4)
 					CLHud_SetFraction(DAT_002ecfac, i, player->entity->lap + 1, g_Laps);
@@ -1033,8 +1047,8 @@ void BCarPlayers_Update(float dt, int control)
 
 		/* driving */
 		player->unk2d8 = 0;
-		if (g_BCarVariant == 4 && player->entity->team != -1)
-			BCarPlayer_DriveToGoal(player);
+		if (g_BCarVariant == 4 && player->entity->place != -1)
+			BCarPlayer_DriveToPodium(player);
 		else if (player->human == 0)
 			BCB_CALL(FUN_0008bdd0, void (*)(void *, float))(player->ai, dt);
 		else
@@ -1114,7 +1128,7 @@ thrust:
 		if (player->headlights[2] != NULL)
 			BCarHeadlight_Update(player->headlights[2]);
 		entity = player->entity;
-		if (entity->dead == 0 && entity->team == -1 && entity->respawnTime == 0.0f)
+		if (entity->dead == 0 && entity->place == -1 && entity->respawnTime == 0.0f)
 			player->headlightsOn = (1 < g_BCarGameState);
 		else
 			player->headlightsOn = 0;
@@ -1127,15 +1141,46 @@ thrust:
 	g_LastColourSet = DAT_00283ea4;
 }
 
+/* 0x000990d0  BumperCars/CBCar_Player.cpp (bracketed; missing from the function table:
+0x000991f0 tail-jumps to it)
+The race variant's lead player: the one ranked first. Says so (speech 0xb, or the lead
+voice 0x14 of the character) when the leader changes. */
+void FUN_000990d0(int speak)
+{
+	struct BCarPlayer *previous = g_LeadPlayer;
+	int i;
+	int lead = -1;
+
+	for (i = 0; i < 4; i++)
+	{
+		if (BCarCamera_GetRank(BCB_CAMERA, i) == 1)
+			lead = i;
+	}
+	if (lead == -1)
+		return;
+	g_LeadPlayer = &g_BCarPlayers[lead];
+	if (speak != 0 && g_BCarPlayers[lead].entity->place == -1 && g_LeadSpoken == 0 &&
+		bcb_rand() % 0x96 == 0)
+	{
+		BCarSound_Speak(BCB_SOUND, lead, 0xb, 0xff, g_BCarPlayers[lead].entity->pos, 1.0f);
+		g_LeadSpoken = 1;
+	}
+	if (g_LeadPlayer != previous && DAT_002baebc == 0)
+	{
+		g_LeadSpoken = 0;
+		if (bcb_rand() % 0x19 == 0)
+			BCarSound_PlayVoice(BCB_SOUND, 0x14, DAT_002baed4[lead * 10], 0xff);
+	}
+}
+
 /* 0x000991f0  BumperCars/CBCar_Player.cpp (bracketed)
-Chooses the lead player (who carries the lead marker): in the team variant the player ranked
-first; otherwise the best scorer when he leads by LEADSCORE, for LEADTIMEOUT seconds. Says
-so (speech 0xb, or the lead voice 0x14) when the leader changes. */
+Chooses the lead player (who carries the lead marker): in the race variant 0x000990d0 does;
+otherwise the best scorer when he leads the others by LEADSCORE, for LEADTIMEOUT seconds.
+Says so (speech 0xb, or the lead voice 0x14) when the leader changes. */
 void BCarPlayers_UpdateLead(int speak)
 {
 	struct BCarPlayer *previous = g_LeadPlayer;
 	struct BCarEntity *entity;
-	int i;
 	int lead;
 	int best;
 	int second;
@@ -1143,27 +1188,7 @@ void BCarPlayers_UpdateLead(int speak)
 
 	if (g_BCarVariant == 4)
 	{
-		lead = -1;
-		for (i = 0; i < 4; i++)
-		{
-			if (BCarCamera_GetRank(BCB_CAMERA, i) == 1)
-				lead = i;
-		}
-		if (lead == -1)
-			return;
-		g_LeadPlayer = &g_BCarPlayers[lead];
-		if (speak != 0 && g_BCarPlayers[lead].entity->team == -1 && g_LeadSpoken == 0 &&
-			bcb_rand() % 0x96 == 0)
-		{
-			BCarSound_Speak(BCB_SOUND, lead, 0xb, 0xff, g_BCarPlayers[lead].entity->pos, 1.0f);
-			g_LeadSpoken = 1;
-		}
-		if (g_LeadPlayer != previous && DAT_002baebc == 0)
-		{
-			g_LeadSpoken = 0;
-			if (bcb_rand() % 0x19 == 0)
-				BCarSound_PlayVoice(BCB_SOUND, 0x14, DAT_002baed4[lead * 10], 0xff);
-		}
+		FUN_000990d0(speak);
 		return;
 	}
 	if (g_LeadTimeout == 0.0f)
@@ -1223,7 +1248,7 @@ void BCarPlayers_UpdateLead(int speak)
 	g_LeadPos[2] = entity->pos[2];
 	g_LeadPos[1] = entity->pos[1] + g_LeadOffset;
 	g_LeadPos[3] = entity->pos[3];
-	if (speak != 0 && g_BCarPlayers[lead].entity->team == -1 && g_LeadSpoken == 0 &&
+	if (speak != 0 && g_BCarPlayers[lead].entity->place == -1 && g_LeadSpoken == 0 &&
 		bcb_rand() % 0x96 == 0)
 	{
 		BCarSound_Speak(BCB_SOUND, lead, 0xb, 0xff, g_BCarPlayers[lead].entity->pos, 1.0f);
@@ -1511,7 +1536,7 @@ static struct BCarHeadlight *bcb_player_headlight(struct BCarPlayer *player, int
 	if (memory != NULL)
 		light = BCarHeadlight_Construct((struct BCarHeadlight *)memory, player->entity->instPos,
 			player->entity->instRot, player->headlightTexture, player->scale * range, width, 8);
-	BCarHeadlight_SetFade(light, 15.0f);
+	BCarHeadlight_SetTilt(light, 15.0f);
 	return light;
 }
 

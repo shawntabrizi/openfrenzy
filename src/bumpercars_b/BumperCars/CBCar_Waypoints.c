@@ -330,10 +330,10 @@ void BCarWaypoints_Update(int playing, float dt)
 					e->lap = e->lap + 1;
 					if (e->lap == g_Laps)
 					{
-						e->team = g_FinishPlace;
+						e->place = g_FinishPlace;
 						g_FinishPlace = g_FinishPlace + 1;
 						BCarSound_Play(BCB_SOUND, 0x1d, 0xff, 0, -1);
-						if (e->team == 1)
+						if (e->place == 1)
 						{
 							int j;
 

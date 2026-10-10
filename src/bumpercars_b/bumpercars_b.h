@@ -181,8 +181,8 @@ struct BCarEntity {
 	float alpha;                      /* 0x038 */
 	float speedScale;                 /* 0x03c powerups: 1.0 normal (fades back to 1) */
 	int lap;                          /* 0x040 */
-	int team;                         /* 0x044 -1: none; 1 and 2: the goal it drives to */
-	int unk048;
+	int place;                        /* 0x044 race finish place, -1 while racing */
+	int unk048;                       /* 0x048 the next waypoint gate (CBCar_Waypoints) */
 	int lag;                          /* 0x04c waypoints behind the leader */
 	float pos[4];                     /* 0x050 */
 	float lastPos[4];                 /* 0x060 */
@@ -515,6 +515,10 @@ void DbgBreakPoint(void);
 extern unsigned char DAT_00291734[];
 
 /* ======================================================================== this module */
+
+/* functions Ghidra missed (not in src/include/of_functions.tsv; see the module report) */
+void FUN_00096c00(void);          /* delete the human players' input maps (CBCar_Player.c) */
+void FUN_000990d0(int speak);     /* the race variant's lead player (CBCar_Player.c) */
 
 /* the game timer's elapsed seconds (0x00096600 on 0x002f1fa8) */
 #define BCB_NOW() BCarTimer_GetElapsed(&g_BCarTimer.timer)
