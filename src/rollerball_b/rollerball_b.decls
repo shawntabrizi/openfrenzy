@@ -42,9 +42,22 @@
 
 # RollerBall/CRollerBall_Player.cpp
 00198a00 void *CRollerballPlayer_Ctor(void *self);
+00198a20 void CRollerballPlayer_Dtor(void *self);
+00198a30 int CRollerballPlayer_InitInput(void *self, int pad);
+00198e30 void CRollerballPlayer_FreeInput(void *self);
 00198e80 void CRollerballPlayer_FindTeamMate(void *self);
+00198f10 void CRollerballPlayer_Draw(void *self);
+00199040 void CRollerballPlayer_DrawReflection(void *self, int rider);
+001990e0 void CRollerballPlayer_SetTargetHeading(void *self, float heading);
+001990f0 void *CRollerballPlayer_DeletingDtor(void *self, unsigned int flags);
+00199110 void CRollerballPlayer_Shutdown(void *self);
+00199170 void CRollerballPlayer_Control(void *self, float dt);
+001993b0 void CRollerballPlayer_Turn(void *self, float dt);
+00199460 void CRollerballPlayer_UpdateFloor(void *self);
+00199530 void CRollerballPlayer_ProcessEvents(void *self, float dt);
 001999e0 void CRollerballPlayer_SetAnimMode(void *self, int mode);
 00199ba0 int CRollerballPlayer_Init(void *self, int player, float *pos, float *rot, float mass);
+00199f30 void CRollerballPlayer_Update(void *self, float dt);
 
 # player controllers (AI states; inferred)
 0019a640 void *CRollerballControlSumo_Ctor(void *self);
