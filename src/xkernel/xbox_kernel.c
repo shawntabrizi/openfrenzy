@@ -1111,16 +1111,15 @@ LPSTR WINAPI lstrcpynA(LPSTR destination, LPCSTR source, int count)
 	return destination;
 }
 
-/* 0x0003099f: Win32 wsprintfA writes at most 1024 characters */
+/* 0x0003099f: this XBE's wsprintfA calls wvsprintfA (0x00030988), which is
+the C library's vsprintf (0x001e041f): no 1024-character limit as in Win32 */
 int wsprintfA(LPSTR buffer, LPCSTR format, ...)
 {
 	va_list arguments;
 	int result;
 
 	va_start(arguments, format);
-	result = vsnprintf(buffer, 1024, format, arguments);
+	result = vsprintf(buffer, format, arguments);
 	va_end(arguments);
-	if (result > 1023)
-		result = 1023;
 	return result;
 }

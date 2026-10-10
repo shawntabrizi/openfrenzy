@@ -28,7 +28,7 @@ the x87 stack before the call (ST0 is the last one loaded).
 | 0x0003096f | Sleep                           | SleepEx(ms, FALSE) |
 | 0x0003097d | DbgBreakPoint                   | (Ghidra); the port logs and continues |
 | 0x00030982 | KeQuerySystemTime               | (Ghidra) kernel import thunk |
-| 0x0003099f | wsprintfA                       | cdecl, 1024 characters at most |
+| 0x0003099f | wsprintfA                       | cdecl; wvsprintfA 0x00030988 = vsprintf, no limit |
 | 0x000309d4 | XGetLanguage                    | ExQueryNonVolatileSetting(XC_LANGUAGE) |
 | 0x000309f9 | XGetVideoStandard               | XC_FACTORY_AV_REGION >> 8 & 0xff |
 | 0x00030a22 | XGetVideoFlags                  | XC_VIDEO_FLAGS >> 16 & 0x5f |

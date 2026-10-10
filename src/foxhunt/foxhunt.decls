@@ -1,0 +1,72 @@
+# foxhunt prototype overrides (docs/ARCHITECTURE.md section 11)
+# <addr> <prototype>;   Only of_types.h / C types and "struct Name *".
+
+# ---- FoxHunt/CModule_FoxHunt.c
+00125070 unsigned int *FUN_00125070(unsigned int *self, unsigned char flags);
+00125090 void FUN_00125090(int player);
+00125360 unsigned int *CModule_FoxHunt_Ctor(unsigned int *self);
+00125390 void CModule_FoxHunt_Dtor(unsigned int *self);
+001253a0 unsigned int *CModule_FoxHunt_Destroy(unsigned int *self, unsigned char flags);
+001253c0 int CModule_FoxHunt_Start(unsigned int *self, int variation);
+
+# ---- FoxHunt/CGameMode_FoxHunt.c
+00125560 void *CGameMode_FoxHunt_Ctor(void *self);
+00125580 void CGameMode_FoxHunt_Dtor(void *self);
+00125590 void CGameMode_FoxHunt_Enter(void *self);
+00125640 void CGameMode_FoxHunt_DrawFrameRate(void *self);
+00125750 int FoxHunt_ReadQuoted(const char *text, char *out, int max);
+001257a0 void CGameMode_FoxHunt_DrawActorPass6(void *self, char *actor);
+00125950 void CGameMode_FoxHunt_DrawActor(void *self, char *actor);
+00125c20 void FoxHunt_CameraAtPlayer1(void);
+00125c90 void FoxHunt_UpdateColourSet(void);
+00125cf0 void FoxHunt_SelectRouteHeights(int index);
+00125d60 void *CGameMode_FoxHunt_Destroy(void *self, unsigned char flags);
+00125d80 void CGameMode_FoxHunt_Init(void *self);
+00126220 void CGameMode_FoxHunt_Update(void *self);
+00128900 void CGameMode_FoxHunt_UpdateState(void *self);
+00129170 int CGameMode_FoxHunt_Results(void *self);
+00129860 void CGameMode_FoxHunt_DrawActors(void *self);
+00129910 void FoxHunt_CreateIcons(void);
+00129ab0 void CGameMode_FoxHunt_Exit(void *self);
+00129e50 void CGameMode_FoxHunt_Process(void *self, int top);
+0012a190 void CGameMode_FoxHunt_Draw(void *self, int top);
+0012a7c0 void CGameMode_FoxHunt_InitCooperation(void *self, void *package);
+
+# ---- FoxHunt/CFHunt_GenericGoal.c
+00133530 void *CFHunt_GenericGoal_Ctor(void *self);
+00133690 void CFHunt_GenericGoal_SetActive(void *self, char *goal, int on);
+00133700 void CFHunt_GenericGoal_SetColour(void *self, char *goal, int colour);
+00133720 void CFHunt_GenericGoal_Update(void *self, float dt);
+00133780 void CFHunt_GenericGoal_StartEffect(void *self, char *goal, int r, int g, int b, unsigned int level);
+001338c0 char *CFHunt_GenericGoal_AddGoal(void *self, float *pos, float size, int user);
+00133b00 void CFHunt_GenericGoal_Draw(void *self, int pass);
+
+# ---- FoxHunt/unplaced_sound.c
+00133db0 void *FHunt_Sound_Ctor(void *self);
+00133e50 int FHunt_Sound_Initialise(void *self, void *package);
+00133ee0 int FHunt_Sound_Play(void *self, unsigned int id, int volume, int pitch);
+00133f80 void *FoxHunt_Effects_Ctor(void *self);
+00133fd0 void FoxHunt_Effects_Update(void *self, float dt);
+00133ff0 void FoxHunt_Effects_Draw(void *self);
+00134000 void FoxHunt_AddDebris(int type, float *pos, float *vel, int life, unsigned int colour);
+00134360 int FoxHunt_Effects_Init(void *self, int unused, int variation);
+00134400 void FoxHunt_LoadPropActors(void);
+
+# ---- FoxHunt/unplaced_player.c
+0012f0a0 void *FoxHunt_Player_Ctor(void *self, int index, float *pos);
+
+# ---- FoxHunt/CFHunt_Throwable.c
+00134460 void *CFHunt_Throwable_Ctor(void *self, int type, float *pos, float size);
+00135d80 void *FoxHunt_Shark_Ctor(void *self, float *pos, int index);
+
+# ---- FoxHunt/CFHunt_Flag.c
+00136570 void *CFHunt_Flag_Ctor(void *self, float *pos, int a, int b);
+
+# ---- FoxHunt/unplaced_level.c
+00137980 void *FoxHunt_Glass_Ctor(void *self, float *pos, int type);
+001386a0 void FoxHunt_TextReader_Ctor(void *self);
+001386b0 void FoxHunt_TextReader_Dtor(void *self);
+001386c0 char *FoxHunt_TextReader_ReadLine(void *self, char *buffer);
+00138720 void FoxHunt_TextReader_NextLine(void *self);
+00138770 void *FoxHunt_TextReader_Destroy(void *self, unsigned char flags);
+00138790 void *FoxHunt_CWaterField_Ctor(void *self);

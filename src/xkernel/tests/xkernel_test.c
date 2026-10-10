@@ -306,6 +306,11 @@ static void test_memory(void)
 		CHECK(nonzero == 0, "new contiguous memory is zeroed");
 		memset(block, 0xab, 1024 * 1024);
 		XPhysicalProtect(block, 1024 * 1024, PAGE_READWRITE);
+		/* 0x001e8823 skips MmSetAddressProtect when size is 0: the game's
+		buffer code (0x00044e90, 0x000458a0) passes sizes that can be 0, and
+		the page of an unaligned address must stay writable */
+		XPhysicalProtect(block + 0x10, 0, PAGE_READONLY);
+		CHECK(XQueryMemoryProtect(block) == PAGE_READWRITE, "XPhysicalProtect with size 0 changes nothing");
 		XPhysicalFree(block);
 	}
 	block2 = MmAllocateContiguousMemory(0x10000);

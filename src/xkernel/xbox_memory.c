@@ -258,8 +258,12 @@ BOOL WINAPI VirtualProtect(LPVOID address, SIZE_T size, DWORD new_protect, PDWOR
 	return TRUE;
 }
 
+/* 0x001e8823: calls MmSetAddressProtect only when size != 0 (VirtualProtect
+would change the page of an unaligned address even for size 0) */
 VOID WINAPI XPhysicalProtect(LPVOID address, SIZE_T size, DWORD new_protect)
 {
+	if (size == 0)
+		return;
 	VirtualProtect(address, size, new_protect, NULL);
 }
 
