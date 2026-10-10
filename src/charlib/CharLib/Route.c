@@ -459,18 +459,18 @@ int CLRoute_Update(struct CLRoute *r)
 }
 
 /* 0x000adb70  CharLib (Route.cpp, inferred)
-Starts a route from `from` to `to` (world positions, x y z w). Returns the result of
-FUN_000b6860 (AI.cpp area), which is also kept in unk_fb6. */
-int CLRoute_Start(struct CLRoute *r, float *from, float *to, int arg4)
+Starts a route from `from` to `to` (world positions, x y z w) for an actor at height y.
+Returns the first cell to walk to (CLRoute_NextCell), which is also kept in next_cell. */
+int CLRoute_Start(struct CLRoute *r, float *from, float *to, float y)
 {
 	short first = (short)CLRoute_CellAt(from);
 	short result;
 
 	r->path[0] = 0;
 	r->dst_cell = (short)CLRoute_CellAt(to);
-	r->unk004 = route_unk_100;
+	r->patience = route_patience;
 	r->waypoint_count = 1;
-	r->first_cell = first;
+	r->cur_cell = first;
 	r->waypoints[0] = first;
 	r->src_cell = first;
 	CLRoute_CellCentre(r->dst_centre, r->dst_cell);
@@ -479,10 +479,10 @@ int CLRoute_Start(struct CLRoute *r, float *from, float *to, int arg4)
 	r->dst_pos[2] = to[2];
 	r->dst_pos[3] = to[3];
 	r->state = 0;
-	result = (short)FUN_000b6860(from, to, arg4, r);
-	r->unk_fb6 = result;
-	r->unk_fec = 0;
-	r->unk_ff0 = 0;
+	result = (short)CLRoute_NextCell(from, to, y, r);
+	r->next_cell = result;
+	r->stuck_time = 0.0f;
+	r->arrive_radius = 0.0f;
 	return result;
 }
 

@@ -94,6 +94,10 @@ extern unsigned int DAT_002bd640[256];
 	((void (*)(void *, void *, void *, int, int, float, unsigned int, CHLAnimCallback, void *))FUN_000358d0)
 /* 0x00038190 baFlushAnimations(inst, node, recurse, keep) */
 #define chl_FlushAnimations ((void (*)(void *, void *, int, int))FUN_00038190)
+/* 0x000366f0 baGetActorVertices(inst, node, stream, vertices, triangles, size, buffer, flags)
+-> the triangle buffer (flags 0x10000: collision triangles) */
+#define chl_GetActorVertices \
+	((void *(*)(void *, void *, int, int *, int *, unsigned int *, void *, unsigned int))FUN_000366f0)
 /* 0x000380f0 baUpdateAnimations(inst, node, dt, root_motion) */
 #define chl_UpdateAnimations ((int (*)(void *, void *, float, float *))FUN_000380f0)
 
@@ -101,7 +105,7 @@ extern unsigned int DAT_002bd640[256];
 
 /* 0x00046cb0 push a draw state (3, 0, 0) / 0x00046d00 pop it */
 #define chl_PushDrawState ((void (*)(int, int, int))FUN_00046cb0)
-#define chl_PopDrawState ((void (*)(void))FUN_00046d00)
+#define chl_PopDrawState ((void (*)(int))FUN_00046d00)
 /* 0x00044dd0 fog start and end / 0x00044e20 fog colour (r, g, b) */
 #define chl_SetFogRange ((void (*)(float, float))FUN_00044dd0)
 #define chl_SetFogColour ((void (*)(int, int, int))FUN_00044e20)

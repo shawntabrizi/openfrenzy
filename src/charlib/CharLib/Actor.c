@@ -177,7 +177,7 @@ void Actor_DrawOpaque(void *actor)
 	if ((CHL_U32(actor, ACT_FLAGS) & 0x80005) != 0) {
 		chl_PushDrawState(3, 0, 0);
 		chl_DrawInstance(ACT_INST(actor), 6);
-		chl_PopDrawState();
+		chl_PopDrawState(3);
 		return;
 	}
 	if ((CHL_U32(actor, ACT_FLAGS) & 0x200000) != 0)
@@ -240,7 +240,7 @@ void Actor_DrawFaded(void *actor)
 done:
 	if (CHL_I32(actor, ACT_TYPE) != 5 && (CHL_U32(actor, ACT_FLAGS) & 0x80000) == 0)
 		return;
-	chl_PopDrawState();
+	chl_PopDrawState(3);
 }
 
 /* 0x000ae4d0  CharLib/Actor.cpp (bracketed)

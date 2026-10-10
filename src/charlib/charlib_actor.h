@@ -19,6 +19,7 @@ Other modules may include this header. Only the charlib agent edits it.
 #define ACT_INST_MATRIX 0x10       /* the instance matrix (16 floats) at the start of it */
 #define ACT_NODE 0x144             /* BActorNode *: the instance's root node (instance + 0x134) */
 #define ACT_POS 0xd0               /* float[4]: position (instance + 0xc0) */
+#define ACT_SCALE 0xe0             /* float[4]: scale (instance + 0xd0) */
 #define ACT_ORIENT 0xf0            /* float[4]: orientation quaternion (instance + 0xe0) */
 #define ACT_COLL_INST 0x180        /* BActorInstance *: collision mesh instance ("_coll.obe") */
 #define ACT_SHADOW_INST 0x184      /* BActorInstance *: shadow mesh instance ("_shad.obe") */

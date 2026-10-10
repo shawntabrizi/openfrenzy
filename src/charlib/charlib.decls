@@ -14,12 +14,12 @@
 000ad930 void CLRoute_Dtor(struct CLRoute *self);
 000ad980 void CLRoute_Rebuild(void);
 000ad990 int CLRoute_Update(struct CLRoute *r);
-000adb70 int CLRoute_Start(struct CLRoute *r, float *from, float *to, int arg4);
+000adb70 int CLRoute_Start(struct CLRoute *r, float *from, float *to, float y);
 000adc30 void CLRoute_RandomPoint(float *out, int need_ground);
 # CRCollision.cpp area
 000b3ff0 float CLColl_GroundProbe(float *pos, float radius, void **tri_out, void **platform_out, int mode);
 # AI.cpp area
-000b6860 int CLRoute_NextCell(float *from, float *to, int arg3, struct CLRoute *r);
+000b6860 int CLRoute_NextCell(float *from, float *to, float y, struct CLRoute *r);
 # Actor.cpp
 000adef0 void Actor_InitCharData(void *actor);
 000adfc0 void *Actor_Delete(void *actor);
@@ -52,3 +52,47 @@
 000b8520 void Platform_RotateActor(void *actor);
 000b8960 void Platform_GetVelocity(float *out, void *platform, int absolute);
 000b8a40 void Platform_AddVelocity(float *vel, float *add);
+000afca0 void *Actor_LoadAny(const char *name, float *pos, int type, void *mem, int no_collision);
+000afcd0 void Actor_DrawFirstPass(void *actor);
+000aff10 void Actor_DrawAll(void);
+# AI player base class (gap before CRCollision.cpp)
+000b01d0 void *AI_Ctor(void *ai);
+000b02d0 void AI_Dtor(void *ai);
+000b02f0 void AI_SetState(void *ai, int state);
+000b0320 void AI_PlayVoice(void *ai, int kind, int volume, float cooldown, unsigned int flags, int choice, int allow_repeat);
+000b0370 void AI_RespawnFarthest(void *ai);
+000b0560 void AI_RespawnAt(void *ai, int id);
+000b06c0 int AI_CanMove(void *ai, float *dir);
+000b06d0 void AI_Hold(void *ai, void *actor, int slot);
+000b0710 float AI_NearestHolderDistSq(float *pos);
+000b0770 void AI_HoldEnd(void *ai, int a, int b);
+000b0780 void AI_SetStick(void *ai, float *dir, float amount);
+000b0820 void AI_Update(void *ai);
+000b0b00 void AI_DrawRouteTarget(void *ai);
+000b0cb0 void AI_Spawn(void *ai, void *point);
+000b1030 void AI_Tick(void *ai);
+000b1100 void AI_TickAll(void);
+000b1190 void AI_FollowRoute(void *ai);
+000b1860 void AI_Think(void *ai);
+000b18a0 void AI_ThinkTail(void *ai);
+000b6710 int CLRoute_PathStep(struct CLRoute *r, int from, int to, float y);
+000b9a30 void RespawnPoint_Update(void *point);
+# CarryOn/CModule_CarryOn.cpp (in the CharLib block)
+000b1a60 void *CModuleCarryOn_Ctor(void *self);
+000b1a90 void CModuleCarryOn_Dtor(void *self);
+000b1aa0 int CModuleCarryOn_Start(void *self, int variant);
+000b1b90 void *CModuleCarryOn_DeletingDtor(void *self, unsigned int flags);
+# CRCollision.cpp
+000b1bb0 int CRColl_PointOverTriXZ(float *tri, float *p);
+000b1cd0 void CLVec3_MinLengthXZ(float *v, float length);
+000b1e00 int CRColl_PushApart(void *a, void *b);
+000b21b0 int CRColl_SamePlane(float *a, float *b);
+000b22c0 int CRColl_ProjectInTri(float *tri, float *p, float *out);
+000b24e0 float CRColl_NearestEdgePoint(float *p, float *tri, float radius, float *out);
+000b26e0 void CRColl_MovePlatformBox(void *platform);
+000b2770 void CRColl_PrepareMesh(void *actor, int lengths, int edges);
+000b2b50 int CRColl_PointInTri(float *tri, float *p);
+000b2d40 int CRColl_CapsuleRimTest(float *sphere, float *centre, struct CRContact *contact);
+000b2f20 void CRColl_ResolveContacts(void *actor);
+000b34e0 int CRColl_MergeEdgeContacts(void);
+000b3840 void CRColl_AddContact(float *tri, void *actor, float *point, float radius, void *platform, int sphere, int tag);

@@ -102,14 +102,15 @@ route_max_iterations steps per call and continues on the next call */
 #define CL_ROUTE_MAX_DEPTH 1000
 struct CLRoute {
 	int state;            /* 0x000 0: start a new search; >0: calls the search ran so far */
-	int unk004;           /* 0x004 route_unk_100 (100) at start */
+	int patience;         /* 0x004 search calls before the AI follows a partial route */
 	int depth;            /* 0x008 */
-	short path[CL_ROUTE_MAX_DEPTH];  /* 0x00c cells on the search stack (path[0] unused) */
+	short path[CL_ROUTE_MAX_DEPTH];  /* 0x00c cells on the search stack; path[0] is not part
+	                                    of the stack: the AI uses it as "route finished" */
 	short from[CL_ROUTE_MAX_DEPTH];  /* 0x7dc the cell each stack entry was reached from */
 	int pad_fac;          /* 0xfac */
 	short *cost;          /* 0xfb0 per cell: steps from dst_cell (32000: not reached) */
-	short first_cell;     /* 0xfb4 */
-	short unk_fb6;        /* 0xfb6 FUN_000b6860 result */
+	short cur_cell;       /* 0xfb4 the cell the actor was in at the last plan */
+	short next_cell;      /* 0xfb6 next cell to walk to (-1: none, -2: search running) */
 	short src_cell;       /* 0xfb8 the cell the actor is in (the search goal) */
 	short dst_cell;       /* 0xfba the destination cell (the search start) */
 	short goal_col;       /* 0xfbc column of src_cell */
@@ -120,13 +121,13 @@ struct CLRoute {
 	short *parent;        /* 0xfc8 per cell: the cell it was reached from */
 	float dst_centre[4];  /* 0xfcc centre of dst_cell (x, ground, z) */
 	float dst_pos[4];     /* 0xfdc the destination position */
-	int unk_fec;          /* 0xfec */
-	int unk_ff0;          /* 0xff0 */
+	float stuck_time;     /* 0xfec frames spent in next_cell while touching walls */
+	float arrive_radius;  /* 0xff0 distance at which dst_pos itself is the target */
 };
 OF_ASSERT_OFFSET(struct CLRoute, from, 0x7dc);
 OF_ASSERT_OFFSET(struct CLRoute, cost, 0xfb0);
 OF_ASSERT_OFFSET(struct CLRoute, parent, 0xfc8);
-OF_ASSERT_OFFSET(struct CLRoute, unk_ff0, 0xff0);
+OF_ASSERT_OFFSET(struct CLRoute, arrive_radius, 0xff0);
 
 /* height buffers handed to CLRoute_SetHeights (Route.cpp 0x000ad7d0) */
 struct CLRouteHeights {
@@ -139,8 +140,8 @@ struct CLRouteHeights {
 /* 0x00292c4c / 0x00292c50  grid columns / rows (24 x 24) */
 #define route_cols CHL_VAR(int, 0x00292c4c)
 #define route_rows CHL_VAR(int, 0x00292c50)
-/* 0x00292c54  initial CLRoute.unk004 (100) */
-#define route_unk_100 CHL_VAR(int, 0x00292c54)
+/* 0x00292c54  CLRoute.patience at start, and when the actor walks in circles (100) */
+#define route_patience CHL_VAR(int, 0x00292c54)
 /* 0x00292c58  highest step up between neighbour cells (350) */
 #define route_max_climb CHL_VAR(float, 0x00292c58)
 /* 0x00292c5c  lowest step (largest drop) when route_check_drop is set (-10000) */
