@@ -1047,48 +1047,8 @@ void CLDebris_Start(void)
 	FUN_00085200();
 }
 
-/* 0x00080bf0  ClassLib (file unknown); missing from of_functions.tsv
-Debris particle kill callback: frees the particle's data and counts it out. Returns 1
-when the particle may go. */
-int FUN_00080bf0(undefined4 system, int particle)
-{
-	(void)system;
-	if (DAT_002ed340 != 0)
-		return 0;
-	if (*(signed char *)(particle + 0xa1) < 0 && DAT_002ed348 == 0)
-		return 0;
-	if (*(int *)(particle + 0xd8) != 0)
-		*(int *)(*(int *)(particle + 0xd8) + 0x14) = *(int *)(*(int *)(particle + 0xd8) + 0x14) + -1;
-	DAT_002ed344 = DAT_002ed344 + -1;
-	if (*(int *)(particle + 0x74) != 0) {
-		FUN_0004c110(*(int *)(particle + 0x74));
-		*(int *)(particle + 0x74) = 0;
-	}
-	return 1;
-}
-
-/* 0x00080c50  ClassLib (file unknown); missing from of_functions.tsv
-DebrisExtraSystemInitCallback: reason 0 initialises the system data, 1 frees it. */
-void FUN_00080c50(int system, int reason)
-{
-	undefined4 *data;
-
-	if (DAT_002ed340 != 0)
-		return;
-	data = *(undefined4 **)(system + 0x40);
-	CLU_DebugPrintf("DebrisExtraSystemInitCallback(..)\n");
-	CLU_DebugPrintf("reason = %i \neSystem->sysData =%i\n\n", reason, *(undefined4 *)(system + 0x40));
-	if (reason == 0) {
-		*(float *)&data[0] = 1.0f;
-		data[1] = 0;
-	} else if (reason == 1) {
-		if (data[1] != 0) {
-			FUN_0004c110(data[1]);
-			data[1] = 0;
-		}
-		DAT_002ed34c = 0;
-	}
-}
+/* 0x00080bf0 and 0x00080c50 (debris callbacks missing from the table) are defined by
+bumpercars_a (ClassLib/Debris.c), which owns the debris system. */
 
 /* 0x00080cc0  ClassLib (file unknown)
 Stops the debris effects. */

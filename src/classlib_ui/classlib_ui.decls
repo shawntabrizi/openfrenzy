@@ -123,6 +123,10 @@
 0007ad50 int CLHud_CreateWinnerText(int self, int *scores, int with_game_type);
 0007b6f0 void CLHud_BuildGroundQuad(struct CLQuadVertex *quad, float *pos, float *normal, float size, float angle, float brightness);
 0007b970 void CLHud_DrawAIRing(int player, float *pos, float *target);
+0007bb70 void CLHud_DrawAIRingAngle(int player, float *pos, float angle);
+0007bd80 void CLHud_UpdateBars(int self);
+0007be80 void CLHud_ShowResultBoxes(void);
+0007bfd0 void CLHud_InitBarGeometry(int self);
 0007cc00 void CLHud_Destroy(void);
 0007cc30 int CLIntroCam_Restart(void);
 0007cc70 float CLIntroCam_GetTime(void);

@@ -1527,3 +1527,156 @@ void CLHud_DrawAIRing(int player, float *pos, float *target)
 	FUN_0003f2d0(4, (int)clu_ring_quad, 4);
 	FUN_00046d60(saved_state);
 }
+
+/* 0x002ed068  quad of the second ground ring */
+#define clu_ring2_quad CLU_ARR(struct CLQuadVertex, 0x002ed068)
+
+/* 0x0007bb70  ClassLib/Hud.cpp (inferred)
+Like CLHud_DrawAIRing, with the arrow turned by `angle` (no arrow for 0). */
+void CLHud_DrawAIRingAngle(int player, float *pos, float angle)
+{
+	int saved_state[30];
+	float start[4];
+	float dir[4];
+	float hit[4];
+	float normal[4];
+	float turn;
+	const unsigned char *rgb;
+	unsigned int colour;
+
+	FUN_00046d40((undefined4 *)saved_state);
+	start[0] = pos[0];
+	start[1] = pos[1] + 100.0f;
+	start[2] = pos[2];
+	start[3] = pos[3];
+	dir[0] = (float)((double)0.0f * (double)1.4f);
+	dir[1] = (float)((((double)pos[1] - (double)2000.0f) - (double)start[1]) * (double)1.4f);
+	dir[2] = (float)((double)0.0f * (double)1.4f);
+	dir[3] = pos[3];
+	if (((float (*)(float *, float *, float *, float *))FUN_000b4bd0)(start, dir, hit, normal) == 0.0f)
+		return;
+	hit[1] = hit[1] + 10.0f;
+	if (angle == 0.0f)
+		turn = 0.0f;
+	else
+		turn = angle + 3.9269905f;
+	CLHud_BuildGroundQuad(clu_ring2_quad, hit, normal, 96.0f, turn, 80.0f);
+	rgb = (const unsigned char *)&clu_characters[DAT_002baed4[player * 10]].colour;
+	colour = DAT_002bd640[rgb[2]] | DAT_002bc490[rgb[1]] | DAT_002bce18[rgb[0]] | DAT_002bca94;
+	clu_ring2_quad[0].colour = colour;
+	clu_ring2_quad[1].colour = colour;
+	clu_ring2_quad[2].colour = colour;
+	clu_ring2_quad[3].colour = colour;
+	FUN_000416c0(0, angle != 0.0f ? clu_ai_ring : clu_ai_ring_nogoal);
+	FUN_00044b00(6, 1, 0);
+	FUN_00044b00(10, 1, 0);
+	FUN_00044b00(3, 0, 0);
+	FUN_00044b00(5, 0, 0);
+	FUN_00044b00(7, 2, 0);
+	FUN_0003f2d0(4, (int)clu_ring2_quad, 4);
+	FUN_00046d60(saved_state);
+}
+
+/* 0x0007bd80  ClassLib/Hud.cpp (inferred; thiscall)
+Sets the target widths of the score bars from the scores (team sums in team games),
+relative to the score range (from 0 or the lowest score). */
+void CLHud_UpdateBars(int self)
+{
+	float low;
+	double high;
+	float team_a;
+	double team_b;
+	double range;
+	double value;
+	int player;
+	int mate;
+
+	if (DAT_002baebc == 0) {
+		low = OV_F(self, 0x3c);
+		high = (double)OV_F(self, 0x40);
+	} else {
+		team_a = OV_F(self, 0x4c + DAT_002baec4 * 4) + OV_F(self, 0x4c + DAT_002baec0 * 4);
+		team_b = (double)OV_F(self, 0x4c + DAT_002baecc * 4) + (double)OV_F(self, 0x4c + DAT_002baec8 * 4);
+		if ((double)team_a <= team_b) {
+			low = team_a;
+			high = team_b;
+		} else {
+			low = (float)team_b;
+			high = (double)team_a;
+		}
+	}
+	if (low > 0.0f)
+		low = 0.0f;
+	if (high == (double)low)
+		high = high + (double)1.0f;
+	if (DAT_002bae94 <= 0)
+		return;
+	range = high - (double)low;
+	for (player = 0; player < DAT_002bae94; player++) {
+		if (DAT_002baebc != 0) {
+			mate = (&DAT_002baec4)[DAT_002baed4[player * 10 + 8] * 2 - DAT_002baed4[player * 10 + 9]];
+			value = (double)OV_F(self, 0x4c + mate * 4) + (double)OV_F(self, 0x4c + player * 4);
+		} else {
+			value = (double)OV_F(self, 0x4c + player * 4);
+		}
+		OV_F(OV_I(self, 0x78 + player * 4), 0x36c) = (float)((value - (double)low) / range * (double)clu_bar_scale);
+	}
+}
+
+extern const char *DAT_00283898[6]; /* core: results images of the characters ("dub_g.bmp") */
+
+/* 0x0007be80  ClassLib/Hud.cpp (inferred)
+Turns the score boxes into result boxes: the character image (the portrait, 25%
+bigger, for absent players), full colour, moved up 8 with their children down 12. */
+void CLHud_ShowResultBoxes(void)
+{
+	int player;
+	int box;
+	int node;
+
+	for (player = 0; player < 4; player++) {
+		OV_S(OV_I(clu_hud, 0xe0 + player * 4), 0x54) = 1;
+		if (DAT_002baed8[player * 10] == 0) {
+			OV_I(OV_I(clu_hud, 0xf0 + player * 4), 0x60) =
+				FUN_0004bb30(0, (char *)clu_characters[DAT_002baed4[player * 10]].portrait, 0, 0xdefa);
+			OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x364) =
+				(float)((double)OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x364) * 1.25);
+			OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x368) =
+				(float)((double)OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x368) * 1.25);
+		} else {
+			OV_I(OV_I(clu_hud, 0xf0 + player * 4), 0x60) =
+				FUN_0004bb30(0, (char *)DAT_00283898[DAT_002baed4[player * 10]], 0, 0xdefa);
+		}
+		box = OV_I(clu_hud, 0xf0 + player * 4);
+		OV_F(box, 0x2ac) = 127.0f;
+		OV_F(box, 0x2b0) = 127.0f;
+		OV_F(box, 0x2b4) = 127.0f;
+		OV_F(box, 0x2b8) = 127.0f;
+		OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x304) = OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x304) - 8.0f;
+		for (node = (int)CLList_Next((unsigned int *)OV_I(clu_hud, 0xf0 + player * 4), NULL); node != 0;
+		     node = (int)CLList_Next((unsigned int *)OV_I(clu_hud, 0xf0 + player * 4), (unsigned int *)node))
+			OV_F(node, 0x304) = OV_F(node, 0x304) + 12.0f;
+	}
+}
+
+/* 0x0007bfd0  ClassLib/Hud.cpp (inferred; thiscall)
+Takes the score bar geometry from score4.tga: the corner angles and the inner margins
+relative to its half size. */
+void CLHud_InitBarGeometry(int self)
+{
+	int texture;
+	double w36;
+	double half;
+
+	texture = FUN_0004bb30(0, "score4.tga", 0, 0xdefa);
+	OV_I(self, 0x5c) = texture;
+	w36 = (double)(int)(*(unsigned short *)(texture + 0x2e) - 0x24);
+	OV_F(self, 0x68) = (float)atan2(w36, (double)(int)(*(unsigned short *)(texture + 0x30) - 0x23));
+	OV_F(self, 0x6c) = (float)atan2(w36, -35.0);
+	OV_F(self, 0x70) = (float)(atan2(-36.0, -35.0) + (double)6.283185f);
+	half = (double)(int)*(unsigned short *)(texture + 0x2e) * (double)0.5f;
+	OV_F(self, 0x60) = (float)(((double)36.0f - half) / half);
+	OV_I(self, 0x74) = 0;
+	half = (double)(int)*(unsigned short *)(texture + 0x30) * (double)0.5f;
+	OV_F(self, 100) = (float)(((double)35.0f - half) / half);
+}
