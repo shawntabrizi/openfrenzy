@@ -201,6 +201,49 @@ integration round 2 (921ec75); see below.
   D3DRS_POINTSPRITEENABLE the one combiner stage comes from texture stage 3, read at gl_PointCoord;
   D3DRS_POINTSCALEENABLE sizes points height * size / sqrt(A + B d + C d^2) within min/max (64).
 
+## Integration round 3 (2026-10-10)
+
+- Clean build in `build/` (rm -rf, configure, build: about 25 s with 12 jobs) links with no
+  errors; ctest 6/6. The final link keeps 5 weak stubs (FUN_00015270, FUN_000175c0,
+  FUN_00018d90, FUN_00055c69, FUN_000bccbf); none was reached in any run below.
+- Board, 2 stages (window, scripted pad 0, `build/run/board.sh` recipe of round 2, 1500 s):
+  the full tournament ends. Power Station (Tube Tremors, Hopper, a third game), Military Base
+  (Tank Tracks, Space Tails, Special Delivery), the final Meta stage, "Geena: Third",
+  "Naomi Wins!", then back to the title screen (about 780 s). No fault, no UNIMPLEMENTED,
+  no assertion. The title screen then tries ATTRACT.bik (Bink is null) and stays on the title.
+- Board, 6 stages (`START@6000,A@11000,A@15000,RIGHT@20000,RIGHT@21000,A@23000,START@26000,
+  START@30000,START@34000,START@38000,A@42000,START@46000`, then A every 3 s; 2700 s): the
+  full tournament ends (Outlands, Coliseum, Downtown, Military Base, ..., Stage 6 Waterfront,
+  the "Final Score" table of 6 stages, then the title, at about 2300 s). No fault,
+  no UNIMPLEMENTED, no assertion. Babel free memory at the title: 41365 Kb at boot,
+  40263-40637 Kb after a tournament.
+- Minigame Frenzy (main menu DOWN once): character select, CPU difficulty, Air Raid played,
+  "Do you want to play again?", replay. No fault in 270 s.
+- Direct launch, all 12 games x variations 1-3, 90 s each, headless: all reach PLAYING with
+  no fault, except MouseWhack variation 2: fault at the round restart (debug start state 2
+  only): CLList_Remove <- Actor_Delete <- FUN_00172730 (CBbash_Arena reset) <-
+  CBbash_Game_Update. ScratchMatch 1-3 print the (original) assertion
+  CScratchmatch_Game.cpp(815) at the outro, as in round 2.
+- Open fault (real menu path): main menu -> Options faults at once, `pc = "\models\"`
+  (0x5c736c65646f6d5c, string bytes as the return address: a stack buffer overflow). The
+  stack scan shows CGameMode_MainMenu_OnButton -> CMB_PUSH_MODE -> MainOptions. Trace
+  prints in CGameMode_MainOptions_Start show Start runs to its end; with prints in
+  RefreshTexts the fault and the garbage go away (heisenbug). Without them, glyphs
+  0x0330-0x0368 that are not in the font are drawn each frame. A print after the second
+  bkWideSprintf call in RefreshTexts showed an empty result (text[0] == 0) for
+  `"%S: %S"`. Repro: `OPENFRENZY_DEBUG_TEST_INPUT="START@6000,A@11000,DOWN@15500,
+  DOWN@16200,A@17500"`, headless, 40 s.
+- Main menu -> Game Demos: XLaunchNewImage("D:\XDemos\XDemos.xbe") exits the game (host).
+- Audio (`OPENFRENZY_DSOUND_LOG=1`, 6-stage run): device opened (48 kHz stereo), WMA music
+  decodes, mixer peak before the limiter over 2692 one-second reports: median 1.19, max
+  2.75 (so the limiter acts most of the time). Nobody listened.
+- New debug aids: each scripted press logs `test_input: <BUTTON> at <ms>` once (time base to
+  match frame dumps); on a fault the host also lists guest code addresses found in the
+  4 KB above sp (`sp+0x.. guest <addr>`; for smashed stacks; some entries are stale).
+- Script timing: the "game length" menu shows about 18 s after the first XInputGetState with
+  the inputs above; a second window run at the same time slows the menus (presses land
+  early).
+
 ## Library identifications
 
 - 0x1e0323 `_purecall`; 0xa6fa0 returns 1; 0xf8ab0 returns 0 (stdcall, 1 argument).
