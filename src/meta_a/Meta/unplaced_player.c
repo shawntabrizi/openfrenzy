@@ -845,21 +845,8 @@ undefined4 FUN_00152b30(int *ai, int entered)
 	return 0;
 }
 
-/* 0x002b06d4  CMetaPlayer conditions, 0x002b0710  CMetaPlayer states */
-const void *const PTR_LAB_002b06d4[15] = {
-	(const void *)FUN_00151450, (const void *)FUN_00151650, (const void *)FUN_001514b0,
-	(const void *)FUN_00139e70, (const void *)FUN_00186d20, (const void *)FUN_001519b0,
-	(const void *)FUN_00151660, (const void *)FUN_00151500, (const void *)FUN_00151550,
-	(const void *)FUN_001515e0, (const void *)FUN_00151650, (const void *)FUN_00151660,
-	(const void *)FUN_00151270, (const void *)FUN_00151650, (const void *)FUN_00151650,
-};
-const void *const PTR_LAB_002b0710[15] = {
-	(const void *)FUN_00151f20, (const void *)FUN_00151ff0, (const void *)FUN_00152080,
-	(const void *)FUN_00152260, (const void *)FUN_00151680, (const void *)FUN_001523d0,
-	(const void *)FUN_00152600, (const void *)FUN_00152800, (const void *)FUN_001528c0,
-	(const void *)FUN_001529f0, (const void *)FUN_001516f0, (const void *)FUN_00151770,
-	(const void *)FUN_00151e70, (const void *)FUN_00152b30, (const void *)FUN_00151c60,
-};
+/* (the condition table 0x002b06d4 and the state table 0x002b0710 are in the Meta data
+   block, Meta/meta_a_data.c) */
 
 /* ---------- level helpers */
 

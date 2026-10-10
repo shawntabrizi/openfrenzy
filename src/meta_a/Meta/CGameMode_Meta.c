@@ -723,7 +723,7 @@ void FUN_0014f670(int self)
 	}
 	FUN_00158e10();
 	CLRoute_Rebuild();
-	FUN_00159000();
+	FUN_00159000(DAT_003082c0);
 	FUN_0015a770(1);
 	MA_I32(self, 0x84) = 0;
 	position[0] = 0.0f;
@@ -779,7 +779,7 @@ void FUN_0014f670(int self)
 		for (i = 0; i < DAT_002bae94; i++)
 			DAT_002baee8[i * 10] = 0;
 		DAT_00309254 = 1;
-		FUN_001592e0();
+		FUN_001592e0(DAT_003082c0);
 	}
 }
 

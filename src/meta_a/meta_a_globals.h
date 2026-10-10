@@ -84,12 +84,15 @@ extern unsigned char DAT_003082d4[];  /* CLList: the tile groups */
 extern unsigned char DAT_00308440[];  /* CLList (meta_b objects with a tag at +0x38) */
 extern unsigned char DAT_003090a8[];  /* CLList (meta_b objects with a tag at +0x6c) */
 extern unsigned char DAT_003090d8[];  /* CLList (meta_b objects with a tag at +0x5c) */
+extern unsigned char DAT_00308f58[];  /* 8 CLLists of 0x20 bytes (meta_b objects) */
 extern int DAT_00309060[16];        /* the big red buttons (meta_b) */
 extern unsigned char DAT_00308e60[];  /* CLList: the vents (meta_b) */
 extern unsigned char DAT_00308f48[];  /* CLList: the bombs (meta_b) */
 extern unsigned char DAT_002ea478[];
 extern int DAT_003055e0;            /* demo mode */
 extern unsigned char DAT_00290ea8[]; /* CSpriteVB (classlib_fx; fallback in Meta/meta_a_foreign.c) */
+
+extern unsigned int DAT_002bc490[], DAT_002bc898[], DAT_002bce18[], DAT_002bd640[]; /* colour tables */
 
 /* ---------- owned elsewhere: charlib */
 
@@ -110,30 +113,12 @@ extern int DAT_002f289c[4];         /* the four character controllers */
 extern int DAT_002f28ac;
 extern int DAT_002f7a30, DAT_002f7a34;
 
-/* BEGIN FALLBACK */
+/* ---------- owned by meta_a: the Meta .data block (Meta/meta_a_data.c, aliases) */
 
-/* classlib_fx */
-extern unsigned char s_aisteam1_00290f00[0x1b0]; /* 6 CSpriteDef */
-
-/* charlib (camera yaw of the extra camera) */
-extern int _DAT_002f7a2c;
-
-/* Hopper */
-extern int DAT_002ae9c4;            /* a sample */
-extern char DAT_002aec00;           /* state of play */
-extern float DAT_002aed74;          /* speed boost */
-extern int DAT_002afef4[4];         /* per player: frozen frames */
-extern int DAT_002b0370;
 extern int DAT_002b04e4;            /* draw shadows */
 extern int DAT_002b04e8;            /* high-res characters (applied) */
 extern int DAT_002b04ec;            /* rumble: distance scale (1000) */
 extern int DAT_002b04f4, DAT_002b04f8; /* rumble: strength and length fall-off */
-extern int DAT_003027a0;            /* game phase */
-extern int DAT_003027bc;            /* round over */
-extern int DAT_00302b48[4];         /* the four player controllers */
-extern float DAT_00304548[4];       /* shader constant */
-
-/* Meta .data: tweaks */
 extern int DAT_002b056c;
 extern int DAT_002b0570;
 extern float DAT_002b0574;          /* slow motion factor */
@@ -168,6 +153,11 @@ extern float DAT_002b07bc, DAT_002b07c0; /* knockout: slide time and speed */
 extern int DAT_002b07c4[5];         /* ball scores by type 1-4 ([0] unused) */
 #define DAT_002b07c8 (DAT_002b07c4 + 1) /* 0x002b07c8 */
 extern int DAT_002b084c;            /* camera: steps for a jump cut */
+extern int DAT_002b0854;            /* AI: time after which it scores at once (600) */
+extern int DAT_002b0858;            /* AI: chance to press a button (%) */
+extern unsigned int DAT_002b085c;   /* AI: button route value (float 200) */
+extern int DAT_002b0860;            /* AI: retaliation time (300) */
+extern int DAT_002b0864;            /* AI: longest plan (1200) */
 extern float DAT_002b0850;          /* AI attack delay */
 extern float DAT_002b0874;          /* carry factor */
 extern float DAT_002b0878, DAT_002b087c, DAT_002b0880; /* thickness base, amp, freq */
@@ -178,10 +168,34 @@ extern float DAT_002b08a8, DAT_002b08ac, DAT_002b08b0; /* alpha */
 extern float DAT_002b08b4, DAT_002b08b8; /* hammer grow speed, marker pulse */
 extern int DAT_002b08c0;            /* neutral % */
 extern int DAT_002b08c4;            /* super orb value */
+extern float DAT_002b09e8;          /* tile height window */
 extern float DAT_002b09ec;          /* orb radius / active range */
 extern unsigned char DAT_002b0d30[0x318]; /* 11 CSpriteDef */
+extern void *PTR_s_ai_orbglow_bmp_002b09d4;
+extern unsigned char PTR_s_STREAK1_002b2104[]; /* a DebrisType */
 extern signed char DAT_002b05f0[0xe1];  /* CMetaPlayer state/condition priorities (15 x 15) */
 extern float DAT_002b0868;          /* hurting platform damage */
+
+/* BEGIN FALLBACK */
+
+/* classlib_fx */
+extern unsigned char s_aisteam1_00290f00[0x1b0]; /* 6 CSpriteDef */
+
+/* charlib (camera yaw of the extra camera) */
+extern int _DAT_002f7a2c;
+
+/* Hopper */
+extern int DAT_002ae9c4;            /* a sample */
+extern char DAT_002aec00;           /* state of play */
+extern float DAT_002aed74;          /* speed boost */
+extern int DAT_002afef4[4];         /* per player: frozen frames */
+extern int DAT_002b0370;
+extern int DAT_003027a0;            /* game phase */
+extern int DAT_003027bc;            /* round over */
+extern int DAT_00302b48[4];         /* the four player controllers */
+extern float DAT_00304548[4];       /* shader constant */
+
+/* Meta .data: tweaks */
 
 /* Meta .bss */
 extern int DAT_00304558;            /* route height buffers (new[]) */
@@ -211,6 +225,15 @@ extern int DAT_003075a0;            /* puzzle actions run without their speed */
 extern int DAT_003075a4;            /* the puzzle being evaluated */
 extern int DAT_003075a8;            /* condition node bump pointer */
 extern int DAT_003075bc[4];         /* the four CMetaPlayer objects */
+extern int DAT_003075d0;            /* orb glow texture */
+extern int DAT_003075d4[6];
+extern int DAT_003075ec;            /* orb shadow texture */
+extern int DAT_003075f0[0xf0];      /* tile models: 6 types x 20 frames x 2 parts */
+extern int DAT_003079b0;
+extern int DAT_003082b8;
+extern int DAT_003082c8;            /* token glow texture */
+extern unsigned int DAT_003082e0[36]; /* the tile glow quad (4 vertices of 9 dwords) */
+extern int DAT_00308f38;            /* number of meta_b object lists */
 extern int DAT_003082bc;
 extern int DAT_003082c0;            /* the tile board */
 extern int DAT_00309244;

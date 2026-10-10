@@ -48,17 +48,9 @@ extern int *DAT_002ea488;
 #define MA_ENTITIES_B ((unsigned int *)((char *)DAT_002ea488 + 0x24))
 #define MA_NEXT(list, node) CLList_Next((unsigned int *)(list), (unsigned int *)(node))
 
-/* 0x002b2398  the condition keywords (meta_b FUN_001667e0 looks words up in it; "***"
-   ends the table) */
-const char *const PTR_s_VAR_EQUAL_002b2398[35] = {
-	"VAR_EQUAL", "VAR_NOT_EQUAL", "VAR_GREATER", "VAR_GREATER_OR_EQUAL", "VAR_LESS",
-	"VAR_LESS_OR_EQUAL", "CHAR_IN_BOX", "CHAR_IN_SPHERE", "CHAR_IN_CYLINDER", "CAM_IN_BOX",
-	"CAM_IN_SPHERE", "CAM_IN_CYLINDER", "COLLECTED", "CHAR_ON_PLATFORM",
-	"CHAR_JUST_ON_PLATFORM", "PLATFORM_AT_POINT", "PLATFORM_JUST_AT_POINT", "SOMETIMES",
-	"ALWAYS", "NEVER", "BRB_DOWN", "BRB_UP", "BRB_JUST_DOWN", "BRB_JUST_UP", "REPEAT",
-	"PLATFORM_DESTROYED", "AFTER_TIME", "BOMB_DESTROYED", "WATER_AT_LEVEL", "FIRST_HALF",
-	"SECOND_HALF", "START_OF_FIRST_HALF", "START_OF_SECOND_HALF", "ANIM_ENDED", "***",
-};
+/* 0x002b2398  the condition keywords (in the Meta data block; meta_b FUN_001667e0 looks
+   words up in it; "***" ends the table) */
+extern const char *const PTR_s_VAR_EQUAL_002b2398[35];
 
 /* 0x00153080  Meta/puzzles.cpp: add an action to a puzzle */
 int FUN_00153080(int puzzle)

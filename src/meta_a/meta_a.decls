@@ -18,3 +18,7 @@
 00156c40 void FUN_00156c40(int ai, float *target, float damage, int mode, int drop);
 001573d0 uint FUN_001573d0(int ai, int alive_only);
 00157bd0 void FUN_00157bd0(int ai);
+
+# Meta/unplaced_tiles.c
+00159000 void FUN_00159000(int list);
+001592e0 void FUN_001592e0(int board);
