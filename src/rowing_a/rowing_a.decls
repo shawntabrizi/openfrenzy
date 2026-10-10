@@ -27,7 +27,7 @@
 
 # Rowing/CRowing_Game.c (the CRowing_Game object 0x0030f0b0)
 0019d8d0 void FUN_0019d8d0(void *self);
-0019d9b0 void FUN_0019d9b0(void *self, int player, int flag);
+0019d9b0 void FUN_0019d9b0(void *self, int player, int place);
 0019dad0 int FUN_0019dad0(void *self);
 
 # callees whose bodies come later (shapes from the disassembly of their callers)
@@ -131,3 +131,15 @@
 001a6f50 int FUN_001a6f50(void *self, float radius, int skip);
 001a73c0 int FUN_001a73c0(int kind, float radius, float *pos, float *impulse, float bodyRadius, void *hitTest, void *context);
 001afba0 void FUN_001afba0(float *pos, float radius, int r, int g, int b);
+
+# Rowing/CRowing_Player.c
+001a7ac0 int FUN_001a7ac0(void *package);
+001a7bb0 int FUN_001a7bb0(void *self, int *count);
+001a7cf0 void FUN_001a7cf0(void *self, float *pos, float heading);
+001a7e10 void FUN_001a7e10(void *self, float *out);
+001a7e40 int FUN_001a7e40(void *self);
+001a8260 int FUN_001a8260(void *self);
+001a8600 void FUN_001a8600(void *self);
+001a8830 void FUN_001a8830(void *self, int anim, float blend);
+001a75c0 void FUN_001a75c0(void *self);
+001a7540 void FUN_001a7540(void *self);

@@ -161,10 +161,10 @@ void FUN_0019d900(void *self, int top)
 }
 
 /* 0x0019d9b0  Rowing (gap; CRowing_Game.cpp inferred)
-When FLAG is 1: places the two particle systems (+0x30c, +0x310) at the two ends of the
+When PLACE is 1 (PLAYER finished first): places the two particle systems (+0x30c, +0x310) at the two ends of the
 world's finish line (world +0x274, +0x284; the defaults at 0x002b54c4/0x002b54e4 when the
 world has fewer than two) and starts them in PLAYER's character colour. */
-void FUN_0019d9b0(void *self, int player, int flag)
+void FUN_0019d9b0(void *self, int player, int place)
 {
 	CPSHeader *ps0, *ps1;
 	void *world;
@@ -172,7 +172,7 @@ void FUN_0019d9b0(void *self, int player, int flag)
 
 	ps0 = (CPSHeader *)GAME_PTR(0x30c);
 	ps1 = (CPSHeader *)GAME_PTR(0x310);
-	if (flag != 1 || ps0 == NULL || ps1 == NULL)
+	if (place != 1 || ps0 == NULL || ps1 == NULL)
 		return;
 	world = GAME_PTR(0x7c);
 	if ((RA_U8(self, 0) & 0xc) != 0) {
