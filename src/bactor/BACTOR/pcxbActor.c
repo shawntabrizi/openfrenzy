@@ -44,57 +44,57 @@ void bFixupSoftSkin(struct BActor *actor)
 {
 	uint32_t *colour;
 	uint32_t c;
-	char *prim;
+	struct BSkinPrim *prim;
 	int stride;
 	int i;
 	int n;
 	void *vb;
 	struct BPrimGroup *group;
 
-	actor->verts = (char *)actor->verts + (intptr_t)actor;
-	actor->prims = (char *)actor->prims + (intptr_t)actor;
-	actor->groups = (struct BPrimGroup *)((char *)actor->groups + (intptr_t)actor);
+	actor->skin.verts = (char *)actor->skin.verts + (intptr_t)actor;
+	actor->skin.prims = (struct BSkinPrim *)((char *)actor->skin.prims + (intptr_t)actor);
+	actor->skin.groups = (struct BPrimGroup *)((char *)actor->skin.groups + (intptr_t)actor);
 	stride = ba_bdVertexSize(bactor_skinVertexFormats[actor->vertexFormat]);
-	colour = (uint32_t *)((char *)actor->verts + 0x2c);
-	for (i = 0; i < (int)actor->numVerts; i++)
+	colour = (uint32_t *)((char *)actor->skin.verts + 0x2c);
+	for (i = 0; i < (int)actor->skin.numVerts; i++)
 	{
 		c = *colour;
 		*colour = DAT_002bce18[(c >> 16) & 0xff] | DAT_002bc490[(c >> 8) & 0xff] | DAT_002bc898[c >> 24] |
 			DAT_002bd640[c & 0xff];
 		colour = (uint32_t *)((char *)colour + stride);
 	}
-	prim = actor->prims;
+	prim = actor->skin.prims;
 	actor->flags |= 0x10;
-	actor->skinFlags = 1;
-	for (i = 0; i < (int)actor->numGroups; i++)
+	actor->skin.flags = 1;
+	for (i = 0; i < (int)actor->skin.numGroups; i++)
 	{
-		group = &actor->groups[i];
+		group = &actor->skin.groups[i];
 		group->texture0 = ba_bkFindTexture(0, (int)(intptr_t)group->texture0, actor->handle, actor->package);
-		actor->groups[i].texture1 =
-			ba_bkFindTexture(0, (int)(intptr_t)actor->groups[i].texture1, actor->handle, actor->package);
-		if (actor->groups[i].texture1 != NULL)
+		actor->skin.groups[i].texture1 =
+			ba_bkFindTexture(0, (int)(intptr_t)actor->skin.groups[i].texture1, actor->handle, actor->package);
+		if (actor->skin.groups[i].texture1 != NULL)
 			actor->flags &= ~0x10;
-		if (actor->skinFlags & 1)
+		if (actor->skin.flags & 1)
 		{
-			for (n = actor->groups[i].numPrims; n != 0; n--)
+			for (n = actor->skin.groups[i].numPrims; n != 0; n--)
 			{
-				if (((uint8_t)prim[1] & 3) != 0)
+				if ((prim->flags & 3) != 0)
 				{
-					actor->skinFlags &= ~1;
+					actor->skin.flags &= ~1;
 					break;
 				}
-				prim += 0x38;
+				prim++;
 			}
 		}
 	}
-	if (ba_bdCreateVertexBuffer(&vb, actor->numVerts, bactor_skinVertexFormats[actor->vertexFormat], 0, 1) == 0)
+	if (ba_bdCreateVertexBuffer(&vb, actor->skin.numVerts, bactor_skinVertexFormats[actor->vertexFormat], 0, 1) == 0)
 	{
 		ba_bkPrintf("bFixupSoftSkin: *** ERROR  Could not create vertex buffer for soft skin vertices ***\n");
 		return;
 	}
-	memcpy(ba_bdLockVertexBuffer(vb, 4), actor->verts, (unsigned int)actor->numVerts * stride);
+	memcpy(ba_bdLockVertexBuffer(vb, 4), actor->skin.verts, (unsigned int)actor->skin.numVerts * stride);
 	ba_bdUnlockVertexBuffer(vb);
-	actor->verts = vb;
+	actor->skin.verts = vb;
 }
 
 /* 0x00038830  BACTOR/pcxbActor.cpp (file inferred)
@@ -461,8 +461,8 @@ void bUpdateNodeMatrices(struct BActorNode *first, const float *parentMatrix, co
 /* 0x000395b0  BACTOR/pcxbActor.cpp (file inferred) */
 void bReleaseSoftSkin(struct BActor *actor)
 {
-	if (actor->verts != NULL)
-		ba_bdReleaseVertexBuffer(actor->verts);
+	if (actor->skin.verts != NULL)
+		ba_bdReleaseVertexBuffer(actor->skin.verts);
 }
 
 /* sets the texture address modes of stage 0 from a primitive's wrap flags,

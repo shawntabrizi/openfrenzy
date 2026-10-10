@@ -194,20 +194,40 @@ struct BActorSubObject
 };
 OF_ASSERT_SIZE(struct BActorSubObject, 0x20);
 
+/* a soft-skinned actor's mesh (actor + 0x20): one vertex buffer for the
+whole actor, transformed by the bone matrices in the vertex shader */
+struct BSoftSkin
+{
+	uint16_t numVerts; /* 0x00 */
+	uint16_t numGroups; /* 0x02 */
+	void *verts; /* 0x04 vertex data in the file, then its vertex buffer */
+	struct BPrimGroup *groups; /* 0x08 */
+	struct BSkinPrim *prims; /* 0x0c */
+	uint8_t numWeights; /* 0x10 bone weights per vertex (0: not skinned) */
+	uint8_t pad11[3];
+	uint32_t flags; /* 0x14 bit 0: no wrapped primitives */
+};
+OF_ASSERT_SIZE(struct BSoftSkin, 0x18);
+
+/* a soft-skin primitive (0x38 bytes) */
+struct BSkinPrim
+{
+	uint8_t type; /* 0x00 D3DPRIMITIVETYPE */
+	uint8_t flags; /* 0x01 bit 0: wrap U, 1: wrap V, 2: skipped by some passes */
+	uint16_t numVerts; /* 0x02 */
+	uint16_t unk04;
+	uint16_t numPrims; /* 0x06 */
+	uint8_t unk08[0x30];
+};
+OF_ASSERT_SIZE(struct BSkinPrim, 0x38);
+
 struct BActor
 {
 	uint32_t handle; /* 0x00 package handle; bit 31: owned by the package */
 	uint16_t package; /* 0x04 */
 	uint16_t pad06;
 	uint8_t unk08[0x18];
-	uint16_t numVerts; /* 0x20 soft skin vertices */
-	uint16_t numGroups; /* 0x22 soft skin groups */
-	void *verts; /* 0x24 soft skin vertex data, then its vertex buffer */
-	struct BPrimGroup *groups; /* 0x28 */
-	void *prims; /* 0x2c 0x38-byte primitives */
-	uint8_t lit; /* 0x30 */
-	uint8_t pad31[3];
-	uint32_t skinFlags; /* 0x34 bit 0: no wrapped primitives */
+	struct BSoftSkin skin; /* 0x20 */
 	uint8_t unk38[8];
 	struct BActorNodeDef *root; /* 0x40 */
 	uint32_t flags; /* 0x44 bit 0: soft skinned, bit 4: no texture 1 */
@@ -403,12 +423,13 @@ OF_ASSERT_SIZE(struct BLight, 0x70);
 
 /* ---------- cameras */
 
-#define BCAM_POS 0 /* 4 doubles: x, y, z, w */
-#define BCAM_POSPTR 1 /* a float pointer and a double */
-#define BCAM_NODE 2 /* an instance (or 0), 4 doubles */
-#define BCAM_ANGLES 3 /* 4 doubles */
-#define BCAM_NODEPTR 4 /* 2 pointers?, 2 doubles (see FUN_0003bf20) */
-#define BCAM_CALLBACK 5 /* a function pointer and a value */
+/* camera point types (the variadic arguments each takes: see bReadCameraPoint) */
+#define BCAM_POS 0 /* position and extra value: 4 doubles */
+#define BCAM_POSPTR 1 /* a float[3] pointer and the extra value (a double) */
+#define BCAM_NODE 2 /* a matrix (instance) pointer, a node pointer (or NULL), offset x y z and extra (4 doubles) */
+#define BCAM_QUAT 3 /* target only: a rotation quaternion (4 doubles) */
+#define BCAM_EULER 4 /* target only: 3 angles (doubles) and a rotation order (int) */
+#define BCAM_CALLBACK 5 /* a function (out, extra, value) and a value */
 
 struct BCameraPoint
 {
@@ -447,7 +468,7 @@ struct BExtraSystem
 	int itemSize; /* 0x14 */
 	int numItems; /* 0x18 */
 	int nextFree; /* 0x1c */
-	BExtraCallback initItem; /* 0x20 (system, item, va_list) */
+	BExtraCallback initItem; /* 0x20 (system, item, args): args is a va_list of baAddExtraItem's arguments */
 	BExtraCallback update; /* 0x24 (system, numItems, items, arg) */
 	BExtraCallback deleteItem; /* 0x28 (system, item): 0 = keep */
 	BExtraCallback draw; /* 0x2c (system, numItems, items, arg) */
@@ -556,8 +577,10 @@ struct BSetCell
 	int numPrims; /* 0x00 */
 	int unk04;
 	struct BSetPrim *prims; /* 0x08 */
-	int firstVertex[3]; /* 0x0c opaque, translucent, additive */
-	int numPrimsPass[3]; /* 0x10.. see FUN_0003e250 */
+	int firstVertex0; /* 0x0c opaque pass */
+	int numPrimsPass[3]; /* 0x10 opaque, translucent, additive */
+	int firstVertex1; /* 0x1c translucent pass */
+	int firstVertex2; /* 0x20 additive pass */
 	uint8_t unk24[0x1c];
 };
 OF_ASSERT_SIZE(struct BSetCell, 0x40);
@@ -586,6 +609,9 @@ extern struct BCamera *DAT_002bc320;
 
 /* 0x002bc328: extra system list head (next at 0x08, prev at 0x0c) */
 extern struct BExtraSystem DAT_002bc328;
+
+/* 0x00284b1c: the FVF of each actor vertex format (pcxbActor.c) */
+extern const uint32_t bactor_vertexFormats[4];
 
 /* ---------- functions of this module (see bactor.decls for the prototypes) */
 

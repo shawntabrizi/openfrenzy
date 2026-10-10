@@ -80,26 +80,96 @@
 0003a220 void bDrawNodes(struct BActorNode *first, struct BActorInstance *inst, int passes);
 
 # ---------- BACTOR/pcxbShaderSelector.c
+0003a280 void bFragCelSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a320 void bFragFlatBegin(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a340 void bFragFlatSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a3e0 void bFragFlatEnd(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a400 void bFragFlatAlphaBegin(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a420 void bFragFlatAlphaEnd(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a440 void bFragColourBegin(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a490 void bFragColourEnd(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a4d0 void bFragColourSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a530 void bFragBlackSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a570 void bFragEnvMapSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a5e0 void bFragAmbientSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a640 void bFragPointLightSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a730 void bFragSpotLightSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a870 void bFragFogSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a8f0 void bFragDiffuseSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003a940 int bShaderBuildAdd(struct BShaderBuild *build, struct BShaderMode *mode, struct BShaderFragment *fragment);
+0003a9c0 void bShaderFragmentInit(struct BShaderFragment *self, int numParams, int numConstants, const char *code);
+0003aa10 int bShaderAppendFragment(struct BShaderFragment *fragment, struct BShaderMode *mode, char *text, ...);
+0003ab60 int bShaderSetConstants(struct BActorInstance *inst, int pass, struct BShaderMode *mode);
+0003ac00 int bShaderGetKey(struct BShaderMode *key, struct BActorInstance *inst, int pass);
 0003ace0 void bShaderEndPass(struct BActorInstance *inst, int pass);
+0003ad40 void bShaderGetLightingKey(int *key);
+0003ada0 struct BLightingState *bShaderNewLightingState(const int *key);
+0003ae20 struct BShaderMode *baGenerateShader(struct BLightingState *state, struct BShaderMode *key, struct BActorInstance *inst, int pass);
+0003b310 int bShaderFragmentNumConstants(struct BShaderFragment *self);
+0003b320 void bFragCelBegin(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003b3d0 void bFragCelEnd(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003b440 void bFragFlatAlphaSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003b570 void bFragEnvMapBegin(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003b5b0 void bFragEnvMapEnd(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003b5d0 void bFragDirLightSetConstants(struct BShaderFragment *self, struct BShaderContext *ctx);
+0003b700 void baInitShaderSelector(void);
+0003bc90 void baShutdownShaderSelector(void);
+0003bcc0 int bShaderUpdateLightingState(void);
 0003bd60 int bShaderSelect(struct BActorInstance *inst, int pass, struct BMesh *mesh);
+
+# ---------- BACTOR/xbShaderSelector.c
+0003dd50 void bInitShaderCache(void);
+0003de20 void bShutdownShaderCache(void);
+0003deb0 void baFlushShaderCache(void);
+0003df30 void bAssembleShader(struct BShaderMode *mode, struct BActorInstance *inst);
 
 # ---------- BACTOR/camera.c
 0003bef0 int baInitCameras(void);
+0003bf10 struct BCamera *baSetCurrentCamera(struct BCamera *camera);
+0003bf20 void bReadCameraPoint(struct BCameraPoint *point, void *args);
+0003c000 struct BCamera *baCreateCamera(struct BCamera *camera, uint32_t flags, ...);
+0003c0b0 void baSetCameraTarget(struct BCamera *camera, ...);
+0003c0d0 void bGetCameraPoint(struct BCameraPoint *point, float *out, float *extra);
+0003c1c0 int baUpdateCamera(void);
+0003c330 void baDeleteCamera(struct BCamera *camera);
 0003c390 void baDeleteAllCameras(void);
 
 # ---------- BACTOR/extras.c
 0003c3c0 int baInitExtras(void);
+0003c3e0 void baClearExtraSystem(struct BExtraSystem *system);
+0003c470 void bUpdateExtraMatrix(struct BExtraSystem *system);
+0003c620 void baUpdateExtras(struct BExtraSystem *system, void *arg);
+0003c690 void baDrawExtras(struct BExtraSystem *system, void *arg);
+0003c710 int baDeleteExtraItem(struct BExtraSystem *system, int index);
+0003c780 struct BExtraSystem *baCreateExtraSystem(const char *name, int (*initItem)(), int (*update)(), int (*deleteItem)(), int (*draw)(), int (*systemCallback)(), int itemSize, int maxItems, uint32_t flags, int userDataSize);
+0003c8b0 void baDeleteExtraSystem(struct BExtraSystem *system);
+0003c920 void *baAddExtraItem(struct BExtraSystem *system, ...);
 0003ca10 void baDeleteAllExtras(void);
 
 # ---------- BACTOR/unplaced.c
 0003ca40 int baInitSets(void);
+0003ca50 struct BSet *baLoadSet(struct BSet *item, void *package);
+0003ca90 void baFreeSet(struct BSet *set);
+0003cac0 void baDrawSet(struct BSet *set, int pass);
 0003cae0 void bGetKey3(float *out, struct BKeyTrack3 *track, int time);
 0003cca0 void bGetKey4(float *out, struct BKeyTrack4 *track, int time);
+0003ced0 int bSetSkinConstants(struct BActorInstance *inst);
 0003cfa0 void bDrawSoftSkin(struct BActorInstance *inst, int passes);
 0003d0d0 void bReleaseMesh(struct BActorNodeDef *def);
+0003d0e0 void bDrawSkinUntextured(struct BSoftSkin *skin, const int *passInfo);
+0003d150 void bDrawSkinTex0(struct BSoftSkin *skin, const int *passInfo);
+0003d440 void bDrawSkinTex01(struct BSoftSkin *skin, const int *passInfo);
+0003d580 void bDrawSkinUntexturedSkip(struct BSoftSkin *skin, const int *passInfo);
+0003d610 void bDrawSkinTex0Skip(struct BSoftSkin *skin, const int *passInfo);
+0003d780 void bDrawSkinTex01Skip(struct BSoftSkin *skin, const int *passInfo);
 0003d8f0 void bFixupMesh(char *base, struct BActorNodeDef *def, struct BActor *actor);
 0003da90 void bLightAssignIndex(struct BLight *light);
 0003db10 void bLightUpdateD3D(struct BLight *light);
 0003dca0 void bLightEnableD3D(struct BLight *light);
 0003dcc0 void bLightColourChanged(struct BLight *light);
 0003dcf0 void bSetAmbientD3D(void);
+
+# ---------- BACTOR/pcxbSet.c
+0003e0b0 void bSetInit(struct BSet *set);
+0003e220 void bSetFree(struct BSet *set);
+0003e250 void bSetDraw(struct BSet *set, int pass);
