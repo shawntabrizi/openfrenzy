@@ -182,3 +182,74 @@
 0004a0f0 void biUpdateFeedback(void);
 0004a220 int biSetMotor(int pad, int what, int speed, int other);
 0004a290 void biStopMotors(int pad);
+
+# ---- package.cpp
+0004fb00 struct bkPackage *bkOpenPackage(const char *name);
+0004fd50 struct bkPackage *bkLoadPackage(struct bkPackage *parent, const char *name, void *buffer);
+0004fe80 void bkClosePackage(struct bkPackage *package);
+0004fef0 int bkGetPackageSize(const char *name, uint flags);
+0004db20 struct bkPackage *bkOpenPackageThunk(const char *name);
+0004db30 struct bkPackage *bkLoadPackageThunk(struct bkPackage *parent, const char *name, void *buffer);
+0004db40 void bkClosePackageThunk(struct bkPackage *package);
+
+# ---- wide strings
+0004a330 void bkStringToWide(ushort *wide, const char *string);
+0004a360 ushort *bkWideFormatArgument(ushort *out, int type, int width, int precision, int hasPrecision, byte padChar, ushort exponentChar, char conversion, __builtin_va_list *arguments);
+0004ae80 int bkWideSprintf(ushort *out, const ushort *format, ...);
+0004b110 int bkWideStrlen(const ushort *string);
+0004b130 void bkWideStrcpy(ushort *destination, const ushort *source);
+
+# ---- maths (matrices, vectors, quaternions, trees)
+0004ff30 void bmMatrixMultiply(float *out, const float *a, const float *b);
+00050150 void bmMatrixMultiplyCopy(float *out, const float *a, const float *b);
+00050250 void bmMatrixTranslation(float *m, float x, float y, float z);
+000502a0 void bmMatrixScaling(float *m, float x, float y, float z);
+000502f0 int bmMatrixInverseAffine(float *out, const float *m);
+00050530 void bmTransformVector4InPlace(const float *m, float *v);
+000505c0 void bmTransformVector4(float *out, const float *m, const float *v);
+00050650 void bmMatrixTranspose(float *out, const float *m);
+000506c0 void bmMatrixScaleTranslate(float *out, float x, float y, float z, const float *m, float sx, float sy, float sz);
+00050750 void bmMatrixRotationX(float *m, float angle);
+000507a0 void bmMatrixRotationY(float *m, float angle);
+000507f0 void bmMatrixRotationZ(float *m, float angle);
+00050840 void bmMatrixRotationXY(float *m, float x, float y);
+000508c0 void bmMatrixRotationYX(float *m, float x, float y);
+00050940 void bmMatrixRotationXZ(float *m, float x, float z);
+00050a20 void bmMatrixRotationXYZ(float *m, float x, float y, float z);
+00050af0 void bmMatrixRotationXZY(float *m, float x, float y, float z);
+00050ba0 void bmMatrixRotationYXZ(float *m, float x, float y, float z);
+00050c70 void bmMatrixRotationYZX(float *m, float x, float y, float z);
+00050d20 void bmMatrixRotationZXY(float *m, float x, float y, float z);
+00050dd0 void bmMatrixRotationZYX(float *m, float x, float y, float z);
+00050e80 void bmMatrixLookAt(float *out, const float *from, const float *to, float roll);
+00050f70 void bmSetRandomSeed(uint seed);
+00050f80 float bmFastSqrt(float value);
+00050fa0 void bmVectorLerp(float *out, const float *a, const float *b, float t);
+00050ff0 void bmVectorBlend(float *out, const float *a, float s, const float *b, float t);
+00051040 void bmTriangleNormal(float *out, const float *a, const float *b, const float *c);
+00051110 void bmVectorRotateX(float *out, const float *v, float angle);
+00051170 void bmVectorRotateY(float *out, const float *v, float angle);
+000511d0 void bmVectorRotateZ(float *out, const float *v, float angle);
+00051220 void bmVectorRotateXY(float *out, const float *v, float a, float b);
+000512a0 void bmVectorRotateZY(float *out, const float *v, float a, float b);
+00051310 void bmVectorRotateXYZ(float *out, const float *v, float a, float b, float c);
+000513b0 void bmVectorRotateZXY(float *out, const float *v, float a, float b, float c);
+00051470 void bmNothing1(void);
+000514a0 void bmVectorNormalise(float *out, const float *v);
+00051500 float bmVectorDistance(const float *a, const float *b);
+00051540 void bmNothing2(void);
+00051570 void bmVectorSetLength(float *out, const float *v, float length);
+000515c0 void bmQuaternionToMatrix(float *m, const float *q);
+00051700 void bmMatrixToQuaternion(float *q, const float *m);
+00051860 void bmQuaternionSlerp(float *out, const float *a, const float *b, float t);
+00051a80 void bmQuaternionSlerpLong(float *out, const float *a, const float *b, float t);
+00051ca0 void bmQuaternionMultiply(float *out, const float *a, const float *b);
+00051d30 void bmQuaternionToAxisAngle(float *out, const float *q);
+00051df0 void bmAxisAngleToQuaternion(float *q, const float *axisAngle);
+00051e30 void bmQuaternionRotationX(float *q, float angle);
+00051e60 void bmQuaternionRotationY(float *q, float angle);
+00051e90 void bmQuaternionRotationZ(float *q, float angle);
+00051ec0 void bmQuaternionFromDirection(float *q, const float *direction, float roll);
+00051f80 int bmCountTreeNodes(int *node);
+00051fb0 void bmFreeTreeNode(int *node);
+00051fe0 void bmRelocateTree(int base, int *node);

@@ -546,7 +546,7 @@ extern XINPUT_FEEDBACK DAT_002cc3d8[BI_MAX_PADS];
 /* maths */
 extern uint DAT_00285630;                /* 0x00285630 random seed (rand LCG) */
 #define bkRandomSeed DAT_00285630
-extern float DAT_002855f0[16];           /* 0x002855f0 identity matrix */
+extern float DAT_002855f0[16];           /* 0x002855f0 identity matrix (defined by bdisplay) */
 #define bkIdentityMatrix DAT_002855f0
 
 /* ======================================================================== functions not in
