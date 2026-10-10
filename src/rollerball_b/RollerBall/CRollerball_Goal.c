@@ -72,7 +72,7 @@ void CRollerballGoalSystem_StartFlare(void *self, float *pos, int r, int g, int 
 		}
 	}
 	/* rollerball_a 0x00191110: the flare's start */
-	RBB_FN(FUN_00191110, void, (void *, float *, int, int, int))(flare, pos, r, g, b);
+	FUN_00191110(flare, pos, r, g, b);
 }
 
 /* 0x001916e0  RollerBall/CRollerball_Goal.cpp (inferred)
@@ -117,7 +117,7 @@ void CRollerballGoal_UpdateActivating(void *self)
 	if (fade > 0x7fff)
 		RBB_S(self, RBG_STATE) = RBG_STATE_LIT;
 	/* rollerball_a 0x00191420: the goal's light colour */
-	RBB_FN(FUN_00191420, void, (void *))(self);
+	FUN_00191420(self);
 }
 
 /* 0x001917a0  RollerBall/CRollerball_Goal.cpp (inferred)
@@ -132,7 +132,7 @@ void CRollerballGoal_UpdateDeactivating(void *self)
 		RBB_B(self, RBG_ANIM0_ON) = 0;
 		return;
 	}
-	RBB_FN(FUN_00191420, void, (void *))(self);
+	FUN_00191420(self);
 }
 
 /* 0x001917c0  RollerBall/CRollerball_Goal.cpp (inferred)
@@ -240,9 +240,9 @@ int CRollerballGoalSystem_Init(void *self, struct bkPackage *package)
 			return 0;
 	}
 	for (i = 0; i < 3; i++)   /* rollerball_a 0x00191060: a flare's init */
-		RBB_FN(FUN_00191060, int, (void *))((char *)self + RBGS_FLARES + i * RBGS_FLARE_SIZE);
+		FUN_00191060((char *)self + RBGS_FLARES + i * RBGS_FLARE_SIZE);
 	for (i = 0; i < 8; i++)   /* rollerball_a 0x001911e0: a burst's init */
-		RBB_FN(FUN_001911e0, int, (void *))((char *)self + RBGS_BURSTS + i * RBGS_BURST_SIZE);
+		FUN_001911e0((char *)self + RBGS_BURSTS + i * RBGS_BURST_SIZE);
 	CRollerballGoalSystem_ResetGoals(self);
 	return 1;
 }
@@ -272,7 +272,7 @@ void CRollerballGoal_Update(void *self, float dt)
 			CRollerballGoal_UpdateDeactivating(self);
 			break;
 		case RBG_STATE_LIT:
-			RBB_FN(FUN_00191420, void, (void *))(self);
+			FUN_00191420(self);
 			break;
 		case RBG_STATE_SCORED:
 			CRollerballGoal_Score(self);
@@ -308,7 +308,7 @@ void CRollerballGoalSystem_Update(void *self, float dt)
 		return;
 
 	for (i = 0; i < 3; i++)   /* rollerball_a 0x00190bb0: a flare's update */
-		RBB_FN(FUN_00190bb0, void, (void *, float))((char *)self + RBGS_FLARES + i * RBGS_FLARE_SIZE, dt);
+		FUN_00190bb0((char *)self + RBGS_FLARES + i * RBGS_FLARE_SIZE, dt);
 	for (i = 0; i < 8; i++) {
 		char *slot = (char *)self + RBGS_BURSTS + i * RBGS_BURST_SIZE;
 		if (RBB_C(slot, 0x14) != 0) {

@@ -371,7 +371,7 @@ void CRollerballPlayer_Control(void *self, float dt)
 		fwd[1] = 0.0f;
 		fwd[2] = 1.0f;
 		fwd[3] = 1.0f;
-		a = stick + RBB_F(self, RBE_HEADING);
+		a = (float)(atan2((double)sx, (double)sy) + (double)RBB_F(self, RBE_HEADING));
 		bmVectorRotateY(dir, fwd, a);
 		bmVectorNormalise(v, dir);
 		cmb_vec3_scale(v, v, RBB_C(self, RBPL_AIRBORNE) == 0 ? RBB_F(self, RBPL_ROLL_FORCE)
@@ -473,7 +473,7 @@ void CRollerballPlayer_ProcessEvents(void *self, float dt)
 			cmb_vec3_scale(at, normal, RBB_F(self, RBE_RADIUS) * 0.949999988f);
 			cmb_vec3_add(at, at, RBB_V(self, RBE_POS));
 			if (speed * 0.0334448181f != 0.0f)   /* rollerball_a 0x0018fff0: spot effects */
-				RBB_FN(FUN_0018fff0, void, (void *, float *, float *, float))(rbb_Game + 0x2060, at,
+				FUN_0018fff0(rbb_Game + 0x2060, at,
 					normal, 0.1f);
 		}
 		if (20.0f <= speed && (float)Core_Rand() * 3.05185094e-05f < 0.25f)

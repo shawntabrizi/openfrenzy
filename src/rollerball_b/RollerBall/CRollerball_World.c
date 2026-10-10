@@ -489,13 +489,13 @@ int FUN_00195930(int node, void *self)
 			return 2;
 	} else if (strstr(name, "goalbank") != NULL) {
 		/* rollerball_a 0x00191530: the goal system's goal <n> */
-		RBB_FN(FUN_00191530, void, (void *, int, float *, float *))(rbb_GoalSystem, atol(name + 8) - 1,
+		FUN_00191530(rbb_GoalSystem, atol(name + 8) - 1,
 			prs + 0, prs + 4);
 		RBB_B(self, RBW_NEW_OBJECT) = 0;
 		return 0;
 	} else if (strstr(name, "respawn") != NULL) {
 		/* rollerball_a 0x00190910: the respawn system (game + 0x1c50) point <n> */
-		RBB_FN(FUN_00190910, void, (void *, int, float *, float *))(rbb_Game + 0x1c50, atol(name + 7) - 1,
+		FUN_00190910(rbb_Game + 0x1c50, atol(name + 7) - 1,
 			prs + 0, prs + 4);
 		RBB_B(self, RBW_NEW_OBJECT) = 0;
 		return 0;

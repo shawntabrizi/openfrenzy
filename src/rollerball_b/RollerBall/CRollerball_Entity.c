@@ -39,7 +39,7 @@ void *CRollerballEntity_Ctor(void *self)
 	CRollerBallEntityEventSystem_Ctor(self);
 	*(const void *const **)self = rbb_vtable_0027482c;
 	/* rollerball_a 0x0018ec10: the physics body's constructor */
-	RBB_FN(FUN_0018ec10, void, (void *))(RBB_ADDR(self, RBE_BODY));
+	FUN_0018ec10(RBB_ADDR(self, RBE_BODY));
 	return self;
 }
 
@@ -48,7 +48,7 @@ CRollerball_Entity destructor. */
 void CRollerballEntity_Dtor(void *self)
 {
 	*(const void *const **)self = rbb_vtable_0027482c;
-	RBB_FN(FUN_0018ec20, void, (void *))(RBB_ADDR(self, RBE_BODY));
+	FUN_0018ec20(RBB_ADDR(self, RBE_BODY));
 	CRollerBallEntityEventSystem_Dtor(self);
 }
 
@@ -156,22 +156,25 @@ void CRollerballEntitySystem_Draw(void *self)
 
 /* 0x00192400  RollerBall/CRollerball_Entity.cpp (inferred)
 Entities of players without a human get the computer flag (+0x19). The list order is
-player 0, 1, 2, 3. */
-void CRollerballEntitySystem_UpdateComputerFlags(void)
+player 0, 1, 2, 3. (A method of the entity system; the x86 code does not use ECX.) */
+void CRollerballEntitySystem_UpdateComputerFlags(void *self)
 {
 	char *e = rbb_FirstPlayer;
 	int i = 0;
 
+	(void)self;
 	for (; e != NULL; e = RBB_P(e, RBE_NEXT), i++)
 		RBB_B(e, RBE_COMPUTER) = rbb_PlayerHuman(i) == 0;
 }
 
 /* 0x00192430  RollerBall/CRollerball_Entity.cpp (inferred)
-Set the animation set `mode` of every player (0x001999e0). */
-void CRollerballEntitySystem_SetAnimMode(int mode)
+Set the animation set `mode` of every player (0x001999e0). (A method of the entity
+system; the x86 code does not use ECX.) */
+void CRollerballEntitySystem_SetAnimMode(void *self, int mode)
 {
 	char *e;
 
+	(void)self;
 	for (e = rbb_FirstPlayer; e != NULL; e = RBB_P(e, RBE_NEXT))
 		CRollerballPlayer_SetAnimMode(e, mode);
 }

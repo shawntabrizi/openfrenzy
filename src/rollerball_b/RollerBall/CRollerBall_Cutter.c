@@ -217,7 +217,7 @@ int CRollerBallCutter_Init(void *self, float *centre, int segments)
 	up[2] = 0.0f;
 	Obj_SetVector48(RBB_P(self, RBCU_SPARKS), up);
 	/* rollerball_a 0x0018e010: add to the game's particle system list */
-	RBB_FN(FUN_0018e010, void, (void *, void *))(rbb_Game + 0x2ad8, RBB_P(self, RBCU_SPARKS));
+	FUN_0018e010(rbb_Game + 0x2ad8, RBB_P(self, RBCU_SPARKS));
 
 	RBB_P(self, RBCU_BEAM_MEM) = RBB_NEW(segments * 0xc, rbb_CutterFile, 0x67);
 	RBB_I(self, RBCU_BEAM_N) = segments;

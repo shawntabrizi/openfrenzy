@@ -1,28 +1,30 @@
 /*
 ROLLERBALL_B.H
 
-Module rollerball_b: the "RollerBall" minigame (sumo balls on floating platforms; level
+Module rollerball_b: the "RollerBall" minigame (balls on floating platforms; level
 names "base", "sumo", "race2", "race", "drop"), part 2 of 2: 0x001915c0-0x0019d150.
-Original files (C:\BlitzParty\Game\Src\RollerBall\), in address order:
+Original files (C:\BlitzParty\Game\Src\RollerBall\), in address order, and their
+files here (RollerBall/):
 
-  CRollerball_Goal.cpp (rest)   0x001915c0-0x00192160  the goal system (rollerball_a has
-                                                       the start of the file; inferred)
-  CRollerball_Entity.cpp        0x00192170-0x00192c20  the player-ball entities and their
-                                                       system (tag 0x001927e0)
-  (camera; file not known)      0x00192c40-0x001953e0  the game camera (vtable 0x00274884)
-  CRollerball_World.cpp         0x00195400-0x001966a0  the level: LOM file, platforms
-                                                       (file name from the heap tag at
-                                                       0x002748cc; 2 functions missing
-                                                       from the function table)
-  CRollerball_Shadow.cpp        0x00196710-0x00196aa0  ball shadows (tag 0x001967f0)
-  CRollerBall_EntityEvent.cpp   0x00196ad0-0x00196fa0  entity event queues (tag 0x00196ad0)
-  CRollerBall_Water.cpp         0x00196fc0-0x00197580  the goo water plane (tag 0x00196fc0)
-  CRollerBall_Cutter.cpp        0x001975b0-0x00198370  the cutters (tag 0x001975b0)
-  (game mode; file not known)   0x00198370-0x00198710  CGameMode_RollerBall
-  CRollerball_ASEImport.cpp     0x00198730-0x001989e0  ASE shape import (tags 0x00198730..)
-  CRollerBall_Player.cpp        0x00198a00-0x0019a4e0  the player (tag 0x00199ba0)
-  (AI and shaders; inferred)    0x0019a4e0-0x0019d130  player controllers (AI states)
-  CRollerBall_Particle.cpp      0x0019d150             particles (tag)
+  CRollerball_Goal.cpp (rest)   0x001915c0-0x00192160  CRollerball_Goal.c (goal system;
+                                                       rollerball_a has the file's start)
+  CRollerball_Entity.cpp        0x00192170-0x00192c20  CRollerball_Entity.c (ball entity,
+                                                       entity system; tag 0x001927e0)
+  (not known)                   0x00192c40-0x00194970  unplaced_camera.c (game camera)
+  CRollerball_World.cpp         0x00194a40-0x001966a0  CRollerball_World.c (level, LOM)
+  CRollerball_Shadow.cpp        0x00196710-0x00196a00  CRollerball_Shadow.c
+  CRollerBall_EntityEvent.cpp   0x00196a60-0x00196d90  CRollerBall_EntityEvent.c
+  CRollerBall_Water.cpp         0x00196de0-0x00197150  CRollerBall_Water.c (goo pool)
+  CRollerBall_Cutter.cpp        0x001973c0-0x00197fa0  CRollerBall_Cutter.c (drop cutter)
+  (not known)                   0x001980f0-0x00198590  unplaced_path.c (race paths)
+  (not known)                   0x00198600-0x001986c0  unplaced_gamemode.c (game mode)
+  CRollerball_ASEImport.cpp     0x001986e0-0x001989e0  CRollerball_ASEImport.c
+  CRollerBall_Player.cpp        0x00198a00-0x00199f30  CRollerBall_Player.c
+  (not known)                   0x0019a4e0-0x0019ce50  unplaced_ai.c (shader fragment,
+                                                       player controllers)
+  CRollerBall_Particle.cpp      0x0019ce50-0x0019d150  CRollerBall_Particle.c
+
+Functions missing from the function table are declared in rollerball_b_missing.h.
 
 Owner: rollerball_b. Other modules may include this header; only rollerball_b edits it.
 
@@ -31,8 +33,10 @@ Conventions (docs/ARCHITECTURE.md):
   and the original byte offset; well understood fields have named accessor macros below.
 - Virtual calls go through RBB_VFN(obj, byte offset, function type), with the object as the
   first argument (the x86 code passed it in ECX).
-- Functions of rollerball_a are called through RBB_FN(FUN_<addr>, ret, (args)): their
-  prototypes are still Ghidra's guesses and may change; the cast fixes the call shape here.
+- Functions of other modules are called by their declared prototypes (of_decls.h), so a
+  changed prototype fails to compile here instead of passing arguments wrongly. The
+  rollerball_a functions that ignore ECX (0x0018e540, 0x0018e5d0, ...) are called without
+  `this`, as rollerball_a declares them.
 - The game object (CRollerball_Game, rollerball_a) is reached through the pointer
   DAT_0030ef04 (rbb_Game).
 - The initialised RollerBall data block (0x002b4b8c-0x002b5474, rollerball_a's of_rb_data)
@@ -66,9 +70,6 @@ Conventions (docs/ARCHITECTURE.md):
 
 /* virtual function at byte offset `off` of the object's vtable */
 #define RBB_VFN(obj, off, type) ((type)((*(void ***)(obj))[(off) / 4]))
-
-/* call function `fn` with an explicit shape */
-#define RBB_FN(fn, ret, args) ((ret(*) args)(fn))
 
 /* bKernel heap: operator new and delete */
 #define RBB_NEW(size, file, line) bkHeapAlloc((uint)(size), (file), (line), 0x1001)
@@ -149,20 +150,20 @@ extern int DAT_00293928;      /* classlib_ui: sample volume */
 functions sit in other modules). Layout: +0x08 running, +0x09 paused, +0x0a stopped,
 +0x28 duration (s), +0x30 remaining time, +0x34 progress 0..1. Names as in rollerball_a
 (CRollerBallTimer_*). */
-#define rbb_TimerInit(t) RBB_FN(FUN_000ec310, int, (void *))(t)
-#define rbb_TimerCtor(t) RBB_FN(FUN_0018e8c0, void, (void *))(t)
-#define rbb_TimerDtor(t) RBB_FN(FUN_0018e8d0, void, (void *))(t)
-#define rbb_TimerUpdate(t) RBB_FN(FUN_0018e8e0, void, (void *))(t)
-#define rbb_TimerSetDuration(t, s) RBB_FN(FUN_0018ea10, void, (void *, float))((t), (s))
-#define rbb_TimerStart(t) RBB_FN(FUN_0018ea30, void, (void *))(t)
-#define rbb_TimerRemaining(t) RBB_FN(FUN_0018ea50, float, (void *))(t)
-#define rbb_TimerReset(t) RBB_FN(FUN_0018ea70, void, (void *))(t)
-#define rbb_TimerProgress(t) RBB_FN(FUN_000965f0, float, (void *))(t)
+#define rbb_TimerInit(t) FUN_000ec310((int)(intptr_t)(t))   /* demolition_a declares an int */
+#define rbb_TimerCtor(t) FUN_0018e8c0(t)
+#define rbb_TimerDtor(t) FUN_0018e8d0(t)
+#define rbb_TimerUpdate(t) FUN_0018e8e0(t)
+#define rbb_TimerSetDuration(t, s) FUN_0018ea10((t), (s))
+#define rbb_TimerStart(t) FUN_0018ea30(t)
+#define rbb_TimerRemaining(t) FUN_0018ea50(t)
+#define rbb_TimerReset(t) FUN_0018ea70(t)
+#define rbb_TimerProgress(t) FUN_000965f0((struct BCarTimer *)(t))
 
 /* the game's sound effects (game + 0x26fc; rollerball_a 0x0018e450 CRollerBallSfx_Play:
 bsPlaySample(sample, volume, a, flags, pos)); ids follow the name table at 0x002b4fe0 */
 #define rbb_PlaySound(id, vol, a, flags, pos) \
-	RBB_FN(FUN_0018e450, int, (void *, int, int, int, unsigned int, float *))( \
+	FUN_0018e450( \
 		(char *)rbb_Game + 0x26fc, (id), (vol), (a), (flags), (pos))
 enum {
 	RBB_SND_BALL2BALL1 = 0, RBB_SND_BALL2BALL2, RBB_SND_BALL2FLOOR1, RBB_SND_BALL2FLOOR2,

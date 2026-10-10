@@ -26,8 +26,8 @@
 00192350 void *CRollerballEntitySystem_GetFirst(void *self);
 00192360 void CRollerballEntitySystem_Update(void *self, float dt);
 00192390 void CRollerballEntitySystem_Draw(void *self);
-00192400 void CRollerballEntitySystem_UpdateComputerFlags(void);
-00192430 void CRollerballEntitySystem_SetAnimMode(int mode);
+00192400 void CRollerballEntitySystem_UpdateComputerFlags(void *self);
+00192430 void CRollerballEntitySystem_SetAnimMode(void *self, int mode);
 00192460 void *CRollerballEntity_DeletingDtor(void *self, unsigned int flags);
 00192480 void CRollerballEntity_SetPosition(void *self, float *pos);
 001924c0 void CRollerballEntity_ComputeForces(void *self);

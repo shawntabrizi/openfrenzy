@@ -19,7 +19,7 @@ Studio ASE text file, for the race paths of rollerball_a.
 static const char rbb_AseFile[] = "C:\\BlitzParty\\Game\\Src\\RollerBall\\CRollerball_ASEImport.cpp";
 
 /* rowing_b 0x001b9e00: copy the current line into `line` */
-#define rbb_AseReadLine(rd, line) RBB_FN(FUN_001b9e00, void, (void *, char *))((rd), (line))
+#define rbb_AseReadLine(rd, line) FUN_001b9e00((int)(intptr_t)(rd), (line))   /* rowing_b declares an int */
 /* carryon_a 0x000c3a50: move the cursor to the next line */
 #define rbb_AseSkipLine(rd) CFire_TextReader_SkipLine((struct CoTextReader *)(rd))
 /* the reader has text left */
