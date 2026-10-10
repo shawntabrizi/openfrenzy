@@ -41,3 +41,5 @@ int DAT_002ba99c;                 /* 0x002ba99c core: frame counter */
 __attribute__((weak)) int DAT_00284b10 = 0x1e;
 __attribute__((weak)) int DAT_00284b14 = 0x1e;
 __attribute__((weak)) int DAT_00284b18 = 0x1e;
+__attribute__((weak)) unsigned char DAT_00291760[0x2c];      /* 0x00291760 BLEND_SMOKE effect */
+__attribute__((weak)) unsigned char DAT_002917b8[0x2c];      /* 0x002917b8 BLEND_SMOKE_NOGRAV effect */

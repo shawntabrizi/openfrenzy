@@ -47,9 +47,6 @@
 000b3d50 void CRColl_BuildMesh(void *actor);
 000b3dc0 void CRColl_BuildMeshFrom(void *actor, void *inst);
 000b6270 void CRColl_MoveActor(void *actor);
-000b8520 void Platform_RotateActor(void *actor);
-000b8960 void Platform_GetVelocity(float *out, void *platform, int absolute);
-000b8a40 void Platform_AddVelocity(float *vel, float *add);
 000afca0 void *Actor_LoadAny(const char *name, float *pos, int type, void *mem, int no_collision);
 000afcd0 void Actor_DrawFirstPass(void *actor);
 000aff10 void Actor_DrawAll(void);
@@ -127,3 +124,23 @@
 000b7620 void Lights_SetAttachedVisible(int visible);
 000b7680 void *Light_Delete(void *light);
 000b76f0 void Light_Update(void *light);
+# Platform.cpp
+000b7c70 void *Platform_Delete(void *platform);
+000b7e40 void Platforms_ActivateGroup(int group);
+000b7ee0 void Platforms_DeactivateGroup(int group);
+000b7f70 void Platform_Deactivate(void *platform);
+000b7fb0 void *Platform_Create(const char *name, float *pos, int no_collision);
+000b8040 void Platform_UpdateSeesaw(void *platform);
+000b81c0 void Platform_ScrollTexture(void *platform);
+000b8240 void PlatformAnim_Advance(struct PlatformAnim *anim);
+000b83f0 void *Platform_Find(int group);
+000b84a0 void Platforms_DeleteAll(void);
+000b8520 void Platform_RotateActor(void *actor);
+000b8720 void Platform_UpdateFalling(void *platform);
+000b8960 void Platform_GetVelocity(float *out, void *platform, int absolute);
+000b8a40 void Platform_AddVelocity(float *vel, float *add);
+000b8b60 void Platforms_UpdateAttached(void);
+000b8d20 void Platform_Smoke(void *platform);
+000b90f0 void Platform_Update(void *platform);
+000b9880 void *Platform_Smash(void *platform, int smoke);
+000b99f0 void Platforms_UpdateAll(void);
