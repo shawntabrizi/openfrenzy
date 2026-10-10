@@ -179,3 +179,14 @@
 00163b20 void MetaEmitters_DeleteAll(void);
 00163b60 struct CMetaEmitter *CMetaEmitter_Update(struct CMetaEmitter *self);
 00163c60 void MetaEmitters_UpdateAll(void);
+
+# Meta/CMeta_Rain.cpp
+00163cd0 void *MbSplash_Update(struct MbSplash *self);
+00163d40 void MbSplash_UpdateAll(void);
+00163d80 void MbSplash_DeleteAll(void);
+00163f30 void MetaRain_DeleteLight(void);
+00163f50 void MbSplash_BuildQuad(struct MbVertex *verts, float *pos, float *normal, float size, int unused, float alpha);
+00164220 void MbSplash_Draw(struct MbSplash *self);
+001642c0 void MbSplash_DrawAll(void);
+001645f0 void CMetaRain_Init(struct CMetaRain *self, int count);
+00164730 void CMetaRain_UpdateLightning(struct CMetaRain *self);

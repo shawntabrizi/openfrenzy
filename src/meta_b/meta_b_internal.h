@@ -597,4 +597,44 @@ extern float DAT_003090d0;
 extern float DAT_003090d4;
 extern struct MbList DAT_003090d8;
 
+/* ---------- CMeta_Rain.cpp */
+
+/* a rain splash sprite (0x40 bytes; a block of DAT_002b0cac at 0x003090f4) */
+struct MbSplash
+{
+	int active;                 /* +0x00 */
+	float life;                 /* +0x04 */
+	float life0;                /* +0x08 */
+	float alpha;                /* +0x0c */
+	float alpha0;               /* +0x10 */
+	float size;                 /* +0x14 */
+	float pos[4];               /* +0x18 */
+	float normal[4];            /* +0x28 */
+	void *next;                 /* +0x38 node of the list 0x00309100 */
+	void *prev;                 /* +0x3c */
+};
+OF_ASSERT_SIZE(struct MbSplash, 0x40);
+
+/* the rain (inside meta_a's Meta mode object at +0xa0) */
+struct CMetaRain
+{
+	struct BExtraSystem *system; /* +0x00 the drops */
+	int unk04;                  /* +0x04 */
+	float flashTimer;           /* +0x08 frames to the next lightning */
+	float flashTime;            /* +0x0c frames the lightning lasts */
+};
+
+extern struct MbSplash *DAT_003090f4;
+extern struct MbList DAT_00309100;
+extern struct BLight *DAT_003090fc;
+
+/* ---------- functions missing from src/include/of_functions.tsv (defined here with their
+   FUN_ address in the comment; listed in the module report for the architect) */
+int FUN_00163df0(struct BExtraSystem *system, int count, void **items, void *arg);
+int FUN_001642f0(struct BExtraSystem *system, void *item, void *data);
+int FUN_00164460(struct BExtraSystem *system, int count, void **items, void *arg);
+#define MetaRain_DrawDrops FUN_00163df0     /* 0x00163df0 */
+#define MetaRain_InitDrop FUN_001642f0      /* 0x001642f0 */
+#define MetaRain_UpdateDrops FUN_00164460   /* 0x00164460 */
+
 #endif

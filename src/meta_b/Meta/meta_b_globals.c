@@ -42,6 +42,8 @@ __attribute__((weak)) int DAT_00290d90[4] = { 0x3c, 0, 0, 0x28 };
 /* 0x002b1ec8 "REDDOT", 0x002b215c "STREAK3": particle types */
 __attribute__((weak)) char DAT_002b1ec8[4];
 __attribute__((weak)) char DAT_002b215c[4];
+/* 0x002b236c "SPLISH" particle type */
+__attribute__((weak)) char DAT_002b236c[4];
 
 /* 0x002b0580-0x002b058c  the water fog colour channels (owner not known) */
 __attribute__((weak)) int DAT_002b0580 = 0x8c;
