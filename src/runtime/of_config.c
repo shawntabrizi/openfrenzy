@@ -4,7 +4,8 @@ OF_CONFIG.C
 openfrenzy runtime module: the settings interface of OpenCE's port_config.h,
 without config.toml (OpenCE's port_config.c needs tomlc17 and Halo's menus).
 
-Each setting has a default below. An environment variable overrides it:
+Each setting has a default below (paths.data and paths.saves default to the host's
+OPENFRENZY_DATA_ROOT and OPENFRENZY_SAVE_ROOT). An environment variable overrides it:
 OPENFRENZY_ + the name in upper case with '.' as '_', for example
 OPENFRENZY_DISPLAY_VSYNC=false or OPENFRENZY_AUDIO_VOLUME=0.5.
 config_write() changes the value for this run only.
@@ -86,18 +87,29 @@ static int setting_index(const char *name)
 	return -1;
 }
 
+/* The folders the host has resolved (port/macos/host/host_main.c sets these variables to
+absolute paths before the guest starts): the defaults of paths.data and paths.saves, so the
+platform layer (vfs) uses the host's data and save roots, not Halo's ~/.local/share/halo-linux. */
+static const struct setting host_folders[] =
+{
+	{ "paths.data", "OPENFRENZY_DATA_ROOT" },
+	{ "paths.saves", "OPENFRENZY_SAVE_ROOT" },
+};
+
 /* the value as text: written, else the environment, else the default; NULL if unknown */
 static const char *value_of(const char *name)
 {
 	char variable[128] = "OPENFRENZY_";
 	size_t length = strlen(variable);
 	const char *environment;
+	const char *letter;
+	unsigned int folder;
 	int index = setting_index(name);
 
 	if (index >= 0 && has_written[index])
 		return written[index];
-	for (; *name && length + 1 < sizeof(variable); name++)
-		variable[length++] = *name == '.' ? '_' : (char)toupper((unsigned char)*name);
+	for (letter = name; *letter && length + 1 < sizeof(variable); letter++)
+		variable[length++] = *letter == '.' ? '_' : (char)toupper((unsigned char)*letter);
 	variable[length] = 0;
 	environment = getenv(variable);
 	if (environment)
@@ -106,6 +118,11 @@ static const char *value_of(const char *name)
 	{
 		platform_log("config: unknown setting %s", name);
 		return NULL;
+	}
+	for (folder = 0; folder < sizeof(host_folders) / sizeof(host_folders[0]); folder++)
+	{
+		if (!strcmp(name, host_folders[folder].name) && (environment = getenv(host_folders[folder].value)) && *environment)
+			return environment;
 	}
 	return settings[index].value;
 }

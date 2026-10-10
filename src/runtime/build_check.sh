@@ -1,84 +1,68 @@
 #!/bin/sh
-# Compiles the XDK replacement layer (src/{runtime,vfs,xkernel,d3d8,dsound,input}) with the guest ABI
-# (ILP32 AArch64, arm64_32, musl headers), as OpenCE's tools/android_build.py
-# does for its platform layer. Objects only: no rebase pass, no link.
-# The CMake build (port/guest) compiles and links the same files through the rebase pass;
-# this script is kept for regenerating src/runtime/entry/xdk_entry_points.inc.
-# Usage: src/runtime/build_check.sh [build-dir]   (default build-fix-platform-layer)
+# Regenerates src/runtime/entry/xdk_entry_points.inc from the symbols that the platform layer
+# (src/{runtime,vfs,xkernel,d3d8,dsound,input}) really defines in a CMake build.
+#
+# The first version of this script compiled the layer itself without the rebase pass and
+# downloaded musl and the GLES headers. The CMake build (port/guest) now compiles and links
+# the same files through the rebase pass, so this script reads its libofplatform.a instead.
+# No network is needed.
+#
+# Usage: src/runtime/build_check.sh [build-dir]    (default build-runtime)
+#   1. builds the platform layer      (cmake --build <build-dir>; configure it first)
+#   2. lists the defined symbols      (llvm-nm of guest-main/libofplatform.a)
+#   3. regenerates the table          (scripts/gen_xdk_entry_points.py, needs export/functions.jsonl)
+#   4. rebuilds, so the new table is compiled and linked (openfrenzy_platform_check.elf)
+# Exit status: 0 when every step passed.
 set -eu
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-B=${1:-build-fix-platform-layer}
+B=${1:-build-runtime}
 case $B in /*) ;; *) B=$ROOT/$B ;; esac
 LLVM=${OPENFRENZY_LLVM_BIN:-/opt/homebrew/opt/llvm@22/bin}
-SDL=${OPENFRENZY_SDL_INCLUDE:-/opt/homebrew/opt/sdl3/include}
-MUSL_VERSION=1.2.5
-TP=$B/third_party
-M=$TP/musl-$MUSL_VERSION
-ARCH=$ROOT/port/guest/libc/arch/arm64_32
-S=$ROOT/src
-X=$S/runtime
-mkdir -p "$TP" "$B/libc_include/bits" "$B/obj"
+INC=$ROOT/src/runtime/entry/xdk_entry_points.inc
+LIB=$B/guest-main/libofplatform.a
 
-# musl headers (public sources; fetched once)
-if [ ! -d "$M" ]; then
-	curl -sSfL "https://musl.libc.org/releases/musl-$MUSL_VERSION.tar.gz" | tar xz -C "$TP"
+if [ ! -f "$B/build.ninja" ] && [ ! -f "$B/Makefile" ]; then
+	echo "build_check: $B is not configured; run: cmake -S $ROOT -B $B -G Ninja" >&2
+	exit 1
 fi
-sed -f "$M/tools/mkalltypes.sed" "$ARCH/bits/alltypes.h.in" "$M/include/alltypes.h.in" > "$B/libc_include/bits/alltypes.h"
-cp "$ARCH/bits/syscall.h.in" "$B/libc_include/bits/syscall.h"
-sed -n -e s/__NR_/SYS_/p < "$ARCH/bits/syscall.h.in" >> "$B/libc_include/bits/syscall.h"
-
-# Khronos OpenGL ES headers (C declarations only)
-G=$TP/gles
-if [ ! -f "$G/KHR/khrplatform.h" ]; then
-	mkdir -p "$G/GLES2" "$G/GLES3" "$G/KHR"
-	K=https://raw.githubusercontent.com/KhronosGroup
-	for f in GLES3/gl32.h GLES3/gl3platform.h GLES2/gl2ext.h GLES2/gl2platform.h GLES2/gl2.h; do
-		curl -sSfL -o "$G/$f" "$K/OpenGL-Registry/main/api/$f"
-	done
-	curl -sSfL -o "$G/KHR/khrplatform.h" "$K/EGL-Registry/main/api/KHR/khrplatform.h"
+cmake --build "$B" --target guest_main
+if [ ! -f "$LIB" ]; then
+	echo "build_check: $LIB is missing after the build" >&2
+	exit 1
 fi
 
-# MSVC linkage semantics for the XDK headers' inline functions
-python3 "$ROOT/scripts/linux_msvc_semantics.py" --output "$B/platform_msvc_semantics.h" --inlines "$X/include/xdk"
+# one defined external symbol per line (weak ones too, as the HLE layer's inline fallbacks are weak)
+"$LLVM/llvm-nm" -j --defined-only --extern-only "$LIB" | grep -v -e ':$' -e '^$' | sort -u > "$B/hle_symbols.txt"
+echo "build_check: $(wc -l < "$B/hle_symbols.txt" | tr -d ' ') symbols defined by the platform layer"
 
-ABI="--target=arm64_32-apple-watchos -U__APPLE__ -U__MACH__ -fno-define-target-os-macros
- -D__linux__=1 -D__unix__=1 -DHALO_ARM64_GUEST=1 -DHALO_GLES=1 -DOPENFRENZY_GUEST=1
- -mcpu=cortex-a53 -nostdinc -fshort-wchar -fno-stack-protector -fno-unwind-tables
- -fno-asynchronous-unwind-tables -femulated-tls -ffp-contract=off -O2"
-CODE="-fms-extensions -fcommon -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks
- -fno-omit-frame-pointer"
-for n in wcslen wcsnlen wcschr wcsrchr wcscmp wcsncmp wcscpy wcsncpy wcscat wcsncat wmemchr wmemcmp wmemcpy wmemmove wmemset; do
-	CODE="$CODE -fno-builtin-$n"
-done
-CLANG_INC=$("$LLVM/clang" -print-resource-dir)/include
-FLAGS="$ABI $CODE -std=gnu11 -D_GNU_SOURCE -DHALO_LINUX_PLATFORM_LAYER -w
- -include $X/include/linux/halo_linux_prefix.h -include $B/platform_msvc_semantics.h
- -I$S/runtime -I$S/vfs -I$S/xkernel -I$S/d3d8 -I$S/dsound -I$S/input -I$X/compat -I$X/include/linux -I$X/include -I$X/include/xdk -I$SDL -I$G
- -isystem $B/libc_include -isystem $ARCH -isystem $M/arch/generic -isystem $M/include -isystem $CLANG_INC
- ${OPENFRENZY_EXTRA_CFLAGS:-}"
-
-fail=0
-compile() {
-	obj=$B/obj/$(basename "$1" .c).o
-	if "$LLVM/clang" $FLAGS $2 -c "$1" -o "$obj" 2> "$obj.log"; then
-		echo "ok   $(basename "$1")"
-	else
-		echo "FAIL $(basename "$1") (see $obj.log)"; fail=1
-	fi
-}
-rm -f "$B"/obj/*.o
-for src in "$S"/runtime/*.c "$S"/vfs/*.c "$S"/xkernel/*.c "$S"/d3d8/*.c "$S"/dsound/*.c "$S"/input/*.c "$X"/compat/*.c; do
-	compile "$src" ""
-done
-
-# the entry-point table: regenerated from the symbols the HLE objects define
-# when the (git-ignored) Ghidra export is present, else the committed .inc
-for obj in "$B"/obj/*.o; do
-	"$LLVM/llvm-nm" -j --defined-only --extern-only "$obj" | sed "s|^_||;s|\$| $(basename "$obj" .o)|"
-done > "$B/hle_symbols.txt"
-if [ -f "$ROOT/export/functions.jsonl" ]; then
-	python3 "$ROOT/scripts/gen_xdk_entry_points.py" "$ROOT/export/functions.jsonl" "$B/hle_symbols.txt" \
-		"$X/entry/xdk_entry_points.inc"
+if [ ! -f "$ROOT/export/functions.jsonl" ]; then
+	echo "build_check: export/functions.jsonl is missing; the committed table is kept" >&2
+	exit 1
 fi
-compile "$X/entry/xdk_entry_points.c" "-I$X/entry"
-exit $fail
+# Merge export/functions_extra.jsonl (functions reached only through tables, found by the second
+# Ghidra pass). Their calls into the libraries are missing from the library functions' "callers"
+# lists, because Ghidra had no function at the call site then: add them from their "callees".
+python3 -I - "$ROOT/export" "$B/functions_all.jsonl" <<'EOF'
+import json, os, sys
+export, output = sys.argv[1:3]
+functions = {}
+for name in ("functions.jsonl", "functions_extra.jsonl"):
+    path = os.path.join(export, name)
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as handle:
+            for line in handle:
+                entry = json.loads(line)
+                functions.setdefault(entry["addr"], entry)
+for address, entry in functions.items():
+    for callee in entry.get("callees", []):
+        target = functions.get(callee)
+        if target is not None and address not in target["callers"]:
+            target["callers"].append(address)
+with open(output, "w", encoding="utf-8") as out:
+    for address in sorted(functions):
+        out.write(json.dumps(functions[address]) + "\n")
+EOF
+python3 -I "$ROOT/scripts/gen_xdk_entry_points.py" "$B/functions_all.jsonl" "$B/hle_symbols.txt" "$INC"
+sed -n 2p "$INC"
+cmake --build "$B" --target guest_main
+echo "build_check: ok"

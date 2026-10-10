@@ -2,11 +2,11 @@
    D3D HLE 52, D3D INTERNAL 28, D3D MISSING 8, D3D UNKNOWN 1, DSOUND HLE 16, DSOUND INTERNAL 55, DSOUND MISSING 10, XGRPH INTERNAL 1, XGRPH MISSING 1, XGRPH UNKNOWN 3, XPP HLE 7, XPP INTERNAL 3, XPP MISSING 1 */
 
 XDK_ENTRY(0x001f5340, "D3D", "D3DDevice_GetDeviceCaps", D3DDevice_GetDeviceCaps, HLE) /* game callers: 2 */
-XDK_ENTRY(0x001f5360, "D3D", "D3DDevice_SetTransform", D3DDevice_SetTransform, HLE) /* game callers: 20 */
+XDK_ENTRY(0x001f5360, "D3D", "D3DDevice_SetTransform", D3DDevice_SetTransform, HLE) /* game callers: 22 */
 XDK_ENTRY(0x001f5470, "D3D", "D3DDevice_GetTransform", D3DDevice_GetTransform, HLE) /* game callers: 2 */
 XDK_ENTRY(0x001f54a0, "D3D", "D3DDevice_SetMaterial", NULL, MISSING) /* game callers: 3 */
 XDK_ENTRY(0x001f54d0, "D3D", "D3DDevice_Release", D3DDevice_Release, HLE) /* game callers: 3 */
-XDK_ENTRY(0x001f5510, "D3D", "D3D_KickOffAndWaitForIdle", NULL, MISSING) /* game callers: 4 */
+XDK_ENTRY(0x001f5510, "D3D", "D3D_KickOffAndWaitForIdle", NULL, MISSING) /* game callers: 7 */
 XDK_ENTRY(0x001f5520, "D3D", "D3DDevice_BlockUntilVerticalBlank", D3DDevice_BlockUntilVerticalBlank, HLE) /* game callers: 0 */
 XDK_ENTRY(0x001f5550, "D3D", "D3DDevice_InsertFence", NULL, MISSING) /* game callers: 4 */
 XDK_ENTRY(0x001f5640, "D3D", "D3DDevice_SetRenderTarget", D3DDevice_SetRenderTarget, HLE) /* game callers: 1 */
@@ -16,24 +16,24 @@ XDK_ENTRY(0x001f5b40, "D3D", "D3DDevice_GetDepthStencilSurface", D3DDevice_GetDe
 XDK_ENTRY(0x001f5b70, "D3D", "D3DDevice_SetViewport", D3DDevice_SetViewport, HLE) /* game callers: 2 */
 XDK_ENTRY(0x001f5cd0, "D3D", "D3DDevice_SetLight", NULL, MISSING) /* game callers: 3 */
 XDK_ENTRY(0x001f5eb0, "D3D", "D3DDevice_LightEnable", NULL, MISSING) /* game callers: 1 */
-XDK_ENTRY(0x001f5f90, "D3D", "D3DDevice_SetTexture", D3DDevice_SetTexture, HLE) /* game callers: 5 */
-XDK_ENTRY(0x001f60f0, "D3D", "D3DDevice_SetPalette", D3DDevice_SetPalette, HLE) /* game callers: 4 */
+XDK_ENTRY(0x001f5f90, "D3D", "D3DDevice_SetTexture", D3DDevice_SetTexture, HLE) /* game callers: 6 */
+XDK_ENTRY(0x001f60f0, "D3D", "D3DDevice_SetPalette", D3DDevice_SetPalette, HLE) /* game callers: 5 */
 XDK_ENTRY(0x001f6170, "D3D", "D3DDevice_SetIndices", D3DDevice_SetIndices, HLE) /* game callers: 2 */
 XDK_ENTRY(0x001f6200, "D3D", "D3DDevice_GetDisplayFieldStatus", NULL, MISSING) /* game callers: 2 */
 XDK_ENTRY(0x001f6240, "D3D", "D3DDevice_SetTile", NULL, INTERNAL) /* game callers: 0 */
 XDK_ENTRY(0x001f6300, "D3D", "D3DDevice_SetScissors", NULL, INTERNAL) /* game callers: 0 */
-XDK_ENTRY(0x001f6490, "D3D", "D3DDevice_PersistDisplay", D3DDevice_PersistDisplay, HLE) /* game callers: 0 */
-XDK_ENTRY(0x001f6650, "D3D", "D3DDevice_SetRenderState_Simple", D3DDevice_SetRenderState_Simple, HLE) /* game callers: 16 */
-XDK_ENTRY(0x001f6680, "D3D", "D3DDevice_SetRenderState_Deferred", D3DDevice_SetRenderState_Deferred, HLE) /* game callers: 8 */
+XDK_ENTRY(0x001f6490, "D3D", "D3DDevice_PersistDisplay", D3DDevice_PersistDisplay, HLE) /* game callers: 2 */
+XDK_ENTRY(0x001f6650, "D3D", "D3DDevice_SetRenderState_Simple", D3DDevice_SetRenderState_Simple, HLE) /* game callers: 18 */
+XDK_ENTRY(0x001f6680, "D3D", "D3DDevice_SetRenderState_Deferred", D3DDevice_SetRenderState_Deferred, HLE) /* game callers: 9 */
 XDK_ENTRY(0x001f66a0, "D3D", "D3DDevice_SetRenderStateNotInline", D3DDevice_SetRenderStateNotInline, HLE) /* game callers: 0 */
-XDK_ENTRY(0x001f6700, "D3D", "FUN_001f6700", D3DDevice_SetTextureState_Deferred, HLE) /* game callers: 33 */
+XDK_ENTRY(0x001f6700, "D3D", "FUN_001f6700", D3DDevice_SetTextureState_Deferred, HLE) /* game callers: 53 */
 XDK_ENTRY(0x001f6790, "D3D", "D3DDevice_SetRenderState_FogColor", D3DDevice_SetRenderState_FogColor, HLE) /* game callers: 1 */
 XDK_ENTRY(0x001f67e0, "D3D", "D3DDevice_SetRenderState_CullMode", D3DDevice_SetRenderState_CullMode, HLE) /* game callers: 1 */
-XDK_ENTRY(0x001f68c0, "D3D", "D3DDevice_SetRenderState_TextureFactor", D3DDevice_SetRenderState_TextureFactor, HLE) /* game callers: 13 */
+XDK_ENTRY(0x001f68c0, "D3D", "D3DDevice_SetRenderState_TextureFactor", D3DDevice_SetRenderState_TextureFactor, HLE) /* game callers: 14 */
 XDK_ENTRY(0x001f6910, "D3D", "D3DDevice_SetRenderState_LineWidth", D3DDevice_SetRenderState_LineWidth, HLE) /* game callers: 0 */
 XDK_ENTRY(0x001f6970, "D3D", "D3DDevice_SetRenderState_Dxt1NoiseEnable", D3DDevice_SetRenderState_Dxt1NoiseEnable, HLE) /* game callers: 0 */
-XDK_ENTRY(0x001f69f0, "D3D", "D3DDevice_SetRenderState_ZBias", D3DDevice_SetRenderState_ZBias, HLE) /* game callers: 0 */
-XDK_ENTRY(0x001f6bf0, "D3D", "D3DDevice_SetTextureState_TexCoordIndex", D3DDevice_SetTextureState_TexCoordIndex, HLE) /* game callers: 26 */
+XDK_ENTRY(0x001f69f0, "D3D", "D3DDevice_SetRenderState_ZBias", D3DDevice_SetRenderState_ZBias, HLE) /* game callers: 2 */
+XDK_ENTRY(0x001f6bf0, "D3D", "D3DDevice_SetTextureState_TexCoordIndex", D3DDevice_SetTextureState_TexCoordIndex, HLE) /* game callers: 27 */
 XDK_ENTRY(0x001f6cd0, "D3D", "D3DDevice_SetTextureState_BumpEnv", D3DDevice_SetTextureState_BumpEnv, HLE) /* game callers: 0 */
 XDK_ENTRY(0x001f6d30, "D3D", "D3DDevice_SetTextureState_BorderColor", D3DDevice_SetTextureState_BorderColor, HLE) /* game callers: 1 */
 XDK_ENTRY(0x001f6d70, "D3D", "D3DDevice_SetTextureState_ColorKeyColor", D3DDevice_SetTextureState_ColorKeyColor, HLE) /* game callers: 0 */
@@ -53,7 +53,7 @@ XDK_ENTRY(0x001f80f0, "D3D", "D3DDevice_SelectVertexShader", D3DDevice_SelectVer
 XDK_ENTRY(0x001f8160, "D3D", "D3DDevice_SetShaderConstantMode", D3DDevice_SetShaderConstantMode, HLE) /* game callers: 2 */
 XDK_ENTRY(0x001f82a0, "D3D", "D3DDevice_DeleteVertexShader", D3DDevice_DeleteVertexShader, HLE) /* game callers: 2 */
 XDK_ENTRY(0x001f83c0, "D3D", "D3DDevice_SetVertexShader", D3DDevice_SetVertexShader, HLE) /* game callers: 7 */
-XDK_ENTRY(0x001f84a0, "D3D", "D3DDevice_SetVertexShaderConstant", D3DDevice_SetVertexShaderConstant, HLE) /* game callers: 2 */
+XDK_ENTRY(0x001f84a0, "D3D", "D3DDevice_SetVertexShaderConstant", D3DDevice_SetVertexShaderConstant, HLE) /* game callers: 16 */
 XDK_ENTRY(0x001f85e0, "D3D", "D3D_UpdateProjectionViewportTransform", NULL, INTERNAL) /* game callers: 0 */
 XDK_ENTRY(0x001f8730, "D3D", "D3D_LazySetPointParams", NULL, INTERNAL) /* game callers: 0 */
 XDK_ENTRY(0x001f9d10, "D3D", "CDevice_SetStateVB", NULL, INTERNAL) /* game callers: 0 */
@@ -82,7 +82,7 @@ XDK_ENTRY(0x001fd630, "D3D", "CMiniport_IsFlipPending", NULL, INTERNAL) /* game 
 XDK_ENTRY(0x001fe365, "D3D", "CMiniport_CreateCtxDmaObject", NULL, INTERNAL) /* game callers: 0 */
 XDK_ENTRY(0x001fe540, "D3D", "CMiniport_InitHardware", NULL, INTERNAL) /* game callers: 0 */
 XDK_ENTRY(0x00201390, "D3D", "D3DDevice_DrawVerticesUP", NULL, MISSING) /* game callers: 3 */
-XDK_ENTRY(0x002014d0, "D3D", "D3DDevice_DrawVertices", D3DDevice_DrawVertices, HLE) /* game callers: 4 */
+XDK_ENTRY(0x002014d0, "D3D", "D3DDevice_DrawVertices", D3DDevice_DrawVertices, HLE) /* game callers: 14 */
 XDK_ENTRY(0x00201570, "D3D", "D3DDevice_DrawIndexedVertices", D3DDevice_DrawIndexedVertices, HLE) /* game callers: 1 */
 XDK_ENTRY(0x002017e0, "D3D", "D3DPalette_Lock", D3DPalette_Lock, HLE) /* game callers: 1 */
 XDK_ENTRY(0x00201810, "D3D", "D3DVertexBuffer_Lock", D3DVertexBuffer_Lock, HLE) /* game callers: 1 */
@@ -119,7 +119,7 @@ XDK_ENTRY(0x002071d1, "DSOUND", "CDirectSoundBuffer_SetMaxDistance", NULL, INTER
 XDK_ENTRY(0x002071e9, "DSOUND", "CDirectSoundBuffer_SetMinDistance", NULL, INTERNAL) /* game callers: 0 */
 XDK_ENTRY(0x00207201, "DSOUND", "CDirectSoundBuffer_SetPosition", NULL, INTERNAL) /* game callers: 0 */
 XDK_ENTRY(0x0020722a, "DSOUND", "CDirectSoundBuffer_SetVelocity", NULL, INTERNAL) /* game callers: 0 */
-XDK_ENTRY(0x00207253, "DSOUND", "IDirectSound_GetCaps", IDirectSound_GetCaps, HLE) /* game callers: 3 */
+XDK_ENTRY(0x00207253, "DSOUND", "IDirectSound_GetCaps", IDirectSound_GetCaps, HLE) /* game callers: 12 */
 XDK_ENTRY(0x0020726f, "DSOUND", "IDirectSound_DownloadEffectsImage", IDirectSound_DownloadEffectsImage, HLE) /* game callers: 1 */
 XDK_ENTRY(0x00207296, "DSOUND", "IDirectSound_SetAllParameters", NULL, MISSING) /* game callers: 1 */
 XDK_ENTRY(0x002072b6, "DSOUND", "IDirectSound_SetDistanceFactor", IDirectSound_SetDistanceFactor, HLE) /* game callers: 1 */
