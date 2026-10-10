@@ -250,6 +250,52 @@ integration round 2 (921ec75); see below.
   the inputs above; a second window run at the same time slows the menus (presses land
   early).
 
+## Audio levels (integration round 3, 2026-10-10)
+
+- New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and
+  `scripts/wav_levels.py` (RMS, peak, clipped and non-silent share).
+- Cause of the hot mix: the port did not apply the Xbox DirectSound headroom. The game never
+  changes it (no game callers of SetMixBinHeadroom or SetHeadroom), so the defaults apply:
+  - Voice headroom 600 mB (6 dB) for 2D buffers, 0 for 3D (DSBCAPS_CTRL3D) and for flags
+    0x82000 (FUN_0020753a, the voice settings init). CDirectSoundVoice_SetVolume (0x00206d45)
+    stores volume - headroom. The game's buffers: samples 0xa0 and music 0x1a0 (2D, 6 dB);
+    3D samples 0xb0 (0 dB).
+  - Mix bin headroom 1 on bins 0-30 and 0 on bin 31 (FUN_00208f1b, the APU start:
+    CMcpxAPU_SetMixBinHeadroom(0x7fffffff, 1), (0x80000000, 0)). The voice processor divides a
+    voice's gain into a bin by 2^headroom (xemu hw/xbox/mcpx/apu/vp/vp.c, voice_process): -6 dB.
+    A 3D voice's direct path goes to the HRTF submixes (bins 6-9, register 0x2c0 = 0x09070806,
+    FUN_0020cbcc) under the HRTF headroom, set to 0 (FUN_00208866(0)). So 3D direct = 0 dB,
+    3D room send = -6 dB.
+  - Result: a 2D voice at volume 0 is now -12 dB, a 3D voice's direct path 0 dB, as on the
+    hardware model above. dsound_sdl.c: `voice_headroom_gain`, `MIXBIN_HEADROOM_GAIN`.
+- Checked and correct (no change): millibels to linear is 10^(mB/2000)
+  (`gain_from_millibels`). The game's volume table 0x00285658 (0-255 to mB, 1000*log2(v/255),
+  index 255 = 0) matches the XBE. Music: `ext_MusicMaster(DAT_002bae68)` (0-255, default 0xff);
+  each stream gets table[stream volume * master / 255]; the Options screen only shows
+  DAT_002bae68 * 11 / 256 (0-10) and writes level * 255 / 10. No extra gain in the WMA path.
+  Halo (ref/OpenCE dsound_sdl.c) sets its mix bin headroom to 0 itself; its port has no
+  headroom code. This game does not, so the Halo assumption did not hold.
+- Not known: the gain of the Xbox DSP program (effects image) from the mix bins to the
+  output. The port does not run it. If it amplified the front bins, the port is now too quiet.
+- Measured (headless in the sandbox: no audio device, the clock thread mixes; 69 s each;
+  menus = `OPENFRENZY_DEBUG_TEST_INPUT="START@6000,A@9000,A@11000,A@13000,START@16000,
+  START@20000,START@24000,START@28000,A@32000,START@36000,A@40000,A@43000,A@46000,..."`,
+  Hopper = `OPENFRENZY_GAME=Hopper` with A every 3-5 s). Peak before the limiter is from
+  the `dsound: mixed` lines (one a second). Limiter ceiling 0.891 (-1 dBFS).
+
+  | Run | RMS | Peak (WAV) | Clipped | Non-silent | Pre-limiter peak median / max | Seconds over ceiling |
+  |---|---|---|---|---|---|---|
+  | menus, before | -14.2 dBFS | -1.00 dBFS | 0 % | 96.8 % | 0.957 / 2.096 | 42 of 69 |
+  | menus, after | -25.3 dBFS | -4.75 dBFS | 0 % | 93.4 % | 0.248 / 0.579 | 0 of 69 |
+  | Hopper, before | -12.0 dBFS | -1.00 dBFS | 0 % | 99.5 % | 1.251 / 1.975 | 66 of 69 |
+  | Hopper, after | -21.5 dBFS | -3.65 dBFS | 0 % | 98.7 % | 0.440 / 0.657 | 0 of 69 |
+
+  "Before" is the same build with the two headroom constants set to unity. The WAV peak
+  "before" is the limiter ceiling (-1 dBFS); no sample is at full scale in either case.
+- Not verified: nobody listened; frames of the menus run were not dumped (the script and
+  buffer counts show menu activity, not which screens); the 6-stage tournament was not run
+  again; a run with a real audio device (outside the sandbox) was not made with the capture.
+
 ## Library identifications
 
 - 0x1e0323 `_purecall`; 0xa6fa0 returns 1; 0xf8ab0 returns 0 (stdcall, 1 argument).

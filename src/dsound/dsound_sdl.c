@@ -19,8 +19,13 @@ resampling) and applies:
 	  and occlusion levels, their high frequency levels a low pass at the
 	  environment's HF reference: a sound behind a wall is muffled.
 3D voices also send to an I3DL2 reverb of the environment the listener is in
-(reverb). Doppler and cones are not modelled. A look-ahead limiter keeps the
-sum under full scale (limit).
+(reverb). Doppler and cones are not modelled. Every voice is turned down by
+the Xbox's default voice and mix bin headroom (voice_headroom_gain,
+MIXBIN_HEADROOM_GAIN). A look-ahead limiter keeps the sum under full scale
+(limit).
+
+OPENFRENZY_DSOUND_CAPTURE=<path> writes the final output (after the limiter)
+to a 48 kHz stereo 16-bit WAV file (capture).
 
 Packets the mixer has finished are completed from DirectSoundDoWork, which
 the game calls every frame, and from Flush, never from the audio thread:
@@ -110,6 +115,7 @@ struct sdl_stream
 	float stereo_pan;
 	float stereo_distance;
 	float stereo_distance_fade;
+	/* the voice's headroom as a gain (voice_headroom_gain) */
 	float headroom;
 
 	/* 3D */
@@ -200,6 +206,35 @@ static struct
 } listener = { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 0 }, 1.0f, 1.0f };
 
 static float master_volume = 1.0f;
+
+/* The Xbox DirectSound headroom, which the game never changes (its callers of
+SetMixBinHeadroom and SetHeadroom: none, docs/LIBRARY_CALLS.md):
+	- every mix bin but bin 31 has headroom 1 (FUN_00208f1b, the APU's start:
+	  CMcpxAPU_SetMixBinHeadroom(0x7fffffff, 1)), and the voice processor
+	  divides a voice's gain into a bin by 2 to the bin's headroom (xemu,
+	  hw/xbox/mcpx/apu/vp/vp.c, voice_process): -6.02 dB. A 3D voice's
+	  direct path goes to the HRTF submixes (bins 6-9, FUN_0020cbcc) under
+	  the HRTF headroom instead, which the start sets to 0 (FUN_00208866(0)),
+	  so only its I3DL2 (room) send is turned down;
+	- a voice has headroom 600 (6 dB) unless it is 3D (DSBCAPS_CTRL3D) or a
+	  mix-in/FX-in voice (flags 0x82000), which have 0 (FUN_0020753a), and
+	  SetVolume sets the volume minus the headroom (CDirectSoundVoice_SetVolume
+	  0x00206d45).
+Without them a 2D voice at volume 0 played 12 dB louder than on the Xbox, and
+the limiter was turning the mix down most of the time. The Xbox's DSP program
+(the effects image) is not run, so any gain it gave the front bins is not
+known here. */
+#define MIXBIN_HEADROOM_GAIN 0.5f
+#define VOICE_HEADROOM_MILLIBELS 600
+
+static float gain_from_millibels(LONG millibels);
+
+static float voice_headroom_gain(DWORD flags)
+{
+	if ((flags & 0x82000) || (flags & DSBCAPS_CTRL3D))
+		return 1.0f;
+	return gain_from_millibels(-VOICE_HEADROOM_MILLIBELS);
+}
 
 /* Port debugging: OPENFRENZY_DSOUND_LOG=1 logs the device, each buffer's creation, data and
 Play, and once a second of output what the mixer mixed (voices playing, peak level before the
@@ -470,6 +505,8 @@ muffle it) and of the send */
 static void voice_gains(const struct sdl_stream *stream, float *left, float *right, float *room,
 	float *direct_lowpass, float *room_lowpass)
 {
+	float direct_headroom;
+
 	*room = 0.0f;
 	*direct_lowpass = 0.0f;
 	*room_lowpass = 0.0f;
@@ -525,9 +562,11 @@ static void voice_gains(const struct sdl_stream *stream, float *left, float *rig
 		*left = stream->mix_left;
 		*right = stream->mix_right;
 	}
-	*left *= stream->volume * master_volume;
-	*right *= stream->volume * master_volume;
-	*room *= stream->volume * master_volume;
+	/* (a 3D voice's direct path goes to the HRTF bins, whose headroom is 0) */
+	direct_headroom = stream->has_3d ? 1.0f : MIXBIN_HEADROOM_GAIN;
+	*left *= stream->volume * stream->headroom * direct_headroom * master_volume;
+	*right *= stream->volume * stream->headroom * direct_headroom * master_volume;
+	*room *= stream->volume * stream->headroom * MIXBIN_HEADROOM_GAIN * master_volume;
 }
 
 /* ---------- resampling
@@ -1249,9 +1288,8 @@ static BOOL reverb_sent(const float *send, unsigned long frames)
 
 /* ---------- limiter
 
-The game sets its mix bins' headroom to 0 (sound_dsound_xbox.c), so the voices
-sum at their full level, as on the Xbox, and a pile of loud ones goes over
-full scale. Clipping each sample, or bending it near full scale, distorts the
+The voices sum under the Xbox's default headroom (MIXBIN_HEADROOM_GAIN,
+voice_headroom_gain), and a pile of loud ones can still go over full scale. Clipping each sample, or bending it near full scale, distorts the
 sound: dialogue over gunfire crackled. Instead the whole mix is turned down
 for as long as it would go over, both channels alike. The output is delayed
 LIMITER_LOOKAHEAD - 1 frames (1.3 ms), so that the gain comes down smoothly
@@ -1335,6 +1373,115 @@ static void limit(float *output, unsigned long frames)
 			sample[channel] = limiter.delay[oldest][channel] * gain;
 		limiter.position = oldest;
 	}
+}
+
+/* ---------- capture
+
+OPENFRENZY_DSOUND_CAPTURE=<path> writes what the mixer gives the device, after
+the limiter, to a WAV file: 48 kHz, stereo, 16-bit PCM, written from mix (the
+audio callback, or the clock thread without a device). The header's sizes are
+written again once a second, so a run killed by a timeout still leaves a file
+that reads to its last second; exit writes them a last time and closes it. */
+
+static struct
+{
+	pthread_mutex_t lock;
+	FILE *file;
+	unsigned long frames;
+	unsigned long frames_at_header;
+	BOOL tried;
+} capture = { PTHREAD_MUTEX_INITIALIZER, NULL, 0, 0, FALSE };
+
+static void capture_put32(unsigned char *at, unsigned long value)
+{
+	at[0] = (unsigned char)value;
+	at[1] = (unsigned char)(value >> 8);
+	at[2] = (unsigned char)(value >> 16);
+	at[3] = (unsigned char)(value >> 24);
+}
+
+/* the 44-byte RIFF/WAVE header of capture.frames frames, at the start */
+static void capture_write_header(void)
+{
+	unsigned char header[44];
+	unsigned long data_bytes = capture.frames * OUTPUT_CHANNELS * 2;
+	long end = ftell(capture.file);
+
+	memcpy(header, "RIFF", 4);
+	capture_put32(header + 4, 36 + data_bytes);
+	memcpy(header + 8, "WAVEfmt ", 8);
+	capture_put32(header + 16, 16);
+	header[20] = 1; header[21] = 0;                      /* PCM */
+	header[22] = OUTPUT_CHANNELS; header[23] = 0;
+	capture_put32(header + 24, OUTPUT_RATE);
+	capture_put32(header + 28, OUTPUT_RATE * OUTPUT_CHANNELS * 2);
+	header[32] = OUTPUT_CHANNELS * 2; header[33] = 0;    /* block align */
+	header[34] = 16; header[35] = 0;
+	memcpy(header + 36, "data", 4);
+	capture_put32(header + 40, data_bytes);
+	fseek(capture.file, 0, SEEK_SET);
+	fwrite(header, 1, sizeof(header), capture.file);
+	fseek(capture.file, end > 0 ? end : (long)sizeof(header), SEEK_SET);
+	fflush(capture.file);
+	capture.frames_at_header = capture.frames;
+}
+
+static void capture_close(void)
+{
+	pthread_mutex_lock(&capture.lock);
+	if (capture.file)
+	{
+		capture_write_header();
+		fclose(capture.file);
+		capture.file = NULL;
+		platform_log("dsound: capture closed (%lu frames, %.1f s)", capture.frames,
+			(double)capture.frames / OUTPUT_RATE);
+	}
+	pthread_mutex_unlock(&capture.lock);
+}
+
+static void capture_write(const float *output, unsigned long frames)
+{
+	short samples[MIX_CHUNK_FRAMES * OUTPUT_CHANNELS];
+	unsigned long index, count;
+
+	pthread_mutex_lock(&capture.lock);
+	if (!capture.tried)
+	{
+		const char *path = getenv("OPENFRENZY_DSOUND_CAPTURE");
+
+		capture.tried = TRUE;
+		if (path && path[0])
+		{
+			capture.file = fopen(path, "wb");
+			if (capture.file)
+			{
+				capture_write_header();
+				atexit(capture_close);
+				platform_log("dsound: capturing the output to %s", path);
+			}
+			else
+				platform_log("dsound: cannot open the capture file %s", path);
+		}
+	}
+	while (capture.file && frames)
+	{
+		count = frames > MIX_CHUNK_FRAMES ? MIX_CHUNK_FRAMES : frames;
+		for (index = 0; index < count * OUTPUT_CHANNELS; index++)
+		{
+			float value = output[index] * 32767.0f;
+
+			value = value > 32767.0f ? 32767.0f : value < -32768.0f ? -32768.0f : value;
+			samples[index] = (short)lrintf(value);
+		}
+		fwrite(samples, sizeof(short), count * OUTPUT_CHANNELS, capture.file);
+		capture.frames += count;
+		output += count * OUTPUT_CHANNELS;
+		frames -= count;
+	}
+	if (capture.file && capture.frames - capture.frames_at_header >= OUTPUT_RATE)
+		capture_write_header();
+	pthread_mutex_unlock(&capture.lock);
 }
 
 /* sets the events of the buffer notifications the mixer reached (outside the mixer's
@@ -1421,6 +1568,7 @@ static void mix(float *output, unsigned long frames)
 	/* the players' voices (voice_audio.c), dry, under the limiter */
 	voice_audio_mix(output, frames);
 	limit(output, frames);
+	capture_write(output, frames);
 }
 
 /* ---------- output */
@@ -1970,6 +2118,7 @@ HRESULT WINAPI IDirectSound_CreateSoundStream(LPDIRECTSOUND sound, LPCDSSTREAMDE
 	stream->sample_rate = format ? format->nSamplesPerSec : 0;
 	stream->frequency = stream->sample_rate;
 	stream->volume = 1.0f;
+	stream->headroom = voice_headroom_gain(description->dwFlags);
 	/* DirectSound's default mix bins: a mono voice to both fronts, a
 	stereo voice's channels to the front left and right */
 	stream->mix_left = 1.0f;
@@ -2308,6 +2457,7 @@ HRESULT WINAPI DirectSoundCreateBuffer(LPCDSBUFFERDESC description, LPDIRECTSOUN
 			description->lpwfxFormat ? description->lpwfxFormat->nChannels : 0,
 			description->lpwfxFormat ? description->lpwfxFormat->wBitsPerSample : 0);
 	stream->volume = 1.0f;
+	stream->headroom = voice_headroom_gain(description->dwFlags);
 	stream->mix_left = 1.0f;
 	stream->mix_right = 1.0f;
 	stream->has_3d = (description->dwFlags & DSBCAPS_CTRL3D) != 0;

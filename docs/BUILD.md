@@ -85,6 +85,7 @@ Environment:
 | `OPENFRENZY_GAME=<name>` | start that minigame directly (BumperCars, Fireworks, Clusteroids, Demolition, Drillers, Tag, Hopper, MouseWhack, RollerBall, Jetboats, ScratchMatch, TankedUp); `src/runtime/of_launch.c` |
 | `OPENFRENZY_VARIATION=<n>` | its variation (default 1) |
 | `OPENFRENZY_DSOUND_LOG=1` | log the audio device, DirectSound buffers, the mix level and the WMA decode level (`src/dsound/dsound_sdl.c`) |
+| `OPENFRENZY_DSOUND_CAPTURE=<path>` | write the final audio output (after the limiter) to a WAV file: 48 kHz, stereo, 16-bit. It works without an audio device too (sandbox). See "Audio capture" below |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
 
 ### Scripted input (automated runs)
@@ -107,6 +108,20 @@ call. The old pad-1 syntax (`START@6000,A@11000`) still works. `src/input/xinput
   `START@6000,A@11000,A@15500,A@23000,A@27000,P2:A@27500,P3:A@28000,P4:A@28500,
   P2:RIGHT@30000,P3:LX+@30000,P3:LX+@31000,P4:LX-@30000,A@33000,P2:A@33500,P3:A@34000,
   P4:A@34500,START@38000,START@42000,START@46000`, then `A` every 3 s.
+
+### Audio capture
+
+`OPENFRENZY_DSOUND_CAPTURE=<abs path>.wav` writes what the mixer sends to the device. The mixer
+writes it after the limiter, from the audio callback (or from the clock thread when no device
+opens). The WAV header is updated each second, so a run that a timeout kills still gives a
+good file. Measure it with:
+
+```sh
+python3 -I scripts/wav_levels.py <file.wav>            # RMS, peak, clipped %, non-silent %
+python3 -I scripts/wav_levels.py <file.wav> --window 5  # also RMS and peak each 5 s
+```
+
+macOS has no `timeout`; use `perl -e 'alarm shift; exec @ARGV' 70 build-<id>/openfrenzy ...`.
 
 ### Display settings
 
