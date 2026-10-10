@@ -203,21 +203,31 @@
 0018fcf0 int CRollerBallLights_Init(void *self);
 
 # RollerBall/unplaced_systems.c (continued)
+0018fe10 void *CRollerBallSpot_Ctor(void *self);
+0018fe30 void CRollerBallSpot_Dtor(void *self);
 0018fe40 void *CRollerBallSpotFX_Ctor(void *self);
 0018fe70 void CRollerBallSpotFX_Dtor(void *self);
 0018fe90 void CRollerBallSpotFX_Shutdown(void *self);
 0018fec0 void CRollerBallSpotFX_Update(void *self, float dt);
 0018ff10 void CRollerBallSpotFX_Draw(void *self);
+0018ff40 void *CRollerBallSpot_DeletingDtor(void *self, unsigned int flags);
+0018ff60 void *CRollerBallSpotFX_DeletingDtor(void *self, unsigned int flags);
 0018ff80 int CRollerBallSpotFX_Init(void *self, void *package);
+0018fff0 void CRollerBallSpotFX_Spawn(void *self, const float *pos, const float *dir, float duration);
 001900b0 void *CRollerBallHud_Ctor(void *self);
 001900d0 void CRollerBallHud_Dtor(void *self);
 001900e0 void CRollerBallHud_Draw(void *self);
+00190100 void CRollerBallHud_SetLaps(void *self);
+00190140 void *CRollerBallHud_DeletingDtor(void *self, unsigned int flags);
 00190160 void CRollerBallHud_Begin(void *self);
 00190330 void CRollerBallHud_Update(void *self, float dt);
+00190420 void CRollerBallTexAnim_Update(void *self, float dt);
 001904f0 void *CRollerBallTextures_Ctor(void *self);
 00190520 void CRollerBallTextures_Dtor(void *self);
 00190540 int CRollerBallTextures_Init(void *self, void *package);
 00190590 void CRollerBallTextures_Update(void *self, float dt);
+001905e0 void *CRollerBallTexAnim_DeletingDtor(void *self, unsigned int flags);
+00190600 void *CRollerBallTextures_DeletingDtor(void *self, unsigned int flags);
 001907c0 void *CRollerBallRespawn_Ctor(void *self);
 001907f0 void CRollerBallRespawn_Dtor(void *self);
 00190810 int CRollerBallRespawn_Init(void *self, void *package);

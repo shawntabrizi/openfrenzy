@@ -1317,3 +1317,452 @@ void CRollerBallPhysics_Update(void *self, float dt)
 {
 	CRollerBallPhysics_Step(self, dt);
 }
+
+/* ======================================================================== spot effects (+0x2060) */
+
+/* Ten spot effects of 0x88 bytes from +4 (vtable 0x00274680): +4 position, +0x14 active,
++0x15 visible, +0x18 age, +0x1c a particle emitter (rollerball_b, CRollerBall_Particle.cpp;
++0x2c / +0x30 its counters, +0x6c alive), +0x80 duration. */
+
+/* 0x00274680  vtable of a spot effect */
+const void *const vtable_00274680[1] = { (const void *)CRollerBallSpot_DeletingDtor };
+
+/* 0x00274684  vtable of the spot effect system */
+const void *const vtable_00274684[1] = { (const void *)CRollerBallSpotFX_DeletingDtor };
+
+/* 0x0018fe10  RollerBall (gap): spot effect constructor */
+void *CRollerBallSpot_Ctor(void *self)
+{
+	*(const void *const **)self = vtable_00274680;
+	rbb_Particle_19d120(RB_P(self, 0x1c));
+	return self;
+}
+
+/* 0x0018fe30  RollerBall (gap): spot effect destructor */
+void CRollerBallSpot_Dtor(void *self)
+{
+	*(const void *const **)self = vtable_00274680;
+	rbb_ParticlesDtor(RB_P(self, 0x1c));
+}
+
+/* 0x0018fe40  RollerBall (gap): constructor (the ten effects, array constructor iterator) */
+void *CRollerBallSpotFX_Ctor(void *self)
+{
+	int i;
+
+	*(const void *const **)self = vtable_00274684;
+	for (i = 0; i < 10; i++)
+		CRollerBallSpot_Ctor((unsigned char *)self + 4 + i * 0x88);
+	return self;
+}
+
+/* 0x0018fe70  RollerBall (gap): destructor (array destructor iterator, last first) */
+void CRollerBallSpotFX_Dtor(void *self)
+{
+	int i;
+
+	*(const void *const **)self = vtable_00274684;
+	for (i = 9; i >= 0; i--)
+		CRollerBallSpot_Dtor((unsigned char *)self + 4 + i * 0x88);
+}
+
+/* 0x0018fe90  RollerBall (gap): Shutdown: every emitter's virtual +0 */
+void CRollerBallSpotFX_Shutdown(void *self)
+{
+	unsigned char *ps;
+	int i;
+
+	for (i = 0; i < 10; i++) {
+		ps = (unsigned char *)self + 0x20 + i * 0x88;
+		RB_VFN(ps, 0x00, void (*)(void *))(ps);
+	}
+}
+
+/* 0x0018fec0  RollerBall (gap)
+Update: active effects age and update their emitter (virtual +4); a dead emitter
+(+0x50 of the emitter) ends the effect. */
+void CRollerBallSpotFX_Update(void *self, float dt)
+{
+	unsigned char *ps;
+	int i;
+
+	for (i = 0; i < 10; i++) {
+		ps = (unsigned char *)self + 0x20 + i * 0x88;
+		if (RB_U8(ps, -8) == 0)
+			continue;
+		RB_F32(ps, -4) = dt + RB_F32(ps, -4);
+		RB_VFN(ps, 0x04, void (*)(void *, float))(ps, dt);
+		if (RB_U8(ps, 0x50) == 0) {
+			RB_U8(ps, -8) = 0;
+			RB_U8(ps, -7) = 0;
+		}
+	}
+}
+
+/* 0x0018ff10  RollerBall (gap): Draw: visible effects (virtual +8 of the emitter) */
+void CRollerBallSpotFX_Draw(void *self)
+{
+	unsigned char *ps;
+	int i;
+
+	for (i = 0; i < 10; i++) {
+		ps = (unsigned char *)self + 0x20 + i * 0x88;
+		if (RB_U8(ps, -7) != 0)
+			RB_VFN(ps, 0x08, void (*)(void *))(ps);
+	}
+}
+
+/* 0x0018ff40  RollerBall (gap): spot effect deleting destructor (flags bit 0: free) */
+void *CRollerBallSpot_DeletingDtor(void *self, unsigned int flags)
+{
+	CRollerBallSpot_Dtor(self);
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x0018ff60  RollerBall (gap): deleting destructor (flags bit 0: free) */
+void *CRollerBallSpotFX_DeletingDtor(void *self, unsigned int flags)
+{
+	CRollerBallSpotFX_Dtor(self);
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x0018ff80  RollerBall (gap)
+Initialise: every emitter gets 50 particles, the textures game +0x1ef0 / +0x1ef4, and is
+reset (virtual +0xc); no effect is active. Returns 1. */
+int CRollerBallSpotFX_Init(void *self, void *package)
+{
+	unsigned char *ps;
+	int i;
+
+	(void)package;
+	for (i = 0; i < 10; i++) {
+		ps = (unsigned char *)self + 0x20 + i * 0x88;
+		rbb_Particle_19d150(ps, NULL, 0x32);
+		CParticleSystem_SetTexture((struct CPSHeader *)ps, RB_I32(RB_GAME, 0x1ef0));
+		rbb_Particle_19d110(ps, RB_I32(RB_GAME, 0x1ef4));
+		RB_U8(ps, -8) = 0;
+		RB_U8(ps, -7) = 0;
+		RB_F32(ps, -4) = 0.0f;
+		RB_VFN(ps, 0x0c, void (*)(void *))(ps);
+	}
+	return 1;
+}
+
+/* 0x0018fff0  RollerBall (gap)
+Starts a spot effect at POS moving along DIR for DURATION (x 50 particles): a free effect
+(or one whose emitter has room), else the oldest. */
+void CRollerBallSpotFX_Spawn(void *self, const float *pos, const float *dir, float duration)
+{
+	unsigned char *e = NULL, *c;
+	float oldest = 0.0f;
+	int n, i;
+
+	n = RB_FTOL(duration * 50.0f);
+	for (i = 0; i < 10; i++) {
+		c = (unsigned char *)self + 4 + i * 0x88;
+		if (RB_U8(c, 0x14) == 0 || n < RB_I32(c, 0x2c) - RB_I32(c, 0x30)) {
+			e = c;
+			break;
+		}
+		if (oldest <= RB_F32(c, 0x18)) {
+			e = c;
+			oldest = RB_F32(c, 0x18);
+		}
+	}
+	RB_F32(e, 4) = pos[0];
+	RB_F32(e, 8) = pos[1];
+	RB_F32(e, 0xc) = pos[2];
+	RB_F32(e, 0x10) = pos[3];
+	CParticleSystem_SetPosition((struct CPSHeader *)RB_P(e, 0x1c), (float *)pos);
+	RbParticle_SetDirection(RB_P(e, 0x1c), dir);
+	RB_F32(e, 0x80) = duration;
+	rbb_Particle_19d0c0(RB_P(e, 0x1c), n);
+	RB_U8(e, 0x6c) = 1;
+	RB_U8(e, 0x14) = 1;
+	RB_U8(e, 0x15) = 1;
+	RB_F32(e, 0x18) = 0.0f;
+}
+
+/* ======================================================================== HUD (+0x201c) */
+
+/* +4 an overlay list (classlib_ui), +0x10 the players' scores (4 ints). */
+
+/* 0x00274688  vtable of the HUD system */
+const void *const vtable_00274688[1] = { (const void *)CRollerBallHud_DeletingDtor };
+
+/* 0x001900b0  RollerBall (gap): constructor */
+void *CRollerBallHud_Ctor(void *self)
+{
+	*(const void *const **)self = vtable_00274688;
+	CLList_Init((int *)RB_P(self, 4));
+	return self;
+}
+
+/* 0x001900d0  RollerBall (gap): destructor (the list's destructor is empty) */
+void CRollerBallHud_Dtor(void *self)
+{
+	*(const void *const **)self = vtable_00274688;
+	FUN_001d5950();
+}
+
+/* 0x001900e0  RollerBall (gap): Draw: the overlays (with z) */
+void CRollerBallHud_Draw(void *self)
+{
+	(void)self;
+	if (RB_I32(RB_GAME, 0x13b0) == 2)
+		FUN_001d5950();
+	COverlay_DrawAll(1);
+}
+
+/* 0x00190100  RollerBall (gap): the race laps on the HUD bars (3, a finished player 4) */
+void CRollerBallHud_SetLaps(void *self)
+{
+	unsigned char *p;
+	int i = 0;
+
+	(void)self;
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p), i++)
+		CLHud_SetFraction(DAT_002ecfac, i,
+			RB_I32(p, RB_PL_41F0) < 3 ? RB_I32(p, RB_PL_SCORE) : 4, 3);
+}
+
+/* 0x00190140  RollerBall (gap): deleting destructor (flags bit 0: free) */
+void *CRollerBallHud_DeletingDtor(void *self, unsigned int flags)
+{
+	CRollerBallHud_Dtor(self);
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x00190160  RollerBall (gap)
+Begin: the overlays, projector, score boxes and bars, zero scores, debris (1000), the
+referee bot, then by variation the score texts and bar positions (classlib_ui's
+DAT_002ecf90 / DAT_00290be4 tables) and the clock (60 s, 120 s for the races; none for
+the drop variation). */
+void CRollerBallHud_Begin(void *self)
+{
+	float *x = (float *)DAT_002ecf90;
+	float clock = 0.0f;
+
+	FUN_00072720((undefined4)(uintptr_t)RB_P(self, 4));
+	CProjector_Reset();
+	CLHud_CreateScoreBoxes(DAT_002ecfac);
+	CLHud_CreateBars(DAT_002ecfac);
+	RB_I32(DAT_002ecfac, 0x3c) = 0;
+	RB_F32(DAT_002ecfac, 0x40) = 1.0f;
+	RB_I32(self, 0x10) = 0;
+	RB_I32(self, 0x14) = 0;
+	RB_I32(self, 0x18) = 0;
+	RB_I32(self, 0x1c) = 0;
+	Debris_Init(NULL, 1000);
+	RefBot_Create();
+	switch (RB_I32(RB_GAME, RB_GO_VARIATION)) {
+	case 0:
+		clock = 60.0f;
+		CLHud_CreateScoreTexts(DAT_002ecfac, (int *)RB_P(self, 0x10));
+		x[0] = 15.0f;
+		DAT_00290be4[0] = 40.0f;
+		x[1] = 0.0f;
+		DAT_00290be4[1] = 40.0f;
+		x[2] = 5.0f;
+		DAT_00290be4[2] = 35.0f;
+		x[3] = -10.0f;
+		DAT_00290be4[3] = 40.0f;
+		break;
+	case 1:
+		clock = 60.0f;
+		x[0] = 5.0f;
+		DAT_00290be4[0] = 40.0f;
+		x[1] = -13.0f;
+		DAT_00290be4[1] = 40.0f;
+		x[2] = -5.0f;
+		DAT_00290be4[2] = 40.0f;
+		x[3] = 13.0f;
+		DAT_00290be4[3] = 40.0f;
+		break;
+	case 2:
+		clock = 120.0f;
+		CLHud_CreateScoreTexts(DAT_002ecfac, (int *)RB_P(self, 0x10));
+		break;
+	case 3:
+		clock = 120.0f;
+		CLHud_CreateScoreLabels(DAT_002ecfac, (char *)"", 1);
+		break;
+	case 4:
+		clock = 60.0f;
+		CLHud_CreateScoreTexts(DAT_002ecfac, (int *)RB_P(self, 0x10));
+		break;
+	}
+	if (RB_I32(RB_GAME, RB_GO_VARIATION) == 4)
+		CLHud_CreateClock(DAT_002ecfac, -1.0f);
+	else
+		CLHud_CreateClock(DAT_002ecfac, clock);
+}
+
+/* 0x00190330  RollerBall (gap)
+Update: the scores (race: the laps), the progress bars (HUD +0x4c..), the clock (none for
+the drop variation), the bars, the referee bot, the overlays and the projector. */
+void CRollerBallHud_Update(void *self, float dt)
+{
+	unsigned char *p;
+	int *score;
+	int off;
+
+	(void)dt;
+	if (RB_I32(RB_GAME, RB_GO_VARIATION) == 3) {
+		CRollerBallHud_SetLaps(self);
+	} else {
+		score = (int *)RB_P(self, 0x10);
+		for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p), score++)
+			*score = RB_I32(p, RB_PL_SCORE);
+		CLHud_SetScores(DAT_002ecfac, (int *)RB_P(self, 0x10));
+	}
+	off = 0x4c;
+	for (p = RB_FIRST_PLAYER(); p != NULL; p = RB_NEXT(p), off += 4)
+		RB_F32(DAT_002ecfac, off) = RB_F32(p, 0x41ec);
+	if (RB_I32(RB_GAME, RB_GO_VARIATION) == 4)
+		CLHud_SetClock(DAT_002ecfac, -1.0f, 1);
+	else
+		CLHud_SetClock(DAT_002ecfac, CRollerBallTimer_Remaining(RB_GAME + RB_GO_COUNTDOWN), 1);
+	CLHud_UpdateBars(DAT_002ecfac);
+	RefBot_Update();
+	COverlay_UpdateAll();
+	CProjector_UpdateAll();
+}
+
+/* ======================================================================== texture animations (+0x1ee0) */
+
+/* +4.. 7 textures (spotfx\sprites\..., 0x002b5068), +0x20 ten animations of 0x1c bytes
+(vtable 0x00274708: +4 texture, +8 first frame, +0xa last, +0xc frames, +0xe frame,
++0x10 flags (1 loop, 2 ping-pong), +0x12 running, +0x13 backwards, +0x14 time, +0x18 time
+per frame), +0x138 their count. */
+
+/* 0x00274708  vtable of a texture animation */
+const void *const vtable_00274708[1] = { (const void *)CRollerBallTexAnim_DeletingDtor };
+
+/* 0x0027470c  vtable of the texture animation system */
+const void *const vtable_0027470c[1] = { (const void *)CRollerBallTextures_DeletingDtor };
+
+/* 0x00190400  RollerBall (missing from the table: the array constructor callback of
+0x001904f0): texture animation constructor */
+void FUN_00190400(void *self)
+{
+	*(const void *const **)self = vtable_00274708;
+}
+
+/* 0x00190410  RollerBall (missing from the table: the array destructor callback):
+texture animation destructor */
+void FUN_00190410(void *self)
+{
+	*(const void *const **)self = vtable_00274708;
+}
+
+/* 0x00190420  RollerBall (gap)
+Update of an animation: every PERIOD the next frame (once: stops at the last; loop: back
+to the first; ping-pong: turns at both ends); the texture shows the frame. */
+void CRollerBallTexAnim_Update(void *self, float dt)
+{
+	float t = dt + RB_F32(self, 0x14);
+
+	RB_F32(self, 0x14) = t;
+	if (!(RB_F32(self, 0x18) < t))
+		return;
+	while (RB_F32(self, 0x18) < RB_F32(self, 0x14))
+		RB_F32(self, 0x14) = RB_F32(self, 0x14) - RB_F32(self, 0x18);
+	if ((RB_U16(self, 0x10) & 1) == 0) {
+		RB_I16(self, 0xe) = (short)(RB_I16(self, 0xe) + 1);
+		if (RB_I16(self, 0xa) <= RB_I16(self, 0xe))
+			RB_U8(self, 0x12) = 0;
+	} else if ((RB_U16(self, 0x10) & 2) == 0) {
+		RB_I16(self, 0xe) = (short)(RB_I16(self, 0xe) + 1);
+		if (RB_I16(self, 0xa) <= RB_I16(self, 0xe))
+			RB_I16(self, 0xe) = RB_I16(self, 8);
+	} else if (RB_U8(self, 0x13) == 0) {
+		RB_I16(self, 0xe) = (short)(RB_I16(self, 0xe) + 1);
+		if (RB_I16(self, 0xa) <= RB_I16(self, 0xe)) {
+			RB_I16(self, 0xe) = (short)(RB_I16(self, 0xe) - 1);
+			RB_U8(self, 0x13) = 1;
+		}
+	} else {
+		RB_I16(self, 0xe) = (short)(RB_I16(self, 0xe) - 1);
+		if (RB_I16(self, 0xe) < RB_I16(self, 8)) {
+			RB_I16(self, 0xe) = (short)(RB_I16(self, 0xe) + 1);
+			RB_U8(self, 0x13) = 0;
+		}
+	}
+	bdTextureSetFrame(RB_PTR(self, 4), RB_I16(self, 0xe));
+}
+
+/* 0x001904f0  RollerBall (gap): constructor (the ten animations) */
+void *CRollerBallTextures_Ctor(void *self)
+{
+	int i;
+
+	*(const void *const **)self = vtable_0027470c;
+	for (i = 0; i < 10; i++)
+		FUN_00190400((unsigned char *)self + 0x20 + i * 0x1c);
+	return self;
+}
+
+/* 0x00190520  RollerBall (gap): destructor (the ten animations, last first) */
+void CRollerBallTextures_Dtor(void *self)
+{
+	int i;
+
+	*(const void *const **)self = vtable_0027470c;
+	for (i = 9; i >= 0; i--)
+		FUN_00190410((unsigned char *)self + 0x20 + i * 0x1c);
+}
+
+/* 0x00190540  RollerBall (gap)
+Initialise: no animations; the 7 sprite textures (0x002b5068). Returns 0 when one is
+missing. */
+int CRollerBallTextures_Init(void *self, void *package)
+{
+	const char *const *name = (const char *const *)RB_ADDR(0x002b5068u);
+	struct bkResource **slot = (struct bkResource **)RB_P(self, 4);
+	int i;
+
+	(void)package;
+	RB_I32(self, 0x138) = 0;
+	for (i = 0; i < 7; i++, name++, slot++) {
+		*slot = bLoadResource(NULL, *name, 0, 0xdefa);
+		if (*slot == NULL)
+			return 0;
+	}
+	return 1;
+}
+
+/* 0x00190590  RollerBall (gap): Update: every running animation */
+void CRollerBallTextures_Update(void *self, float dt)
+{
+	int i;
+
+	for (i = 0; i < RB_I32(self, 0x138); i++) {
+		if (RB_U8(self, 0x20 + i * 0x1c + 0x12) != 0)
+			CRollerBallTexAnim_Update((unsigned char *)self + 0x20 + i * 0x1c, dt);
+	}
+}
+
+/* 0x001905e0  RollerBall (gap): texture animation deleting destructor */
+void *CRollerBallTexAnim_DeletingDtor(void *self, unsigned int flags)
+{
+	*(const void *const **)self = vtable_00274708;
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}
+
+/* 0x00190600  RollerBall (gap): deleting destructor (flags bit 0: free) */
+void *CRollerBallTextures_DeletingDtor(void *self, unsigned int flags)
+{
+	CRollerBallTextures_Dtor(self);
+	if ((flags & 1) != 0)
+		RB_DELETE(self);
+	return self;
+}

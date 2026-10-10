@@ -242,6 +242,8 @@ extern int DAT_002bc40c, DAT_002bc410; /* bdisplay: the screen width and height 
 extern void *DAT_002bc47c;          /* bdisplay: the D3D device */
 extern long long DAT_002cd7a0;      /* bkernel: timer ticks per second */
 extern float DAT_00285644;          /* engine_misc: the collision rest threshold */
+extern int DAT_002ecf90[4];         /* classlib_ui: HUD score text x offsets (float bits) */
+extern float DAT_00290be4[4];       /* classlib_ui: HUD score text y offsets */
 
 /* the kernel debug break (xkernel HLE: logs and continues) */
 void DbgBreakPoint(void);
@@ -265,8 +267,8 @@ void FUN_00188fa0(void *self);                     /* game: start (jmp from 0x00
 void FUN_001890e0(void *self, int run);            /* game: update (jmp from 0x001986a6) */
 void FUN_001892e0(void *self, int draw);           /* game: render (jmp from 0x001986b6) */
 int FUN_0018ddf0(void *a, int b, void *c);         /* video screen texture callback */
-void FUN_00190400(void *self);                     /* (vtable 0x00274708) */
-void FUN_00190410(void *self);
+void FUN_00190400(void *self);                     /* texture animation constructor */
+void FUN_00190410(void *self);                     /* texture animation destructor */
 int FUN_00190b70(void *a, void *b, void *c, void *d, void *e); /* respawn callback */
 
 #endif
