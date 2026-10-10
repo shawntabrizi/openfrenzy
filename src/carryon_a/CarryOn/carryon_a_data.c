@@ -383,6 +383,7 @@ __asm__(
 	".globl DAT_00293a58\n.set DAT_00293a58, of_co_data + 0x8\n"  /* 0x00293a58 */
 	".globl DAT_00293a5c\n.set DAT_00293a5c, of_co_data + 0xc\n"  /* 0x00293a5c */
 	".globl DAT_00293a60\n.set DAT_00293a60, of_co_data + 0x10\n"  /* 0x00293a60 */
+	".globl DAT_00293a68\n.set DAT_00293a68, of_co_data + 0x18\n"  /* 0x00293a68 */
 	".globl DAT_00293a6c\n.set DAT_00293a6c, of_co_data + 0x1c\n"  /* 0x00293a6c */
 	".globl DAT_00293a74\n.set DAT_00293a74, of_co_data + 0x24\n"  /* 0x00293a74 */
 	".globl DAT_00293ac8\n.set DAT_00293ac8, of_co_data + 0x78\n"  /* 0x00293ac8 */
@@ -411,6 +412,7 @@ __asm__(
 	".globl DAT_00293d54\n.set DAT_00293d54, of_co_data + 0x304\n"  /* 0x00293d54 */
 	".globl DAT_00293d58\n.set DAT_00293d58, of_co_data + 0x308\n"  /* 0x00293d58 */
 	".globl DAT_00293d5c\n.set DAT_00293d5c, of_co_data + 0x30c\n"  /* 0x00293d5c */
+	".globl DAT_00293d60\n.set DAT_00293d60, of_co_data + 0x310\n"  /* 0x00293d60 */
 	".globl DAT_00293e20\n.set DAT_00293e20, of_co_data + 0x3d0\n"  /* 0x00293e20 */
 	".globl DAT_00293e24\n.set DAT_00293e24, of_co_data + 0x3d4\n"  /* 0x00293e24 */
 	".globl DAT_00293e28\n.set DAT_00293e28, of_co_data + 0x3d8\n"  /* 0x00293e28 */
@@ -433,8 +435,10 @@ __asm__(
 	".globl DAT_00293f48\n.set DAT_00293f48, of_co_data2 + 0x34\n"  /* 0x00293f48 */
 	".globl DAT_00293f4c\n.set DAT_00293f4c, of_co_data2 + 0x38\n"  /* 0x00293f4c */
 	".globl DAT_00293fc0\n.set DAT_00293fc0, of_co_data2 + 0xac\n"  /* 0x00293fc0 */
+	".globl DAT_00293fd0\n.set DAT_00293fd0, of_co_data2 + 0xbc\n"  /* 0x00293fd0 */
 	".globl DAT_00293fe8\n.set DAT_00293fe8, of_co_data2 + 0xd4\n"  /* 0x00293fe8 */
 	".globl DAT_00293ff8\n.set DAT_00293ff8, of_co_data2 + 0xe4\n"  /* 0x00293ff8 */
+	".globl DAT_00294008\n.set DAT_00294008, of_co_data2 + 0xf4\n"  /* 0x00294008 */
 	".globl DAT_00294018\n.set DAT_00294018, of_co_data2 + 0x104\n"  /* 0x00294018 */
 	".globl DAT_00294028\n.set DAT_00294028, of_co_data2 + 0x114\n"  /* 0x00294028 */
 	".globl DAT_00294040\n.set DAT_00294040, of_co_data2 + 0x12c\n"  /* 0x00294040 */

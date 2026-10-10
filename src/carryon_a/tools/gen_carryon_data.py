@@ -66,6 +66,7 @@ def module_names():
         if os.path.exists(p):
             for full, addr in NAME_RE.findall(open(p, errors="replace").read()):
                 used.add(int(addr, 16))
+    used.update(header_only_names())
     return used
 
 NAME_RE = re.compile(r"\b((?:_?DAT|PTR_[A-Za-z0-9_]*?|s_[A-Za-z0-9_]*?|u_[A-Za-z0-9_]*?)_(00[23][0-9a-f]{5}))\b")
@@ -79,7 +80,23 @@ def ghidra_names():
             continue
         for full, addr in NAME_RE.findall(open(os.path.join(funcs, f), errors="replace").read()):
             names.setdefault(int(addr, 16), set()).update((full, "DAT_" + addr))
+    for addr in header_only_names():
+        names.setdefault(addr, set()).add("DAT_%08x" % addr)
     return names
+
+
+def header_only_names():
+    """Addresses that carryon_a_data.h names but no Ghidra output spells exactly (a table
+    reached through an offset, e.g. DAT_00293fd0 as &DAT_00293fd4 - 4). Their aliases are
+    strong: only this module uses those names."""
+    seen = set()
+    funcs = os.path.join(ROOT, "export", "funcs")
+    for f in os.listdir(funcs):
+        if f.endswith(".c"):
+            for full, addr in NAME_RE.findall(open(os.path.join(funcs, f), errors="replace").read()):
+                seen.add(int(addr, 16))
+    header = open(os.path.join(ROOT, "src", "carryon_a", "carryon_a_data.h")).read()
+    return {int(a, 16) for a in re.findall(r"\bDAT_(00[23][0-9a-f]{5})\b", header)} - seen
 
 
 def function_starts():
