@@ -48,3 +48,45 @@ __attribute__((weak)) uint32_t DAT_00285630 = 1;    /* 0x00285630 libc rand seed
 __attribute__((weak)) int DAT_00281b0c[3] = { 0x3c, 0x3c, 0x3c };  /* 0x00281b0c core_modes_a */
 __attribute__((weak)) int DAT_00281b18[3] = { 0xff, 0xff, 0xff };  /* 0x00281b18 core_modes_a */
 __attribute__((weak)) float DAT_00292c84 = 4.0f;     /* 0x00292c84 (used by the tweak constructor) */
+
+/* placeholders for the objects and vtables the exit functions of crt/static_init.c write */
+__attribute__((weak)) unsigned char DAT_002ba7a4[4];  /* 0x002ba7a4 */
+__attribute__((weak)) const void *const vtable_000[1] = { 0 };  /* 0x000 */
+__attribute__((weak)) unsigned char DAT_00293ad8[4];  /* 0x00293ad8 */
+__attribute__((weak)) const void *const vtable_00267468[1] = { 0 };  /* 0x00267468 */
+__attribute__((weak)) unsigned char DAT_00296ee4[4];  /* 0x00296ee4 */
+__attribute__((weak)) const void *const vtable_00269648[1] = { 0 };  /* 0x00269648 */
+__attribute__((weak)) unsigned char DAT_00298da0[4];  /* 0x00298da0 */
+__attribute__((weak)) const void *const vtable_0026c294[1] = { 0 };  /* 0x0026c294 */
+__attribute__((weak)) unsigned char DAT_00298e70[4];  /* 0x00298e70 */
+__attribute__((weak)) const void *const vtable_0026c2ec[1] = { 0 };  /* 0x0026c2ec */
+__attribute__((weak)) unsigned char DAT_002a54d8[4];  /* 0x002a54d8 */
+__attribute__((weak)) const void *const vtable_0026c310[1] = { 0 };  /* 0x0026c310 */
+__attribute__((weak)) unsigned char DAT_002aa830[4];  /* 0x002aa830 */
+__attribute__((weak)) const void *const vtable_0026c568[1] = { 0 };  /* 0x0026c568 */
+__attribute__((weak)) unsigned char DAT_002aa900[4];  /* 0x002aa900 */
+__attribute__((weak)) const void *const vtable_0026c5a0[1] = { 0 };  /* 0x0026c5a0 */
+__attribute__((weak)) unsigned char DAT_002aaaf8[4];  /* 0x002aaaf8 */
+__attribute__((weak)) const void *const vtable_0026cb20[1] = { 0 };  /* 0x0026cb20 */
+__attribute__((weak)) unsigned char DAT_002aab08[4];  /* 0x002aab08 */
+__attribute__((weak)) const void *const vtable_0026cb7c[1] = { 0 };  /* 0x0026cb7c */
+__attribute__((weak)) unsigned char DAT_002aadf8[4];  /* 0x002aadf8 */
+__attribute__((weak)) const void *const vtable_0026cbac[1] = { 0 };  /* 0x0026cbac */
+__attribute__((weak)) unsigned char DAT_002aae60[4];  /* 0x002aae60 */
+__attribute__((weak)) const void *const vtable_0026cc44[1] = { 0 };  /* 0x0026cc44 */
+__attribute__((weak)) unsigned char DAT_002ae878[4];  /* 0x002ae878 */
+__attribute__((weak)) const void *const vtable_0026e330[1] = { 0 };  /* 0x0026e330 */
+__attribute__((weak)) unsigned char DAT_002ae948[4];  /* 0x002ae948 */
+__attribute__((weak)) const void *const vtable_0026e510[1] = { 0 };  /* 0x0026e510 */
+__attribute__((weak)) unsigned char DAT_002aebd8[4];  /* 0x002aebd8 */
+__attribute__((weak)) const void *const vtable_0026edb8[1] = { 0 };  /* 0x0026edb8 */
+__attribute__((weak)) unsigned char DAT_002aec10[4];  /* 0x002aec10 */
+__attribute__((weak)) const void *const vtable_0026edd4[1] = { 0 };  /* 0x0026edd4 */
+__attribute__((weak)) unsigned char DAT_002afe80[4];  /* 0x002afe80 */
+__attribute__((weak)) const void *const vtable_0026eeb4[1] = { 0 };  /* 0x0026eeb4 */
+__attribute__((weak)) unsigned char DAT_002affa0[4];  /* 0x002affa0 */
+__attribute__((weak)) const void *const vtable_0026eeb8[1] = { 0 };  /* 0x0026eeb8 */
+__attribute__((weak)) unsigned char DAT_002b0038[4];  /* 0x002b0038 */
+__attribute__((weak)) const void *const vtable_0026f038[1] = { 0 };  /* 0x0026f038 */
+__attribute__((weak)) unsigned char DAT_002b0378[4];  /* 0x002b0378 */
+__attribute__((weak)) const void *const vtable_0026f05c[1] = { 0 };  /* 0x0026f05c */

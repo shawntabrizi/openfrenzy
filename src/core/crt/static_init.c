@@ -8,8 +8,10 @@ destructor. Generated from the disassembly (core agent script), then checked by 
 
 The objects belong to other modules. They are tentative definitions here (merged with the
 owner's by -fcommon), sized to cover what the constructor writes. Objects at 0x002ba4f0 and
-0x002bae5c are in the core block (core_data.h). The 19 exit functions that store a
-base-class vtable into an initialised object are stubs (see each one).
+0x002bae5c are in the core block (core_data.h). 19 exit functions store a base-class
+vtable into an initialised object of another module; the object and vtable symbols have
+weak placeholders in crt/core_foreign.c until their owners define them (only the first
+word is written, so a smaller owner definition is safe).
 
 Note: the original never runs the exit functions (main never returns on the Xbox). In the
 port they run when of_boot.c returns from main().
@@ -108,6 +110,47 @@ uint32_t DAT_002aa994[8];  /* 0x002aa994 */
 uint32_t DAT_002aec24[8];  /* 0x002aec24 */
 uint32_t DAT_002cce60[10];  /* 0x002cce60: bkernel resource type tags */
 
+extern unsigned char DAT_002ba7a4[];
+extern const void *const vtable_000[];
+extern unsigned char DAT_00293ad8[];
+extern const void *const vtable_00267468[];
+extern unsigned char DAT_00296ee4[];
+extern const void *const vtable_00269648[];
+extern unsigned char DAT_00298da0[];
+extern const void *const vtable_0026c294[];
+extern unsigned char DAT_00298e70[];
+extern const void *const vtable_0026c2ec[];
+extern unsigned char DAT_002a54d8[];
+extern const void *const vtable_0026c310[];
+extern unsigned char DAT_002aa830[];
+extern const void *const vtable_0026c568[];
+extern unsigned char DAT_002aa900[];
+extern const void *const vtable_0026c5a0[];
+extern unsigned char DAT_002aaaf8[];
+extern const void *const vtable_0026cb20[];
+extern unsigned char DAT_002aab08[];
+extern const void *const vtable_0026cb7c[];
+extern unsigned char DAT_002aadf8[];
+extern const void *const vtable_0026cbac[];
+extern unsigned char DAT_002aae60[];
+extern const void *const vtable_0026cc44[];
+extern unsigned char DAT_002ae878[];
+extern const void *const vtable_0026e330[];
+extern unsigned char DAT_002ae948[];
+extern const void *const vtable_0026e510[];
+extern unsigned char DAT_002aebd8[];
+extern const void *const vtable_0026edb8[];
+extern unsigned char DAT_002aec10[];
+extern const void *const vtable_0026edd4[];
+extern unsigned char DAT_002afe80[];
+extern const void *const vtable_0026eeb4[];
+extern unsigned char DAT_002affa0[];
+extern const void *const vtable_0026eeb8[];
+extern unsigned char DAT_002b0038[];
+extern const void *const vtable_0026f038[];
+extern unsigned char DAT_002b0378[];
+extern const void *const vtable_0026f05c[];
+
 /* ====================================================================== exit functions */
 
 /* 0x001f4e10  LIB:crt_exit (missing from the function table): destroy the object at 0x002ba4f0 */
@@ -187,9 +230,8 @@ void FUN_001f4ee0(void)
 /* 0x001f4ef0  LIB:crt_exit */
 void FUN_001f4ef0(void)
 {
-	/* STUB: the original stores vtable 0x00267468 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x00293ad8. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x00293ad8 gets vtable 0x00267468 */
+	*(const void *const **)DAT_00293ad8 = vtable_00267468;
 }
 
 /* 0x001f4f00  LIB:crt_exit */
@@ -207,9 +249,8 @@ void FUN_001f4f10(void)
 /* 0x001f4f20  LIB:crt_exit */
 void FUN_001f4f20(void)
 {
-	/* STUB: the original stores vtable 0x00269648 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x00296ee4. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x00296ee4 gets vtable 0x00269648 */
+	*(const void *const **)DAT_00296ee4 = vtable_00269648;
 }
 
 /* 0x001f4f30  LIB:crt_exit */
@@ -233,73 +274,64 @@ void FUN_001f4f50(void)
 /* 0x001f4f60  LIB:crt_exit */
 void FUN_001f4f60(void)
 {
-	/* STUB: the original stores vtable 0x0026c294 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x00298da0. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x00298da0 gets vtable 0x0026c294 */
+	*(const void *const **)DAT_00298da0 = vtable_0026c294;
 }
 
 /* 0x001f4f70  LIB:crt_exit */
 void FUN_001f4f70(void)
 {
-	/* STUB: the original stores vtable 0x0026c2ec (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x00298e70. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x00298e70 gets vtable 0x0026c2ec */
+	*(const void *const **)DAT_00298e70 = vtable_0026c2ec;
 }
 
 /* 0x001f4f80  LIB:crt_exit */
 void FUN_001f4f80(void)
 {
-	/* STUB: the original stores vtable 0x0026c310 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002a54d8. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002a54d8 gets vtable 0x0026c310 */
+	*(const void *const **)DAT_002a54d8 = vtable_0026c310;
 }
 
 /* 0x001f4f90  LIB:crt_exit */
 void FUN_001f4f90(void)
 {
-	/* STUB: the original stores vtable 0x0026c568 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002aa830. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002aa830 gets vtable 0x0026c568 */
+	*(const void *const **)DAT_002aa830 = vtable_0026c568;
 }
 
 /* 0x001f4fa0  LIB:crt_exit */
 void FUN_001f4fa0(void)
 {
-	/* STUB: the original stores vtable 0x0026c5a0 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002aa900. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002aa900 gets vtable 0x0026c5a0 */
+	*(const void *const **)DAT_002aa900 = vtable_0026c5a0;
 }
 
 /* 0x001f4fb0  LIB:crt_exit */
 void FUN_001f4fb0(void)
 {
-	/* STUB: the original stores vtable 0x0026cb20 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002aaaf8. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002aaaf8 gets vtable 0x0026cb20 */
+	*(const void *const **)DAT_002aaaf8 = vtable_0026cb20;
 }
 
 /* 0x001f4fc0  LIB:crt_exit */
 void FUN_001f4fc0(void)
 {
-	/* STUB: the original stores vtable 0x0026cb7c (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002aab08. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002aab08 gets vtable 0x0026cb7c */
+	*(const void *const **)DAT_002aab08 = vtable_0026cb7c;
 }
 
 /* 0x001f4fd0  LIB:crt_exit */
 void FUN_001f4fd0(void)
 {
-	/* STUB: the original stores vtable 0x0026cbac (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002aadf8. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002aadf8 gets vtable 0x0026cbac */
+	*(const void *const **)DAT_002aadf8 = vtable_0026cbac;
 }
 
 /* 0x001f4fe0  LIB:crt_exit */
 void FUN_001f4fe0(void)
 {
-	/* STUB: the original stores vtable 0x0026cc44 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002aae60. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002aae60 gets vtable 0x0026cc44 */
+	*(const void *const **)DAT_002aae60 = vtable_0026cc44;
 }
 
 /* 0x001f4ff0  LIB:crt_exit */
@@ -359,9 +391,8 @@ void FUN_001f5070(void)
 /* 0x001f5080  LIB:crt_exit */
 void FUN_001f5080(void)
 {
-	/* STUB: the original stores vtable 0x0026e330 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002ae878. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002ae878 gets vtable 0x0026e330 */
+	*(const void *const **)DAT_002ae878 = vtable_0026e330;
 }
 
 /* 0x001f5090  LIB:crt_exit */
@@ -379,57 +410,50 @@ void FUN_001f50a0(void)
 /* 0x001f50b0  LIB:crt_exit */
 void FUN_001f50b0(void)
 {
-	/* STUB: the original stores vtable 0x0026e510 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002ae948. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002ae948 gets vtable 0x0026e510 */
+	*(const void *const **)DAT_002ae948 = vtable_0026e510;
 }
 
 /* 0x001f50c0  LIB:crt_exit */
 void FUN_001f50c0(void)
 {
-	/* STUB: the original stores vtable 0x0026edb8 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002aebd8. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002aebd8 gets vtable 0x0026edb8 */
+	*(const void *const **)DAT_002aebd8 = vtable_0026edb8;
 }
 
 /* 0x001f50d0  LIB:crt_exit */
 void FUN_001f50d0(void)
 {
-	/* STUB: the original stores vtable 0x0026edd4 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002aec10. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002aec10 gets vtable 0x0026edd4 */
+	*(const void *const **)DAT_002aec10 = vtable_0026edd4;
 }
 
 /* 0x001f50e0  LIB:crt_exit */
 void FUN_001f50e0(void)
 {
-	/* STUB: the original stores vtable 0x0026eeb4 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002afe80. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002afe80 gets vtable 0x0026eeb4 */
+	*(const void *const **)DAT_002afe80 = vtable_0026eeb4;
 }
 
 /* 0x001f50f0  LIB:crt_exit */
 void FUN_001f50f0(void)
 {
-	/* STUB: the original stores vtable 0x0026eeb8 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002affa0. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002affa0 gets vtable 0x0026eeb8 */
+	*(const void *const **)DAT_002affa0 = vtable_0026eeb8;
 }
 
 /* 0x001f5100  LIB:crt_exit */
 void FUN_001f5100(void)
 {
-	/* STUB: the original stores vtable 0x0026f038 (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002b0038. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002b0038 gets vtable 0x0026f038 */
+	*(const void *const **)DAT_002b0038 = vtable_0026f038;
 }
 
 /* 0x001f5110  LIB:crt_exit */
 void FUN_001f5110(void)
 {
-	/* STUB: the original stores vtable 0x0026f05c (a base-class vtable, inlined base
-	   destructor) into the first word of the initialised object at 0x002b0378. Not done:
-	   the owner of that class does not export the vtable symbol yet. Runs only at exit. */
+	/* the inlined base destructor: the object at 0x002b0378 gets vtable 0x0026f05c */
+	*(const void *const **)DAT_002b0378 = vtable_0026f05c;
 }
 
 /* 0x001f5120  LIB:crt_exit */

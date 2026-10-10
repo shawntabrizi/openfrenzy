@@ -73,6 +73,7 @@ void CMenuMode_Update(struct CMenuMode *self, int top)
 player in EBX, the flags from the compare). Nothing calls it. STUB: it logs and returns. */
 void FUN_0002fe6c(int *self)
 {
+	/* STUB (not a real function, see above) */
 	(void)self;
 	of_unimplemented(0x0002fe6c, "FUN_0002fe6c (interior of 0x0002fe60)");
 }
