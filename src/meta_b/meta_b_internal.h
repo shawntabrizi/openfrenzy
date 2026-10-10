@@ -346,4 +346,187 @@ extern struct MbList DAT_00308f3c;
 extern struct MbList DAT_00308f48;
 extern struct MbBombGroup DAT_00308f58[8];
 
+/* ---------- BigRedButton.cpp */
+
+/* an animation name and speed (0x44 bytes) */
+struct MbAnimName
+{
+	char name[0x40];
+	float speed;
+};
+OF_ASSERT_SIZE(struct MbAnimName, 0x44);
+
+/* a big red button (allocated by the level loader) */
+struct CBigRedButton
+{
+	int unk00[3];               /* +0x00 */
+	float pos[4];               /* +0x0c the bone's position */
+	float heading;              /* +0x1c the bone's heading */
+	float radius2;              /* +0x20 squared reach */
+	float tolerance;            /* +0x24 facing tolerance (radians) */
+	int unk28;                  /* +0x28 */
+	struct BActorNode *bone;    /* +0x2c */
+	int enabled;                /* +0x30 */
+	int mode;                   /* +0x34 */
+	int presses;                /* +0x38 */
+	int state;                  /* +0x3c */
+	int prevState;              /* +0x40 */
+	void *model;                /* +0x44 the button's model object */
+};
+OF_ASSERT_OFFSET(struct CBigRedButton, model, 0x44);
+
+extern struct MbAnimName DAT_002b0be8[2];
+extern int DAT_00309058;
+extern int DAT_0030905c;
+extern struct CBigRedButton *DAT_00309060[16];
+
+/* ---------- Searchlights.cpp, BigGun.cpp */
+
+/* the cutter's spark parameters (0x34 bytes at cutter +0x68) */
+struct MbCutterParams
+{
+	unsigned char flags;        /* +0x00 1: sparks alive, 2: not below their start */
+	unsigned char pad01[3];
+	float speed;                /* +0x04 */
+	float damping;              /* +0x08 */
+	float gravity;              /* +0x0c per frame */
+	float unk10;                /* +0x10 */
+	float unk14;                /* +0x14 */
+	int unk18;                  /* +0x18 */
+	int unk1c;                  /* +0x1c */
+	int sizeMin;                /* +0x20 */
+	int sizeRange;              /* +0x24 */
+	short colour[3];            /* +0x28 streak start colour */
+	short endColour[3];         /* +0x2e streak end and glow colour */
+};
+OF_ASSERT_SIZE(struct MbCutterParams, 0x34);
+
+/* a cutter spark (0x78 bytes); colours are 8.7 fixed point */
+struct MbSpark
+{
+	unsigned char flags;        /* +0x00 1: alive */
+	unsigned char pad01;
+	short age;                  /* +0x02 */
+	short life;                 /* +0x04 */
+	short pad06;
+	float pos[4];               /* +0x08 */
+	float prevPos[4];           /* +0x18 */
+	float vel[4];               /* +0x28 */
+	float origin[4];            /* +0x38 */
+	float size;                 /* +0x48 */
+	int unk4c;                  /* +0x4c */
+	int unk50[2];               /* +0x50 */
+	short colour[3];            /* +0x58 */
+	short pad5e;
+	short endColour[3];         /* +0x60 */
+	short pad66;
+	short colourStep[3];        /* +0x68 */
+	short pad6e;
+	short endColourStep[3];     /* +0x70 */
+	short pad76;
+};
+OF_ASSERT_SIZE(struct MbSpark, 0x78);
+
+/* the laser's cutter (0x9c bytes) */
+struct CBigGunCutter
+{
+	void *texScorch;            /* +0x00 cutterscorch.bmp */
+	void *texGlow;              /* +0x04 cutterglow.bmp */
+	float dir[4];               /* +0x08 sparks fly this way (0, 1, 0) */
+	int unk18;                  /* +0x18 */
+	struct MbSpark *sparks;     /* +0x1c */
+	int numSparks;              /* +0x20 */
+	int numActive;              /* +0x24 */
+	void *texture;              /* +0x28 of the streaks (NULL) */
+	float pos[4];               /* +0x2c */
+	int unk3c[8];               /* +0x3c */
+	struct bdVertexBuffer *vb;  /* +0x5c */
+	int unk60[2];               /* +0x60 */
+	struct MbCutterParams params; /* +0x68 */
+};
+OF_ASSERT_OFFSET(struct CBigGunCutter, vb, 0x5c);
+OF_ASSERT_SIZE(struct CBigGunCutter, 0x9c);
+
+/* a big gun's laser (0x74 bytes) */
+struct CBigGunLaser
+{
+	struct CBigGunCutter *cutter; /* +0x00 */
+	void *actor;                /* +0x04 the gun's actor */
+	float hit[4];               /* +0x08 where the beam ends */
+	float hitRaw[4];            /* +0x18 */
+	float muzzle[4];            /* +0x28 */
+	int unk38[8];               /* +0x38 */
+	void *trail;                /* +0x58 CProjTrail (the spiral) */
+	int unk5c;                  /* +0x5c */
+	int alpha;                  /* +0x60 fades after firing */
+	int firing;                 /* +0x64 */
+	int visible;                /* +0x68 */
+	float time;                 /* +0x6c */
+	float duration;             /* +0x70 */
+};
+OF_ASSERT_SIZE(struct CBigGunLaser, 0x74);
+
+/* a big gun (0x28 bytes) */
+struct CBigGun
+{
+	int id;                     /* +0x00 */
+	float pos[4];               /* +0x04 */
+	void *actor;                /* +0x14 */
+	struct BActorNode *bone;    /* +0x18 the laser bone that turns */
+	struct CBigGunLaser *laser; /* +0x1c */
+	void *next;                 /* +0x20 node of the list 0x00309268 */
+	void *prev;                 /* +0x24 */
+};
+OF_ASSERT_SIZE(struct CBigGun, 0x28);
+
+/* the key-framed path of a searchlight (a BKeyTrack3) */
+struct MbPath
+{
+	short count;                /* +0x00 */
+	short hasKeys;              /* +0x02 */
+	void *keys;                 /* +0x04 */
+};
+
+/* a searchlight (allocated by the level loader) */
+struct CSearchlight
+{
+	void *next;                 /* +0x00 node of the list 0x003090a8 */
+	void *prev;                 /* +0x04 */
+	int unk08;                  /* +0x08 */
+	void *actor;                /* +0x0c the light model */
+	struct MbPath path;         /* +0x10 */
+	int unk18[6];               /* +0x18 */
+	float pathTime[5];          /* +0x30 charlib timer (FUN_000b8240) */
+	int unk44;                  /* +0x44 */
+	float target[4];            /* +0x48 */
+	int targetValid;            /* +0x58 */
+	float cone;                 /* +0x5c half angle */
+	float scale;                /* +0x60 */
+	int unk64;                  /* +0x64 */
+	int state;                  /* +0x68 0 on, 1 off, 2 growing, 3 shrinking */
+	int arg6c;                  /* +0x6c */
+	float detection[4];         /* +0x70 per player */
+	float threshold;            /* +0x80 */
+	int unk84;                  /* +0x84 */
+	int flags;                  /* +0x88 1: draw as a beam */
+	void *beamTexture;          /* +0x8c */
+	float beamStart[4];         /* +0x90 */
+	float beamEnd[4];           /* +0xa0 */
+	float beamStartWidth;       /* +0xb0 */
+	float beamStartLength;      /* +0xb4 */
+	float beamEndWidth;         /* +0xb8 */
+	float beamEndLength;        /* +0xbc */
+	int beamStartColour[4];     /* +0xc0 */
+	int beamColour[4];          /* +0xd0 */
+	struct CBigGun *gun;        /* +0xe0 */
+};
+OF_ASSERT_OFFSET(struct CSearchlight, target, 0x48);
+OF_ASSERT_OFFSET(struct CSearchlight, gun, 0xe0);
+
+extern struct MbList DAT_003090a8;
+extern void *DAT_00309258;
+extern void *DAT_0030925c;
+extern void *DAT_00309260;
+extern struct MbList DAT_00309268;
+
 #endif

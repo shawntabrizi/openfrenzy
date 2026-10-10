@@ -33,6 +33,7 @@ __attribute__((weak)) char DAT_00290dc8[0x18];
 /* 0x002b1ef4  the "SONIC_RING" particle type (the particle system's data) */
 __attribute__((weak)) char DAT_002b1ef4[4];
 
+__attribute__((weak)) float DAT_0028fdb8[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
 __attribute__((weak)) float DAT_0028fdc8[3] = { 0.0f, 1.0f, 0.0f };
 __attribute__((weak)) float DAT_0028fdd8[3] = { 0.0f, 0.0f, 1.0f };
 __attribute__((weak)) float DAT_00292c84 = 4.0f;       /* gravity */
@@ -45,6 +46,7 @@ __attribute__((weak)) char DAT_002b215c[4];
 /* ---------- .bss (weak) */
 
 __attribute__((weak)) int DAT_002bae94;                 /* number of players */
+__attribute__((weak)) int DAT_002bae70;                 /* handicap (core_modes_a) */
 __attribute__((weak)) int DAT_003055d0;                 /* display settings object */
 __attribute__((weak)) int DAT_0030564c;                 /* game state object */
 __attribute__((weak)) int DAT_003075bc[4];              /* meta players */
@@ -57,3 +59,5 @@ __attribute__((weak)) int DAT_002ecdec;                 /* the game is paused */
 __attribute__((weak)) float DAT_002ea478[4];            /* a zero vector */
 __attribute__((weak)) unsigned char DAT_002ed324[0x14]; /* the rumble manager */
 __attribute__((weak)) int DAT_00290da4;                 /* CProjTrail texture */
+__attribute__((weak)) unsigned int DAT_0030a090;        /* the board's ambient light (meta_a) */
+__attribute__((weak)) int *DAT_002ea488;                /* charlib's actor list */

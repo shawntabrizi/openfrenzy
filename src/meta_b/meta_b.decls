@@ -105,3 +105,44 @@
 00161510 void CAirRaid_DeleteAll(void);
 00161560 void *CBomb_Update(struct CBomb *self);
 00161b80 void CBomb_UpdateAll(void);
+
+# Meta/BigRedButton.cpp
+00161c00 void BigRedButton_Init(void);
+00161c20 int BigRedButton_FindTag(int tag);
+00161c70 struct CBigRedButton *BigRedButton_FindPressable(void);
+00161cc0 int CBigRedButton_Release(struct CBigRedButton *self);
+00161d00 void BigRedButton_ClearPresses(int tag);
+00161d20 void BigRedButton_Enable(int tag, int enabled);
+00161d80 struct CBigRedButton *CBigRedButton_Construct(struct CBigRedButton *self, void *model, int mode, float radius, float tolerance, int enabled);
+00161ed0 int CBigRedButton_Update(struct CBigRedButton *self);
+00161fd0 int CBigRedButton_CanPress(struct CBigRedButton *self, void *character);
+00162080 int CBigRedButton_Press(struct CBigRedButton *self);
+00162150 int CBigRedButton_Toggle(struct CBigRedButton *self);
+00162180 void BigRedButton_DeleteAll(void);
+001621d0 struct CBigRedButton *BigRedButton_FindPressableBy(void *character);
+00162230 void BigRedButton_UpdateAll(void);
+
+# Meta/Searchlights.cpp
+00162260 void Searchlights_DrawAll(void);
+00162640 struct CSearchlight *CSearchlight_Construct(struct CSearchlight *self, const char *name, int unused, float *pos, float scale, int arg6, int gunId, int flags, const char *gunModel, const char *gunBone, float *gunPos);
+001627a0 void CSearchlight_Update(struct CSearchlight *self);
+00162b60 void Searchlights_UpdateAll(void);
+00162b90 void *CSearchlight_Delete(struct CSearchlight *self);
+00162c10 void Searchlights_DeleteAll(void);
+
+# Meta/BigGun.cpp
+00164b50 struct CBigGun *CBigGun_Construct(struct CBigGun *self);
+00164bc0 void MbCutterParams_Init(struct MbCutterParams *p);
+00164c40 void CBigGunCutter_Draw(struct CBigGunCutter *self);
+00164e90 void CBigGunLaser_Draw(struct CBigGunLaser *self, void *unused1, void *unused2);
+00165000 void CBigGunCutter_Init(struct CBigGunCutter *self, int count);
+001650d0 void CBigGunCutter_StartSpark(struct CBigGunCutter *self, struct MbSpark *s);
+00165300 void CBigGunCutter_Emit(struct CBigGunCutter *self, int count, float *pos);
+00165380 void CBigGunCutter_Update(struct CBigGunCutter *self, float *pos, int emit);
+001654f0 void CBigGun_DrawLaser(struct CBigGun *self, float *target);
+00165510 void CBigGunLaser_Init(struct CBigGunLaser *self, void *actor);
+00165630 void CBigGunLaser_Update(struct CBigGunLaser *self, void *actor, float *target);
+001659e0 void CBigGun_Init(struct CBigGun *self, const char *model, const char *bone, int id);
+00165a90 void CBigGun_Aim(struct CBigGun *self, float *target);
+00165e20 void CBigGun_Free(struct CBigGun *self);
+00165e90 void CBigGun_Destruct(struct CBigGun *self);

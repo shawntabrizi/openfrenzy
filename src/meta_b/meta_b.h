@@ -120,6 +120,7 @@ extern unsigned int DAT_002bce18[];
 extern char DAT_00290dc8[];         /* CProjSpiralType table, whitebeam.bmp (classlib_fx) */
 extern long long DAT_002cd7a0;      /* timer ticks per second (bkernel) */
 extern int DAT_002ecdec;            /* the game is paused (classlib_ui) */
+extern float DAT_0028fdb8[4];       /* (1, 0, 0, 1) (classlib_ui) */
 extern float DAT_0028fdc8[3];       /* (0, 1, 0) (classlib_ui) */
 extern float DAT_0028fdd8[3];       /* (0, 0, 1) (classlib_ui) */
 extern float DAT_00292c84;          /* gravity (charlib) */
