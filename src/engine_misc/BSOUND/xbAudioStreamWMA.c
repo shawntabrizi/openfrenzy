@@ -282,6 +282,7 @@ int bsPlayAudioStreamWMA(struct BAudioStream *stream, unsigned int flags, int vo
 	DAT_002db81c++;
 	bsStreamDebug("bPlayAudioStreamWMA: Playing stream 0x%08x, channel %d, event '%s'\n", stream,
 		stream->slot - 1, stream->eventName);
+	bsLogStart("stream WMA", stream, stream->buffer, stream->slot - 1, volume, frequency, flags);
 	return 1;
 }
 

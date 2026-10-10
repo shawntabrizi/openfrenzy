@@ -230,6 +230,7 @@ int bsPlayAudioStreamADPCM(struct BAudioStream *stream, unsigned int flags, int 
 	DAT_002db81c++;
 	DAT_002db810[stream->slot] = stream;
 	bsAdpcmReadBlock(stream);
+	bsLogStart("stream ADPCM", stream, stream->buffer, stream->slot - 1, volume, frequency, flags);
 	return 1;
 }
 

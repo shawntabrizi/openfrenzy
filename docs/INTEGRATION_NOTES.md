@@ -370,6 +370,65 @@ integration round 2 (921ec75); see below.
   buffer counts show menu activity, not which screens); the 6-stage tournament was not run
   again; a run with a real audio device (outside the sandbox) was not made with the capture.
 
+## Sound content check (integration round 4)
+
+Question: do the effects, the announcer and the character voices play, and are the ~1000
+`bLoadResource: Could not find '<name>NN.wav' in memory` lines a run original probing or a port bug?
+Checked by measurement only (nobody listened). Tools: `scripts/sound_report.py` and the new
+`OPENFRENZY_DSOUND_LOG` lines (docs/BUILD.md, "Audio capture").
+
+- The probes are original behaviour. Checked against the XBE (bLoadResource 0x0004bb30,
+  bkFindOrLoadResource 0x0004b720, the set loaders 0x00071170 / 0x00071540, the commentator
+  package loader 0x00071880 and the callers of 0x00071170) and against the filename tables of
+  every .xbp on the disc:
+  - A set loader probes `<kind>00.wav`, `01`, ... in memory until one fails, for all 58
+    commentary kinds (0x0028fec0) or all 19 voice kinds (0x0028fe70) of a character. So every
+    load ends each kind with one miss: `movestage06.wav` is the end of `movestage00-05`.
+  - One commentator package is in memory at a time (com_ingame, com_mapscreen, ...; 0x00071880
+    closes the last one first), and each holds only its screen's kinds. So `zonewrapup00`
+    (only in com_zonescorescreen) misses on every other screen. `roundcomplete`, `stop`,
+    `playerwins`, `levelname`, `zonename`, `tiebreak`, `playerleads`, `charnamemightwin`,
+    `charnamejoins`, `newchampion`, `charnamewinsstage` and `unselected` are in no package on the
+    disc: the game wins a round with `char<N>wins` instead.
+  - `dub\bad00.wav` before Dub.xbp: CLSamples_LoadGeneric (0x000712b0) probes all 6 characters
+    right after CharVoice.xbp (only the `selected` samples). The character packages are
+    background loaded later; CGameMode_MiniGameIntro_Update (0x000237b0) and the character select
+    (0x00017070) call 0x00071170 again once a package is in. The port matches the XBE in all of
+    these. In the runs below the voices of every loaded character were found after that.
+  - Data quirks of the disc (same on the Xbox): `ffintro04.wav` is missing, so `ffintro05-08` are
+    never used; Fly has `fly\hurt01-04` but no `hurt00`, so Fly has no hurt voice; Jet has no
+    `revenge`.
+  - `scripts/sound_report.py --misses` lists probes of a file that is on the disc and that fail
+    after a package holding it was loaded. Hopper run: 261 misses, 0 such. Board run: 2259
+    misses, 0 such sound files (6 are `dub.obe`, a model; see below).
+- Background-loaded packages have no filename table (the XBE's background loader does not call
+  bkLoadFilenameTable 0x0004dec0 either), so the start log shows `'?'` for their files; the
+  script names them from the disc.
+- Hopper direct launch (`OPENFRENZY_GAME=Hopper`, headless, A every 3 s, 75 s): announcer
+  getready, countdown 02/01/00, go, almostover, char2wins (-15 dBFS each, own mix peak); the
+  voices of Dub, Fly, Geena and Zak (jump 156 starts, land 3D 153, hurt 34: all heard, -19, -9.5
+  and -20 dBFS); refbot, tokens, horn; music boom.wma and blitz_cowboy.wma (-11 to -12 dBFS). Whole WAV: RMS
+  -21.5 dBFS, 0 silent seconds of 74; the RMS goes from -26 to -19.5 dBFS during the countdown.
+  The direct launch loads the character packages too, so the voices play there.
+- Board path (`build/run/input_mv.txt`, videos skipped, headless, 900 s, no fault): every
+  started buffer added sound to the mix, except a few looping buffers that the game stops in
+  the frame it starts them (refbotlaser). Announcer: fuzionfrenzy, charname, selectroute,
+  choosegame, getready 8, countdown 24, go 8, almostover 7, char1/3/5/6wins, teamwins, teamup,
+  char5good, char1rubbish, powerstwrapup, endstage. Voices: jump 352, land 363, hurt 213,
+  knockovr 43, score 19, respawn 14, taunt 8, first 6, revenge 4, pickedup 4, steal 4, stolen 1,
+  selected 1; all heard but 2 land and 1 hurt (3D, out of earshot or cut off). Music: 10 WMA tracks (fuzionfrenzy, boom,
+  chemical_brain, hey_fatty, casino_royale, geena, lullaby_for_broadmore, sidewinder,
+  the_ease_of_tomorrow, rok_yer_world), -11 to -13 dBFS. WAV: RMS -22.6 dBFS, peak -1.0 dBFS, 0 %
+  clipped. 66 silent seconds of 899: 2 are scene changes (505 s, 684 s); 64 are from 707 s, where the
+  script presses START every 3 s and the pause menu stops the music each time.
+- Effects that start while the effects volume (0x00285650) is 0 are silent: the game fades the
+  effects volume (0x00071c20) during loads. This is original behaviour.
+- No port bug was found in sample loading or playing, so no game code was changed.
+- Not sound, not investigated: 235 `Could not find '' in memory` (empty name) and 6 `dub.obe`
+  misses on the score screen after CharacterSel/Meta are closed.
+- Not verified: nobody listened; no run with a real audio device (sandbox); the Welsh
+  commentary path (0x000716a0) was not run.
+
 ## Bink video (integration round 3)
 
 - `src/dsound/bink_host.c` implements the Bink entry points; the host decodes with FFmpeg 8

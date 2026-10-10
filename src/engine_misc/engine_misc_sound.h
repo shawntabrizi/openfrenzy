@@ -232,6 +232,11 @@ int WINAPI FUN_00056780(void *context, DWORD offset, DWORD size, void **data);
 void FUN_000574c0(const char *eventName, int unused, struct BAudioStream *stream);
 int FUN_00057570(struct BAudioStream *stream);
 
+/* port debugging, not in the XBE (BSOUND/unplaced.c): with OPENFRENZY_DSOUND_LOG, one line a
+sample or stream start: its file name, DirectSound buffer, channel, volume */
+void bsLogStart(const char *what, const void *resource, LPDIRECTSOUNDBUFFER buffer, int channel, int volume,
+	int frequency, unsigned int flags);
+
 /* ---------- play lists (soundtracks) */
 
 /* a play list: 0x74 bytes */

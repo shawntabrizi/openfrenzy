@@ -636,6 +636,30 @@ void bsShutdownDirectSound(void)
 	}
 }
 
+/* Port debugging (not in the XBE): with OPENFRENZY_DSOUND_LOG, one line a start, with the
+file name (the resource's crc in its package's filename table), the DirectSound buffer (the
+"dsound: buffer" lines of src/dsound/dsound_sdl.c, which give its mix level when it ends),
+the channel, the game volume 0-255 and the output time (the position in the capture WAV). */
+int dsound_log_enabled(void);
+double dsound_output_seconds(void);
+void platform_log(const char *format, ...);
+
+void bsLogStart(const char *what, const void *resource, LPDIRECTSOUNDBUFFER buffer, int channel, int volume,
+	int frequency, unsigned int flags)
+{
+	const unsigned int *header = resource;
+	const char *name;
+
+	if (!dsound_log_enabled() || resource == NULL)
+		return;
+	/* bkResource: 0x00 package id, 0x0c crc of the file name */
+	name = ((const char *(*)(unsigned int, unsigned int))FUN_0004e0c0)(header[0], header[3]);
+	platform_log("sound: %s '%s' (package 0x%08x crc 0x%08x) at %.2f s: buffer %p, channel %d, volume %d "
+		"(x effects %d = %ld mB), frequency %d, flags 0x%x", what, name ? name : "?", header[0], header[3],
+		dsound_output_seconds(), (void *)buffer, channel,
+		volume, DAT_00285650, (long)VOLUME(DAT_00285650 * volume >> 8), frequency, flags);
+}
+
 /* 0x00055550  BSOUND (unplaced) (bPlaySample)
 Creates the channel's buffer for the sample and plays it. pan is not used. */
 int bsCreateAndPlay(struct BSample *sample, int volume, int pan, int frequency, unsigned int flags,
@@ -670,6 +694,7 @@ int bsCreateAndPlay(struct BSample *sample, int volume, int pan, int frequency, 
 	IDirectSoundBuffer_Play(*buffer, 0, 0, flags >> 4 & 1);
 	CHANNEL(channel)->playFlags = flags;
 	CHANNEL(channel)->status = 1;
+	bsLogStart("sample", sample, *buffer, channel, volume, frequency, flags);
 	return 1;
 }
 
@@ -782,6 +807,7 @@ int bsCreateAndPlay3D(struct BSample *sample, float *pos, int volume, int freque
 	IDirectSoundBuffer_Play(*buffer, 0, 0, flags >> 4 & 1);
 	CHANNEL(channel)->playFlags = flags;
 	CHANNEL(channel)->status = 1;
+	bsLogStart("sample 3D", sample, *buffer, channel, volume, frequency, flags);
 	return 1;
 }
 

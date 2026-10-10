@@ -127,6 +127,21 @@ python3 -I scripts/wav_levels.py <file.wav>            # RMS, peak, clipped %, n
 python3 -I scripts/wav_levels.py <file.wav> --window 5  # also RMS and peak each 5 s
 ```
 
+Which sounds started, and whether each was heard: run with `OPENFRENZY_DSOUND_LOG=1
+OPENFRENZY_BKLOG=1` and the capture, then
+
+```sh
+python3 -I scripts/sound_report.py <run.log>            # per file: starts, heard, mix peak, first time
+python3 -I scripts/sound_report.py <run.log> --misses   # also: classify "Could not find" probes
+```
+
+With `OPENFRENZY_DSOUND_LOG=1`, BSOUND logs each start (`sound: sample|sample 3D|stream WMA|stream
+ADPCM '<file>' ... at <s> s: buffer <p>, channel, volume ...`; `'?'` for files of background-loaded
+packages, which have no filename table: the script names them from the disc), and the mixer logs
+each buffer's own peak in the mix when it ends, stops or is released (every 5 s while it plays:
+music): `dsound: buffer <p> ended at <s> s after <d> s: its mix peak <x>`. The times are output
+seconds, the same as the position in the capture WAV.
+
 macOS has no `timeout`; use `perl -e 'alarm shift; exec @ARGV' 70 build-<id>/openfrenzy ...`.
 
 ### Display settings
