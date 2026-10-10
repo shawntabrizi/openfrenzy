@@ -424,6 +424,30 @@ No new fault was found, so no code changed. `OPENFRENZY_BKLOG=1` is needed for t
   `CGEventPostToPid` (window not focused) did not move the title screen; the computer-use
   daemon was not available. The scripted pad path works.
 
+### Loop bound audit (fix-loop-bound-audit, round 5)
+
+- New check: `python3 -I scripts/check_loop_bounds.py [--all] [--addr <8 hex>] [-v]` computes
+  the trip count of each counted loop (constant start, step and limit: `i < 47`,
+  `0x264 + i * 4 < 800`, stride, pointer and count-down loops, `do { ... if (v > C) return; }
+  while (true)`) in `export/funcs/<addr>.c` and in the src function after `/* 0x<addr>`, and
+  lists src loops whose count is not a count of any XBE loop of the function. With the 47-loop
+  of CDemolition_Player_CreateActor put back, it reports it (47 vs XBE 43).
+- Run after 9f792cc: 888 functions, 1453 src loops, 1385 XBE loops compared; 56 MISMATCH and
+  54 XBE-ONLY lines (not counting `for (n = C; n != 0; n--)` rep stos/movs copies). All were
+  checked by hand against the Ghidra output: none is a real bound error. The causes are MSVC
+  unrolling (fully: 3-6 element loops, `xyz` copies, the 8-step bit counts of COverlay and
+  ScratchMatch; partly: 4 x 8 bits, 10 x 2 shuffle swaps), merged nested loops (4 x 9 = 36
+  button slots, 6 x 19 = 114 voice sets), loop interchange (DrawMeter), inlined helpers
+  (MW_Splat_Reset, rb_UpdateResults, tu_blast, sp_Strip, bg_FindAnims with a `count`
+  argument), and counters the script cannot follow (float-typed, derived `iVar6 = iVar5 + 6`).
+  One src deviation is intended and documented (CBbash_Game_Outro ends the mode instead of the
+  original reset). So no game module changed.
+- The script compares counts, not positions: a src loop whose wrong count equals another XBE
+  loop's count in the same function is not found.
+- Verified on a `git archive HEAD` build (other agents had uncommitted edits): ctest 5/5;
+  Demolition variations 1-4, 90 s headless, A every 3 s: each reaches `countdown PLAYING`
+  once, no `OpenFrenzy fault`, 36 `Failed to find anim segment` (the known model misses).
+
 ### Real audio device (fix-audio-device-real, round 5)
 
 - Where `audio.enabled` comes from: `src/runtime/of_config.c` has the default `true`, and the
