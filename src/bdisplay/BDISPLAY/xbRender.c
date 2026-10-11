@@ -563,8 +563,8 @@ void bdSetRenderState(int state, unsigned int value, unsigned int extra)
 		}
 		return;
 	case 2:
-		D3DDevice_SetTextureStageState(0, D3DTSS_ADDRESSU, ~(value * 2) & 2 | 1);
-		D3DDevice_SetTextureStageState(0, D3DTSS_ADDRESSV, ~value & 2 | 1);
+		D3DDevice_SetTextureStageState(0, D3DTSS_ADDRESSU, (~(value * 2) & 2) | 1);
+		D3DDevice_SetTextureStageState(0, D3DTSS_ADDRESSV, (~value & 2) | 1);
 		return;
 	case 3:
 		D3DDevice_SetRenderState(D3DRS_LIGHTING, value);
@@ -627,7 +627,7 @@ void bdSetFogRange(float start, float end)
 /* 0x00044e20  BDISPLAY/xbRender.cpp (inferred) */
 void bdSetFogColour(unsigned int r, unsigned int g, unsigned int b)
 {
-	D3DDevice_SetRenderState_FogColor(((r | 0xffffff00u) << 8 | g & 0xff) << 8 | b & 0xff);
+	D3DDevice_SetRenderState_FogColor((((r | 0xffffff00u) << 8 | (g & 0xff)) << 8) | (b & 0xff));
 	DAT_002be5f4 = g;
 	DAT_002be5f0 = r;
 	DAT_002be5f8 = b;
@@ -824,7 +824,7 @@ int bdSetRenderTarget(bdRenderTarget *target, unsigned int r, unsigned int g, un
 			DAT_002bee90[0].x = 0.0f;
 			DAT_00284d40 = 0;
 		}
-		DAT_002bee90[0].color = b & 0xff | 0xff000000u;
+		DAT_002bee90[0].color = (b & 0xff) | 0xff000000u;
 		DAT_002bee90[1].x = (float)target->viewport[2];
 		DAT_002bee90[2].y = (float)target->viewport[3];
 		DAT_002bee90[3].x = (float)target->viewport[2];
@@ -835,7 +835,7 @@ int bdSetRenderTarget(bdRenderTarget *target, unsigned int r, unsigned int g, un
 		bdDrawPrimitiveTL(BDPRIMTYPE_TRISTRIP, DAT_002bee90, 4);
 		return 1;
 	}
-	colour = ((r & 0xff | (unsigned int)a << 8) << 8 | g & 0xff) << 8 | b & 0xff;
+	colour = ((((r & 0xff) | (unsigned int)a << 8) << 8 | (g & 0xff)) << 8) | (b & 0xff);
 	if ((flags & 1) != 0 && (flags & 2) != 0)
 	{
 		D3DDevice_Clear(0, NULL, 0xf3, colour, z, 0);

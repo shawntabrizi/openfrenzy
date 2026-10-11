@@ -166,7 +166,7 @@ void bdFlip(unsigned int r, unsigned int g, unsigned int b, int a)
 	if (flags != 0)
 	{
 		D3DDevice_Clear(0, NULL, ((flags & 1) != 0 ? 0xf0 : 0) | (flags >> 1 & 3),
-			((r & 0xff | (unsigned int)a << 8) << 8 | g & 0xff) << 8 | b & 0xff, 1.0f, 0);
+			((((r & 0xff) | (unsigned int)a << 8) << 8 | (g & 0xff)) << 8) | (b & 0xff), 1.0f, 0);
 	}
 	DAT_002bc890++;
 }
@@ -243,7 +243,7 @@ multisample_set:
 		bdPrintf("bStartDisplay: CreateDevice failed (%s)\n", bdGetErrorString(result));
 		return 0;
 	}
-	bdPrintf("bStartDisplay: Frame buffers use %d Kb of RAM\n", freeBefore - (int)FUN_0004c2e0() >> 10);
+	bdPrintf("bStartDisplay: Frame buffers use %d Kb of RAM\n", (freeBefore - (int)FUN_0004c2e0()) >> 10);
 	D3DDevice_GetBackBuffer(0, 0, (D3DSurface **)&DAT_002bc480);
 	result = D3DDevice_GetDepthStencilSurface((D3DSurface **)&DAT_002bc484);
 	if (result < 0)
@@ -457,7 +457,7 @@ static void write_bmp_header(FILE *file, int width, int height, unsigned int ima
 	fputc('B', file);
 	fputc('M', file);
 	memset(&header, 0, sizeof(header));
-	header.fileSize = imageBytes + 0x34 >> 2;
+	header.fileSize = (imageBytes + 0x34) >> 2;
 	header.dataOffset = 0x36;
 	header.infoSize = 0x28;
 	header.width = width;

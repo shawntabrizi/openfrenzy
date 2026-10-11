@@ -368,7 +368,7 @@ void *bdVertexBufferLock(bdVertexBuffer *vb, unsigned int flags)
 		if (tries == 0)
 			bdPrintf("bdVertexBufferLock: WARNING: vb 0x%08x has all buffers busy!\n", vb);
 	}
-	D3DVertexBuffer_Lock(vb->buffer[vb->current], 0, 0, &data, ((flags & 2) << 4 | flags & 8) << 2);
+	D3DVertexBuffer_Lock(vb->buffer[vb->current], 0, 0, &data, ((flags & 2) << 4 | (flags & 8)) << 2);
 	vb->locked = data;
 	return data;
 }

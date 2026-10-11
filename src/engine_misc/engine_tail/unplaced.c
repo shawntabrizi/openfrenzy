@@ -872,7 +872,7 @@ struct BCamera *bProjector_Construct(struct BCamera *self, int type, int w, int 
 	self->colour[0] = 0x40;
 	self->scaleY = (float)h * 0.5f;
 	self->vtable = vtable_0027d2d0;
-	self->texture = em_bdCreateRenderTexture(width, h, 0x10, 0, (flags & 0x10000 | 0x2000) >> 0xd);
+	self->texture = em_bdCreateRenderTexture(width, h, 0x10, 0, ((flags & 0x10000) | 0x2000) >> 0xd);
 	bCamera_BuildProjection(self);
 	return self;
 }

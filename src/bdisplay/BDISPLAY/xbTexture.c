@@ -231,7 +231,7 @@ void bdTextureSetup(bdTexture *texture)
 	frames = (bdTextureFrame *)((BYTE *)texture + 0x80);
 	texture->frames = frames;
 	texture->current = &frames->d3d;
-	data = (((unsigned int)texture->numFrames * 0x18 + 0x7f >> 7) + 1) * 0x80;
+	data = ((((unsigned int)texture->numFrames * 0x18 + 0x7f) >> 7) + 1) * 0x80;
 	texture_format(texture->format, &format, &bitsPerPixel);
 	if (texture->format == BDTEXFMT_PAL8)
 	{
