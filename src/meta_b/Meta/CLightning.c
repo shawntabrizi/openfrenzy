@@ -199,7 +199,9 @@ struct CLightningBolt *CLightningBolt_Update(struct CLightningBolt *self)
 	float b;
 
 	self->life = life;
-	if (life <= 0.0f)
+	/* strictly below 0 (x86: fcomp; test ah,5; jp): a life of exactly 0 takes the fade
+	   branch below and leaves the live count alone */
+	if (life < 0.0f)
 	{
 		self->life = 0.0f;
 		DAT_00308458--;
