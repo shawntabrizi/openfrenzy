@@ -9,6 +9,15 @@
 #   - openfrenzy          the Darwin host (loader, arena, threads, SDL3, ANGLE)
 # Guest code (arm64_32, rebased) is built by sub-projects with cmake/guest-toolchain.cmake.
 cmake_minimum_required(VERSION 3.24)
+
+# The web build (WebAssembly, docs/WEB.md): cmake --preset web, or
+# cmake -S . -B build-web -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/web-toolchain.cmake
+if(CMAKE_TOOLCHAIN_FILE MATCHES "web-toolchain\\.cmake$")
+  project(openfrenzy_web C)
+  add_subdirectory(port/web)
+  return()
+endif()
+
 project(openfrenzy C CXX ASM)
 
 if(NOT APPLE OR NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")

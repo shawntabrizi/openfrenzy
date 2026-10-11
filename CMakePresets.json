@@ -1,0 +1,20 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "web",
+      "displayName": "Web (WebAssembly, Emscripten): docs/WEB.md",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-web",
+      "toolchainFile": "${sourceDir}/cmake/web-toolchain.cmake",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "web", "configurePreset": "web" }
+  ],
+  "testPresets": [
+    { "name": "web", "configurePreset": "web", "filter": { "include": { "label": "web" } },
+      "output": { "outputOnFailure": true } }
+  ]
+}

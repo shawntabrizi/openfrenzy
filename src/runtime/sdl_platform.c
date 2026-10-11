@@ -32,6 +32,13 @@ at the window's pixels, "original" at 640x480). The host decides the window mode
 #define XBOX_HEIGHT 480
 
 int gl_functions_load(void);
+#ifdef HALO_WEB
+#include "web_shared.h"
+/* port/web/src/web_frame.c: counts the frame and yields to the browser until its next
+animation frame (JSPI), which shows the frame */
+void web_frame_yield(void);
+void web_frame_set_main_thread(void);
+#endif
 
 static SDL_Window *platform_window;
 static SDL_GLContext platform_gl_context;
@@ -152,6 +159,11 @@ static BOOL video_initialize(unsigned long width, unsigned long height)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+#ifdef HALO_WEB
+	/* an opaque canvas: the game keeps scratch values in destination alpha, which a page
+	would otherwise blend the picture by (OpenCE's web build) */
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 0);
+#endif
 	platform_window = SDL_CreateWindow("OpenFrenzy", (int)(width ? width * 2 : 1280),
 		(int)(height ? height * 2 : 960), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 	if (!platform_window)
@@ -171,6 +183,10 @@ static BOOL video_initialize(unsigned long width, unsigned long height)
 		return FALSE;
 	}
 	SDL_GL_MakeCurrent(platform_window, platform_gl_context);
+#ifdef HALO_WEB
+	/* the thread with the canvas, which yields once a frame (web_frame.c) */
+	web_frame_set_main_thread();
+#endif
 	if (!gl_functions_load())
 		return FALSE;
 	SDL_GL_SetSwapInterval(config_boolean("display.vsync") ? 1 : 0);
@@ -215,10 +231,17 @@ void platform_video_window_size(int *width, int *height)
 void platform_video_swap(void)
 {
 	SDL_GL_SwapWindow(platform_window);
+#ifdef HALO_WEB
+	web_frame_yield();
+#endif
 }
 
 void platform_mouse_capture(BOOL capture)
 {
+#ifdef HALO_WEB
+	/* for the page, which takes the pointer lock on a click (web_shared.h) */
+	__atomic_store_n(&web_shared[_web_mouse_wanted], capture ? 1 : 0, __ATOMIC_RELAXED);
+#endif
 	if (platform_window)
 		SDL_SetWindowRelativeMouseMode(platform_window, capture ? true : false);
 }

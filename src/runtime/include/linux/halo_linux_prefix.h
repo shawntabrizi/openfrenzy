@@ -10,7 +10,7 @@ byte-for-byte identical to what the matching MSVC build compiles.
 #ifndef __HALO_LINUX_PREFIX_H
 #define __HALO_LINUX_PREFIX_H
 
-#if !defined(__i386__) && !defined(HALO_ARM64_GUEST)
+#if !defined(__i386__) && !defined(HALO_ARM64_GUEST) && !defined(HALO_WEB)
 #error the Linux port targets 32-bit x86: game data structures assume 32-bit pointers
 #endif
 
@@ -32,7 +32,7 @@ __thiscall there and warns at each use (-Wignored-attributes, about 110,000
 warnings per build from the XDK headers). Remove the keywords, so that the
 code means the same and the warning group stays on for real cases. */
 
-#ifdef HALO_ARM64_GUEST
+#if defined(HALO_ARM64_GUEST) || defined(HALO_WEB)
 #define __stdcall
 #define __fastcall
 #define __thiscall

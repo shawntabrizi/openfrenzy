@@ -33,9 +33,15 @@ which knows no Xbox paths; the vfs module's vfs_fopen does. */
 
 /* BK_ALIAS(name, target, offset): makes name a global symbol at target + offset (Mach-O
 assembly from llc; asm_convert.py turns it into ELF). target must be a defined (not common)
-symbol. Gives other modules' Ghidra names for words inside bKernel's globals. */
+symbol. Gives other modules' Ghidra names for words inside bKernel's globals. The web build
+(WebAssembly object files) has no leading underscore on C symbols. */
+#ifdef __wasm__
+#define BK_ALIAS(name, target, offset) \
+	__asm__(".globl " #name "\n\t.set " #name ", " #target " + " #offset "\n")
+#else
 #define BK_ALIAS(name, target, offset) \
 	__asm__(".globl _" #name "\n\t.set _" #name ", _" #target " + " #offset "\n")
+#endif
 
 /* ======================================================================== heap (bkHeap) */
 

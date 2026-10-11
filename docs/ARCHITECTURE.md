@@ -398,3 +398,35 @@ Closed: the `.xbp` packages load through the decompiled bKernel code. Music play
 Code copied from OpenCE and its Mac forks is CC0. Each copied file starts with a comment naming
 its source repository, path and commit. Third-party licenses (ANGLE, musl, extract-xiso in
 `xiso.c`) are in `port/macos/licenses/` or in the file.
+
+## 18. Web build (WebAssembly)
+
+The web build (`port/web/`, `cmake --preset web`, docs/WEB.md) runs the same game and platform
+layer in a browser. Decision, after OpenCE's web port (OpenCE `port/web`, `tools/web_build.py`
+at commit `e0b581b1`, CC0):
+
+- **No guest/host split on the web.** wasm32 is natively ILP32 (4-byte pointers and `long`,
+  8-byte aligned doubles and 64-bit integers), so the game's 32-bit layouts hold as compiled.
+  The `arm64_32` guest, the `of-rebase` pass, `asm_convert.py`, the guest musl and the host
+  import tables exist only because macOS has no ILP32 process; the web build uses none of them.
+  Emscripten's C library, pthreads, GLES 3 (WebGL 2) and SDL 3.4.16 (an Emscripten port,
+  `port/web/openfrenzy_sdl3.py`) replace the host. The platform layer is compiled with
+  `HALO_WEB=1` (and `HALO_GLES`, `OPENFRENZY_GUEST`); each web difference is marked with it.
+- The host services the layer calls directly (`host_gl_*`, `host_bink_*`, the memory watch)
+  have web versions in `port/web/src/`. The memory watch hashes pages (WebAssembly cannot
+  protect pages), as OpenCE's web build does.
+- **Memory.** The WebAssembly memory is `0x88000000` bytes and does not grow. The Xbox
+  contiguous window (`0x80000000-0x88000000`, 128 MB as on the ARM64 guest) is its top; the
+  C heap is kept below it (`emscripten_get_heap_size` in `web_main.c`).
+- **Threads and frames.** `PROXY_TO_PTHREAD`: `main` runs on a worker, which owns the canvas
+  (OffscreenCanvas) and may block. OpenCE runs one iteration of Halo's main loop per browser
+  frame; this game presents from many nested loops (the mode loop, loading screens, the Bink
+  player), so instead `platform_video_swap` suspends the WebAssembly stack with JSPI until the
+  worker's next animation frame (`port/web/src/web_frame.c`). JSPI is incompatible with
+  Emscripten's `EMULATE_FUNCTION_POINTER_CASTS`, so every indirect call must have the callee's
+  exact type (a mismatch traps); direct calls are checked at link time (`--fatal-warnings`).
+- **No weak stubs.** `gen/of_stubs.c` is not linked: every table function has a definition, and
+  a missing one is a link error.
+- **Inline assembly.** The data files' file-scope assembly is Mach-O syntax for the native
+  toolchain; `port/web/tools/wasm_inline_asm.py` applies `asm_convert.py`'s symbol rule (one
+  leading `_` dropped, `.weak_definition` to `.weak`) to compiled copies.
