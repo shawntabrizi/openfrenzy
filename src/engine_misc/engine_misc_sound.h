@@ -172,7 +172,8 @@ extern int DAT_002db80c;              /* 1: DirectSound up (3D possible) */
 /* an audio stream (ADPCM file or WMA): 0xb0 bytes */
 struct BAudioStream {
 	int owned;                /* 0x00 >= 0: allocated */
-	unsigned char pad04[0x24 - 0x04];
+	unsigned char pad04[0x20 - 0x04];
+	int field_20;             /* 0x20 (bsGetAudioStreamInfo's second result) */
 	int frequency;            /* 0x24 */
 	int bits;                 /* 0x28 */
 	unsigned int formatFlags; /* 0x2c bit 1: stereo */

@@ -119,16 +119,18 @@ int bsAudioStreamTestFlags(struct BAudioStream *stream, unsigned int mask)
 	return (stream->flags & mask) != 0;
 }
 
-/* 0x00056440  BSOUND (xbAudioStream.cpp?) */
-void bsGetAudioStreamInfo(struct BAudioStream *stream, int *frequency, int *bits, int *formatFlags,
+/* 0x00056440  BSOUND (xbAudioStream.cpp?)
+The results in the original's order: +0x24, +0x20, +0x28 (the format flags at +0x2c are not
+among them). */
+void bsGetAudioStreamInfo(struct BAudioStream *stream, int *frequency, int *field20, int *bits,
 	int *blockTime, int *field8c, void **data90)
 {
 	if (frequency != NULL)
 		*frequency = stream->frequency;
+	if (field20 != NULL)
+		*field20 = stream->field_20;
 	if (bits != NULL)
 		*bits = stream->bits;
-	if (formatFlags != NULL)
-		*formatFlags = (int)stream->formatFlags;
 	if (blockTime != NULL)
 		*blockTime = 4000;
 	if (field8c != NULL)
