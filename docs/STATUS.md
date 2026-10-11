@@ -6,6 +6,10 @@ Each claim names its source: a run made for this update (build directory `build-
 section of `docs/INTEGRATION_NOTES.md`. All runs were on one Mac: Apple Silicon (M3 Max),
 macOS 26, Homebrew LLVM 22, SDL 3.4, ANGLE on Metal.
 
+Later change (build directory `build-fix-app`): the self-contained app (SDL3, FFmpeg and their
+dependencies in the bundle, hardened runtime) and the virtual gamepad names. The rows "App
+bundle" and "Virtual pad names" below come from that run; the other rows are from f0ecccb.
+
 ## Summary
 
 Fuzion Frenzy plays natively on Apple Silicon. Every function of the game and engine has
@@ -55,7 +59,8 @@ asks for the disc image once. Direct launch of one minigame:
 | ctest, fast | 6/6 passed (`-LE gameplay`) |
 | ctest, gameplay | 13/13 passed in 240 s at `-j8`: `gameplay_board` (title, character select, Map, first minigame to `countdown PLAYING`) and a 60 s direct launch of each of the 12 games. Each test fails on a fault, `UNIMPLEMENTED`, `Out of memory` or an assertion |
 | Module tests | All 31 `src/*/tests/run_tests.sh` exit 0, headless. `d3d8` skips its drawing tests without a window. `runtime` reports 1 expected failure (`test_toolchain_strings`, see "Known bugs") |
-| App bundle | `codesign --verify --strict` passes. `Contents/MacOS/openfrenzy` with no argument loads the bundled game image and ANGLE from `Frameworks`, makes `settings.ini` and `openfrenzy.log` in the save root, and reaches the main menu and `GameSizeMenu` in 40 s (headless, scripted input, stopped by SIGALRM). Not started from the Finder (the sandbox blocks `open`) |
+| App bundle | Self-contained, 54 MB: 17 dylibs in `Frameworks` (ANGLE, SDL3, 5 FFmpeg libraries, 10 of their dependencies). `otool -l` finds no `/opt/homebrew` path in any Mach-O file of the bundle. Ad-hoc signature with the hardened runtime and 2 entitlements (`allow-unsigned-executable-memory`, `disable-library-validation`; each tested, `docs/BUILD.md`). `codesign --verify --strict --deep` passes. `Contents/MacOS/openfrenzy` with no argument (headless, scripted input, stopped after 40 s) reaches `MainMenu`; `lsof` and `vmmap` of the process show every dylib from `Contents/Frameworks` and none from `/opt/homebrew`. **The bundled FFmpeg (Homebrew) is GPL version 3 or later** (`docs/BUILD.md` "Licences"). Not started from the Finder (the sandbox blocks `open`); not tested on a Mac without Homebrew |
+| Virtual pad names | `OPENFRENZY_DEBUG_VIRTUAL_PADS=4`: the host logs `gamepad 2: Pad 1 OpenFrenzy virtual` to `gamepad 5: Pad 4 OpenFrenzy virtual` (was "OpenFrenzy virtual pad 1" for all 4) |
 | Weak stubs | `llvm-nm` of `openfrenzy_guest.elf`: 5 weak `FUN_` symbols, the same as round 6 (list in "Known limits") |
 | XDK entry points | `src/runtime/entry/xdk_entry_points.inc`: 0 `MISSING`, 0 `UNKNOWN`. D3D 62 HLE + 27 internal, DSOUND 27 HLE + 54 internal, XGRPH 4 + 1, XPP 8 + 3 |
 
@@ -165,8 +170,6 @@ tests above.
    disc, or that is a path or format, would be wrong. Not fixed.
 2. Hopper, direct launch only: a token pickup after the debug round restart faulted once. The
    original code does the same; the board never restarts the round.
-3. Cosmetic: the host names every virtual gamepad "OpenFrenzy virtual pad 1" (cause not
-   checked).
 
 ## Known limits
 
@@ -178,8 +181,9 @@ tests above.
 - The build hides two warning classes that clang 22 makes errors in C:
   `-Wno-int-conversion` and `-Wno-incompatible-function-pointer-types` (over 400 errors
   without them). Real bugs in these classes do not show in the build.
-- The `.app` needs Homebrew SDL3 and FFmpeg on the Mac. It has an ad-hoc signature, no
-  hardened runtime and no notarization.
+- The `.app` has an ad-hoc signature and no notarization (that needs the owner's Apple
+  Developer account; steps in `docs/BUILD.md`). It bundles Homebrew's FFmpeg, which is GPL
+  and links unused encoders (18 MB of the 47 MB in `Frameworks`).
 - No SMAA ("smaa" gives FXAA). Settings come from defaults, `settings.ini` (app only) and
   `OPENFRENZY_*` variables.
 - Custom soundtracks: `XFindFirstSoundtrack` always returns none.
@@ -210,9 +214,10 @@ tests above.
 4. Run a full 6-stage tournament and Minigame Frenzy at the current commit (the last ones ran
    before the draw-overhead and input changes). Add a long tournament test under a new ctest
    label if its run time is acceptable.
-5. Self-contained `.app`: put SDL3 and FFmpeg in `Frameworks`, use the hardened runtime, and
-   notarize.
+5. Release `.app`: decide the FFmpeg licence (an FFmpeg built for Bink alone is LGPL and
+   smaller), sign with a Developer ID, test without `disable-library-validation`, notarize
+   (`docs/BUILD.md`), and start it on a Mac without Homebrew.
 6. Measure performance on a slower Mac (M1 base).
 7. Decompile the 5 weak `FUN_` symbols (the debug menu callback first) and name the 53
    unidentified library calls.
-8. Low: SMAA, custom soundtracks, the virtual gamepad name.
+8. Low: SMAA, custom soundtracks.

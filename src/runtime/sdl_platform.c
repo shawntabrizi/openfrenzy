@@ -737,7 +737,10 @@ static void virtual_pad_attach(int pad)
 	char name[32];
 	int axis;
 
-	snprintf(name, sizeof(name), "OpenFrenzy virtual pad %d", pad + 1);
+	/* The number comes first: SDL keeps only the first 9 characters of the name in a virtual
+	   joystick's GUID, and its gamepad mapping (with the name of the first pad) is found by
+	   GUID. With "OpenFrenzy virtual pad %d" all 4 pads had one GUID and the name of pad 1. */
+	snprintf(name, sizeof(name), "Pad %d OpenFrenzy virtual", pad + 1);
 	SDL_INIT_INTERFACE(&desc);
 	desc.type = SDL_JOYSTICK_TYPE_GAMEPAD;
 	desc.naxes = VIRTUAL_PAD_AXES;

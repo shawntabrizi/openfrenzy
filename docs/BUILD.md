@@ -40,7 +40,7 @@ the rebase pass). Outputs in `build-<id>/`:
 |---|---|
 | `openfrenzy` | the Darwin host (native arm64) |
 | `openfrenzy_guest.elf` | the game image: decompiled code + weak stubs + platform layer |
-| `OpenFrenzy.app` | the app (target `openfrenzy_app`, part of the default build): host, game image and ANGLE, ad-hoc signed; see "Run the app" |
+| `OpenFrenzy.app` | the app (target `openfrenzy_app`, part of the default build): host, game image, ANGLE, SDL3 and FFmpeg, ad-hoc signed with the hardened runtime; see "Run the app" |
 | `openfrenzy_smoke.elf` | smoke test: SDL3 window + GLES clear + disc reads |
 | `openfrenzy_platform_check.elf` | links every platform object (catches undefined symbols) |
 | `openfrenzy_skeleton.elf`, `openfrenzy_probe.elf`, `openfrenzy_adrp.elf` | toolchain tests without musl |
@@ -91,24 +91,28 @@ Bink videos: the host decodes them with Homebrew FFmpeg (`ffmpeg`: libavformat, 
 libswscale; `port/macos/host/host_bink.c`). CMake finds it with pkg-config and prints
 `Bink video: FFmpeg <version>`. Without FFmpeg, or with `-DOPENFRENZY_BINK_FFMPEG=OFF`, the host
 builds without it and the game skips every video (the old `bink_null.c` behaviour).
+**Homebrew's `ffmpeg` is built with `--enable-gpl --enable-version3` (GPL version 3 or later,
+with x264 and x265).** The app bundle copies it (see "Run the app", "Licences").
 
 ## 3. Run
 
 ### Run the app (no shell, no variables)
 
 `cmake --build build-<id>` also makes `build-<id>/OpenFrenzy.app` (target `openfrenzy_app`,
-`cmake/make_app.cmake`, `port/macos/Info.plist`). Start it with `open build-<id>/OpenFrenzy.app`
-or from the Finder.
+`cmake/make_app.cmake`, `cmake/bundle_dylibs.py`, `port/macos/Info.plist`,
+`port/macos/OpenFrenzy.entitlements`). Start it with `open build-<id>/OpenFrenzy.app` or from the
+Finder. The app is self-contained: it runs on a Mac without Homebrew.
 
 | Bundle path | What |
 |---|---|
 | `Contents/MacOS/openfrenzy` | the host; rpath `@executable_path/../Frameworks` |
 | `Contents/Resources/openfrenzy_guest.elf` | the game image |
 | `Contents/Frameworks/libEGL.dylib`, `libGLESv2.dylib` | ANGLE, as plain dylibs (as OpenCE-mac-innerhat does; signed code belongs in `Frameworks`, not `Resources`) |
+| `Contents/Frameworks/libSDL3.0.dylib`, `libav*`, `libsw*` and 10 more | SDL3, the 5 FFmpeg libraries the host needs (libavformat, libavcodec, libswscale, libavutil, and libswresample, which libavformat needs) and their own dependencies, found recursively with `otool` (`cmake/bundle_dylibs.py`) |
+| `Contents/Resources/licenses/` | the licence files of each bundled Homebrew formula, `ANGLE.txt`, `musl.txt` (in the game image), and `BUNDLED_LIBRARIES.txt` (library, formula, version, FFmpeg configuration) |
 
-- The bundle holds no game data. SDL3 and FFmpeg come from Homebrew (`/opt/homebrew/opt/...`),
-  so the app runs only on a Mac with those formulae. It is not a release build (ad-hoc
-  signature, no hardened runtime, no notarization).
+- The bundle holds no game data. It is not a release build: ad-hoc signature (with the
+  hardened runtime), no notarization.
 - With no argument the host uses the bundled image (else `openfrenzy_guest.elf` next to the
   host, so `build-<id>/openfrenzy` with no argument also works), and:
   - save root and data root: `~/Library/Application Support/OpenFrenzy` (each variable still
@@ -125,6 +129,100 @@ or from the Finder.
 - A run with a guest argument (`build-<id>/openfrenzy build-<id>/openfrenzy_guest.elf`) is
   unchanged: no settings file, no dialog, log on stderr. The tests use this form.
 - To choose another disc image: delete `disc_path.txt` (or set `OPENFRENZY_ISO`).
+
+Size with FFmpeg 8.0.1 and SDL 3.4.18: 54 MB (`Frameworks` 47 MB, of which ANGLE is 15 MB; game
+image 6.2 MB). Homebrew's libavcodec and libavformat link codecs and libraries that Bink never
+uses (x264, x265, SVT-AV1, libvpx, dav1d, LAME, Opus, OpenSSL): 18 MB of the 47 MB. They must
+be bundled because the FFmpeg libraries load them at start. Only an FFmpeg built for Bink alone
+can remove them.
+
+`cmake/bundle_dylibs.py` copies each dylib that is not in `/usr/lib` or `/System`, sets its
+install name to `@rpath/<name>`, changes every reference to `@rpath/<name>`, removes rpaths
+that point outside the bundle and gives each dylib the rpath `@loader_path`. The host keeps one
+rpath, `@executable_path/../Frameworks`. It stops the build if a library is not from a
+Homebrew formula (no licence file is known for it). Check a build:
+
+```sh
+A=build-<id>/OpenFrenzy.app
+for f in $A/Contents/MacOS/openfrenzy $A/Contents/Frameworks/*.dylib; do
+  otool -l "$f" | grep -c /opt/homebrew; done          # 0 for each file
+codesign --verify --strict --deep $A
+codesign -d --entitlements - $A
+```
+
+`DYLD_PRINT_LIBRARIES=1` prints nothing for the app: the hardened runtime ignores `DYLD_*`
+variables. Use `lsof -p <pid>` or `vmmap <pid>` on the running host to see where each library
+comes from.
+
+#### Hardened runtime and signature
+
+`make_app.cmake` signs ad hoc: each dylib in `Frameworks` first (`codesign --force --options
+runtime --sign -`), then the bundle with `--options runtime` and the entitlements in
+`port/macos/OpenFrenzy.entitlements`. `codesign --deep` alone does not sign the nested dylibs
+correctly after `install_name_tool`. Each entitlement was tested with the bundled host
+(headless, to the main menu):
+
+| Entitlements | Result |
+|---|---|
+| none | dyld stops at once: `libEGL.dylib ... not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs` |
+| `disable-library-validation` only | killed (SIGKILL, exit 137) when the guest code starts: the host makes guest pages executable with `mprotect` |
+| `disable-library-validation` + `allow-jit` | killed the same way (`allow-jit` covers only `MAP_JIT` memory) |
+| `disable-library-validation` + `allow-unsigned-executable-memory` | runs: main menu, Bink decode libraries loaded from `Frameworks` |
+
+`disable-library-validation` is necessary only because an ad-hoc signature has no Team ID. With
+one Developer ID signature on every file it may be removed; test that first.
+
+#### Notarization (needs the owner's Apple Developer account; not done)
+
+Nobody has notarized the app. The steps, with `"Developer ID Application: NAME (TEAMID)"`
+from the owner's keychain:
+
+```sh
+A=build-<id>/OpenFrenzy.app
+ID="Developer ID Application: NAME (TEAMID)"
+# 1. sign each dylib, then the bundle, with a secure timestamp and the hardened runtime
+for f in $A/Contents/Frameworks/*.dylib; do
+  codesign --force --options runtime --timestamp --sign "$ID" "$f"; done
+codesign --force --options runtime --timestamp \
+  --entitlements port/macos/OpenFrenzy.entitlements --sign "$ID" $A
+codesign --verify --strict --deep --verbose=2 $A
+# 2. send it to Apple (an app-specific password, stored once in the keychain)
+xcrun notarytool store-credentials openfrenzy-notary --apple-id <apple id> --team-id <TEAMID>
+ditto -c -k --keepParent $A OpenFrenzy.zip
+xcrun notarytool submit OpenFrenzy.zip --keychain-profile openfrenzy-notary --wait
+xcrun notarytool log <submission id> --keychain-profile openfrenzy-notary   # if it is rejected
+# 3. attach the ticket and check
+xcrun stapler staple $A
+spctl --assess --type exec --verbose=4 $A
+```
+
+- Change `CFBundleIdentifier` in `port/macos/Info.plist` (now `local.openfrenzy`) to an
+  identifier of the owner first.
+- After the Developer ID signature, try the app without `disable-library-validation`.
+- Read "Licences" before a copy of the app goes to another person.
+
+#### Licences of the bundled libraries
+
+| Library | Formula | Licence |
+|---|---|---|
+| libSDL3 | sdl3 3.4.18 | zlib |
+| libavformat, libavcodec, libswscale, libswresample, libavutil | ffmpeg 8.0.1_3 | **GPL version 3 or later** (this build: `--enable-gpl --enable-version3`; FFmpeg itself is LGPL only when built without them) |
+| libx264 | x264 r3222 | **GPL version 2 or later** |
+| libx265 | x265 4.1 | **GPL version 2 or later** |
+| libmp3lame | lame 3.100 | LGPL version 2 or later |
+| libdav1d | dav1d 1.5.3 | BSD-2-Clause |
+| libvpx | libvpx 1.15.2 | BSD-3-Clause |
+| libopus | opus 1.6.1 | BSD-3-Clause |
+| libSvtAv1Enc | svt-av1 4.0.1 | BSD-3-Clause-Clear (`LICENSE.md`) and BSD-2-Clause (`LICENSE-BSD2.md`) |
+| libssl, libcrypto | openssl@3 3.6.4 | Apache-2.0 |
+| libEGL, libGLESv2 | ANGLE (deps/) | BSD-3-Clause (`port/macos/licenses/ANGLE.txt`) |
+| musl (in the game image) | musl 1.2.5 | MIT (`port/macos/licenses/musl.txt`) |
+
+**WARNING: the bundled FFmpeg is GPL.** A copy of the app that includes it must meet the GPL
+terms (for example, the corresponding source code on offer). This note does not change the
+project licence. To get an LGPL app, build FFmpeg without `--enable-gpl` (only the Bink demuxer and
+decoders are needed) and point `PKG_CONFIG_PATH` at it.
+
 
 ### Run from a shell
 
@@ -255,7 +353,7 @@ base of `OPENFRENZY_DEBUG_TEST_KEYS`) and releases it HOLD ms later (default 150
 
 - With no other gamepad, virtual pad k is on port k - 1 (pad 1 shares port 0 with the keyboard).
   A re-plugged pad takes the lowest free port, so it comes back to its old port.
-- Logs: `virtual_pads: pad 2 attached (SDL joystick id 3)`, `virtual_pads: P2:A at 27508 ms`,
+- Logs: `virtual_pads: pad 2 attached (SDL joystick id 3)`, `gamepad 3: Pad 2 OpenFrenzy virtual (type 1, 0000:0000)`, `virtual_pads: P2:A at 27508 ms`,
   `virtual_pads: pad 2 detached ...`, `gamepad 3 removed`. The host's Rumble callback logs
   each request: `virtual gamepad 3: rumble low 27362 high 27362` (low = left motor).
 - A release sets the control to rest even when another item still holds it.

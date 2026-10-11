@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Hardened runtime entitlements of OpenFrenzy.app (cmake/make_app.cmake). Each was tested with
+     the bundled host (docs/BUILD.md "Hardened runtime"):
+     - allow-unsigned-executable-memory: the host loads the guest image into its arena and
+       makes the code pages executable (mprotect PROT_READ|PROT_EXEC, host_loader.c). Without
+       it the kernel kills the process (SIGKILL) at the first guest instruction. allow-jit is
+       not enough: it covers only MAP_JIT memory.
+     - disable-library-validation: an ad-hoc signature has no Team ID, so dyld refuses the
+       bundled dylibs ("different Team IDs"). With a Developer ID signature on every dylib
+       (one Team ID) this entitlement can be removed; test that before notarization. -->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>

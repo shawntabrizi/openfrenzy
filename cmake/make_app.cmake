@@ -2,11 +2,14 @@
 # Layout and install-name steps follow ref/OpenCE-mac-innerhat tools/macos_build.py
 # (package_into, CC0): ANGLE's two frameworks become plain dylibs in Contents/Frameworks.
 # The bundle holds no game data: the player's disc image stays outside it (docs/BUILD.md).
-# Usage: cmake -DAPP=... -DHOST=... -DGUEST=... -DPLIST=... -DEGL_DIR=... -DGLES_DIR=... -P make_app.cmake
+# SDL3, FFmpeg and their own dependencies (Homebrew) are copied by cmake/bundle_dylibs.py, so
+# the app runs on a Mac without Homebrew. Licence files go to Contents/Resources/licenses.
+# Usage: cmake -DAPP=... -DHOST=... -DGUEST=... -DPLIST=... -DEGL_DIR=... -DGLES_DIR=...
+#        -DPYTHON=... -DENTITLEMENTS=... -DLICENSES=... -P make_app.cmake
 
 file(REMOVE_RECURSE "${APP}")
 set(_contents "${APP}/Contents")
-file(MAKE_DIRECTORY "${_contents}/MacOS" "${_contents}/Resources" "${_contents}/Frameworks")
+file(MAKE_DIRECTORY "${_contents}/MacOS" "${_contents}/Resources/licenses" "${_contents}/Frameworks")
 set(_exe "${_contents}/MacOS/openfrenzy")
 file(COPY_FILE "${HOST}" "${_exe}")
 file(COPY_FILE "${GUEST}" "${_contents}/Resources/openfrenzy_guest.elf")
@@ -31,9 +34,17 @@ foreach(_pair "EGL;${EGL_DIR}" "GLESv2;${GLES_DIR}")
 endforeach()
 _run(install_name_tool -add_rpath "@executable_path/../Frameworks" "${_exe}")
 
-# Ad-hoc signature: the dylibs first, then the bundle (install_name_tool broke the old ones).
-foreach(_lib libEGL.dylib libGLESv2.dylib)
-  _run(codesign --force --sign - "${_contents}/Frameworks/${_lib}")
+# SDL3, FFmpeg and their dependencies: copied, install names @rpath/<name>, no /opt/homebrew.
+_run("${PYTHON}" -I "${CMAKE_CURRENT_LIST_DIR}/bundle_dylibs.py" "${_exe}"
+     "${_contents}/Frameworks" "${_contents}/Resources/licenses")
+file(COPY "${LICENSES}/ANGLE.txt" "${LICENSES}/musl.txt" DESTINATION "${_contents}/Resources/licenses")
+
+# Ad-hoc signature with the hardened runtime: each dylib first, then the bundle
+# (install_name_tool broke the old signatures; --deep does not sign nested dylibs well).
+# The entitlements file says why the host needs each one.
+file(GLOB _dylibs "${_contents}/Frameworks/*.dylib")
+foreach(_lib ${_dylibs})
+  _run(codesign --force --options runtime --sign - "${_lib}")
 endforeach()
-_run(codesign --force --sign - "${APP}")
+_run(codesign --force --options runtime --entitlements "${ENTITLEMENTS}" --sign - "${APP}")
 _run(codesign --verify --deep --strict "${APP}")
