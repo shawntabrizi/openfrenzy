@@ -123,7 +123,7 @@ void MetaVent_DrawCylinder(float *pos, float *dir, float radius, float height, s
 		FUN_00050150(world, translation, rotation);
 	else
 		FUN_0004ff30(world, translation, rotation);
-	FUN_00043930((undefined4 *)world);
+	FUN_00043930((float *)world);
 	spoke[0] = radius;
 	spoke[1] = 0.0f;
 	spoke[2] = 0.0f;

@@ -180,7 +180,7 @@ void FUN_0014dca0(int *self)
 	if (DAT_002baeb8 == 0 && self[0x1a] != 10) {
 		self[0x1a] = 10;
 		memory = MA_NEW(0x2b8, ma_file_gamemode_meta, 0x132, 0x1001);
-		mode = memory == NULL ? NULL : (void *)FUN_00021820((undefined4 *)memory);
+		mode = memory == NULL ? NULL : (void *)FUN_00021820((struct CGameMode_MetaVote *)memory);
 		CGameModeStack_Push(MA_MODESTACK, (struct CGameMode *)mode, 1);
 		return;
 	}
@@ -404,8 +404,8 @@ void FUN_0014ea80(void)
 		DAT_003045a4[2] = 0.0f;
 		DAT_003045a4[3] = 0.0f;
 	}
-	FUN_00082b20((undefined4 *)(MA_CHAR(DAT_002f289c[0]) + 0xd0), (undefined4 *)(MA_CHAR(DAT_002f289c[1]) + 0xd0),
-		(undefined4 *)(MA_CHAR(DAT_002f289c[2]) + 0xd0), (undefined4 *)(MA_CHAR(DAT_002f289c[3]) + 0xd0));
+	FUN_00082b20((float *)(MA_CHAR(DAT_002f289c[0]) + 0xd0), (float *)(MA_CHAR(DAT_002f289c[1]) + 0xd0),
+		(float *)(MA_CHAR(DAT_002f289c[2]) + 0xd0), (float *)(MA_CHAR(DAT_002f289c[3]) + 0xd0));
 	FUN_00163c60();
 	FUN_001635b0();
 	FUN_000af9e0();
@@ -426,7 +426,7 @@ void FUN_0014ea80(void)
 	FUN_0015f1d0();
 	FUN_0015e6e0();
 	FUN_0015e370();
-	FUN_0015d440((ushort *)DAT_00308460);
+	FUN_0015d440((struct CLightningMgr *)DAT_00308460);
 	FUN_000af380();
 	CRayControl_UpdateAll();
 	FUN_000b8b60();
@@ -475,7 +475,7 @@ void FUN_0014ee80(int self, int active)
 	CProjector_DrawAll();
 	FUN_00162260();
 	FUN_00080cc0();
-	FUN_0015d360((ushort *)DAT_00308460);
+	FUN_0015d360((struct CLightningMgr *)DAT_00308460);
 	FUN_001649b0();
 	CRayControl_DrawAll();
 	FUN_0015c580();
@@ -489,7 +489,7 @@ void FUN_0014ee80(int self, int active)
 	for (i = 0; i < DAT_002bae94; i++) {
 		if (MA_I16(DAT_003075bc[i], 0x36) != 0xe) {
 			ch = MA_CHAR(DAT_003075bc[i]);
-			FUN_0007bb70(i, (undefined4 *)(ch + 0xd0), MA_F32(ch, 0x1e8));
+			FUN_0007bb70(i, (float *)(ch + 0xd0), MA_F32(ch, 0x1e8));
 		}
 	}
 	FUN_0015b500();
@@ -758,7 +758,7 @@ void FUN_0014f670(int self)
 	if (MA_I32(self, 0x88) == 4)
 		FUN_0015b600();
 	if (DAT_003055d8 != 0)
-		FUN_001645f0((undefined4 *)MA_ADDR(self, 0xa0), DAT_0030455c);
+		FUN_001645f0((struct CMetaRain *)MA_ADDR(self, 0xa0), DAT_0030455c);
 	CRayControl_ResetList();
 	RefBot_Create();
 	FUN_0015ff80();
@@ -833,7 +833,7 @@ static void ma_close_package(int self, int offset)
 	struct bkPackage *package = (struct bkPackage *)MA_PTR(self, offset);
 
 	bkDeletePackageResources(bkGetPackageId(package), 0xffffffff);
-	FUN_0004db40((int *)package);
+	FUN_0004db40((struct bkPackage *)package);
 	MA_PTR(self, offset) = NULL;
 }
 
@@ -893,7 +893,7 @@ void FUN_0014faf0(int self)
 	FUN_00163560();
 	FUN_00163b20();
 	AnimTex_DeleteList((struct CLFList *)DAT_0030563c);
-	FUN_0015d010((ushort *)DAT_00308460);
+	FUN_0015d010((struct CLightningMgr *)DAT_00308460);
 	Sprite_FreeDefs((struct CSpriteDef *)DAT_002b0d30, 0xb);
 	Sprite_FreeDefs((struct CSpriteDef *)s_aisteam1_00290f00, 6);
 	FUN_0015b4d0();
@@ -995,7 +995,7 @@ void FUN_0014fe50(int self)
 	FUN_00163b20();
 	FUN_00163560();
 	AnimTex_DeleteList((struct CLFList *)DAT_0030563c);
-	FUN_0015d010((ushort *)DAT_00308460);
+	FUN_0015d010((struct CLightningMgr *)DAT_00308460);
 	Sprite_FreeDefs((struct CSpriteDef *)DAT_002b0d30, 0xb);
 	Sprite_FreeDefs((struct CSpriteDef *)s_aisteam1_00290f00, 6);
 	FUN_0015b4d0();
@@ -1307,7 +1307,7 @@ void FUN_00150510(int self)
 			CScoreTable_AddRound((struct CScoreTable *)&DAT_002b9968, scores);
 			CScoreTable_EndRound((struct CScoreTable *)&DAT_002b9968);
 			memory = MA_NEW(0x13c, ma_file_gamemode_meta, 0x700, 0x1001);
-			mode = memory == NULL ? NULL : (int *)FUN_000199c0((undefined4 *)memory);
+			mode = memory == NULL ? NULL : (int *)FUN_000199c0((struct CGameMode_GameStats *)memory);
 			MA_PTR(self, 0x30) = mode;
 			MA_VFN(mode, 0x10, void (*)(void *))(mode);
 			MA_VFN(MA_PTR(self, 0x30), 0x8, void (*)(void *))(MA_PTR(self, 0x30));

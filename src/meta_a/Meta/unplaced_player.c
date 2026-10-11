@@ -447,7 +447,7 @@ undefined4 FUN_001519b0(int ai)
 	ray[0] = ray[0] * k;
 	ray[1] = ray[1] * k;
 	ray[2] = ray[2] * k;
-	t = (double)FUN_000b43e0(ray_from, ray, (undefined4 *)result, NULL, &hit);
+	t = (double)FUN_000b43e0(ray_from, ray, (float *)result, NULL, (void **)&hit);
 	if (hit != 0 && MA_I32(hit, 0x440) != 0 && 0.0 < t) {
 		MA_U16(ai, 0x1084) = 0xffff;
 		return 1;

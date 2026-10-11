@@ -75,7 +75,7 @@ void FUN_001530c0(int node, int text)
 
 	sscanf((const char *)text, "%s", word);
 	rest = (const char *)text + strlen(word);
-	kind = FUN_001667e0((byte *)word, (undefined4 *)PTR_s_VAR_EQUAL_002b2398);
+	kind = FUN_001667e0((byte *)word, (const char **)PTR_s_VAR_EQUAL_002b2398);
 	MA_I32(node, 4) = kind;
 	switch (kind) {
 	case 0:

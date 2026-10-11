@@ -172,7 +172,7 @@ void CSearchlight_Update(struct CSearchlight *self)
 	dir[1] = 0.0f;
 	dir[2] = 0.0f;
 	dir[3] = 0.0f;
-	FUN_000b8240(self->pathTime);
+	FUN_000b8240((struct PlatformAnim *)self->pathTime);
 	if (self->path.numKeys != 0)
 	{
 		bGetKey3(key, (struct BKeyTrack3 *)&self->path, (int)self->pathTime[0]);

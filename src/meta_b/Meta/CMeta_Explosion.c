@@ -249,7 +249,7 @@ void CMetaExplosion_DrawShockwave(struct CMetaExplosion *self)
 			((undefined4 *)matrix, mb_fbits(self->pos[0]), mb_fbits(self->pos[1]),
 				mb_fbits(self->pos[2])),
 			(matrix, self->pos[0], self->pos[1], self->pos[2]));
-		FUN_00043930((undefined4 *)matrix);
+		FUN_00043930((float *)matrix);
 		bdDrawPrimitive(4, DAT_00308e78, 4);
 	}
 	MB_SET_RS(6, 0);

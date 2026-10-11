@@ -67,7 +67,7 @@ void CMetaExplSmoke_Draw(struct CMetaExplSmoke *self)
 	int i;
 	char *base;
 
-	FUN_00043930((undefined4 *)DAT_002855f0);
+	FUN_00043930((float *)DAT_002855f0);
 	MB_SET_RS(6, 1);
 	MB_SET_RS(10, 0);
 	MB_SET_RS(5, 0);
