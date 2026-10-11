@@ -138,6 +138,7 @@ class X86Runner:
 
         self.writes = []
         self.float_bytes = set()
+        self.float_values = set()
         self.float_store = {}
         self.cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
         self.calls = set()
@@ -160,6 +161,8 @@ class X86Runner:
             self.float_store[pc] = is_float
         if is_float:
             self.float_bytes.update(range(address, address + size))
+            if size == 4:
+                self.float_values.add(value & 0xffffffff)
 
     def _on_block(self, uc, address, size, user):
         if address in LIBC_DENY:
@@ -191,6 +194,9 @@ class X86Runner:
         self.image = image
         uc.mem_write(self.scratch_base, image)
         uc.mem_write(TIB_ADDR, self.tib)
+        # the same stack contents each case: a function that reads a local before it
+        # writes it must not see what the previous function left
+        uc.mem_write(STACK_TOP - 0x10000, bytes(0x10000))
         esp = STACK_TOP
         frame = struct.pack("<I", RET_ADDR) + b"".join(struct.pack("<I", w & 0xffffffff)
                                                       for w in stack_words)
@@ -202,6 +208,7 @@ class X86Runner:
         uc.reg_write(X.UC_X86_REG_ESP, esp)
         self.writes = []
         self.float_bytes = set()
+        self.float_values = set()
         self.calls = set()
         self.libc = set()
         self.stop_reason = None
@@ -230,6 +237,7 @@ class X86Runner:
             result["popped"] = uc.reg_read(X.UC_X86_REG_ESP) - esp - 4
         result["changed"] = self._collect_and_restore(status == "ok")
         result["float_bytes"] = self.float_bytes
+        result["float_values"] = self.float_values
         return result
 
     def _collect_and_restore(self, collect):

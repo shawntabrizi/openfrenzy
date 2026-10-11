@@ -735,6 +735,11 @@ class Comparer:
         if self.port.is_unmapped_data(pw) and any(lo <= ow < hi for lo, hi in self.xbe_ro):
             return "ptr"
         if not is_float:
+            # a float constant that x86 stores with an integer move: a few ulps apart, both
+            # normal floats of a usual size (integers almost never look like this)
+            if (ow ^ pw) & 0x80000000 == 0 and abs(ow - pw) <= 4 and is_normal_or_zero(ow) \
+                    and 1e-10 <= abs(f32(ow)) <= 1e10:
+                return "float"
             return None
         if is_nan32(ow) and is_nan32(pw):
             return "float"            # x87 makes negative NaNs, ARM positive ones
@@ -746,7 +751,7 @@ class Comparer:
             return "float"
         return None
 
-    def compare_memory(self, ochanged, pchanged_port, image, float_bytes=()):
+    def compare_memory(self, ochanged, pchanged_port, image, float_bytes=(), float_values=()):
         """List of (orig word address, x86 word, port word, verdict) for differing words,
         and the number of x86-changed bytes that have no port location."""
         pchanged = {}
@@ -792,7 +797,10 @@ class Comparer:
                 continue
             ow = struct.unpack("<I", bytes(ob))[0]
             pw = struct.unpack("<I", bytes(pb))[0]
-            verdict = self.words_equal(ow, pw, any(a in float_bytes for a in range(w, w + 4)))
+            # a float word: x86 stored it with an x87/SSE store, or copied a value that such a
+            # store made (a structure copy with integer moves)
+            verdict = self.words_equal(ow, pw, ow in float_values or
+                                       any(a in float_bytes for a in range(w, w + 4)))
             if verdict != "same":
                 out.append((w, ow, pw, verdict))
         return out, unmapped
@@ -838,7 +846,7 @@ def case_problems(f, o, pr, v, comparer):
     elif rdiff:
         problems.append(rdiff)
     mem, unmapped = comparer.compare_memory(o["changed"], pr["changed"], v["image"],
-                                            o.get("float_bytes", ()))
+                                            o.get("float_bytes", ()), o.get("float_values", ()))
     for w, ow, pw, verdict in mem:
         if verdict == "float":
             floaty += 1
@@ -994,13 +1002,13 @@ def main():
             if o["popped"] != expect_pop:
                 abi_note = "abi: x86 popped %d argument bytes, expected %d" % (o["popped"], expect_pop)
                 break
-            if c < 2:
-                o2 = runner.run(addr, images[image], ecx, edx, stack, poison=1)
-                if o2["status"] != o["status"] or o2["changed"] != o["changed"] or (
-                        f["ret"] in ("f32", "f64") and o2["st0"] != o["st0"]) or (
-                        f["ret"] not in ("void", "f32", "f64") and (o2["eax"], o2["edx"]) != (o["eax"], o["edx"])):
-                    abi_note = "abi: the result depends on registers that are not arguments"
-                    break
+            # the same case with other values in the registers that are not arguments
+            o2 = runner.run(addr, images[image], ecx, edx, stack, poison=1)
+            if o2["status"] != o["status"] or o2["changed"] != o["changed"] or (
+                    f["ret"] in ("f32", "f64") and o2["st0"] != o["st0"]) or (
+                    f["ret"] not in ("void", "f32", "f64") and (o2["eax"], o2["edx"]) != (o["eax"], o["edx"])):
+                abi_note = "abi: the result depends on registers that are not arguments"
+                break
             fd = o["fdepth"]
             if fd > 1:
                 # the x87 stack grew by more than one value: an error path of the C library

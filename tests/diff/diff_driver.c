@@ -36,6 +36,14 @@ struct of_diff_result
 
 int of_diff_call(uint32_t function, const uint32_t *a, struct of_diff_result *r);
 
+/* zero 64 KB of stack below the caller's frame, as the x86 side does before each case, so
+that a local read before it is written holds 0 on both sides */
+__attribute__((noinline)) static void clear_stack(void)
+{
+	volatile unsigned char pad[0x10000];
+	memset((void *)pad, 0, sizeof(pad));
+}
+
 static uint32_t rd32(const unsigned char *p)
 {
 	return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
@@ -158,6 +166,7 @@ int main(void)
 		memset(&r, 0, sizeof(r));
 		fprintf(out, "B %u\n", id);
 		fflush(out);
+		clear_stack();
 		if (of_diff_call(function, args, &r) != 0)
 		{
 			fprintf(out, "X %u unknown function %u\n", id, function);

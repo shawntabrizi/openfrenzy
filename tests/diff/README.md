@@ -34,7 +34,7 @@ missing. It needs no other game data.
 
 - The XBE sections are loaded at their virtual addresses. Each case starts from the same
   state: the pristine data image (the harness puts back every byte that the last case
-  wrote), a fresh copy of the scratch image, and a saved CPU state. The x87 control word is
+  wrote), a fresh copy of the scratch image, 64 KB of zero stack, and a saved CPU state. The x87 control word is
   0x027F (53-bit precision, the MSVC CRT value). FS points to a small TIB.
 - Arguments: the port's prototype (from the generated `of_decls.h`) gives the types. The
   harness finds the x86 locations from the code: a `ret N` gives the number of stack words
@@ -49,7 +49,7 @@ missing. It needs no other game data.
 - Recorded: EAX, EDX, ST0, the x87 stack depth, the bytes popped, and every byte that the
   function changed in the scratch window and in the data sections (stack writes are not
   compared). The write hook also records which bytes an x87 or SSE store wrote.
-- Each case runs a second time with other values in EAX, EBX, ESI, EDI and EBP. If the
+- Every case runs a second time with other values in EAX, EBX, ESI, EDI and EBP. If the
   result changes, the function reads a register that is not an argument (a custom calling
   convention) and the harness skips it.
 
@@ -62,7 +62,8 @@ missing. It needs no other game data.
 - The driver maps the scratch window at the same guest address as Unicorn (0x87000000,
   inside the Xbox window, where the guest can map a fixed address). So pointers in the
   scratch data are the same values on both sides.
-- Before each case the driver copies the scratch image. After the call it writes the
+- Before each case the driver copies the scratch image and clears 64 KB of its stack (as
+  the x86 side does, so that a local read before it is written is 0 on both sides). After the call it writes the
   return value and every changed byte of the scratch window and of the mapped globals, and
   it puts the globals back. The output is flushed after each case. When the port faults or
   hangs (no output for 5 s), the harness records it for that case and starts the driver
@@ -100,9 +101,12 @@ one module does not see writes from the other. The harness prints `TWO-STORAGE` 
 - Memory: byte by byte, in 32-bit words. A port pointer to a global or a function is mapped
   back to its original address. A port pointer into data without a known original address
   equals an x86 pointer into its own data ("pointer to unmapped constant").
-- Float tolerance applies only to words that x86 wrote with an x87 or SSE store: relative
+- Float tolerance applies only to words that x86 wrote with an x87 or SSE store, or that hold
+  a value which such a store made in the same run (a copy with integer moves): relative
   1e-4 or absolute 1e-5; any NaN equals any NaN; two denormals are equal; a value that is
-  finite on one side only is an x87 range difference.
+  not finite on one side is an x87 range difference. Other words: two normal floats of
+  magnitude 1e-10 to 1e10 at most 4 ulps apart are equal (a float constant that x86 stores
+  with a mov).
 - The precision check: when a case differs, x86 runs again with the x87 precision at 24
   bits (control word 0x007F). If the results then agree, the difference is precision only.
 

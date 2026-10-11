@@ -29,3 +29,16 @@
 000c10d0 input: CCarryOn_Player_PickRandomOpponent reads self->+0x30 before the player loop; x86 reads it inside the loop, which runs 0 times with 0 players. Same result for a valid player object
 000c11e0 input: CCarryOn_Player_PickWorstEnemy, as 0x000c10d0
 000c2e00 input: CCarryOn_Player_PickTarget, as 0x000c10d0
+#
+# x87 NaN compares: MSVC's fcom/fnstsw/test/jp sequences let a NaN pass tests that C's < fails.
+# The port's bdProjectSize returns 0 for a NaN depth (its comment says x86 does too); x86
+# goes on and draws with NaN sizes. Reported, not changed (it would send NaN vertices to GL).
+00040750 x87 NaN: bdDrawSprite3D via bdProjectSize 0x000443f0 (zero matrices give depth 0/0)
+000407d0 x87 NaN: bdDrawBeam3D via bdProjectSize 0x000443f0
+00040880 x87 NaN: bdDrawPolyline3D via bdProjectWidth 0x000444b0
+#
+# Unset locals in the original: with a point count of 0 or less the loop does not run and the
+# function returns locals that it never wrote (x86 reads its stack, the port its registers).
+# Every differing case has such a count.
+000f6270 unset locals: CDemolition_Camera_Fit with count <= 0
+001935f0 unset locals: CRollerballCamera_FitPoints with count <= 0
