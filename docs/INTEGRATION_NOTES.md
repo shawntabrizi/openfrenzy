@@ -618,6 +618,41 @@ guest (`ofr5*`), `OPENFRENZY_BKLOG=1`. No run logged `quit requested`.
 - Not verified: audible sound (nobody listened), a real gamepad, keyboard focus from a real OS
   focus change, anything past 300 s in this round (rounds 3-5 cover full tournaments).
 
+### Build warnings (fix-build-warning-noise)
+
+A clean build printed 140,391 `warning:` lines. Correction to the note above: the
+`GetLastError` lines (xdk_pdb.h 1678, 1726, 1744, 1750) are not redeclarations. They are the
+same warning as all the others:
+
+| Count | Flag | Cause | Fix |
+|---|---|---|---|
+| 111,741 | `-Wignored-attributes` | `__stdcall` (via `WINAPI`, `NTAPI`) in the XDK headers, about 385 per game object; AArch64 has no x86 calling conventions | `halo_linux_prefix.h` defines `__stdcall`, `__fastcall`, `__thiscall` empty for `HALO_ARM64_GUEST` (same code; the flag stays on) |
+| 28,420 | `-Wduplicate-decl-specifier` | `D3DINLINE` was `static __forceinline`, and `__forceinline` is already `static` | `xdk_d3d8.h`: `D3DINLINE` is `__forceinline` (same code) |
+| 220 | (no flag) | `weak identifier ... never declared`: the generated `platform_msvc_semantics.h` has `#pragma weak D3DDevice_SetRenderState` / `D3DXMatrixIdentity`; 110 game objects do not include `xdk_d3d8.h` | not fixed, see below |
+| 10 | `-Wformat`, `-Wformat-extra-args` | `meta_a/Meta/puzzles.c` (`%d` into `short[2]`, `%i` into `MA_ADDR`), `meta_b/Meta/LevelLoad.c:535`, `tankedup_b/TankedUp/CTank_Char.c:91` | kept: each is the original's call (comments say so); not bugs on this target |
+
+After: 230 lines (clean build, `build-fix-build-warning-noise`). Link OK, ctest 6/6, headless
+90 s board run (round-2 input, videos skipped, `OPENFRENZY_BKLOG=1`) reaches `countdown PLAYING`.
+The guest image is the same as before: identical symbol table and `.text` bytes (llvm-nm, objcopy).
+
+- The weak pragmas: clang's warning has no `-W` group, so only `-w` hides it. The pragma must
+  come before the static inline definition (after it, clang stops with "weak declaration cannot
+  have internal linkage"), so it cannot move into `xdk_d3d8.h` after the functions, and the
+  linker needs the weak copies (330 objects define them `W`). Left as is: 2 lines per object
+  that does not use D3D.
+- Warning classes turned off for game modules: none were added. The game flags have no
+  `-Wall`/`-Wextra`, so unused variables and similar classes are not on, and after the two fixes
+  the default set prints only the 10 format lines. The existing `-Wno-` list in
+  `port/guest/CMakeLists.txt` (`GAME_FLAGS`) is unchanged.
+- Conflict to know: `GAME_FLAGS` already has `-Wno-int-conversion` and
+  `-Wno-incompatible-function-pointer-types`. In clang 22 these are errors by default in C;
+  without the two flags the game sources stop with more than 400 `-Wint-conversion` errors
+  (clang's error limit cut several units short). The round-2 audits ran the conversion
+  warnings as a separate pass; do that again for those two classes, because the build does
+  not show them. Of the float-conversion warnings, only `-Wimplicit-const-int-float-conversion`
+  is on by default; `-Wimplicit-int-float-conversion` and `-Wfloat-conversion` are not on in
+  the build (nothing turns them off; clang does not enable them without a flag).
+
 ## Frame pacing (integration round 5, fix-frame-pacing)
 
 - New: the host logs one line every 10 s from the swap path (`host_sdl_gl_swap_window`,

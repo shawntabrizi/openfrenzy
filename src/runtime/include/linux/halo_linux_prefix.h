@@ -25,6 +25,19 @@ byte-for-byte identical to what the matching MSVC build compiles.
 /* the XDK's COM headers decorate methods with __export when _WIN32 is unset */
 #define __export
 
+/* ---------- x86 calling conventions
+
+AArch64 has one calling convention. Clang ignores __stdcall, __fastcall and
+__thiscall there and warns at each use (-Wignored-attributes, about 110,000
+warnings per build from the XDK headers). Remove the keywords, so that the
+code means the same and the warning group stays on for real cases. */
+
+#ifdef HALO_ARM64_GUEST
+#define __stdcall
+#define __fastcall
+#define __thiscall
+#endif
+
 /* ---------- MSVC inline semantics
 
 MSVC gives C `__inline` functions COMDAT (pick-any) linkage. ELF C has no
