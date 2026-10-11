@@ -504,8 +504,9 @@ int bmSweepSphereMesh(struct BSphere *sphere, struct BCollMesh *mesh, float *del
 }
 
 /* 0x00053af0  BMATHS (unplaced)
-Sphere a moving by vec against sphere b. */
-void bmSweepSphereSphereVec(struct BSphere *a, struct BSphere *b, float *vec, struct BCollHit *hit)
+Sphere a moving by vec against sphere b. Returns bmSweepSphereSphere's result (eax at the
+original's ret; the callers test it). */
+int bmSweepSphereSphereVec(struct BSphere *a, struct BSphere *b, float *vec, struct BCollHit *hit)
 {
 	float len, inv, dir[4];
 
@@ -515,7 +516,7 @@ void bmSweepSphereSphereVec(struct BSphere *a, struct BSphere *b, float *vec, st
 	dir[1] = inv * vec[1];
 	dir[2] = inv * vec[2];
 	dir[3] = 0.0f; /* not set by the original */
-	bmSweepSphereSphere(a, b, dir, len, hit);
+	return bmSweepSphereSphere(a, b, dir, len, hit);
 }
 
 /* 0x00053b60  BMATHS (unplaced)

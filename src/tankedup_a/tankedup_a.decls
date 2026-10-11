@@ -199,7 +199,7 @@
 001ce100 void *CTankEntities_Get(void *self, int id);
 001ce130 void CTankEntities_RouteMessage(void *self, void *message);
 001ce1f0 void CTankEntities_ChangeState(void *self, void *ent);
-001ce270 void CTankEntities_SkipId(void);
+001ce270 int CTankEntities_SkipId(void);
 001ce280 void CTankEntities_EntityDtor(void *ent);
 001ce290 void CTankEntities_Setup(void *self);
 001ce300 void CTankEntities_Shutdown(void *self);

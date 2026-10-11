@@ -168,7 +168,7 @@
 00049380 int biAddRumble(int pad, int motor, int strength, int duration, int attack, int decay, int delay, int waveform);
 00049490 void biAddRumbleList(int pad, int count, const int *effects);
 000494e0 int biPauseRumble(void);
-00049500 void biResumeRumble(void);
+00049500 int biResumeRumble(void);
 00049510 void biClearRumble(int pad);
 00049550 void biShutdownInput(void);
 00049560 void biUpdateRumble(void);

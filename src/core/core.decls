@@ -108,7 +108,7 @@
 # Core/CVectorShape.c
 0002f4a0 void CVectorShape_Draw(struct CVectorShape *self);
 0002f500 void CVectorShape_DrawPart(struct CVectorShape *self, unsigned int count);
-0002f570 void CVectorShape_Init(struct CVectorShape *self);
+0002f570 struct CVectorShape *CVectorShape_Init(struct CVectorShape *self);
 0002f580 void CVectorShape_Free(struct CVectorShape *self);
 0002f5a0 void CVectorShape_Set(struct CVectorShape *self, const int *data, const int *colour);
 0002f710 void CVectorShape_BuildFan(struct CVectorShape *self, const float *centre, int *vb, const int *colour, const int *glow);

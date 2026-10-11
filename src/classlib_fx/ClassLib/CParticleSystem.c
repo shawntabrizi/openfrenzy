@@ -420,10 +420,11 @@ void CParticleSystemList_DeleteAll(CParticleSystemList *self)
 }
 
 /* 0x000a95c0  ClassLib/CParticleSystem.cpp
-Constructor (vtable only). */
-void CParticleSystem_Construct(CParticleSystem *self)
+Constructor (vtable only). Returns self (eax = this at the original's ret). */
+CParticleSystem *CParticleSystem_Construct(CParticleSystem *self)
 {
 	self->h.vtable = vtable_00266cd8;
+	return self;
 }
 
 /* 0x000a95d0  ClassLib/CParticleSystem.cpp

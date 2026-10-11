@@ -1196,17 +1196,20 @@ void CRColl_SphereVsMesh(void *actor, float *centre, float radius, void *owner, 
 
 /* 0x000b4bd0  CharLib (CRCollision.cpp, inferred)
 CRColl_RayCast without the platform result; normal_out gets the normal of the triangle
-hit (w = 1 in any case). */
-void CRColl_RayCastNormal(float *start, float *delta, float *hit, float *normal_out)
+hit (w = 1 in any case). Returns CRColl_RayCast's fraction: the original's fcom leaves it in
+st0 at the ret, and the callers read it. */
+float CRColl_RayCastNormal(float *start, float *delta, float *hit, float *normal_out)
 {
 	float *tri;
+	float fraction = CRColl_RayCast(start, delta, hit, &tri, NULL);
 
-	if (0.0f < CRColl_RayCast(start, delta, hit, &tri, NULL)) {
+	if (0.0f < fraction) {
 		memcpy(normal_out, tri + 12, 0x10);
 		normal_out[3] = 1.0f;
-		return;
+		return fraction;
 	}
 	normal_out[3] = 1.0f;
+	return fraction;
 }
 
 /* 0x000b4c40  CharLib (CRCollision.cpp, inferred)

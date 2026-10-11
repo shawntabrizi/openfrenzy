@@ -43,11 +43,12 @@ void CBCar_Effects_Draw(void *self, int view)
 		CLDebris_Stop(); /* classlib_ui's name for 0x00080cc0: draws the debris */
 }
 
-/* 0x0008cba0  (gap): adds one piece of BumperCars debris type `type` */
-void CBCar_Effects_Add(void *self, int type, float *pos, float *vel, int lifeFrames, unsigned int colour)
+/* 0x0008cba0  (gap): adds one piece of BumperCars debris type `type`; returns the piece
+(Debris_Add's result, eax at the original's ret) */
+void *CBCar_Effects_Add(void *self, int type, float *pos, float *vel, int lifeFrames, unsigned int colour)
 {
 	(void)self;
-	Debris_Add(&DAT_00291e88[type], pos, vel, lifeFrames, colour);
+	return Debris_Add(&DAT_00291e88[type], pos, vel, lifeFrames, colour);
 }
 
 /* 0x0008cbd0  (gap): a ring of `count` pieces of type `type` */

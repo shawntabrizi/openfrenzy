@@ -55,11 +55,13 @@ void CVectorShape_DrawPart(struct CVectorShape *self, unsigned int count)
 	ext_DrawPrimitives(1, self->vertices, (int)n);
 }
 
-/* 0x0002f570  (Core, CVectorShape.cpp) CVectorShape::CVectorShape */
-void CVectorShape_Init(struct CVectorShape *self)
+/* 0x0002f570  (Core, CVectorShape.cpp) CVectorShape::CVectorShape (returns this, eax at the
+original's ret) */
+struct CVectorShape *CVectorShape_Init(struct CVectorShape *self)
 {
 	self->vertices = NULL;
 	self->data = NULL;
+	return self;
 }
 
 /* 0x0002f580  (Core, CVectorShape.cpp) CVectorShape::~CVectorShape */

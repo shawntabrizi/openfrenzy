@@ -27,7 +27,7 @@ const require = createRequire(path.join(root, 'tools/web-test/package.json'));
 const playwright = require('playwright');
 
 function options(argv) {
-  const out = { site: 'build-web/site', seconds: 60, shots: [], set: [], keys: [], browser: 'chrome', port: 8765, headed: false };
+  const out = { site: 'build-web/site', seconds: 60, shots: [], set: [], keys: [], pad: null, browser: 'chrome', port: 8765, headed: false };
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i];
     const value = () => argv[++i];
@@ -38,6 +38,7 @@ function options(argv) {
     else if (name === '--out') out.out = value();
     else if (name === '--set') out.set.push(value());
     else if (name === '--keys') out.keys.push(value());
+    else if (name === '--pad') out.pad = value();
     else if (name === '--browser') out.browser = value();
     else if (name === '--port') out.port = Number(value());
     else if (name === '--headed') out.headed = true;
@@ -85,6 +86,52 @@ try {
   }
   context = await playwright[kind].launchPersistentContext(path.join(root, `tools/web-test/profile-${opts.browser}`), launch);
   const page = context.pages()[0] || await context.newPage();
+  // Sound check: every Web Audio node connected to the speakers is also connected to an
+  // analyser, whose level the driver logs ("audio: peak P rms R, context C"). Muted headless
+  // output does not change what the graph produces.
+  await page.addInitScript(() => {
+    const original = AudioNode.prototype.connect;
+    window.openfrenzyAudioTaps = [];
+    AudioNode.prototype.connect = function (target, ...rest) {
+      const result = original.call(this, target, ...rest);
+      if (target instanceof AudioDestinationNode) {
+        const analyser = this.context.createAnalyser();
+        analyser.fftSize = 2048;
+        original.call(this, analyser);
+        window.openfrenzyAudioTaps.push(analyser);
+      }
+      return result;
+    };
+    // --pad: a scripted gamepad of the standard mapping (the Gamepad API has no pad in a headless
+    // browser). navigator.getGamepads returns it; window.openfrenzyPad(button, down) presses
+    // standard button indices (0 A, 1 B, 2 X, 3 Y, 9 Start, 12-15 the d-pad).
+    window.openfrenzyPadInstall = () => {
+      const pad = {
+        id: 'OpenFrenzy scripted pad (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard',
+        timestamp: performance.now(), axes: [0, 0, 0, 0],
+        buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
+        vibrationActuator: null,
+      };
+      navigator.getGamepads = () => [pad, null, null, null];
+      const event = new Event('gamepadconnected');
+      Object.defineProperty(event, 'gamepad', { value: pad });
+      window.dispatchEvent(event);
+      window.openfrenzyPad = (button, down) => {
+        pad.buttons[button] = { pressed: down, touched: down, value: down ? 1 : 0 };
+        pad.timestamp = performance.now();
+      };
+    };
+    window.openfrenzyAudioLevel = () => {
+      let peak = 0, sum = 0, count = 0, state = 'none';
+      for (const analyser of window.openfrenzyAudioTaps) {
+        const data = new Float32Array(analyser.fftSize);
+        analyser.getFloatTimeDomainData(data);
+        state = analyser.context.state;
+        for (const v of data) { peak = Math.max(peak, Math.abs(v)); sum += v * v; count++; }
+      }
+      return { peak, rms: count ? Math.sqrt(sum / count) : 0, state, taps: window.openfrenzyAudioTaps.length };
+    };
+  });
   page.on('console', (message) => record(message.text()));
   page.on('pageerror', (error) => record('pageerror: ' + error.message));
   page.on('crash', () => record('driver: the page crashed'));
@@ -106,8 +153,10 @@ try {
     record('data: ' + data);
     if (!/ready/.test(data)) throw new Error('the disc image was not copied');
   }
+  if (opts.pad) await page.evaluate(() => window.openfrenzyPadInstall());
   await page.click('#play');
   const start = Date.now();
+  let padIndex = 0;
   const shots = [...opts.shots].sort((a, b) => a - b);
   let keyIndex = 0;
   while ((Date.now() - start) / 1000 < opts.seconds) {
@@ -132,6 +181,24 @@ try {
         keyIndex++;
       }
     }
+    if (Math.floor(elapsed / 5) !== Math.floor((elapsed - 0.3) / 5)) {
+      const level = await page.evaluate(() => window.openfrenzyAudioLevel());
+      record(`audio: peak ${level.peak.toFixed(3)} rms ${level.rms.toFixed(4)}, context ${level.state}, ${level.taps} taps`);
+    }
+    // --pad "SECONDS:BUTTON[+HOLD_MS],...": standard button indices on the scripted pad
+    if (opts.pad) {
+      const items = opts.pad.split(',');
+      while (padIndex < items.length) {
+        const [when, what] = items[padIndex].split(':');
+        if (Number(when) > elapsed) break;
+        const [button, hold] = what.split('+');
+        await page.evaluate((b) => window.openfrenzyPad(Number(b), true), button);
+        await sleep(Number(hold || 150));
+        await page.evaluate((b) => window.openfrenzyPad(Number(b), false), button);
+        record(`driver: pad button ${button} at ${elapsed.toFixed(1)} s`);
+        padIndex++;
+      }
+    }
     const fatal = await page.evaluate(() => window.openfrenzyFatal || null);
     if (fatal) {
       record('driver: the game stopped: ' + fatal);
@@ -142,6 +209,23 @@ try {
     await sleep(250);
   }
   for (const at of shots) record(`driver: screenshot at ${at} s not taken (the run ended first)`);
+  // what the site keeps in its private storage (OPFS), for the saves check
+  const files = await page.evaluate(async () => {
+    const out = [];
+    async function walk(directory, prefix) {
+      for await (const [name, handle] of directory.entries()) {
+        if (handle.kind === 'directory') await walk(handle, prefix + name + '/');
+        else {
+          let size = '?';
+          try { size = (await handle.getFile()).size; } catch (e) { size = 'open'; }
+          out.push(prefix + name + ' ' + size);
+        }
+      }
+    }
+    await walk(await navigator.storage.getDirectory(), '');
+    return out;
+  });
+  record('storage: ' + files.join(', '));
   if (opts.expect) {
     const pattern = new RegExp(opts.expect);
     if (!lines.some((line) => pattern.test(line))) {

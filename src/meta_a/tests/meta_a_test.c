@@ -69,11 +69,12 @@ void bkHeapFree(void *pointer)
 }
 
 /* classlib_ui ClassLib/unplaced.c 0x00071050-0x00071110 */
-void CLList_Init(int *list)
+int *CLList_Init(int *list)
 {
 	list[1] = (int)list;
 	list[0] = (int)list;
 	list[2] = 0;
+	return list;
 }
 
 void CLList_Insert(int *list, int *node, int at_tail)

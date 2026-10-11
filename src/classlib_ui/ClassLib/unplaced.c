@@ -509,12 +509,14 @@ struct CLU_List { node *next; node *prev; int count; } -- the list head is
 itself a node (next/prev at the same offsets as in every node). */
 
 /* 0x00071050  ClassLib (file unknown)
-List constructor: an empty list points at itself. */
-void CLList_Init(int *list)
+List constructor: an empty list points at itself. Returns the list (eax = this at the
+original's ret, as MSVC constructors do; some callers use it). */
+int *CLList_Init(int *list)
 {
 	list[1] = (int)list;
 	list[0] = (int)list;
 	list[2] = 0;
+	return list;
 }
 
 /* 0x00071060  ClassLib (file unknown)
@@ -770,20 +772,24 @@ int CLFade_Draw(float step)
 
 /* 0x00071f90  ClassLib (file unknown)
 Adds the size of the loading-screen resource of a package ("csLoading" for
-cut scenes, else "mgLoading") to the loading totals. */
-void CLLoading_AddPackage(undefined4 package, int cutscene)
+cut scenes, else "mgLoading") to the loading totals. Returns what 0x0004d320 returned (eax
+at the original's ret; the callers use it as the package's buffer). */
+void *CLLoading_AddPackage(undefined4 package, int cutscene)
 {
 	const char *name;
 	int size;
+	void *result;
 
 	if (cutscene == 0)
 		name = "mgLoading";
 	else
 		name = "csLoading";
-	if (FUN_0004d320(0, (const char *)package, (const char *)name, &size, 0) != 0) {
+	result = FUN_0004d320(0, (const char *)package, (const char *)name, &size, 0);
+	if (result != 0) {
 		DAT_002ba9ac = DAT_002ba9ac + size;
 		DAT_002ba9b0 = DAT_002ba9b0 + 1;
 	}
+	return result;
 }
 
 /* 0x00071ff0  ClassLib (file unknown)

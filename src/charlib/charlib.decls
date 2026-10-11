@@ -93,7 +93,7 @@
 000b3e40 void CRColl_RefreshMesh(void *platform, void *actor);
 000b43e0 float CRColl_RayCast(float *start, float *delta, float *hit, float **tri_out, void **platform_out);
 000b4a20 void CRColl_SphereVsMesh(void *actor, float *centre, float radius, void *owner, void *platform, int sphere, int tag);
-000b4bd0 void CRColl_RayCastNormal(float *start, float *delta, float *hit, float *normal_out);
+000b4bd0 float CRColl_RayCastNormal(float *start, float *delta, float *hit, float *normal_out);
 000b4c40 void CRColl_GatherContacts(void *actor, float *centres, float *radii);
 000b4dd0 void CRColl_Step(void *actor);
 000b5900 void CRColl_StepAndPush(void *actor, int push);

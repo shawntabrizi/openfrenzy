@@ -570,10 +570,12 @@ int biPauseRumble(void)
 	return DAT_002cc1bc;
 }
 
-/* 0x00049500 */
-void biResumeRumble(void)
+/* 0x00049500
+Returns the new pause count (eax at the original's ret; CRumble.c keeps it). */
+int biResumeRumble(void)
 {
 	DAT_002cc1bc--;
+	return DAT_002cc1bc;
 }
 
 /* 0x00049510

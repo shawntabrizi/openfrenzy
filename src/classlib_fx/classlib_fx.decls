@@ -125,7 +125,7 @@
 000a9550 void CParticleSystem_SetPosition(struct CPSHeader *self, float *pos);
 000a9570 struct CParticleSystemList *CParticleSystemList_DeletingDtor(struct CParticleSystemList *self, byte flags);
 000a9590 void CParticleSystemList_DeleteAll(struct CParticleSystemList *self);
-000a95c0 void CParticleSystem_Construct(struct CParticleSystem *self);
+000a95c0 struct CParticleSystem *CParticleSystem_Construct(struct CParticleSystem *self);
 000a95d0 int CParticleSystem_Init(struct CParticleSystem *self, struct CPSParams *params, int maxParticles);
 000a9800 void CParticleSystem_Emit(struct CParticleSystem *self, struct CParticle *p);
 000a9a30 void CParticleSystem_Release(struct CParticleSystem *self);

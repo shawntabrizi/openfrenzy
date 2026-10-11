@@ -32,7 +32,7 @@ int bmSweepSphereSphere(struct BSphere *a, struct BSphere *b, float *dir, float 
 void bmSegmentSphere(float *segment, struct BSphere *sphere, struct BCollHit *hit);
 int bmSweepSphereTriangle(struct BSphere *sphere, struct BTriangle *tri, float *delta, struct BCollHit *hit);
 int bmSweepSphereMesh(struct BSphere *sphere, struct BCollMesh *mesh, float *delta, int *count, struct BCollHit *hits);
-void bmSweepSphereSphereVec(struct BSphere *a, struct BSphere *b, float *vec, struct BCollHit *hit);
+int bmSweepSphereSphereVec(struct BSphere *a, struct BSphere *b, float *vec, struct BCollHit *hit);
 int bmSweepSphereEdge(struct BSphere *sphere, struct BEdge *edge, float *delta, struct BCollHit *hit);
 int bmRayTriangle(struct BRay *ray, struct BTriangle *tri, struct BCollHit *hit);
 int bmClosestLinePoints(float *a, float *b, float *s, float *t);

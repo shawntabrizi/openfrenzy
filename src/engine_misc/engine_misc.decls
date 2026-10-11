@@ -133,7 +133,7 @@
 00052ea0 void bmSegmentSphere(float *segment, struct BSphere *sphere, struct BCollHit *hit);
 00052f30 int bmSweepSphereTriangle(struct BSphere *sphere, struct BTriangle *tri, float *delta, struct BCollHit *hit);
 00053720 int bmSweepSphereMesh(struct BSphere *sphere, struct BCollMesh *mesh, float *delta, int *count, struct BCollHit *hits);
-00053af0 void bmSweepSphereSphereVec(struct BSphere *a, struct BSphere *b, float *vec, struct BCollHit *hit);
+00053af0 int bmSweepSphereSphereVec(struct BSphere *a, struct BSphere *b, float *vec, struct BCollHit *hit);
 00053b60 int bmSweepSphereEdge(struct BSphere *sphere, struct BEdge *edge, float *delta, struct BCollHit *hit);
 00054050 int bmRayTriangle(struct BRay *ray, struct BTriangle *tri, struct BCollHit *hit);
 00054420 int bmClosestLinePoints(float *a, float *b, float *s, float *t);

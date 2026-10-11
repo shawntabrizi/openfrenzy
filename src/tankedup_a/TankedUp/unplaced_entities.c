@@ -357,10 +357,12 @@ void CTankEntities_ChangeState(void *self, void *ent)
 }
 
 /* 0x001ce270  TankedUp (gap; no `this`)
-Counts up the entity id counter (0x00315398) without making an entity. */
-void CTankEntities_SkipId(void)
+Counts up the entity id counter (0x00315398) without making an entity. Returns the new
+count (eax at the original's ret; CTank_AI.c uses it as the new id). */
+int CTankEntities_SkipId(void)
 {
 	TU_VAR(int, 0x00315398) = TU_VAR(int, 0x00315398) + 1;
+	return TU_VAR(int, 0x00315398);
 }
 
 /* 0x001ce280  TankedUp (gap)

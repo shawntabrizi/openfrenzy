@@ -21,7 +21,8 @@ passes the arguments as the AArch64 procedure call standard would: integer argum
 i64) fill the callee's integer parameters in order, float arguments (f32, f64) fill its
 float parameters in order, a missing one is 0, a surplus one is dropped; f32 and f64 are
 converted to each other, i32 and i64 are wrapped or zero-extended. The callee's result goes
-back the same way (0 if it returns nothing). The function table itself is not changed, so
+back the same way (the first integer argument if it returns nothing, as LLVM's wrappers of
+direct calls do: eax = this for MSVC constructors). The function table itself is not changed, so
 JavaScript's calls into it are unaffected.
 
 The first mismatched call of each table entry is reported to of_web_icall_mismatch (C,
@@ -239,7 +240,9 @@ def main():
             call = f"(call_indirect $0 (type ${t}) {' '.join(operands)} (local.get $index))"
             result = results[0] if results else None
             if result is None:
-                body = f"{call} (return (i64.const 0))"
+                # a void callee called for a value: the first integer argument, as LLVM's own
+                # wrappers for direct calls give (and eax = this for MSVC constructors)
+                body = f"{call} (return (local.get 3))"
             elif result == "i32":
                 body = f"(return (i64.extend_i32_u {call}))"
             elif result == "i64":

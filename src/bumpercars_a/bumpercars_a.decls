@@ -118,7 +118,7 @@
 0008cb60 void CBCar_Effects_Shutdown(void *self);
 0008cb80 void CBCar_Effects_Update(void *self, float dt);
 0008cb90 void CBCar_Effects_Draw(void *self, int view);
-0008cba0 void CBCar_Effects_Add(void *self, int type, float *pos, float *vel, int lifeFrames, unsigned int colour);
+0008cba0 void *CBCar_Effects_Add(void *self, int type, float *pos, float *vel, int lifeFrames, unsigned int colour);
 0008cbd0 void CBCar_Effects_AddRing(void *self, int type, float *pos, float outSpeed, float upSpeed, float jitter, int count);
 0008cdc0 int CBCar_Effects_Init(void *self);
 0008ce30 void CBCar_Effects_Burst(void *self, float *pos, float outSpeed, float upSpeed, float jitter, int count, int ntypes, ...);

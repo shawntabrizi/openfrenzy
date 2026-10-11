@@ -22,7 +22,7 @@
 00070ed0 int CLVec3_MoveTowards(float *pos, float *target, float speed, float scale);
 00070f80 void CLVec3_Reflect(float *v, float *n);
 00070ff0 int CLCylinder_ContainsPoint(float *cyl, float *p);
-00071050 void CLList_Init(int *list);
+00071050 int *CLList_Init(int *list);
 00071060 void CLList_Init2(int *list);
 00071070 void CLList_Insert(int *list, int *node, int at_tail);
 000710b0 int CLList_Remove(int *list, int *node);
@@ -50,7 +50,7 @@
 00071bf0 void CLMusic_Release(void);
 00071c20 void CLScreen_DrawDarken(int alpha, int music);
 00071db0 int CLFade_Draw(float step);
-00071f90 void CLLoading_AddPackage(undefined4 package, int cutscene);
+00071f90 void *CLLoading_AddPackage(undefined4 package, int cutscene);
 00071ff0 void CLMusic_FadeOut(int frames);
 000720e0 void CLSprite_DrawBlurred(undefined4 a1, undefined4 a2, undefined4 a3, float *pos, undefined4 a5, undefined4 a6, undefined4 a7, int alpha, float spread, float scale, int sprite);
 000722a0 void CLMusic_NextCustomTrack(void);
