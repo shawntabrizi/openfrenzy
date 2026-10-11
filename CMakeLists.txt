@@ -204,6 +204,14 @@ if(EXISTS "${OPENFRENZY_ISO}")
       COMMAND Python3::Interpreter -I ${_gameplay_args} game ${_game} 1)
     set_tests_properties(gameplay_game_${_game} PROPERTIES LABELS gameplay TIMEOUT 120 PROCESSORS 2)
   endforeach()
+  # Jetboats has a different course and computer driver in each variation; 2 also reads the
+  # lane paths of map\multiline.ase (shape suffixes _a.._d).
+  foreach(_variation 2 3 4)
+    add_test(NAME gameplay_game_Jetboats_${_variation}
+      COMMAND Python3::Interpreter -I ${_gameplay_args} game Jetboats ${_variation})
+    set_tests_properties(gameplay_game_Jetboats_${_variation}
+      PROPERTIES LABELS gameplay TIMEOUT 120 PROCESSORS 2)
+  endforeach()
 else()
   message(STATUS "No disc image at ${OPENFRENZY_ISO}: guest_smoke_runs and gameplay tests not registered")
 endif()

@@ -1113,6 +1113,42 @@ Fixes STATUS.md Known bug 1.
   exit 0 (runtime 8 passed, 0 failed, 0 known failures; d3d8 skips its drawing tests
   without a window).
 
+## Rowing lane paths in play (open-decomp)
+
+Play test of the Rowing suffix change in "String literals in asm_convert.py".
+
+- Which variation reads `map\multiline.ase`: `FUN_0019e970` (the start, XBE thunk 0x0019d590)
+  stores `variant * 4 - 4` in bits 2-3 of the game object 0x0030f0b0, so
+  `(g_RowVariant & 0xc) == 4` is variation 2 only ("Water Gate Scramble",
+  `OPENFRENZY_GAME=Jetboats OPENFRENZY_VARIATION=2`, package `row_v2`).
+- Method: a temporary log (not committed) of the lane paths after `RowWorld_LoadPaths`, the
+  lane index of each player (+0x158) and, every 120 calls, the computer driver's position
+  and target (`FUN_001a9af0`). Headless, 90 s, variations 1-4; one window run of variation 2
+  for 75 s with frame dumps. Then the same with the old suffixes `a`-`d` for comparison.
+- Now (`_a`-`_d`): each of the 4 lanes gets 19 race-line paths and 19 end-box paths, and the
+  four lanes have different points (lane a path 0 starts at (-1829.7, -10.4), b at
+  (-2132.6, -5.3), c at (-2319.5, 33.4), d at (-1958.8, -1.4)). Variations 1, 3 and 4 do
+  not open the file (0 lane paths).
+- Old (`a`-`d`): also 19 paths a lane, but a node matched more than one lane, and the later
+  node overwrote the slot: lanes a and c held the same mixed set (path 0 of lane c, paths
+  1-18 of lane d). Lanes b and d were correct. So 2 of the 4 old lanes were wrong.
+- Players get distinct lanes in both builds: `(player + table 0x0030f440) & 3`, for example
+  1, 2, 3, 0.
+- The retail code does not use the lanes in play. Evidence: a disassembly of the XBE `.text`
+  (`llvm-objdump` of the raw section) has, in the Rowing range 0x19d000-0x1bd000, only
+  writes to player +0x158 (0x1a7d9e, 0x1ac35b, 0x1ac363) and reads of world +0x154-0x198
+  only in the loader (0x1b2c30), the debug highlight `RowWorld_DrawRaceLine` (0x1b40f0, it
+  steps a highlight index but draws only the race line and the gates) and the destructor
+  (0x1b4530). The Ghidra export agrees. The variation 2 computer driver (`FUN_001a9af0`)
+  steers to the next gate (world +0x19c/+0x1a0): the log shows each boat's target move from
+  gate 0 to gates 1 and 2 independently of its lane number.
+- Result: the fix makes the lane data correct, but play is the same in both builds,
+  as on the Xbox. "AI boats follow their own lanes" is not a behaviour of the original game.
+- Window run of variation 2 (75 s): countdown, the race through the coloured gates, the
+  results, "play again". No fault, no `UNIMPLEMENTED`.
+- New ctest tests: `gameplay_game_Jetboats_2`, `_3`, `_4` (direct launch, 60 s each, the
+  same checks as `gameplay_game_Jetboats`). All 4 Jetboats tests pass.
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and

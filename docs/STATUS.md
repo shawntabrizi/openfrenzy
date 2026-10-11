@@ -40,7 +40,7 @@ cd openfrenzy   # the root of your clone
 cmake -S . -B build -G Ninja
 cmake --build build
 ctest --test-dir build -LE gameplay --output-on-failure        # 6 toolchain/boot tests, < 1 s
-ctest --test-dir build -L gameplay -j8 --output-on-failure     # 13 game tests, about 4 min
+ctest --test-dir build -L gameplay -j8 --output-on-failure     # 16 game tests, about 5 min
 for s in src/*/tests/run_tests.sh; do sh "$s" "$PWD/build" || echo "FAIL $s"; done   # module tests
 ```
 
@@ -175,7 +175,9 @@ tests above.
    so on), the Rowing suffixes `_a`-`_d`, the d3d8 shader dump name `_lit`, two musl strings,
    and three musl tables (`iswalpha`, `iswpunct`, `iconv`) that had lost bytes.
    `test_toolchain_strings` passes. Details: `docs/INTEGRATION_NOTES.md`, "String literals
-   in asm_convert.py".
+   in asm_convert.py". Rowing play test: Jetboats 2 now loads 4 different lane paths (before,
+   lanes a and c were a mix); the original game never reads the lanes in play, so play does
+   not change ("Rowing lane paths in play").
 2. Hopper, direct launch only: a token pickup after the debug round restart faulted once. The
    original code does the same; the board never restarts the round.
 

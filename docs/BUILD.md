@@ -68,6 +68,7 @@ then checks the log:
 |---|---|---|
 | `gameplay_board` | 120 s, the board recipe: `START@6000,A@9000,A@11000,A@13000,START@16000,START@20000,START@24000,START@28000,A@32000,START@36000`, then A every 3 s | `Top of stack now: CharacterSelect`, then `Top of stack now: Map`, then `countdown PLAYING`, in this order (the title shows `Map` once before, in attract) |
 | `gameplay_game_<Name>` (the 12 games of `OPENFRENZY_GAME`) | 60 s, direct launch with `OPENFRENZY_VARIATION=1`, A every 3 s | `countdown PLAYING` |
+| `gameplay_game_Jetboats_2` to `_4` | the same with `OPENFRENZY_VARIATION=2`, 3, 4 (each variation has its own course and computer driver; 2 reads the lane paths of `map\multiline.ase`) | `countdown PLAYING` |
 
 Every test fails on a log line with `OpenFrenzy fault`, `UNIMPLEMENTED`, `Out of memory` or
 `assert` (any case), and when the host exits before the time ends (the game's main never
@@ -77,7 +78,7 @@ on a failure it prints the reasons and the last 40 log lines.
 
 ```sh
 ctest --test-dir build-<id> -LE gameplay                        # fast tests only (< 1 s)
-ctest --test-dir build-<id> -L gameplay -j8 --output-on-failure # 13 tests, about 4 min
+ctest --test-dir build-<id> -L gameplay -j8 --output-on-failure # 16 tests, about 5 min
 python3 -I tests/run_game_check.py --host build-<id>/openfrenzy \
   --image build-<id>/openfrenzy_guest.elf --iso orig/game.xiso.iso \
   --work build-<id>/test-gameplay game Tag 2                     # one game, another variation
