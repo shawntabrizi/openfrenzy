@@ -70,6 +70,7 @@ asks for the disc image once. Direct launch of one minigame:
 | Virtual pad names | `OPENFRENZY_DEBUG_VIRTUAL_PADS=4`: the host logs `gamepad 2: Pad 1 OpenFrenzy virtual` to `gamepad 5: Pad 4 OpenFrenzy virtual` (was "OpenFrenzy virtual pad 1" for all 4) |
 | Weak stubs | `llvm-nm` of `openfrenzy_guest.elf`: 0 weak `FUN_` symbols (build `build-open-decomp`; was 5 until the five functions were decompiled, `docs/INTEGRATION_NOTES.md` "Weak FUN_ symbols decompiled") |
 | XDK entry points | `src/runtime/entry/xdk_entry_points.inc`: 0 `MISSING`, 0 `UNKNOWN`. D3D 62 HLE + 27 internal, DSOUND 27 HLE + 54 internal, XGRPH 4 + 1, XPP 8 + 3, WMADECXM 1 HLE (`WmaCreateDecoder`, added later). `docs/LIBRARY_CALLS.md`: 192 functions, 0 unidentified (was 53) |
+| Differential test | `tests/diff` (build `build-open-diff`): each decompiled function against the original x86 code (Unicorn), same random and edge inputs, return values and changed memory compared. All 5623 functions: 2723 match (2567 exact, 156 within float rules), 2802 skipped (1515 fault on x86 with random data, 1150 call XDK, kernel, heap, file or clock code, 103 unclear ABI, 17 time out, 17 unsupported types), 21 known (checked by hand: port choices, x87 range or NaN effects, unset locals in the original), 17 only with out-of-range integers, 38 out-of-range faults, 1 ABI note, 21 not yet triaged (all call other game code; cameras, MouseWhack). Leaf and level-1 functions (1924): no unexplained difference. 4 real bugs fixed (see "Known bugs" 3). `ctest -L diff`: 48 functions, about 2 s; the full run about 2 min. `docs/INTEGRATION_NOTES.md` "Differential test" |
 
 ## Decompilation coverage
 
@@ -181,6 +182,15 @@ tests above.
    not change ("Rowing lane paths in play").
 2. Hopper, direct launch only: a token pickup after the debug round restart faulted once. The
    original code does the same; the board never restarts the round.
+3. Fixed, found by the differential test (`tests/diff`):
+   - Minigame Frenzy: core_modes_b kept its own copies of the AskAgain answer (0x0028198c)
+     and the "add the points" flag (0x002ba4cc). After a game, No (or Quit) went on to the
+     game or its rules again instead of the selection screen, and the totals did not grow.
+   - RollerBall sumo: `CRollerBallSumo_GetTime` read the game object's timer, not the
+     active platform's.
+   - `bsGetAudioStreamInfo` returned the wrong fields as its 2nd and 3rd results (no
+     reader of the value today); `CLightningBolt_Update` ended a bolt at life 0, x86 below 0
+     (only the live count changes).
 
 ## Known limits
 

@@ -1149,6 +1149,64 @@ Play test of the Rowing suffix change in "String literals in asm_convert.py".
 - New ctest tests: `gameplay_game_Jetboats_2`, `_3`, `_4` (direct launch, 60 s each, the
   same checks as `gameplay_game_Jetboats`). All 4 Jetboats tests pass.
 
+## Differential test (open-diff)
+
+`tests/diff` (design and use: `tests/diff/README.md`) runs a function two times with the same
+inputs: the x86 code of `orig/default.xbe` in Unicorn, and the port's compiled C in the host
+arena (a driver linked with the game build's objects). It compares the return value and every
+changed byte of the scratch memory and of the globals. `ctest -L diff` runs
+`tests/diff/regression.txt` (48 functions, about 2 s); it skips without the XBE or without
+`tools/diff-venv` (`sh tests/diff/setup_venv.sh`).
+
+Results (build `build-open-diff`, 12 cases a function, at fd56f2f, which has the fixes below):
+
+| Scope | Functions | Exact | Float only | Skipped | Known | Out-of-range int | Out-of-range fault | ABI note | Not triaged | Time |
+|---|---|---|---|---|---|---|---|---|---|---|
+| leaf and level 1 | 1924 | 1318 | 119 | 440 | 18 | 7 | 21 | 1 | 0 | 28 s |
+| all | 5623 | 2567 | 156 | 2802 | 21 | 17 | 38 | 1 | 21 | 118 s |
+
+- Float only: within the float rules (only on words that x86 stored with x87 or SSE, or
+  copied from such a store). Of the 156 functions, 12 agree only when x86 runs again with
+  24-bit x87 precision, and 5 have a value that is finite on one side only.
+- Skipped (all): 1515 fault on x86 with every random case (vtable calls, object graphs),
+  1150 call XDK, kernel, heap, file or clock code, 103 have an unclear ABI (a `ret N` that
+  does not fit the port's prototype, or a result that depends on registers that are not
+  arguments), 17 time out, 17 have unsupported types.
+- Not triaged: 21 functions that call other game code (cameras of CarryOn, CharLib,
+  Demolition, Hopper, RollerBall; MouseWhack bugs and arena; charlib collision; meta_b
+  laser and dust). Run `python3 -I tests/diff/run_diff.py --build build-<id> --scope all`
+  to see them.
+
+Bugs found and fixed (one commit each; the three functions are in `regression.txt`):
+
+| Where | Function | Bug | Effect |
+|---|---|---|---|
+| core_modes_b | 0x00024d40, 0x00025000 MiniGameSelect | own copies `_DAT_0028198c`, `_DAT_002ba4cc` of core's AskAgain answer and classlib_ui's score flag | Minigame Frenzy: No (or Quit) after a game went on to the game or its rules, not the selection; the totals did not grow |
+| rollerball_a | 0x00188870 `CRollerBallSumo_GetTime` | read the timer at self + 8, x86 the timer of the active platform object | the sumo time came from the wrong object |
+| engine_misc | 0x00056440 `bsGetAudioStreamInfo` | results 2 and 3 from +0x28, +0x2c; x86 +0x20, +0x28 | none today (ScratchMatch's only use, 0x0030fef4, has no reader) |
+| meta_b | 0x0015d260 `CLightningBolt_Update` | `life <= 0` ends a bolt; x86 `life < 0` | only the live-bolt count (0x00308458) |
+
+The two storages were found by the symbol map, not by a case: every run fails when two port
+symbols name the same original address at two places (`TWO-STORAGE`). None is left.
+
+Open, not changed:
+
+- `bdProjectSize` (0x000443f0) and `bdProjectWidth` (0x000444b0): x86's
+  `fcom; fnstsw; test ah,0x41; jnp` and `test ah,1; je` let a NaN depth pass both plane
+  tests, so x86 draws with NaN sizes; the port returns 0. The port's comment ("a NaN depth
+  fails the far test") is wrong. Matching x86 would send NaN vertices to GL, so it is listed
+  in `known.txt`, not changed. Owner: bdisplay.
+- `bmVectorNormalise` (0x000514a0) leaves the length in ST0 (the true prototype returns a
+  float). No x86 caller reads it, so the port's `void` has no effect.
+- MSVC's x87 compares (`test ah,5; jp` and similar) treat NaN in other ways than C's `<`.
+  Other functions can have the same difference; the harness gives no NaN inputs.
+- Harness limits (README "Limits"): random inputs reach few object-heavy functions; tiny
+  floats in the scratch cause x87 range differences in vector maths; port globals without
+  an address name and outside `tests/diff/blobs.tsv` are not compared.
+- `ucshim.c`: the Unicorn 2.1 wheels crash on this Mac (macOS 26): `mrs ctr_el0` traps, and
+  the JIT buffer is not switched between write and execute. The shim handles both in the
+  harness process only.
+
 ## Weak FUN_ symbols decompiled (open-decomp)
 
 The 5 hand-written weak `FUN_` symbols are now strong definitions in their owner modules.
