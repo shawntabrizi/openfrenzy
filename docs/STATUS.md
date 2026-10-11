@@ -196,6 +196,9 @@ tests above.
 - Settings come from defaults, `settings.ini` (app only) and
   `OPENFRENZY_*` variables.
 - Custom soundtracks: `XFindFirstSoundtrack` always returns none.
+- 60 fps only. Frame interpolation or a higher update rate is not safe yet: the update step is
+  variable but at least one 60 Hz frame, and no state of the previous update is kept
+  (`docs/FRAME_RATE.md`: the blockers and the work needed).
 
 ## Not verified
 
