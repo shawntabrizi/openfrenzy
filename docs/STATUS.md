@@ -195,7 +195,7 @@ tests above.
 - The `.app` has an ad-hoc signature and no notarization (that needs the owner's Apple
   Developer account; steps in `docs/BUILD.md`). It bundles an LGPL FFmpeg built for Bink only
   (`docs/BUILD.md` "Licences").
-- No SMAA ("smaa" gives FXAA). Settings come from defaults, `settings.ini` (app only) and
+- Settings come from defaults, `settings.ini` (app only) and
   `OPENFRENZY_*` variables.
 - Custom soundtracks: `XFindFirstSoundtrack` always returns none.
 
@@ -234,4 +234,4 @@ tests above.
 6. Measure performance on a slower Mac (M1 base).
 7. Decompile the 5 weak `FUN_` symbols (the debug menu callback first) and name the 53
    unidentified library calls.
-8. Low: SMAA, custom soundtracks.
+8. Low: custom soundtracks. (SMAA: done, `display.anti_aliasing = smaa`.)

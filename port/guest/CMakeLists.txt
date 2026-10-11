@@ -153,6 +153,13 @@ endforeach()
 list(FILTER _platform_sources EXCLUDE REGEX "/src/runtime/(of_boot|of_main)\\.c$")
 # the guest side of memory write tracking (calls the host) belongs with the layer
 list(APPEND _platform_sources "${RUNTIME_DIR}/guest_memory_watch.c")
+# SMAA's shader and lookup textures as C data (src/d3d8/xgpu_post.c; MIT, port/third_party/smaa)
+set(_smaa "${R}/port/third_party/smaa")
+add_custom_command(OUTPUT "${GEN}/xgpu_smaa.c"
+  COMMAND "${Python3_EXECUTABLE}" -I "${R}/port/macos/tools/embed_smaa.py" "${_smaa}" "${GEN}/xgpu_smaa.c"
+  DEPENDS "${R}/port/macos/tools/embed_smaa.py" "${_smaa}/SMAA.hlsl" "${_smaa}/area_tex.zlib"
+          "${_smaa}/search_tex.zlib")
+list(APPEND _platform_sources "${GEN}/xgpu_smaa.c")
 add_library(ofplatform STATIC ${_platform_sources})
 add_dependencies(ofplatform guest_headers)
 target_compile_options(ofplatform PRIVATE ${PLATFORM_FLAGS})

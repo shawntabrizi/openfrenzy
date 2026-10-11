@@ -19,7 +19,8 @@ host (src/d3d8/tests/run_tests.sh builds and runs it):
 5. With a window (not SDL_VIDEO_DRIVER=dummy): the device draws an FVF
    quad with DrawVerticesUP through the fixed-function shaders, and the
    pixels read back are the vertex color, modulated by a texture factor
-   stage, and lit by a directional light.
+   stage, and lit by a directional light. FXAA's and SMAA's passes build and
+   smooth an edge (test_post_process).
 
 Exit code 0 when all pass; otherwise the number of failed checks.
 */
@@ -1093,6 +1094,56 @@ static int pixel_near(const unsigned char *pixel, int r, int g, int b)
 	return abs(pixel[0] - r) <= 3 && abs(pixel[1] - g) <= 3 && abs(pixel[2] - b) <= 3;
 }
 
+/* display.anti_aliasing's passes (xgpu_post.c): FXAA's and SMAA's programs
+build on this GL (GLSL ES 3.00 for SMAA: SMAA_GLSL_3), and each smooths a
+hard edge of a shallow slope (one row down every 8 columns, white above
+black) in a target of its own: a pixel at the edge becomes grey, and pixels
+away from it keep their colour. SMAA's weights come from its embedded
+lookup textures (port/macos/tools/embed_smaa.py), so a wrong texture gives
+no blend here. */
+static void test_post_process(void)
+{
+	enum { SIZE = 64 };
+	static unsigned char texels[SIZE * SIZE * 4], result[SIZE * SIZE * 4];
+	const GLint corners[4] = { 0, 0, SIZE, SIZE };
+	GLuint texture, framebuffer;
+	int smaa, x, y, greys;
+
+	for (y = 0; y < SIZE; y++)
+		for (x = 0; x < SIZE; x++)
+			memset(&texels[(y * SIZE + x) * 4], y * 8 < x + 64 ? 255 : 0, 3), texels[(y * SIZE + x) * 4 + 3] = 255;
+	for (smaa = 0; smaa <= 1; smaa++)
+	{
+		CHECK(xgpu_post_prepare(smaa), "%s's programs and textures build", smaa ? "SMAA" : "FXAA");
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SIZE, SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, texels);
+		glGenFramebuffers(1, &framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+		CHECK(xgpu_post_anti_alias(smaa, framebuffer, SIZE, SIZE, corners), "%s pass runs", smaa ? "SMAA" : "FXAA");
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glReadPixels(0, 0, SIZE, SIZE, GL_RGBA, GL_UNSIGNED_BYTE, result);
+		greys = 0;
+		for (y = 1; y < SIZE - 1; y++)
+			for (x = 1; x < SIZE - 1; x++)
+				greys += result[(y * SIZE + x) * 4] > 16 && result[(y * SIZE + x) * 4] < 240;
+		printf("d3d8_test: %s: %d grey pixels at the edge\n", smaa ? "SMAA" : "FXAA", greys);
+		/* (the edge crosses 56 columns; an unblended one has no grey) */
+		CHECK(greys >= 20, "%s blends the edge: %d grey pixels", smaa ? "SMAA" : "FXAA", greys);
+		CHECK(result[(2 * SIZE + 60) * 4] == 255 && result[(60 * SIZE + 2) * 4] == 0,
+			"%s keeps pixels away from the edge: %d %d", smaa ? "SMAA" : "FXAA", result[(2 * SIZE + 60) * 4],
+			result[(60 * SIZE + 2) * 4]);
+		CHECK(result[(30 * SIZE + 30) * 4 + 3] == 255, "%s keeps the target's alpha", smaa ? "SMAA" : "FXAA");
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDeleteFramebuffers(1, &framebuffer);
+		glDeleteTextures(1, &texture);
+	}
+}
+
 static void test_drawing(void)
 {
 	const char *driver = getenv("SDL_VIDEO_DRIVER");
@@ -1209,6 +1260,7 @@ static void test_drawing(void)
 	D3D_KickOffAndWaitForIdle();
 	CHECK(D3DDevice_InsertFence() != D3DDevice_InsertFence(), "fences count up");
 	D3DDevice_Present(NULL, NULL, NULL, NULL);
+	test_post_process();
 }
 
 int main(void)

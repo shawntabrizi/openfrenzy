@@ -120,17 +120,13 @@ static const struct
 {
 	{ "off", _anti_aliasing_off, 0 },
 	{ "fxaa", _anti_aliasing_fxaa, 0 },
-#ifdef HALO_GLES
+#ifdef HALO_ANDROID
 	/* (SMAA's three passes and supersampling's four times the pixels are
 	more than a phone's GPU has to spare: FXAA in SMAA's place, and none.
-	Fuzion Frenzy's build has no SMAA, so FXAA too; a Mac has the GPU for
-	supersampling) */
+	Fuzion Frenzy: a Mac has the GPU for both, and SMAA's GLSL compiles as
+	GLSL ES 3.00: xgpu_post.c) */
 	{ "smaa", _anti_aliasing_fxaa, 0 },
-#ifdef HALO_ANDROID
 	{ "ssaa2x", _anti_aliasing_off, 0 },
-#else
-	{ "ssaa2x", _anti_aliasing_ssaa, 0 },
-#endif
 #else
 	{ "smaa", _anti_aliasing_smaa, 0 },
 	{ "ssaa2x", _anti_aliasing_ssaa, 0 },

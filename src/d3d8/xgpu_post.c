@@ -1,5 +1,6 @@
-/* Copied from ref/OpenCE (commit 231708d) port/linux/src/xgpu_post.c (CC0). Fuzion Frenzy's
-GLES build has FXAA only: SMAA (port/third_party/smaa, zlib) is compiled out by HALO_GLES. */
+/* Copied from ref/OpenCE (commit 231708d) port/linux/src/xgpu_post.c (CC0). Fuzion Frenzy:
+SMAA is in the GLES build too (XGPU_SMAA): its GLSL compiles as GLSL ES 3.00 (SMAA_GLSL_3),
+and port/macos/tools/embed_smaa.py embeds its lookup textures inflated, so no zlib. */
 /*
 XGPU_POST.C
 
@@ -26,8 +27,16 @@ anti_aliasing_values).
 
 #include <stdlib.h>
 
-#ifndef HALO_GLES
+/* SMAA where its data is embedded: not on Android (d3d8_gl.c) */
+#if !defined(HALO_GLES) || defined(OPENFRENZY_GUEST)
+#define XGPU_SMAA 1
+#endif
+
+#if defined(XGPU_SMAA) && !defined(HALO_GLES)
 #include "zlib_prefixed.h"
+#endif
+
+#ifdef XGPU_SMAA
 
 /* port/third_party/smaa, embedded by tools/embed_assets.py: the shader's
 text (ending in a NUL), and the lookup textures' bytes compressed with
@@ -190,7 +199,7 @@ static const char fxaa_source[] =
 	"\tresult = vec4(color_at(position + max(varies ? pixel_offset : 0.0, subpixel) * across), 1.0);\n"
 	"}\n";
 
-#ifndef HALO_GLES
+#ifdef XGPU_SMAA
 /* the main functions of SMAA's passes, after SMAA.hlsl; its vertex
 functions' offsets are found for each pixel */
 static const char *const smaa_mains[] =
@@ -269,11 +278,16 @@ static GLuint program_build(int which)
 	{
 		xgpu_text_append(&text, "%s", fxaa_source);
 	}
-#ifndef HALO_GLES
+#ifdef XGPU_SMAA
 	else if (xgpu_smaa_shader_size)
 	{
 		xgpu_text_append(&text,
+#ifdef HALO_GLES
+			/* (GLSL ES 3.00: no fma or textureGather, which SMAA_GLSL_4 uses) */
+			"#define SMAA_GLSL_3 1\n"
+#else
 			"#define SMAA_GLSL_4 1\n"
+#endif
 			"uniform vec4 metrics;\n"
 			"#define SMAA_RT_METRICS metrics\n"
 			"#define SMAA_PRESET_HIGH 1\n"
@@ -360,7 +374,18 @@ static void textures_fit(BOOL smaa, unsigned long width, unsigned long height)
 	}
 }
 
-#ifndef HALO_GLES
+#if defined(XGPU_SMAA) && defined(HALO_GLES)
+/* a lookup texture of SMAA's from its texels, inflated as the build embedded
+them (port/macos/tools/embed_smaa.py); 0 if they are not of its size */
+static GLuint lookup_texture(const unsigned int *texels, unsigned long texels_size, GLenum format,
+	GLenum data_format, unsigned long width, unsigned long height, unsigned long texel_size)
+{
+	if (texels_size != width * height * texel_size)
+		return 0;
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	return texture_new(format, width, height, data_format, texels);
+}
+#elif defined(XGPU_SMAA)
 /* a lookup texture of SMAA's from its zlib stream; 0 if it does not
 inflate */
 static GLuint lookup_texture(const unsigned int *stream, unsigned long stream_size, GLenum format,
@@ -439,7 +464,7 @@ BOOL xgpu_post_prepare(BOOL smaa)
 			return FALSE;
 		}
 	}
-#ifndef HALO_GLES
+#ifdef XGPU_SMAA
 	if (smaa && !post.area)
 	{
 		post.area = lookup_texture(xgpu_smaa_area_texture, xgpu_smaa_area_texture_size, GL_RG8, GL_RG,
@@ -448,7 +473,7 @@ BOOL xgpu_post_prepare(BOOL smaa)
 			64, 16, 1);
 		if (!post.area || !post.search)
 		{
-			platform_log("anti-aliasing: cannot inflate SMAA's lookup textures");
+			platform_log("anti-aliasing: cannot load SMAA's lookup textures");
 			post.failed[1] = TRUE;
 			return FALSE;
 		}

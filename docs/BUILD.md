@@ -154,7 +154,7 @@ Finder. The app is self-contained: it runs on a Mac without Homebrew.
 | `Contents/Frameworks/libEGL.dylib`, `libGLESv2.dylib` | ANGLE, as plain dylibs (as OpenCE-mac-innerhat does; signed code belongs in `Frameworks`, not `Resources`) |
 | `Contents/Frameworks/libSDL3.0.dylib` | SDL3 (Homebrew) |
 | `Contents/Frameworks/libavformat.63.dylib`, `libavcodec.63.dylib`, `libswscale.10.dylib`, `libavutil.61.dylib` | the project's LGPL FFmpeg 9.0.2 (see "Bink videos" above). The libraries are found recursively with `otool` (`cmake/bundle_dylibs.py`) |
-| `Contents/Resources/licenses/` | `sdl3/` (Homebrew licence file), `ffmpeg/` (`COPYING.LGPLv2.1`, `LICENSE.md`, `SOURCE.txt`), `ANGLE.txt`, `musl.txt` (in the game image), and `BUNDLED_LIBRARIES.txt` (library, source, version, FFmpeg configuration) |
+| `Contents/Resources/licenses/` | `sdl3/` (Homebrew licence file), `ffmpeg/` (`COPYING.LGPLv2.1`, `LICENSE.md`, `SOURCE.txt`), `ANGLE.txt`, `musl.txt` and `SMAA.txt` (in the game image), and `BUNDLED_LIBRARIES.txt` (library, source, version, FFmpeg configuration) |
 
 - The bundle holds no game data. It is not a release build: ad-hoc signature (with the
   hardened runtime), no notarization.
@@ -254,6 +254,7 @@ spctl --assess --type exec --verbose=4 $A
 | libavformat, libavcodec, libswscale, libavutil | FFmpeg 9.0.2, built from source (deps/) | LGPL version 2.1 or later (`ffmpeg/COPYING.LGPLv2.1`, `ffmpeg/LICENSE.md`) |
 | libEGL, libGLESv2 | ANGLE (deps/) | BSD-3-Clause (`port/macos/licenses/ANGLE.txt`) |
 | musl (in the game image) | musl 1.2.5 | MIT (`port/macos/licenses/musl.txt`) |
+| SMAA shader and lookup textures (in the game image) | iryoku/smaa 71c806a (`port/third_party/smaa`) | MIT (`port/third_party/smaa/LICENSE`) |
 
 The app has no GPL code. The LGPL lets you give the app to another person when that person can
 get the FFmpeg source and can replace the FFmpeg libraries:
@@ -453,7 +454,7 @@ taller window gets black bars.
 | Variable | Values | Effect |
 |---|---|---|
 | `OPENFRENZY_DISPLAY_RESOLUTION_SCALING` | `native` (default), `original` | `native` draws at the window's real pixels (Retina: 2 for each point), with the same scale both ways. `original` draws 640x480 and scales it up. |
-| `OPENFRENZY_DISPLAY_ANTI_ALIASING` | `off` (default), `fxaa`, `smaa`, `msaa2x`, `msaa4x`, `msaa8x`, `ssaa2x` | `fxaa`: one pass over the 3D scene before the HUD (`COverlay_DrawAll`), or over the full frame at present when the frame has no HUD (menus). `smaa` gives `fxaa` (no SMAA in this build). `msaaNx`: N samples a pixel. `ssaa2x`: draws at 2 times the size each way, then scales down (with `native` only). |
+| `OPENFRENZY_DISPLAY_ANTI_ALIASING` | `off` (default), `fxaa`, `smaa`, `msaa2x`, `msaa4x`, `msaa8x`, `ssaa2x` | `fxaa`: one pass over the 3D scene before the HUD (`COverlay_DrawAll`), or over the full frame at present when the frame has no HUD (menus). `smaa`: SMAA (HIGH preset, 3 passes; `port/third_party/smaa`, MIT), at the same points as `fxaa`. `msaaNx`: N samples a pixel. `ssaa2x`: draws at 2 times the size each way, then scales down (with `native` only). |
 | `OPENFRENZY_DISPLAY_VSYNC` | `true` (default), `false` | wait for the display's refresh |
 
 Every 10 s the host logs `frame pacing: N frames in 10.0 s, F fps, worst W ms, K over 20 ms,

@@ -85,4 +85,5 @@ The platform layer, renderer, audio and the macOS guest/host design come from
 [innerhat-dev](https://github.com/innerhat-dev/OpenCE) and
 [zimm3rmann](https://github.com/zimm3rmann/halo-ce-ios-macos), all CC0. Third-party libraries
 (ANGLE, musl, SDL3, FFmpeg) are downloaded at build time under their own licences. The build
-makes its own LGPL FFmpeg (Bink only) from the FFmpeg source.
+makes its own LGPL FFmpeg (Bink only) from the FFmpeg source. SMAA (`port/third_party/smaa`,
+by Jorge Jimenez et al.) is MIT licensed.

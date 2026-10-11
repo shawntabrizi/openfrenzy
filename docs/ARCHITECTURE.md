@@ -358,11 +358,12 @@ the `crt_init`, `crt_exit` and `engine_tail` regions. Ghidra's first analysis mi
 | `port/macos/dependencies.json` (ANGLE, Khronos) | OpenCE-mac-zimm3rmann | `e55684a` | + musl 1.2.5 pin |
 | `src/{runtime,vfs,xkernel,d3d8,dsound,input}/` OpenCE files | OpenCE `port/linux/src/`, `port/include/`, `port/linux/include/` | `231708d` | as is, except `posix.h` (networking removed), `xbox_memory.c` (Halo cache reservation removed), `xbox_textures.c` (include) |
 | `scripts/linux_msvc_semantics.py` | OpenCE `tools/` | `231708d` | as is |
+| `port/third_party/smaa/` (SMAA, MIT) | OpenCE `port/third_party/smaa/` | `231708d` | as is; `port/macos/tools/embed_smaa.py` (after OpenCE `tools/embed_assets.py`) embeds it, its textures inflated at build time (no zlib in the guest) |
 | new for this game | - | - | `xiso_fs.c`, `sdl_platform.c` (rewritten, smaller), `of_config.c` (no config.toml), `of_math.c`, `of_boot.c`, `of_unimplemented.c`, `compat/halo_hooks.c` (inert Halo hooks), the generators |
 
 Dropped from OpenCE: Halo game code and its build (`configure.py`, ninja graph), networking
 (`posix_net.c`, `xnet.c`, p2p, UPnP, Discord), the updater, touch input and menus, map
-extraction, config.toml (`port_config.c` + tomlc17), SMAA (needs zlib; `xgpu_post.c` keeps FXAA only), the
+extraction, config.toml (`port_config.c` + tomlc17), the
 installer (the `.app` bundle is built: docs/BUILD.md "Run the app"), iOS/Android/Windows/Linux targets.
 
 The XDK layer still carries Halo names (`HALO_*` macros, `halo_gl*`, `halo_hooks.c`). They are

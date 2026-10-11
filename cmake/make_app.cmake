@@ -43,6 +43,8 @@ endif()
 _run("${PYTHON}" -I "${CMAKE_CURRENT_LIST_DIR}/bundle_dylibs.py" "${_exe}"
      "${_contents}/Frameworks" "${_contents}/Resources/licenses" ${_local})
 file(COPY "${LICENSES}/ANGLE.txt" "${LICENSES}/musl.txt" DESTINATION "${_contents}/Resources/licenses")
+# SMAA (MIT), embedded in the guest image by port/macos/tools/embed_smaa.py
+file(COPY_FILE "${CMAKE_CURRENT_LIST_DIR}/../port/third_party/smaa/LICENSE" "${_contents}/Resources/licenses/SMAA.txt")
 
 # Ad-hoc signature with the hardened runtime: each dylib first, then the bundle
 # (install_name_tool broke the old signatures; --deep does not sign nested dylibs well).
