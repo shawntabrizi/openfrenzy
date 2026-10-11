@@ -243,7 +243,7 @@ void DemoCrate_Damage(void *self, float *pos, float radius)
 	CDemoSpotFX_StartBurst(DD_GAME + 0x1510, c->pos, dir);
 	/* the original advances the random seed here and does not use the value */
 	(void)dd_rand();
-	FUN_0018e450((int)(DD_GAME + 0x79d0), CRATE_SOUND_SMASH, 0xff, 0, 0, 0);
+	FUN_0018e450((void *)(DD_GAME + 0x79d0), CRATE_SOUND_SMASH, 0xff, 0, 0, 0);
 }
 
 /* 0x0010db40  Demolition/CDemolition_Crate.cpp

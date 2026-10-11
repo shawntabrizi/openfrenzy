@@ -114,8 +114,8 @@ static void dc_light_start(struct DcJetLight *l, struct DcGasJet *jet)
 	l->mode = 1;
 	FUN_000edbc0((int)l->light, (undefined4 *)pos);
 	DC_LIGHT_SET_ON(l->light, 1);
-	FUN_0018ea10((int)l->timer, 0.100000001f);
-	FUN_0018ea30((int)l->timer);
+	FUN_0018ea10((void *)l->timer, 0.100000001f);
+	FUN_0018ea30((void *)l->timer);
 }
 
 /* moves the rows' lights between the first and the last jet (inlined in 0x000fedf0 and
@@ -148,8 +148,8 @@ static void dc_wave_end(struct CDemolition_GasJets *self)
 	for (g = 0; g < 4; g++)
 	{
 		self->lights[g].mode = 2;
-		FUN_0018ea10((int)self->lights[g].timer, 0.200000003f);
-		FUN_0018ea30((int)self->lights[g].timer);
+		FUN_0018ea10((void *)self->lights[g].timer, 0.200000003f);
+		FUN_0018ea30((void *)self->lights[g].timer);
 	}
 	self->active = 0;
 }
@@ -180,18 +180,18 @@ void DcJetLight_Update(struct DcJetLight *self, float dt)
 {
 	float f;
 
-	FUN_0018e8e0((int)self->timer);
+	FUN_0018e8e0((void *)self->timer);
 	if (self->mode == 1)
 	{
 		f = BCarTimer_GetRemaining((struct BCarTimer *)self->timer);
-		FUN_0018fa10((int)self->light, 0, 0, (int)(f * 64.0f)); /* 0x00253f38 */
+		FUN_0018fa10((void *)self->light, 0, 0, (int)(f * 64.0f)); /* 0x00253f38 */
 		if (!(f < 1.0f))
 			self->mode = 0;
 	}
 	else if (self->mode == 2)
 	{
 		f = BCarTimer_GetRemaining((struct BCarTimer *)self->timer);
-		FUN_0018fa10((int)self->light, 0, 0, (int)((1.0f - f) * 64.0f));
+		FUN_0018fa10((void *)self->light, 0, 0, (int)((1.0f - f) * 64.0f));
 		if (!(f < 1.0f))
 		{
 			self->mode = 0;
@@ -322,9 +322,9 @@ void CDemolition_GasJets_StartOutside(struct CDemolition_GasJets *self)
 	int g;
 
 	self->state = 1;
-	FUN_0018ea10((int)self->timer, 1.0f);
-	FUN_0018ea30((int)self->timer);
-	FUN_0018e450((int)(DC_GAME + 0x79d0), 0x18, 0xff, 0, 0, 0);
+	FUN_0018ea10((void *)self->timer, 1.0f);
+	FUN_0018ea30((void *)self->timer);
+	FUN_0018e450((void *)(DC_GAME + 0x79d0), 0x18, 0xff, 0, 0, 0);
 	for (g = 0; g < 4; g++)
 	{
 		jet = self->groups[g].jets[0];
@@ -340,13 +340,13 @@ State 1: after a second, a second sound and the wave runs in (state 2). */
 void CDemolition_GasJets_WaitOutside(struct CDemolition_GasJets *self, float dt)
 {
 	(void)dt;
-	FUN_0018e8e0((int)self->timer);
+	FUN_0018e8e0((void *)self->timer);
 	if (BCarTimer_GetRemaining((struct BCarTimer *)self->timer) < 1.0f)
 		return;
-	FUN_0018e450((int)(DC_GAME + 0x79d0), 0x16, 0xff, 0, 0, 0);
+	FUN_0018e450((void *)(DC_GAME + 0x79d0), 0x16, 0xff, 0, 0, 0);
 	self->state = 2;
-	FUN_0018ea10((int)self->timer, 1.0f);
-	FUN_0018ea30((int)self->timer);
+	FUN_0018ea10((void *)self->timer, 1.0f);
+	FUN_0018ea30((void *)self->timer);
 }
 
 /* 0x000fe770  Demolition (file inferred: CDemolition_GasJets.cpp)
@@ -357,9 +357,9 @@ void CDemolition_GasJets_StartCentre(struct CDemolition_GasJets *self)
 	int g;
 
 	self->state = 3;
-	FUN_0018ea10((int)self->timer, 1.0f);
-	FUN_0018ea30((int)self->timer);
-	FUN_0018e450((int)(DC_GAME + 0x79d0), 0x18, 0xff, 0, 0, 0);
+	FUN_0018ea10((void *)self->timer, 1.0f);
+	FUN_0018ea30((void *)self->timer);
+	FUN_0018e450((void *)(DC_GAME + 0x79d0), 0x18, 0xff, 0, 0, 0);
 	for (g = 0; g < 4; g++)
 	{
 		jet = self->groups[g].jets[self->groups[g].count - 1];
@@ -375,13 +375,13 @@ State 3: after a second, a second sound and the wave runs out (state 4). */
 void CDemolition_GasJets_WaitCentre(struct CDemolition_GasJets *self, float dt)
 {
 	(void)dt;
-	FUN_0018e8e0((int)self->timer);
+	FUN_0018e8e0((void *)self->timer);
 	if (BCarTimer_GetRemaining((struct BCarTimer *)self->timer) < 1.0f)
 		return;
-	FUN_0018e450((int)(DC_GAME + 0x79d0), 0x16, 0xff, 0, 0, 0);
+	FUN_0018e450((void *)(DC_GAME + 0x79d0), 0x16, 0xff, 0, 0, 0);
 	self->state = 4;
-	FUN_0018ea10((int)self->timer, 1.0f);
-	FUN_0018ea30((int)self->timer);
+	FUN_0018ea10((void *)self->timer, 1.0f);
+	FUN_0018ea30((void *)self->timer);
 }
 
 /* 0x000fe8c0  Demolition (file inferred: CDemolition_GasJets.cpp)
@@ -431,7 +431,7 @@ int DcJetLight_Init(struct DcJetLight *self)
 		FUN_000ed640((undefined4 *)light); /* the constructor returns `light` */
 	self->light = light;
 	DC_LIGHT_INIT(light);
-	FUN_0018fa10((int)self->light, 0, 0, 0x40);
+	FUN_0018fa10((void *)self->light, 0, 0, 0x40);
 	dc_light_set_range(self->light, 0.000500000024f);
 	DC_LIGHT_SET_ON(self->light, 0);
 	FUN_000ec310((int)self->timer);
@@ -580,7 +580,7 @@ void CDemolition_GasJets_SpreadIn(struct CDemolition_GasJets *self, float dt)
 	int g;
 
 	(void)dt;
-	FUN_0018e8e0((int)self->timer);
+	FUN_0018e8e0((void *)self->timer);
 	f = BCarTimer_GetRemaining((struct BCarTimer *)self->timer);
 	for (g = 0; g < 4; g++)
 		dc_jet_ignite(self->groups[g].jets[(int)((float)(self->groups[g].count - 1) * f)]);
@@ -598,7 +598,7 @@ void CDemolition_GasJets_SpreadOut(struct CDemolition_GasJets *self, float dt)
 	int g;
 
 	(void)dt;
-	FUN_0018e8e0((int)self->timer);
+	FUN_0018e8e0((void *)self->timer);
 	f = BCarTimer_GetRemaining((struct BCarTimer *)self->timer);
 	for (g = 0; g < 4; g++)
 	{

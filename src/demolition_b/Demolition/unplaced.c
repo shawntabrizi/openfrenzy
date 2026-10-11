@@ -326,7 +326,7 @@ void CDemolition_ExplosionMgr_Start(struct CDemolition_ExplosionMgr *self, void 
 	FUN_000edbc0((int)DB_PTR(light, 8), (undefined4 *)pos);
 	DB_DUAL(FUN_0018fa30, void (*)(int, undefined4), void (*)(void *, float),
 		((int)DB_PTR(light, 8), 0x3903126f), (DB_PTR(light, 8), db_bitsf(0x3903126f)));
-	FUN_0018fa10((int)DB_PTR(light, 8), 0x7f, 0, 0);
+	FUN_0018fa10((void *)DB_PTR(light, 8), 0x7f, 0, 0);
 	DB_VFN(DB_PTR(light, 8), 0xc, void (*)(void *, int))(DB_PTR(light, 8), 1);
 	db_timer_start(light + 0x10, 0.3f);
 	if (free == NULL)
@@ -373,7 +373,7 @@ void CDemolition_ExplosionMgr_Draw(struct CDemolition_ExplosionMgr *self)
 		DB_VFN(e + 0xa4, 8, void (*)(void *))(e + 0xa4);
 		DB_VFN(e + 0x104, 8, void (*)(void *))(e + 0x104);
 		DB_VFN(e + 0x170, 8, void (*)(void *))(e + 0x170);
-		if (FUN_0018ea50((int)(e + 0x740)) > 0.0f)
+		if (FUN_0018ea50((void *)(e + 0x740)) > 0.0f)
 			FUN_000efd50((int)e);
 	}
 }
@@ -388,8 +388,8 @@ void CDemolition_Explosion_Update(struct CDemolition_Explosion *self, float dt)
 
 	if (DB_U8(e, 0x28) == 0)
 		return;
-	FUN_0018e8e0((int)(e + 0x740));
-	if (FUN_0018ea50((int)(e + 0x740)) > 0.0f && DB_U8(DAT_002ff85c, 0x25) == 0)
+	FUN_0018e8e0((void *)(e + 0x740));
+	if (FUN_0018ea50((void *)(e + 0x740)) > 0.0f && DB_U8(DAT_002ff85c, 0x25) == 0)
 		CDemolition_Explosion_DamageObjects(self,
 			BCarTimer_GetRemaining((struct BCarTimer *)(e + 0x740)) * DB_F32(e, 0x778));
 	DB_F32(e, 0x24) = dt + DB_F32(e, 0x24);

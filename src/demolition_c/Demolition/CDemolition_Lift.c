@@ -151,7 +151,7 @@ Starts the lift (state 1, speeding up) with sound 0xf at full volume. Variation 
 void CDemolition_Lift_Start(struct CDemolition_Lift *self)
 {
 	self->state = 1;
-	FUN_0018e450((int)(DC_GAME + 0x79d0), 0xf, 0xff, 0, 0, 0);
+	FUN_0018e450((void *)(DC_GAME + 0x79d0), 0xf, 0xff, 0, 0, 0);
 }
 
 /* 0x000fcbc0  Demolition (file inferred: CDemolition_Lift.cpp)
@@ -187,7 +187,7 @@ void CDemolition_Lift_SpeedUp(struct CDemolition_Lift *self, float dt)
 		self->speed = -4.0f;
 		if (self->soundOn == 0)
 		{
-			self->sound = FUN_0018e450((int)(DC_GAME + 0x79d0), 0x10, 0xc0, 0, 0, 0);
+			self->sound = FUN_0018e450((void *)(DC_GAME + 0x79d0), 0x10, 0xc0, 0, 0, 0);
 			self->soundOn = 1;
 		}
 	}
@@ -615,7 +615,7 @@ int CDemolition_Lift_InitControlBox(struct CDemolition_Lift *self)
 	FUN_00104770(self->sparks, NULL, 200);
 	CParticleSystem_SetTexture((struct CPSHeader *)self->sparks, DC_I32(DC_GAME, 0x6c54));
 	FUN_0019d110((int)self->sparks, DC_I32(DC_GAME, 0x6c78));
-	FUN_0018e010((int)(DC_GAME + 0x7bd0), (int)self->sparks);
+	FUN_0018e010((void *)(DC_GAME + 0x7bd0), (void *)self->sparks);
 	self->sparking = 0;
 	self->sparkTimer = dc_rand() % 0x3c;
 	return 1;

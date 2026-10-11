@@ -538,7 +538,7 @@ int CDemolition_World_ParseInstance(int node, char *world)
 		turn[2] = 0.0f;
 		turn[3] = 0.0f;   /* uninitialised in the original */
 		CDemoPlatform_SetPosition(object, turn);
-		FUN_0018e010((int)(uintptr_t)(DAT_002ff85c + 0x79a4), (int)(uintptr_t)object);
+		FUN_0018e010((void *)(uintptr_t)(DAT_002ff85c + 0x79a4), (void *)(uintptr_t)object);
 	}
 	else
 	{

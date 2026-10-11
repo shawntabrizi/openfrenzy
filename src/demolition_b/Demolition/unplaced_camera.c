@@ -127,7 +127,7 @@ void CDemolition_Camera_Reset(struct CDemolition_Camera *self)
 	DB_F32(s, 0x34) = 0.0f;
 	DB_F32(s, 0x3c) = 0.0f;
 	DB_U32(s, 0x40) = 0x3f9c61aa;   /* 1.2217 (70 degrees) */
-	FUN_0018ea70((int)(s + 0x78));
+	FUN_0018ea70((void *)(s + 0x78));
 	if (DB_I32(DAT_002ff85c, 0x28) == 3)
 	{
 		DB_U32(s, 0x30) = 0x3f490fdb;   /* pi / 4 */
@@ -177,7 +177,7 @@ void *CDemolition_Camera_ResultsPlayer(struct CDemolition_Camera *self)
 	if (count == 0)
 		return NULL;
 	part = DB_F32(s, 0xd4) / (float)count;
-	index = (int)((DB_F32(s, 0xd4) - FUN_0018ea50((int)(s + 0x78))) / part);
+	index = (int)((DB_F32(s, 0xd4) - FUN_0018ea50((void *)(s + 0x78))) / part);
 	if (index >= count)
 		index = count - 1;
 	i = 0;
@@ -755,7 +755,7 @@ void CDemolition_Camera_Update(struct CDemolition_Camera *self, float dt)
 {
 	char *s = (char *)self;
 
-	FUN_0018e8e0((int)(s + 0x78));
+	FUN_0018e8e0((void *)(s + 0x78));
 	switch (DB_I32(s, 0x44))
 	{
 	case 1:

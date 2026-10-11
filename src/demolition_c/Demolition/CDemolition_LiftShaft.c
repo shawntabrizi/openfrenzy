@@ -266,7 +266,7 @@ void CDemolition_LiftShaft_UpdateBarriers(struct CDemolition_LiftShaft *self, fl
 			break;
 		if (used == 3)
 			goto update;
-		FUN_0018fa10((int)DC_LIGHT(self, used), b->colour[0] / 2, b->colour[1] / 2,
+		FUN_0018fa10((void *)DC_LIGHT(self, used), b->colour[0] / 2, b->colour[1] / 2,
 			b->colour[2] / 2);
 		dc_light_set_range(DC_LIGHT(self, used), 0.000333333359f);
 		FUN_000edbc0((int)DC_LIGHT(self, used), (undefined4 *)b->centre);
@@ -404,7 +404,7 @@ void CDemolition_LiftShaft_Destruct(struct CDemolition_LiftShaft *self)
 
 	self->vtable = vtable_0026b880;
 	for (i = 2; i >= 0; i--)
-		FUN_000ed760((int)DC_LIGHT(self, i));
+		FUN_000ed760((void *)DC_LIGHT(self, i));
 	for (i = 3; i >= 0; i--)
 		FUN_000ffec0(&self->platforms[i]);
 }
@@ -472,7 +472,7 @@ int CDemolition_LiftShaft_InitPlatforms(struct CDemolition_LiftShaft *self)
 			DC_I32(sys, 0x7c) = 0xc;
 			CParticleSystem_SetTexture((struct CPSHeader *)sys, DC_I32(DC_GAME, 0x6c54));
 			CParticleSystem_SetTexture2((struct CParticleSystem *)sys, DC_I32(DC_GAME, 0x6c78));
-			FUN_000ab4c0((int)sys, (undefined4 *)s_up);
+			FUN_000ab4c0((void *)sys, (undefined4 *)s_up);
 		}
 		sprintf(name, "platform0%d", i);
 		crc = bkCRCString(name);
@@ -526,7 +526,7 @@ void CDemolition_LiftShaft_Start(struct CDemolition_LiftShaft *self)
 	self->started = 1;
 	self->state = 3;
 	self->timer = (dc_unit() + 0.5f) * 600.0f; /* 0x00255444 */
-	self->sound = FUN_0018e450((int)(DC_GAME + 0x79d0), 0x11, 0xff, 0, 0, 0);
+	self->sound = FUN_0018e450((void *)(DC_GAME + 0x79d0), 0x11, 0xff, 0, 0, 0);
 	self->soundOn = 1;
 }
 
@@ -807,12 +807,12 @@ void CDemolition_LiftShaft_UpdatePlatforms(struct CDemolition_LiftShaft *self, f
 				{
 				case 0:
 				case 1:
-					p->sound = FUN_0018e450((int)(DC_GAME + 0x79d0), 0x13, 0xff, 0xff, 0, 0);
+					p->sound = FUN_0018e450((void *)(DC_GAME + 0x79d0), 0x13, 0xff, 0xff, 0, 0);
 					p->soundStarted = 1;
 					break;
 				case 2:
 				case 3:
-					p->sound = FUN_0018e450((int)(DC_GAME + 0x79d0), 0x13, 0xff, -0xff, 0, 0);
+					p->sound = FUN_0018e450((void *)(DC_GAME + 0x79d0), 0x13, 0xff, -0xff, 0, 0);
 					p->soundStarted = 1;
 					break;
 				default:

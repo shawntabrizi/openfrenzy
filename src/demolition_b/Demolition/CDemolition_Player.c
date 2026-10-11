@@ -502,8 +502,8 @@ void CDemolition_Player_UpdateThrowFrag(struct CDemolition_Player *self, float d
 			if (DB_I32(DB_PTR(s, 0x6c), 0x14) != 0)
 			{
 				DB_U8(s, 0x11ac) = 1;
-				FUN_0018ea10((int)(uintptr_t)(s + 0x11d0), 0.4f);
-				FUN_0018ea30((int)(uintptr_t)(s + 0x11d0));
+				FUN_0018ea10((void *)(uintptr_t)(s + 0x11d0), 0.4f);
+				FUN_0018ea30((void *)(uintptr_t)(s + 0x11d0));
 			}
 		}
 		else if (DB_I32(DB_PTR(s, 0x6c), 0x14) == 0 && DB_I32(DB_PTR(s, 0x68), 0x14) == 0)
@@ -524,7 +524,7 @@ void CDemolition_Player_UpdateThrowFrag(struct CDemolition_Player *self, float d
 			AI_SetState(s, 0x10);
 		}
 	}
-	FUN_0018e8e0((int)(uintptr_t)(s + 0x11d0));
+	FUN_0018e8e0((void *)(uintptr_t)(s + 0x11d0));
 }
 
 /* 0x000f9bb0  variation 0: sets off the frag bomb it holds and lets go of it */
@@ -617,8 +617,8 @@ void CDemolition_Player_UpdateThrowCross(struct CDemolition_Player *self, float 
 				if (DB_I32(DB_PTR(s, 0x6c), 0x14) != 0)
 				{
 					DB_U8(s, 0x11ac) = 1;
-					FUN_0018ea10((int)(uintptr_t)(s + 0x11d0), 0.6f);
-					FUN_0018ea30((int)(uintptr_t)(s + 0x11d0));
+					FUN_0018ea10((void *)(uintptr_t)(s + 0x11d0), 0.6f);
+					FUN_0018ea30((void *)(uintptr_t)(s + 0x11d0));
 				}
 			}
 			else if (DB_I32(DB_PTR(s, 0x6c), 0x14) == 0)
@@ -639,7 +639,7 @@ void CDemolition_Player_UpdateThrowCross(struct CDemolition_Player *self, float 
 		}
 	}
 timer:
-	FUN_0018e8e0((int)(uintptr_t)(s + 0x11d0));
+	FUN_0018e8e0((void *)(uintptr_t)(s + 0x11d0));
 }
 
 /* 0x000f9de0  variation 3: sets off the cross bomb it holds and lets go of it */

@@ -63,7 +63,7 @@ void DcASEShape_Read(struct DcASEShape *self, struct DcASEFile *file, const char
 	while (file->pos < file->end)
 	{
 		FUN_001b9e00((int)file, line);
-		FUN_000c3a50((int)file);
+		FUN_000c3a50((struct CoTextReader *)file);
 		if (found == 0)
 		{
 			if (strstr(line, name) != NULL)

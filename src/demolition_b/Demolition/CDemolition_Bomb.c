@@ -41,7 +41,7 @@ The remote bomb is a CharLib AI character (charlib_ai.h): two AI states (0 idle:
 /* 0x0018e450 (rollerball_a)  plays sound `id` of the game's sound bank (game +0x79d0) */
 static void db_sound(int id, int volume)
 {
-	FUN_0018e450((int)(DAT_002ff85c + 0x79d0), id, volume, 0, 0, 0);
+	FUN_0018e450((void *)(DAT_002ff85c + 0x79d0), id, volume, 0, 0, 0);
 }
 
 /* 0x000ebac0 (demolition_a)  rumbles pad `player` with `strength` (0..1) (game +0x7a38) */
@@ -299,7 +299,7 @@ void CDemolition_RemoteBomb_UpdateGrow(struct CDemolition_RemoteBomb *self, floa
 	float t;
 
 	(void)dt;
-	FUN_0018e8e0((int)(s + 0x1220));
+	FUN_0018e8e0((void *)(s + 0x1220));
 	t = BCarTimer_GetRemaining((struct BCarTimer *)(s + 0x1220));
 	DB_F32(DB_PTR(s, 0x30), 0xe0) = t;
 	DB_F32(DB_PTR(s, 0x30), 0xe4) = (1.0f - t) * 5.0f + 1.0f;
@@ -322,7 +322,7 @@ void CDemolition_RemoteBomb_UpdateShrink(struct CDemolition_RemoteBomb *self, fl
 	float left;
 
 	(void)dt;
-	FUN_0018e8e0((int)(s + 0x1220));
+	FUN_0018e8e0((void *)(s + 0x1220));
 	t = BCarTimer_GetRemaining((struct BCarTimer *)(s + 0x1220));
 	left = 1.0f - t;
 	DB_F32(DB_PTR(s, 0x30), 0xe0) = left;
@@ -652,7 +652,7 @@ void CDemolition_BombSystemFrag_Update(struct CDemolition_BombSystem *self, floa
 		if (DB_U8(b, 0x15) != 0)
 			DB_VFN(b, 8, void (*)(void *, float))(b, dt);
 	}
-	FUN_0018ec60((int)(DAT_002ff85c + 0x77d4), (undefined4)DB_PTR(self, 4));
+	FUN_0018ec60((void *)(DAT_002ff85c + 0x77d4), (void *)DB_PTR(self, 4));
 	db_game_77d4_update(dt);
 }
 
@@ -1784,7 +1784,7 @@ void CDemolition_CrossBomb_Spawn(struct CDemolition_CrossBomb *self, float *pos)
 	DB_PTR(s, 0x45d0) = NULL;
 	DB_PTR(s, 0x45d4) = NULL;
 	db_timer_start(s + 0x45f0, (float)db_rand() * 3.05185094e-05f * 5.0f + 6.0f);
-	DB_I32(s, 0x46c0) = FUN_000ee7f0((int)(DAT_002ff85c + 0x1510));
+	DB_I32(s, 0x46c0) = (int)FUN_000ee7f0((void *)(DAT_002ff85c + 0x1510));
 	DB_U8(DB_PTR(s, 0x46c0), 0x66) = 0;
 }
 
@@ -1893,7 +1893,7 @@ int CDemolition_BombSystemFrag_Init(struct CDemolition_BombSystem *self, void *p
 				0xc6f, 0x1001);
 			char *b = mem != NULL ? (char *)CDemolition_FragBomb_Construct(mem) : NULL;
 
-			CDemolition_FragBomb_Init((struct CDemolition_FragBomb *)b, self);
+			CDemolition_FragBomb_Init((struct CDemolition_FragBomb *)b, (int)self);
 			DB_PTR(b, 0x10) = DB_PTR(s, 4);
 			DB_PTR(s, 4) = b;
 			DB_I32(b, 0x4458) = DB_I32(s, 8);
@@ -2041,7 +2041,7 @@ void CDemolition_BombSystemTimed_SpawnBomb(struct CDemolition_BombSystem *self)
 		{
 			if (DB_U8(s, 0x1d0 + i * 0x2b0) == 0)
 				continue;
-			if (FUN_00101ac0((int)zone, DB_FP(s, 0x190 + i * 0x2b0)) != 0)
+			if (FUN_00101ac0((struct DcShape *)zone, DB_FP(s, 0x190 + i * 0x2b0)) != 0)
 				count++;
 			if (count > best)
 				break;
@@ -2067,7 +2067,7 @@ void CDemolition_BombSystemTimed_SpawnBomb(struct CDemolition_BombSystem *self)
 		pos[1] = 2500.0f;
 		pos[2] = (float)r2 * 3.05185094e-05f * (DB_F32(best_area, 0x34) + DB_F32(best_area, 0x34)) -
 			DB_F32(best_area, 0x34) + DB_F32(best_area, 0x2c);
-		if (FUN_00101ac0((int)best_area, pos) == 0)
+		if (FUN_00101ac0((struct DcShape *)best_area, pos) == 0)
 			continue;
 		for (i = 0; i < 8; i++)
 		{
@@ -2228,7 +2228,7 @@ void CDemolition_TimedBomb_Update(struct CDemolition_TimedBomb *self, float dt)
 	short r;
 
 	if (DB_U8(s, 0x1c2) == 0)
-		FUN_0018e8e0((int)(s + 0x1e0));
+		FUN_0018e8e0((void *)(s + 0x1e0));
 	t = BCarTimer_GetRemaining((struct BCarTimer *)(s + 0x1e0));
 	if (DB_F32(s, 0x184) <= -1000.0f)
 	{
@@ -2301,7 +2301,7 @@ void CDemolition_CrossBomb_Update(struct CDemolition_CrossBomb *self, float dt)
 	if (DB_F32(s, 0x46d0) < 0.0f)
 		DB_F32(s, 0x46d0) = 0.0f;
 	if (DB_U8(s, 0x17) == 0)
-		FUN_0018e8e0((int)(s + 0x45f0));
+		FUN_0018e8e0((void *)(s + 0x45f0));
 	t = BCarTimer_GetRemaining((struct BCarTimer *)(s + 0x45f0));
 	switch (DB_I32(s, 0x4454))
 	{
@@ -2436,7 +2436,7 @@ void CDemolition_BombSystemTimed_Update(struct CDemolition_BombSystem *self, flo
 			active++;
 		}
 	}
-	FUN_0018e8e0((int)(s + 0x1590));
+	FUN_0018e8e0((void *)(s + 0x1590));
 	if (DB_U8(s, 0x15cd) != 0)
 		return;
 	wanted = 8 - (int)((1.0f - BCarTimer_GetRemaining((struct BCarTimer *)(DAT_002ff85c + 0x78c0))) * 7.0f);
@@ -2554,7 +2554,7 @@ void CDemolition_BombSystemCross_Update(struct CDemolition_BombSystem *self, flo
 	}
 	for (b = (char *)DB_PTR(s, 4); b != NULL; b = (char *)DB_PTR(b, 0x10))
 		DB_VFN(b, 8, void (*)(void *, float))(b, dt);
-	FUN_0018ec60((int)(DAT_002ff85c + 0x77d4), (undefined4)DB_PTR(s, 4));
+	FUN_0018ec60((void *)(DAT_002ff85c + 0x77d4), (void *)DB_PTR(s, 4));
 	db_game_77d4_update(dt);
 }
 
@@ -2566,7 +2566,7 @@ void CDemolition_FragBomb_Update(struct CDemolition_FragBomb *self, float dt)
 	char *s = (char *)self;
 
 	if (DB_U8(s, 0x17) == 0)
-		FUN_0018e8e0((int)(s + 0x4628));
+		FUN_0018e8e0((void *)(s + 0x4628));
 	CDemolition_Object_PlayImpact((struct CDemolition_Object *)s, dt);
 	switch (DB_I32(s, 0x4454))
 	{
@@ -2574,7 +2574,7 @@ void CDemolition_FragBomb_Update(struct CDemolition_FragBomb *self, float dt)
 		CDemolition_FragBomb_FollowHolder(self, dt);
 		break;
 	case 2:
-		if (!(FUN_0018ea50((int)(s + 0x4628)) > 2.5f))
+		if (!(FUN_0018ea50((void *)(s + 0x4628)) > 2.5f))
 			DB_I32(s, 0x4454) = 3;
 		break;
 	case 3:

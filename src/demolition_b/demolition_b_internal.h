@@ -73,8 +73,8 @@ static inline void db_popup_int(float *pos, int r, int g, int b, const char *for
 /* rollerball_a timer helpers (0x0018ea10 SetTime(float), 0x0018ea30 Start) */
 static inline void db_timer_start(void *timer, float seconds)
 {
-	FUN_0018ea10((int)timer, seconds);
-	FUN_0018ea30((int)timer);
+	FUN_0018ea10((void *)timer, seconds);
+	FUN_0018ea30((void *)timer);
 }
 
 #endif
