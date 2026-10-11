@@ -186,6 +186,25 @@ if(EXISTS "${OPENFRENZY_ISO}")
       "-DEXPECT=0"
       "-DISO=${OPENFRENZY_ISO}"
       -P "${CMAKE_SOURCE_DIR}/cmake/run_guest_test.cmake")
+
+  # Gameplay regression (label "gameplay"; docs/BUILD.md): the game image headless with scripted
+  # pad input, checked on its log. board: 120 s to the first minigame; game_<Name>: direct
+  # launch, variation 1, 60 s. Fast tests only: ctest -LE gameplay.
+  find_package(Python3 COMPONENTS Interpreter REQUIRED)
+  set(_gameplay_args
+    "${CMAKE_SOURCE_DIR}/tests/run_game_check.py"
+    --host "$<TARGET_FILE:openfrenzy>"
+    --image "${CMAKE_BINARY_DIR}/openfrenzy_guest.elf"
+    --iso "${OPENFRENZY_ISO}"
+    --work "${CMAKE_BINARY_DIR}/test-gameplay")
+  add_test(NAME gameplay_board COMMAND Python3::Interpreter -I ${_gameplay_args} board)
+  set_tests_properties(gameplay_board PROPERTIES LABELS gameplay TIMEOUT 180 PROCESSORS 2)
+  foreach(_game BumperCars Fireworks Clusteroids Demolition Drillers Tag Hopper MouseWhack
+                RollerBall Jetboats ScratchMatch TankedUp)
+    add_test(NAME gameplay_game_${_game}
+      COMMAND Python3::Interpreter -I ${_gameplay_args} game ${_game} 1)
+    set_tests_properties(gameplay_game_${_game} PROPERTIES LABELS gameplay TIMEOUT 120 PROCESSORS 2)
+  endforeach()
 else()
-  message(STATUS "No disc image at ${OPENFRENZY_ISO}: guest_smoke_runs test not registered")
+  message(STATUS "No disc image at ${OPENFRENZY_ISO}: guest_smoke_runs and gameplay tests not registered")
 endif()

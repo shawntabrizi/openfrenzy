@@ -53,6 +53,36 @@ and exits 0; `OPENFRENZY_BOOT_ONLY=1` skips the game's `main`),
 `guest_smoke_runs` (needs `orig/game.xiso.iso`; not registered without it). Tests run headless
 (`SDL_VIDEO_DRIVER=dummy`), so they also pass in the sandbox.
 
+Gameplay regression tests (label `gameplay`; registered only when `orig/game.xiso.iso` exists).
+`tests/run_game_check.py` runs the game image headless (`SDL_VIDEO_DRIVER=dummy`,
+`SDL_AUDIO_DRIVER=dummy`, `OPENFRENZY_DEBUG_SKIP_VIDEOS=true`, `OPENFRENZY_BKLOG=1`) with a fresh
+save root and scripted pad input (`OPENFRENZY_DEBUG_TEST_INPUT`), stops it after a fixed time,
+then checks the log:
+
+| Test | Run | Pass |
+|---|---|---|
+| `gameplay_board` | 120 s, the board recipe: `START@6000,A@9000,A@11000,A@13000,START@16000,START@20000,START@24000,START@28000,A@32000,START@36000`, then A every 3 s | `Top of stack now: CharacterSelect`, then `Top of stack now: Map`, then `countdown PLAYING`, in this order (the title shows `Map` once before, in attract) |
+| `gameplay_game_<Name>` (the 12 games of `OPENFRENZY_GAME`) | 60 s, direct launch with `OPENFRENZY_VARIATION=1`, A every 3 s | `countdown PLAYING` |
+
+Every test fails on a log line with `OpenFrenzy fault`, `UNIMPLEMENTED`, `Out of memory` or
+`assert` (any case), and when the host exits before the time ends (the game's main never
+returns). The one exception is the original ScratchMatch assertion
+`CScratchmatch_Game.cpp(815)`. Each test keeps its log at `build-<id>/test-gameplay/<name>.log`;
+on a failure it prints the reasons and the last 40 log lines.
+
+```sh
+ctest --test-dir build-<id> -LE gameplay                        # fast tests only (< 1 s)
+ctest --test-dir build-<id> -L gameplay -j8 --output-on-failure # 13 tests, about 4 min
+python3 -I tests/run_game_check.py --host build-<id>/openfrenzy \
+  --image build-<id>/openfrenzy_guest.elf --iso orig/game.xiso.iso \
+  --work build-<id>/test-gameplay game Tag 2                     # one game, another variation
+```
+
+Each gameplay test asks ctest for 2 processors, so `-j8` runs 4 games at a time. The input is
+timed in wall-clock milliseconds, so a much heavier load may make the board recipe miss a menu (not seen at -j8).
+A deliberate break (Tag's start returning 0) failed `gameplay_game_Tag` with
+`missing: 'countdown PLAYING'` while the other games passed.
+
 Rebuild after editing: `cmake --build build-<id>` (new files under `src/` are found
 automatically). The guest is an ExternalProject (`build-<id>/guest-main`); to see its errors in
 full, run `cmake --build build-<id>/guest-main`.
