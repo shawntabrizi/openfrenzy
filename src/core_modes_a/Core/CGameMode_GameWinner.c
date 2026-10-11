@@ -152,7 +152,7 @@ void CGameMode_GameWinner_Pushed(struct CGameMode_GameWinner *self)
 	for (k = 0; k < 2; k++) {
 		FUN_000382f0((undefined4 *)self->lights[k], 0);
 		FUN_00038550((undefined4 *)self->lights[k], (undefined4 *)&DAT_0028372c[k * 4]);
-		FUN_00038470((int)self->lights[k], DAT_00283724[k * 4], DAT_00283724[k * 4 + 1],
+		FUN_00038470((struct BLight *)self->lights[k], DAT_00283724[k * 4], DAT_00283724[k * 4 + 1],
 			DAT_00283724[k * 4 + 2]);
 	}
 }
@@ -176,9 +176,9 @@ void CGameMode_GameWinner_Render(struct CGameMode_GameWinner *self, int active)
 		FUN_00038440(DAT_00283720 & 0xff, DAT_00283720 >> 8 & 0xff, DAT_00283720 >> 16 & 0xff);
 		for (k = 0; k < 2; k++) {
 			FUN_00038550((undefined4 *)self->lights[k], (undefined4 *)&DAT_0028372c[k * 4]);
-			FUN_00038470((int)self->lights[k], DAT_00283724[k * 4], DAT_00283724[k * 4 + 1],
+			FUN_00038470((struct BLight *)self->lights[k], DAT_00283724[k * 4], DAT_00283724[k * 4 + 1],
 				DAT_00283724[k * 4 + 2]);
-			FUN_00038370((int)self->lights[k], 1);
+			FUN_00038370((struct BLight *)self->lights[k], 1);
 		}
 		FUN_000438b0();
 		FUN_00044b00(3, 0, 0);
@@ -189,15 +189,15 @@ void CGameMode_GameWinner_Render(struct CGameMode_GameWinner *self, int active)
 		FUN_00043b70(1);
 		FUN_00044a00(1.2217305f, 0.0f);
 		CMA_SetClipPlanes(10.0f, 100000.0f);
-		FUN_00034bf0(self->background, 1);
-		FUN_00034d50(self->background, 7);
+		FUN_00034bf0((struct BActorInstance *)self->background, 1);
+		FUN_00034d50((struct BActorInstance *)self->background, 7);
 		FUN_00044b00(3, 1, 0);
-		FUN_00034bf0(self->podium, 1);
-		FUN_00034d50(self->podium, 7);
+		FUN_00034bf0((struct BActorInstance *)self->podium, 1);
+		FUN_00034d50((struct BActorInstance *)self->podium, 7);
 		FUN_00044b00(6, 0, 0);
 		for (k = 0; k < 4; k++) {
-			FUN_00034bf0(self->actors[k], 1);
-			FUN_00034d50(self->actors[k], 7);
+			FUN_00034bf0((struct BActorInstance *)self->actors[k], 1);
+			FUN_00034d50((struct BActorInstance *)self->actors[k], 7);
 		}
 		FUN_00044b00(3, 0, 0);
 		FUN_00044b00(6, 1, 0);
@@ -219,10 +219,10 @@ void GameWinner_PlayAnim(struct CGameMode_GameWinner *self, int slot, int anim, 
 	float speed, float blend)
 {
 	int actor = self->actors[slot];
-	int sequence = FUN_00035c70(actor, DAT_00292ca0[anim].name);
+	int sequence = (int)FUN_00035c70((struct BActorInstance *)actor, DAT_00292ca0[anim].name);
 
 	if (keep == 0)
-		FUN_00038190(self->actors[slot], CMA_FIELD(int, self->actors[slot], 0x134), 1, 0);
+		FUN_00038190((void *)self->actors[slot], (struct BActorNode *)CMA_FIELD(int, self->actors[slot], 0x134), 1, 0);
 	if (sequence == 0)
 		return;
 	actor = self->actors[slot];
@@ -230,7 +230,7 @@ void GameWinner_PlayAnim(struct CGameMode_GameWinner *self, int slot, int anim, 
 		CMA_Actor_PlayBlended(actor, CMA_FIELD(int, actor, 0x134), sequence, (int)((double)speed * 1024.0),
 			-1, blend, loop != 0, 0, 0);
 	else
-		FUN_00035770(actor, CMA_FIELD(int, actor, 0x134), sequence, (int)((double)speed * 1024.0),
+		FUN_00035770((struct BActorInstance *)actor, (struct BActorNode *)CMA_FIELD(int, actor, 0x134), (struct BAnim *)sequence, (int)((double)speed * 1024.0),
 			0xffffffff, loop != 0, 0, 0);
 }
 
@@ -249,7 +249,7 @@ void GameWinner_LoadCamera(struct CGameMode_GameWinner *self, int stage)
 		CMA_DebugPrintf("InitialiseCamera - Could not load camera LOM file\n");
 		return;
 	}
-	lom = FUN_0007f2f0(data, 2, size);
+	lom = (int)FUN_0007f2f0((char *)data, 2, size);
 	if (lom == 0) {
 		CMA_DebugPrintf("InitialiseCamera - Error parsing camera LOM file\n");
 		return;
@@ -269,7 +269,7 @@ static struct CBGTypeText *GameWinner_NewText(int line, int y, unsigned short *t
 {
 	void *memory = CMA_New(0x90, s_GameWinner_cpp, line, 0x1001);
 	struct CBGTypeText *t = memory == 0 ? 0
-		: CBGTypeText_ctor(memory, -320, y, text, FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa));
+		: CBGTypeText_ctor(memory, -320, y, text, (int)FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa));
 
 	CBGTypeText_Select(t, 0.0f);
 	t->style |= 8;
@@ -497,12 +497,12 @@ void CGameMode_GameWinner_Popped(struct CGameMode_GameWinner *self)
 		CMA_VFN(self->placeText, 0, void *(*)(void *, unsigned int))(self->placeText, 1);
 	if (self->winnerText != 0)
 		CMA_VFN(self->winnerText, 0, void *(*)(void *, unsigned int))(self->winnerText, 1);
-	FUN_00034930(self->podium);
-	FUN_00034930(self->background);
+	FUN_00034930((struct BActorInstance *)self->podium);
+	FUN_00034930((struct BActorInstance *)self->background);
 	for (k = 0; k < 2; k++)
-		FUN_000384d0((int)self->lights[k]);
+		FUN_000384d0((struct BLight *)self->lights[k]);
 	for (k = 0; k < 4; k++)
-		FUN_00034930(self->actors[k]);
+		FUN_00034930((struct BActorInstance *)self->actors[k]);
 	FUN_0007d590();
 	FUN_0004db40((int *)self->package);
 }
@@ -510,12 +510,12 @@ void CGameMode_GameWinner_Popped(struct CGameMode_GameWinner *self)
 /* a model of the package, posed at its first frame */
 static int GameWinner_LoadActor(int model, int line)
 {
-	int actor = FUN_00036b20(0, model, 6, (undefined4)s_GameWinner_cpp, line);
+	int actor = (int)FUN_00036b20(0, (struct BActor *)model, 6, (const char *)s_GameWinner_cpp, line);
 
-	FUN_00035cc0(actor, 0, 1, 0);
-	FUN_00035cc0(actor, 1, 0, 0);
-	FUN_00034e70(actor, (undefined4 *)CMA_FIELD(int, actor, 0x134), 0, 1);
-	FUN_00038190(actor, CMA_FIELD(int, actor, 0x134), 1, 0);
+	FUN_00035cc0((struct BActorInstance *)actor, 0, 1, 0);
+	FUN_00035cc0((struct BActorInstance *)actor, 1, 0, 0);
+	FUN_00034e70((struct BActorInstance *)actor, (undefined4 *)CMA_FIELD(int, actor, 0x134), 0, 1);
+	FUN_00038190((void *)actor, (struct BActorNode *)CMA_FIELD(int, actor, 0x134), 1, 0);
 	return actor;
 }
 
@@ -527,15 +527,15 @@ void CGameMode_GameWinner_LoadingStarted(struct CGameMode_GameWinner *self)
 	int glow;
 	int i;
 
-	FUN_0004b870(self->package, 0xffffffff, 0xdefa, 0);
-	glow = FUN_0004bb30(0, "firework_glow.bmp", 0, 0xdefa);
+	FUN_0004b870((struct bkPackage *)self->package, 0xffffffff, 0xdefa, 0);
+	glow = (int)FUN_0004bb30(0, "firework_glow.bmp", 0, 0xdefa);
 	memory = CMA_New(0x1c, s_GameWinner_cpp, 0x291, 0x1001);
 	self->fireworks = memory == 0 ? 0 : CMA_Fireworks_ctor(memory, 800, glow, 50.0f, 30000, glow, 50.0f);
 	CMA_FIELD(void *, self->fireworks, 0xc) = (void *)GameWinner_FireworkExploded;
-	self->podium = GameWinner_LoadActor(FUN_0004bb30(0, "podium.obe", 1, 0), 0x299);
-	FUN_00034bf0(self->podium, 1);
-	self->background = GameWinner_LoadActor(FUN_0004bb30(0, "background.obe", 1, 0), 0x2a5);
-	FUN_00034bf0(self->background, 1);
+	self->podium = GameWinner_LoadActor((int)FUN_0004bb30(0, "podium.obe", 1, 0), 0x299);
+	FUN_00034bf0((struct BActorInstance *)self->podium, 1);
+	self->background = GameWinner_LoadActor((int)FUN_0004bb30(0, "background.obe", 1, 0), 0x2a5);
+	FUN_00034bf0((struct BActorInstance *)self->background, 1);
 	FUN_0001bd70(DAT_002b9968);
 	for (i = 0; i < 4; i++) {
 		int character = DAT_002baed0[CMA_SCORE_BY_PLACE(i)].character;
@@ -543,7 +543,7 @@ void CGameMode_GameWinner_LoadingStarted(struct CGameMode_GameWinner *self)
 		int actor;
 		int sequence;
 
-		actor = GameWinner_LoadActor(FUN_0004bb30(0, DAT_002900c8 + character * 0x108, 1, 0), 0x2b6);
+		actor = GameWinner_LoadActor((int)FUN_0004bb30(0, DAT_002900c8 + character * 0x108, 1, 0), 0x2b6);
 		self->actors[i] = actor;
 		CMA_FIELD(float, actor, 0xc0) = DAT_002836e0[i * 4];
 		CMA_FIELD(float, actor, 0xc4) = DAT_002836e0[i * 4 + 1];
@@ -556,20 +556,20 @@ void CGameMode_GameWinner_LoadingStarted(struct CGameMode_GameWinner *self)
 		rotation[1] = 1.0f;
 		rotation[2] = 0.0f;
 		FUN_00070d70((float *)((char *)self->actors[i] + 0xe0), rotation);
-		FUN_00034bf0(self->actors[i], 1);
-		sequence = FUN_00035c70(self->actors[i], DAT_00292ca0[CMA_ANIM_IDLE_CHARSELECT].name);
+		FUN_00034bf0((struct BActorInstance *)self->actors[i], 1);
+		sequence = (int)FUN_00035c70((struct BActorInstance *)self->actors[i], DAT_00292ca0[CMA_ANIM_IDLE_CHARSELECT].name);
 		actor = self->actors[i];
-		FUN_00038190(actor, CMA_FIELD(int, actor, 0x134), 1, 0);
+		FUN_00038190((void *)actor, (struct BActorNode *)CMA_FIELD(int, actor, 0x134), 1, 0);
 		if (sequence != 0)
-			FUN_00035770(self->actors[i], CMA_FIELD(int, self->actors[i], 0x134), sequence, 0x400,
+			FUN_00035770((struct BActorInstance *)self->actors[i], (struct BActorNode *)CMA_FIELD(int, self->actors[i], 0x134), (struct BAnim *)sequence, 0x400,
 				0xffffffff, 1, 0, 0);
 	}
 	for (i = 0; i < 3; i++)
-		DAT_002b9730[i] = FUN_0004bb30(0, (char *)PTR_s_wheee1_wav_00283670[i], 2, 0xdefa);
+		DAT_002b9730[i] = (int)FUN_0004bb30(0, (char *)PTR_s_wheee1_wav_00283670[i], 2, 0xdefa);
 	for (i = 0; i < 3; i++)
-		DAT_002b9754[i] = FUN_0004bb30(0, (char *)PTR_s_bang1_wav_0028367c[i], 2, 0xdefa);
+		DAT_002b9754[i] = (int)FUN_0004bb30(0, (char *)PTR_s_bang1_wav_0028367c[i], 2, 0xdefa);
 	for (i = 0; i < 6; i++)
-		DAT_002b973c[i] = FUN_0004bb30(0, (char *)PTR_s_crackles1_wav_00283688[i], 2, 0xdefa);
+		DAT_002b973c[i] = (int)FUN_0004bb30(0, (char *)PTR_s_crackles1_wav_00283688[i], 2, 0xdefa);
 	self->eye[1] = 500.0f;
 	self->eye[0] = 1000.0f;
 	self->eye[3] = 1.0f;

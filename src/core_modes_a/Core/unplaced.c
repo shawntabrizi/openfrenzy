@@ -75,7 +75,7 @@ struct CGameMode *CGameMode_ctor(struct CGameMode *self, char *name)
 	self->name = name;
 	self->refCount = 0;
 	self->flags = 0;
-	FUN_0004c290((undefined4)name);
+	FUN_0004c290((const char *)name);
 	return self;
 }
 
@@ -346,19 +346,19 @@ void CharSel_PlayerLeave(struct CGameMode_CharacterSelect *self, int player)
    on TRACK (0: the actor's current one) */
 void CharSel_PlayAnim(int actor, int anim, int loop, int keep, float speed, float blend, int track)
 {
-	int sequence = FUN_00035c70(actor, DAT_00292ca0[anim].name);
+	int sequence = (int)FUN_00035c70((struct BActorInstance *)actor, DAT_00292ca0[anim].name);
 
 	if (sequence == 0)
 		return;
 	if (keep == 0)
-		FUN_00038190(actor, track != 0 ? track : CMA_FIELD(int, actor, 0x134), 1, 0);
+		FUN_00038190((void *)actor, (struct BActorNode *)(track != 0 ? track : CMA_FIELD(int, actor, 0x134)), 1, 0);
 	if (blend == 0.0f)
-		FUN_00035770(actor, track, sequence, (int)((double)speed * 1024.0), 0xffffffff, loop != 0, 0, 0);
+		FUN_00035770((struct BActorInstance *)actor, (struct BActorNode *)track, (struct BAnim *)sequence, (int)((double)speed * 1024.0), 0xffffffff, loop != 0, 0, 0);
 	else
 		CMA_Actor_PlayBlended(actor, track, sequence, (int)((double)speed * 1024.0), -1, blend,
 			loop != 0, 0, 0);
 	CMA_Actor_Update(actor, track != 0 ? track : CMA_FIELD(int, actor, 0x134), 0.0f, 0);
-	FUN_00034bf0(actor, 1);
+	FUN_00034bf0((struct BActorInstance *)actor, 1);
 }
 
 /* 0x00014250  Core (unplaced): the choice is made: stop the cheers and push the next mode */
@@ -487,7 +487,7 @@ void CGameMode_GameStats_Popped(struct CGameMode_GameStats *self)
 void CGameMode_GameStats_Render(struct CGameMode_GameStats *self, int active)
 {
 	if (self->standalone != 0)
-		FUN_00030310((int)self, active);
+		FUN_00030310((struct CMenuMode *)self, active);
 	FUN_00072720((undefined4)&self->overlays);
 	FUN_00073900(1);
 }
@@ -574,8 +574,8 @@ void CGameMode_GameStats_Pushed(struct CGameMode_GameStats *self)
 
 	memset(params, 0, sizeof(params));
 	FUN_00072720((undefined4)&self->overlays);
-	font1 = FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
-	font2 = FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
+	font1 = (int)FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
+	font2 = (int)FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
 
 	memset(params, 0, sizeof(params));
 	GameStats_TextParams(params, font1, 2, 3, 270.0f, 170.0f);
@@ -634,7 +634,7 @@ void CGameMode_GameStats_Pushed(struct CGameMode_GameStats *self)
 			DAT_002baed0[p].character = p;
 		memset(params, 0, sizeof(params));
 		CMA_FIELD(int, params, 0x288) = 0;
-		CMA_FIELD(int, params, 0x4) = FUN_0004bb30(0, (char *)CMA_CHAR_PICTURE(DAT_002baed0[p].character), 0, 0xdefa);
+		CMA_FIELD(int, params, 0x4) = (int)FUN_0004bb30(0, (char *)CMA_CHAR_PICTURE(DAT_002baed0[p].character), 0, 0xdefa);
 		CMA_FIELD(float, params, 0x250) = 128.0f;
 		CMA_FIELD(float, params, 0xc) = 90.0f - (float)(slot * 60);
 		CMA_FIELD(float, params, 0x254) = 128.0f;
@@ -697,8 +697,8 @@ void CGameMode_GameStats_Pushed(struct CGameMode_GameStats *self)
 	}
 	self->unka8 = 0;
 	self->timer = 20.0f;
-	self->tickSound = FUN_0004bb30(0, "kickimpact2.wav", 2, 0xdefa);
-	self->swipeSound = FUN_0004bb30(0, "punchswipe1.wav", 2, 0xdefa);
+	self->tickSound = (int)FUN_0004bb30(0, "kickimpact2.wav", 2, 0xdefa);
+	self->swipeSound = (int)FUN_0004bb30(0, "punchswipe1.wav", 2, 0xdefa);
 }
 
 /* 0x0001a520  Core (unplaced): count this round's points into the totals; rows move to the new
@@ -734,7 +734,7 @@ void CGameMode_GameStats_Update(struct CGameMode_GameStats *self, int active)
 			CMA_FIELD(int, self->totalText[i], 0x2f8) = 1;
 			CMA_FIELD(float, self->totalText[i], 0x2b8) = 127.0f;
 			if (self->tickSound != 0)
-				FUN_00054ba0(self->tickSound, 0xff, 0, 0, 0);
+				FUN_00054ba0((struct BSample *)self->tickSound, 0xff, 0, 0, 0);
 			self->counted[i] = 1;
 		}
 		counting++;

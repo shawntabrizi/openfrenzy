@@ -88,7 +88,7 @@ struct CMA_List {
 #define CMA_New(size, file, line, flags) \
 	((void *(*)(unsigned int, const char *, int, unsigned int))FUN_0004c480)((size), (file), (line), (flags))
 /* FUN_0004c110: Babel operator delete */
-#define CMA_Delete(p) FUN_0004c110((int)(p))
+#define CMA_Delete(p) FUN_0004c110((void *)(p))
 /* FUN_0004b230: debug printf (varargs) */
 #define CMA_DebugPrintf ((void (*)(const char *, ...))FUN_0004b230)
 /* FUN_0004b110: wcslen for UTF-16 text */
@@ -155,7 +155,7 @@ extern uint32_t DAT_002bc898[256]; /* alpha */
 
 /* FUN_000713a0: play SAMPLE (volume, pan, priority, 3D position or 0); returns a voice or -1 */
 #define CMA_PlaySample(sample, vol, pan, prio, pos) \
-	((int (*)(int, int, int, int, int))FUN_000713a0)((sample), (vol), (pan), (prio), (pos))
+	((int (*)(int, int, int, int, int))FUN_000713a0)((int)(sample), (vol), (pan), (prio), (pos))
 /* FUN_00071720: play the generic sample with index N (volume, pan, priority, 3D position) */
 #define CMA_PlayGeneric(n, vol, pan, prio, pos) \
 	((int (*)(int, int, int, int, int))FUN_00071720)((n), (vol), (pan), (prio), (pos))

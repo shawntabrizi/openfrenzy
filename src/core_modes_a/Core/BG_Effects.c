@@ -169,7 +169,7 @@ void BG_DrawRect(float x, float y, float w, float h, int *rgba)
 	v[3].z = 0.0f;
 	v[3].color = CMA_RGBA(rgba[0], rgba[1], rgba[2], rgba[3]);
 	FUN_000416c0(0, 0);
-	FUN_0003f2d0(5, (int)v, 4);
+	FUN_0003f2d0(5, (void *)v, 4);
 }
 
 /* 0x00011160  Core/BG_Effects.cpp */
@@ -311,7 +311,7 @@ void CBGTypeText_Start(struct CBGTypeText *self, float charDelay, float startDel
 
 	self->beepVolume = 0;
 	if (self->style & 0x10) {
-		FUN_00046320(self->buf.text.font, (int)self->buf.buffer, self->buf.capacity - 1, &w, &h);
+		FUN_00046320((struct bdFont *)self->buf.text.font, (const unsigned short *)self->buf.buffer, self->buf.capacity - 1, &w, &h);
 		self->buf.text.x = self->buf.text.x - w;
 		self->style &= ~0x10u;
 	}
@@ -360,7 +360,7 @@ void CBGTilingBackdrop_Init(struct CBGTilingBackdrop *self)
 	self->tileV = 3.75f;
 	self->scrollU = 0.0f;
 	self->scrollV = 0.0f;
-	self->texture = FUN_0004bb30(0, "ff_tile.bmp", 0, 0);
+	self->texture = (int)FUN_0004bb30(0, "ff_tile.bmp", 0, 0);
 	if (self->texture == 0)
 		CMA_DebugPrintf("CTilingBackDrop: Couldn't load ff_tile.bmp\n");
 }
@@ -372,7 +372,7 @@ void CBGTilingBackdrop_Render(struct CBGTilingBackdrop *self)
 	uint32_t grey;
 
 	FUN_00043b70(0);
-	FUN_000416c0(0, self->texture);
+	FUN_000416c0(0, (struct bdTexture *)self->texture);
 	FUN_000438b0();
 	FUN_00044b00(3, 0, 0);
 	FUN_00044b00(5, 0, 0);
@@ -404,7 +404,7 @@ void CBGTilingBackdrop_Render(struct CBGTilingBackdrop *self)
 	v[3].color = grey;
 	v[3].u = self->scrollU;
 	v[3].v = self->scrollV;
-	FUN_0003f2d0(5, (int)v, 4);
+	FUN_0003f2d0(5, (void *)v, 4);
 	self->scrollU = (float)((double)self->scrollU - (double)DAT_0028fda8 * 0.01f);
 	self->scrollV = (float)((double)self->scrollV - (double)DAT_0028fda8 * 0.01f);
 }
@@ -668,7 +668,7 @@ int CBGTypeText_Update(struct CBGTypeText *self)
 						int sample;
 
 						sprintf(name, "computertext%d.wav", (int)(Core_Rand() & 3) + 1);
-						sample = FUN_0004bb30(0, name, 2, 0xdefa);
+						sample = (int)FUN_0004bb30(0, name, 2, 0xdefa);
 						CMA_PlaySample(sample, self->beepVolume, 0, 0, 0);
 					}
 					typed = self->typed + 1;

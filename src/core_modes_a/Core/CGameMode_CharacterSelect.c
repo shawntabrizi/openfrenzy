@@ -55,13 +55,13 @@ static void CharSel_AddToGroup(struct CBGEffectGroup *group, struct CBGEffect *e
 /* bring ANIM (a name of the animation table) up on ACTOR's current track from the start */
 static void CharSel_StartIdle(int actor, int anim, int loop)
 {
-	int sequence = FUN_00035c70(actor, DAT_00292ca0[anim].name);
+	int sequence = (int)FUN_00035c70((struct BActorInstance *)actor, DAT_00292ca0[anim].name);
 
 	if (sequence != 0) {
-		FUN_00038190(actor, ACTOR_TRACK(actor), 1, 0);
-		FUN_00035770(actor, 0, sequence, 0x400, 0xffffffff, loop, 0, 0);
+		FUN_00038190((void *)actor, (struct BActorNode *)ACTOR_TRACK(actor), 1, 0);
+		FUN_00035770((struct BActorInstance *)actor, 0, (struct BAnim *)sequence, 0x400, 0xffffffff, loop, 0, 0);
 		CMA_Actor_Update(actor, ACTOR_TRACK(actor), 0.0f, 0);
-		FUN_00034bf0(actor, 1);
+		FUN_00034bf0((struct BActorInstance *)actor, 1);
 	}
 }
 
@@ -132,7 +132,7 @@ void CGameMode_CharacterSelect_Resume(struct CGameMode_CharacterSelect *self)
 	int font;
 
 	memset(params, 0, sizeof(params));
-	FUN_0004c290((undefined4)self->menu.base.name);
+	FUN_0004c290((const char *)self->menu.base.name);
 	FUN_00054690(DAT_002bae6c);
 	memory = CMA_New(0xe8, s_CharacterSelect_cpp, 0x1e1, 0x1001);
 	self->tweakMenu = memory == 0 ? 0 : CMA_TweakMenu_ctor(memory, "CharSelect");
@@ -158,7 +158,7 @@ void CGameMode_CharacterSelect_Resume(struct CGameMode_CharacterSelect *self)
 	CMA_FIELD(int, DAT_002b95e8, 0x18) = DAT_00281b1c;
 	CMA_FIELD(int, DAT_002b95e8, 0x1c) = DAT_00281b20;
 	FUN_00038550((undefined4 *)DAT_002b95e8, (undefined4 *)lightDir);
-	FUN_00038370((int)DAT_002b95e8, 1);
+	FUN_00038370((struct BLight *)DAT_002b95e8, 1);
 	FUN_00071880(1);
 	FUN_00026bf0();
 	FUN_00072720((undefined4)&self->overlays);
@@ -166,8 +166,8 @@ void CGameMode_CharacterSelect_Resume(struct CGameMode_CharacterSelect *self)
 	memory = CMA_New(0x20, s_CharacterSelect_cpp, 0x20a, 0x1001);
 	self->group = memory == 0 ? 0 : CBGEffectGroup_ctor(memory);
 	self->group->deleteFinished = 0;
-	self->font1 = FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
-	self->font2 = FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
+	self->font1 = (int)FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
+	self->font2 = (int)FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
 
 	/* the longest character description (texts 0x111-0x116) */
 	for (i = 0x1110; i < 0x1170; i += 0x10) {
@@ -216,7 +216,7 @@ void CGameMode_CharacterSelect_Resume(struct CGameMode_CharacterSelect *self)
 		/* "join" and "ready" are centred */
 		text = &panel->joinText;
 		for (k = 0; k < 2; k++, text++) {
-			FUN_00046320((*text)->buf.text.font, (int)(*text)->buf.text.text, (*text)->buf.text.length,
+			FUN_00046320((struct bdFont *)(*text)->buf.text.font, (const unsigned short *)(*text)->buf.text.text, (*text)->buf.text.length,
 				&w, &h);
 			(*text)->buf.text.x = -w;
 			CBGTypeText_Select(*text, 0.0f);
@@ -229,7 +229,7 @@ void CGameMode_CharacterSelect_Resume(struct CGameMode_CharacterSelect *self)
 		panel->readyText->alpha = 0.0f;
 
 		/* the description box */
-		font = FUN_0004bb30(0, "ocraext.ttf", 3, 0xdefa);
+		font = (int)FUN_0004bb30(0, "ocraext.ttf", 3, 0xdefa);
 		memory = CMA_New(0xb0, s_CharacterSelect_cpp, 0x24e, 0x1001);
 		panel->infoBox = memory == 0 ? 0
 			: CBGTypeTextBox_ctorEmpty(memory, DAT_00281a30, DAT_00281a34, maxLength, font);
@@ -517,11 +517,11 @@ void CharSel_InitCamera(struct CGameMode_CharacterSelect *self)
 
 			CharSel_StartIdle(actor, CMA_ANIM_PSYCHED, 0);
 			actor = self->actors[i];
-			sequence = FUN_00035c70(actor, DAT_00292ca0[CMA_ANIM_RUN].name);
+			sequence = (int)FUN_00035c70((struct BActorInstance *)actor, DAT_00292ca0[CMA_ANIM_RUN].name);
 			if (sequence != 0) {
 				CMA_Actor_PlayBlended(actor, 0, sequence, 0x400, -1, 0.05f, 1, 0, 0);
 				CMA_Actor_Update(actor, ACTOR_TRACK(actor), 0.0f, 0);
-				FUN_00034bf0(actor, 1);
+				FUN_00034bf0((struct BActorInstance *)actor, 1);
 			}
 			actor = self->actors[i];
 			CMA_FIELD(float, actor, 0xc0) = DAT_00281bd8[i * 4];
@@ -536,7 +536,7 @@ void CharSel_InitCamera(struct CGameMode_CharacterSelect *self)
 		CMA_DebugPrintf("InitialiseCamera - Could not load camera LOM file [%s]\n", file);
 		return;
 	}
-	lom = FUN_0007f2f0(data, 2, size);
+	lom = (int)FUN_0007f2f0((char *)data, 2, size);
 	if (lom == 0) {
 		CMA_DebugPrintf("InitialiseCamera - Error parsing camera LOM file [%s]\n", file);
 		return;
@@ -556,7 +556,7 @@ void CharSel_AllJoined(struct CGameMode_CharacterSelect *self)
 	FUN_0007d590();
 	for (i = 0; i < 4; i++) {
 		if (self->actors[i] != 0) {
-			FUN_00034930(self->actors[i]);
+			FUN_00034930((struct BActorInstance *)self->actors[i]);
 			self->actors[i] = 0;
 		}
 	}
@@ -642,8 +642,8 @@ void CharSel_RenderCelebration(struct CGameMode_CharacterSelect *self)
 	for (i = 0; i < 4; i++) {
 		if (self->camStage == 4 || self->camStage == i) {
 			CMA_FIELD(float, self->actors[i], 0xd4) = -1.0f;
-			FUN_00034bf0(self->actors[i], 1);
-			FUN_00034d50(self->actors[i], 7);
+			FUN_00034bf0((struct BActorInstance *)self->actors[i], 1);
+			FUN_00034d50((struct BActorInstance *)self->actors[i], 7);
 		}
 	}
 
@@ -672,13 +672,13 @@ void CharSel_RenderCelebration(struct CGameMode_CharacterSelect *self)
 	FUN_00044b00(3, 0, 0);
 	FUN_000416c0(0, 0);
 	FUN_000438b0();
-	FUN_0003f2d0(5, (int)DAT_002b9680, 4);
+	FUN_0003f2d0(5, (void *)DAT_002b9680, 4);
 	FUN_00044b00(3, 1, 0);
 	for (i = 0; i < 4; i++) {
 		if (self->camStage == 4 || self->camStage == i) {
 			CMA_FIELD(float, self->actors[i], 0xd4) = 1.0f;
-			FUN_00034bf0(self->actors[i], 1);
-			FUN_00034d50(self->actors[i], 7);
+			FUN_00034bf0((struct BActorInstance *)self->actors[i], 1);
+			FUN_00034d50((struct BActorInstance *)self->actors[i], 7);
 		}
 	}
 }
@@ -724,7 +724,7 @@ int CharSel_UpdateCelebration(struct CGameMode_CharacterSelect *self)
 			}
 			if (sample != 0) {
 				int volume = (int)self->cheerVolume[self->camStage];
-				int resource = FUN_0004bb30(0, (char *)sample, 2, 0xdefa);
+				int resource = (int)FUN_0004bb30(0, (char *)sample, 2, 0xdefa);
 
 				self->cheerVoice[self->camStage] = CMA_PlaySample(resource, volume, 0, 0, 0);
 			}
@@ -774,7 +774,7 @@ void CharSel_ShowCharacter(struct CGameMode_CharacterSelect *self, int player, i
 	text->buf.text.color[3] = 0x7f;
 	FUN_0004ae80((ushort *)text->buf.buffer, (ushort *)CMA_TEXT(0x149 + character));
 	text->buf.text.length = CMA_WStrLen(text->buf.buffer);
-	FUN_00046320(text->buf.text.font, (int)text->buf.buffer, text->buf.text.length, &w, &h);
+	FUN_00046320((struct bdFont *)text->buf.text.font, (const unsigned short *)text->buf.buffer, text->buf.text.length, &w, &h);
 	text->buf.text.x = -w;
 	FUN_00072720((undefined4)&panel->overlays);
 
@@ -822,12 +822,12 @@ void CGameMode_CharacterSelect_Suspend(struct CGameMode_CharacterSelect *self)
 	if (self->tweakMenu != 0) {
 		void *menu = self->tweakMenu;
 
-		FUN_0002f3e0((int)menu);
+		FUN_0002f3e0((struct CTweakMenu *)menu);
 		CMA_Delete(menu);
 	}
 	FUN_0004c2c0();
-	FUN_00038370((int)DAT_002b95e8, 0);
-	FUN_000384d0((int)DAT_002b95e8);
+	FUN_00038370((struct BLight *)DAT_002b95e8, 0);
+	FUN_000384d0((struct BLight *)DAT_002b95e8);
 	self->created = 0;
 	FUN_00072720((undefined4)&self->overlays);
 	FUN_00074ba0();
@@ -839,7 +839,7 @@ void CGameMode_CharacterSelect_Suspend(struct CGameMode_CharacterSelect *self)
 		struct CMA_CharSelPanel *panel = &self->panels[i];
 
 		if (self->actors[i] != 0) {
-			FUN_00034930(self->actors[i]);
+			FUN_00034930((struct BActorInstance *)self->actors[i]);
 			self->actors[i] = 0;
 		}
 		if (panel->overlay != 0 && OVL_I32(panel->overlay, 0x10) == 0)
@@ -859,14 +859,14 @@ static void CharSel_PanelAnim(struct CGameMode_CharacterSelect *self, int player
 	float blend, int loop, int restart)
 {
 	int actor = OVL_I32(self->panels[player].overlay, 0x74);
-	int sequence = FUN_00035c70(actor, DAT_00292ca0[anim].name);
+	int sequence = (int)FUN_00035c70((struct BActorInstance *)actor, DAT_00292ca0[anim].name);
 
 	if (sequence != 0) {
 		if (restart)
-			FUN_00038190(actor, ACTOR_TRACK(actor), 1, 0);
+			FUN_00038190((void *)actor, (struct BActorNode *)ACTOR_TRACK(actor), 1, 0);
 		CMA_Actor_PlayBlended(actor, 0, sequence, 0x400, -1, blend, loop, 0, 0);
 		CMA_Actor_Update(actor, ACTOR_TRACK(actor), 0.0f, 0);
-		FUN_00034bf0(actor, 1);
+		FUN_00034bf0((struct BActorInstance *)actor, 1);
 	}
 }
 
@@ -882,9 +882,9 @@ void CharSel_Deselect(struct CGameMode_CharacterSelect *self, int player, int an
 	if (self->stage != 4)
 		CMA_PlayGeneric(10, 0x7f, 0, 0, 0);
 	character = DAT_002baed0[player].character;
-	OVL_I32(self->charOverlay[character], 0x60) = FUN_0004bb30(0, (char *)PTR_s_dub_off_bmp_00281a0c[character], 0, 0xdefa);
+	OVL_I32(self->charOverlay[character], 0x60) = (int)FUN_0004bb30(0, (char *)PTR_s_dub_off_bmp_00281a0c[character], 0, 0xdefa);
 	for (k = 0; k < 6; k++)
-		OVL_I32(self->marker[k][player], 0x60) = FUN_0004bb30(0, (char *)PTR_s_p1_select_bmp_00281998[player], 0, 0xdefa);
+		OVL_I32(self->marker[k][player], 0x60) = (int)FUN_0004bb30(0, (char *)PTR_s_p1_select_bmp_00281998[player], 0, 0xdefa);
 	character = DAT_002baed0[player].character;
 	DAT_002baed0[player].character = -1;
 	DAT_002b9658[character] = 0.0f;
@@ -915,9 +915,9 @@ void CharSel_Confirm(struct CGameMode_CharacterSelect *self, int player, int ani
 	DAT_002baed0[player].character = self->selection[player];
 	self->owner[self->selection[player]] = player;
 	character = DAT_002baed0[player].character;
-	OVL_I32(self->charOverlay[character], 0x60) = FUN_0004bb30(0, (char *)PTR_s_dub_on_bmp_002819f4[character], 0, 0xdefa);
+	OVL_I32(self->charOverlay[character], 0x60) = (int)FUN_0004bb30(0, (char *)PTR_s_dub_on_bmp_002819f4[character], 0, 0xdefa);
 	for (k = 0; k < 6; k++)
-		OVL_I32(self->marker[k][player], 0x60) = FUN_0004bb30(0, (char *)PTR_s_p1_confirm_bmp_002819a8[player], 0, 0xdefa);
+		OVL_I32(self->marker[k][player], 0x60) = (int)FUN_0004bb30(0, (char *)PTR_s_p1_confirm_bmp_002819a8[player], 0, 0xdefa);
 	self->confirmed = self->confirmed + 1;
 	DAT_002baed0[player].character = self->selection[player];
 	for (j = 0; j < 4; j++) {
@@ -1026,7 +1026,7 @@ void CGameMode_CharacterSelect_Render(struct CGameMode_CharacterSelect *self, in
 {
 	int i;
 
-	FUN_00030310((int)self, active);
+	FUN_00030310((struct CMenuMode *)self, active);
 	if (active == 0)
 		return;
 	CMA_PushRenderState(8, 0, 0);
@@ -1117,12 +1117,12 @@ void CharSel_StartCelebration(struct CGameMode_CharacterSelect *self)
 		OVL_I32(self->playerOverlay[i], 0x2f4) = 1;
 		OVL_I32(self->playerOverlay[i], 0x2bc) = -12;
 		CMA_List_Remove(&panel->overlays, (char *)panel->overlay + 0x10);
-		model = FUN_0004bb30(0, DAT_002900c8 + DAT_002baed0[i].character * 0x108, 1, 0xdefa);
-		actor = FUN_00036b20(0, model, 6, (undefined4)s_CharacterSelect_cpp, 0x7d3);
+		model = (int)FUN_0004bb30(0, DAT_002900c8 + DAT_002baed0[i].character * 0x108, 1, 0xdefa);
+		actor = (int)FUN_00036b20(0, (struct BActor *)model, 6, (const char *)s_CharacterSelect_cpp, 0x7d3);
 		self->actors[i] = actor;
-		FUN_00034e70(actor, (undefined4 *)ACTOR_TRACK(actor), 0, 1);
-		FUN_00038190(self->actors[i], ACTOR_TRACK(self->actors[i]), 1, 0);
-		FUN_00034bf0(self->actors[i], 1);
+		FUN_00034e70((struct BActorInstance *)actor, (undefined4 *)ACTOR_TRACK(actor), 0, 1);
+		FUN_00038190((void *)self->actors[i], (struct BActorNode *)ACTOR_TRACK(self->actors[i]), 1, 0);
+		FUN_00034bf0((struct BActorInstance *)self->actors[i], 1);
 		actor = self->actors[i];
 		CMA_FIELD(float, actor, 0xc0) = 0.0f;
 		CMA_FIELD(float, actor, 0xc4) = 0.0f;
@@ -1164,7 +1164,7 @@ void CGameMode_CharacterSelect_LoadingStarted(struct CGameMode_CharacterSelect *
 		void *highlight;
 
 		OVP_I32(params, 0x288) = 0;
-		OVP_I32(params, 0x4) = FUN_0004bb30(0, (char *)PTR_s_dub_off_bmp_00281a0c[c], 0, 0xdefa);
+		OVP_I32(params, 0x4) = (int)FUN_0004bb30(0, (char *)PTR_s_dub_off_bmp_00281a0c[c], 0, 0xdefa);
 		OVP_F32(params, 0x2a4) = (float)c * DAT_00281a2c + DAT_00281a24;
 		OVP_I32(params, 0x28c) |= 5;
 		OVP_I32(params, 0x268) = 0x7f;
@@ -1185,7 +1185,7 @@ void CGameMode_CharacterSelect_LoadingStarted(struct CGameMode_CharacterSelect *
 		OVP_I32(params, 0x27c) = 0x50;
 		OVP_I32(params, 0x280) = 0x50;
 		self->charOverlay[c] = CMA_Overlay_Create(params);
-		OVP_I32(params, 0x4) = FUN_0004bb30(0, (char *)PTR_s_dub_on_bmp_002819f4[c], 0, 0xdefa);
+		OVP_I32(params, 0x4) = (int)FUN_0004bb30(0, (char *)PTR_s_dub_on_bmp_002819f4[c], 0, 0xdefa);
 		highlight = CMA_Overlay_CreateChild(self->charOverlay[c], params);
 		self->charHighlight[c] = highlight;
 		CMA_FIELD(short, highlight, 0x54) = 1;
@@ -1193,7 +1193,7 @@ void CGameMode_CharacterSelect_LoadingStarted(struct CGameMode_CharacterSelect *
 			void *marker;
 
 			OVP_I32(params, 0x288) = 0;
-			OVP_I32(params, 0x4) = FUN_0004bb30(0, (char *)PTR_s_p1_select_bmp_00281998[p], 0, 0xdefa);
+			OVP_I32(params, 0x4) = (int)FUN_0004bb30(0, (char *)PTR_s_p1_select_bmp_00281998[p], 0, 0xdefa);
 			OVP_F32(params, 0x250) = 127.0f;
 			OVP_F32(params, 0x254) = 127.0f;
 			OVP_F32(params, 0x258) = 127.0f;

@@ -312,14 +312,14 @@ void CGameMode_Credits_Resume(struct CGameMode_Credits *self)
 	self->columns[1].x = -220;
 	self->columns[1].y = -100;
 	self->columns[1].style = 0;
-	self->font1 = FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
-	self->font2 = FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
+	self->font1 = (int)FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
+	self->font2 = (int)FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
 }
 
 /* 0x00017db0  Core (unplaced; CGameMode_Credits): render (a jump to core's menu render) */
 void CGameMode_Credits_Render(struct CGameMode_Credits *self, int active)
 {
-	FUN_00030310((int)self, active);
+	FUN_00030310((struct CMenuMode *)self, active);
 }
 
 /* 0x00017dc0  Core (unplaced; CGameMode_Credits): A, start or B leave */

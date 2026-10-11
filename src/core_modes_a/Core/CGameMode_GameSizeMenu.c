@@ -46,7 +46,7 @@ struct CBGTypeText *DAT_002b971c;
 
 /* core: CVectorShape (thiscall) */
 #define CMA_VectorShape_ctor(s) ((void *(*)(void *))FUN_0002f570)(s)
-#define CMA_VectorShape_dtor(s) FUN_0002f580((int)(s))
+#define CMA_VectorShape_dtor(s) FUN_0002f580((struct CVectorShape *)(s))
 /* bkernel: 4x4 translation and scale matrices (float parameters) */
 #define CMA_MatrixTranslation(m, x, y, z) \
 	CMA_DUAL(FUN_00050250, void (*)(undefined4 *, undefined4, undefined4, undefined4), \
@@ -89,10 +89,10 @@ void CGameMode_GameSizeMenu_Suspend(struct CGameMode_GameSizeMenu *self)
 		self->group = 0;
 		for (i = 0; i < 3; i++) {
 			CMA_VectorShape_dtor(self->shapes[i]);
-			FUN_0003f650(SHAPE_MODEL(self->shapes[i]));
+			FUN_0003f650((struct bdVertexBuffer *)SHAPE_MODEL(self->shapes[i]));
 			self->labels[i] = 0;
 		}
-		FUN_0002ff40((int)self, 0);
+		FUN_0002ff40((struct CMenuMode *)self, 0);
 	}
 	FUN_0004c2c0();
 }
@@ -229,10 +229,10 @@ void CGameMode_GameSizeMenu_Resume(struct CGameMode_GameSizeMenu *self)
 	int i;
 
 	DAT_00284408 = 0;
-	FUN_0004c290((undefined4)self->menu.base.name);
-	font1 = FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
-	font2 = FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
-	self->texture = FUN_0004bb30(0, "projsmoke.bmp", 0, 0xdefa);
+	FUN_0004c290((const char *)self->menu.base.name);
+	font1 = (int)FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
+	font2 = (int)FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
+	self->texture = (int)FUN_0004bb30(0, "projsmoke.bmp", 0, 0xdefa);
 	memory = CMA_New(0x20, s_GameSizeMenu_cpp, 0x54, 0x1001);
 	self->group = memory == 0 ? 0 : CBGEffectGroup_ctor(memory);
 	root = CMA_ModeStack_Find("Root");
@@ -253,7 +253,7 @@ void CGameMode_GameSizeMenu_Resume(struct CGameMode_GameSizeMenu *self)
 		toLight[1] = DAT_0028364c[1] - pos[1];
 		toLight[2] = DAT_0028364c[2] - pos[2];
 		SHAPE_MODEL(shape) = 0;
-		FUN_0002f710((int)shape, (undefined4 *)toLight, &SHAPE_MODEL(shape), DAT_0028363c, 0);
+		FUN_0002f710((struct CVectorShape *)shape, (undefined4 *)toLight, &SHAPE_MODEL(shape), DAT_0028363c, 0);
 		SHAPE_SCALE(shape)[0] = 1.0f;
 		SHAPE_SCALE(shape)[1] = 1.0f;
 		SHAPE_SCALE(shape)[2] = 1.0f;
@@ -289,7 +289,7 @@ void CGameMode_GameSizeMenu_Resume(struct CGameMode_GameSizeMenu *self)
 
 	for (i = 0; i < 36; i++)
 		CMA_FIELD(int, DAT_002baf78[i], 0x20) = 2;
-	FUN_00030210((int)self, FUN_0004bb30(0, "over_gamesize.obe", 1, 0xdefa), 0);
+	FUN_00030210((struct CMenuMode *)self, FUN_0004bb30(0, "over_gamesize.obe", 1, 0xdefa), 0);
 	self->scrollV = 0.0f;
 	self->scrollU = 0.0f;
 }
@@ -306,7 +306,7 @@ void CGameMode_GameSizeMenu_Render(struct CGameMode_GameSizeMenu *self, int acti
 	float *pos;
 	int i;
 
-	FUN_00030310((int)self, active);
+	FUN_00030310((struct CMenuMode *)self, active);
 	if (active == 0)
 		return;
 	D3D_KickOffAndWaitForIdle();
@@ -318,7 +318,7 @@ void CGameMode_GameSizeMenu_Render(struct CGameMode_GameSizeMenu *self, int acti
 	memcpy(&textureMatrix, DAT_002855f0, sizeof(textureMatrix));
 	((float *)&textureMatrix)[9] = self->scrollV;
 	((float *)&textureMatrix)[8] = self->scrollU;
-	FUN_000416c0(0, self->texture);
+	FUN_000416c0(0, (struct bdTexture *)self->texture);
 	FUN_00044b00(2, 3, 0);
 	D3DDevice_SetTextureState_Deferred(0, (D3DTEXTURESTAGESTATETYPE)9, 2);
 	D3DDevice_SetTransform((D3DTRANSFORMSTATETYPE)2, &textureMatrix);
@@ -342,7 +342,7 @@ void CGameMode_GameSizeMenu_Render(struct CGameMode_GameSizeMenu *self, int acti
 		FUN_00038440(level, level, level);
 		CMA_MatrixTranslation(translation, pos[0], pos[1], pos[2]);
 		FUN_00043930((undefined4 *)translation);
-		FUN_0003f4a0(3, SHAPE_MODEL(shape), 0, FUN_0003ef90(SHAPE_MODEL(shape)));
+		FUN_0003f4a0(3, (struct bdVertexBuffer *)SHAPE_MODEL(shape), 0, FUN_0003ef90((struct bdVertexBuffer *)SHAPE_MODEL(shape)));
 	}
 	D3DDevice_SetTextureState_Deferred(0, (D3DTEXTURESTAGESTATETYPE)9, 0);
 	if (self->group != 0)

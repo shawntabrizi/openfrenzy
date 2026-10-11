@@ -92,13 +92,13 @@ void CGameMode_DemoSplash_Update(struct CGameMode_DemoSplash *self, int active)
 			int i;
 			unsigned long result;
 
-			FUN_0004b870(package, 0xffffffff, 0xdefa, 0);
-			picture = FUN_0004bb30(0, "wait.bmp", 5, 0xdefa);
+			FUN_0004b870((struct bkPackage *)package, 0xffffffff, 0xdefa, 0);
+			picture = (int)FUN_0004bb30(0, "wait.bmp", 5, 0xdefa);
 			for (i = 0; i < 3; i++) {
-				FUN_00046dd0(picture, -1, -1);
+				FUN_00046dd0((struct bdTexture *)picture, -1, -1);
 				FUN_00041ee0(0, 0, 0, 0xff);
 			}
-			FUN_00046dd0(picture, -1, -1);
+			FUN_00046dd0((struct bdTexture *)picture, -1, -1);
 			CMA_DebugPrintf("\n\n%s\n\n", (char *)DAT_002d08a8 + 0xc);
 			strcpy(DAT_002d0758, DAT_002ba9d8);
 			FUN_0001c800();
@@ -128,7 +128,7 @@ void CGameMode_DemoSplash_Render(struct CGameMode_DemoSplash *self, int active)
 	if (self->picture != 0) {
 		FUN_00044b00(2, 0xc, 0);
 		FUN_00044ac0(2);
-		FUN_00046dd0(self->picture, -1, -1);
+		FUN_00046dd0((struct bdTexture *)self->picture, -1, -1);
 		FUN_00044ae0(2);
 	}
 	CMA_VFN(self->text, 0x0c, void (*)(void *))(self->text);
@@ -172,12 +172,12 @@ void CGameMode_DemoSplash_Resume(struct CGameMode_DemoSplash *self)
 	self->timer = 0.0f;
 	self->fade = 265.0f;
 	self->package = CMA_LoadPackage(0, "Packages\\demosplash", 0);
-	FUN_0004b870(self->package, 0xffffffff, 0xdefa, 0);
-	self->picture = FUN_0004bb30(0, "demosplash.bmp", 5, 0xdefa);
+	FUN_0004b870((struct bkPackage *)self->package, 0xffffffff, 0xdefa, 0);
+	self->picture = (int)FUN_0004bb30(0, "demosplash.bmp", 5, 0xdefa);
 	self->leaving = 0;
 	memory = CMA_New(0x90, s_DemoSplash_cpp, 0x2c, 0x1001);
 	self->text = memory == 0 ? 0
-		: CBGTypeText_ctor(memory, 0, 100, CMA_TEXT(0x1b9), FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa));
+		: CBGTypeText_ctor(memory, 0, 100, CMA_TEXT(0x1b9), (int)FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa));
 	CBGTypeText_Select(self->text, 0.0f);
 	self->text->style |= 0xc;
 	self->text->style &= ~1u;

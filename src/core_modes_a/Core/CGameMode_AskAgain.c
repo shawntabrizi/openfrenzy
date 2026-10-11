@@ -159,15 +159,15 @@ void CGameMode_FinishedLoading(struct CGameMode *self)
 void CGameMode_UpdateLoading(struct CGameMode *self)
 {
 	self->unk04 = 0;
-	if (FUN_0004d6d0(DAT_002ba9a4, 0) == 1)
+	if (FUN_0004d6d0((struct bkEventClient *)DAT_002ba9a4, 0) == 1)
 		DAT_002ba9b0 = DAT_002ba9b0 - 1;
-	if (FUN_0004d6d0(DAT_002ba9a8, 0) == 1) {
+	if (FUN_0004d6d0((struct bkEventClient *)DAT_002ba9a8, 0) == 1) {
 		DAT_002ba9b0 = DAT_002ba9b0 - 1;
-		FUN_0004b870(DAT_002b9670, 0xffffffff, 0xdefa, 0);
+		FUN_0004b870((struct bkPackage *)DAT_002b9670, 0xffffffff, 0xdefa, 0);
 		DAT_002b95ac = 1;
 	}
 	if (DAT_002ba9b0 == 0) {
-		FUN_0004c290((undefined4)self->name);
+		FUN_0004c290((const char *)self->name);
 		if (self->loadState == 2)
 			CMA_VFN(self, 0x2c, void (*)(struct CGameMode *))(self);
 		CMA_VFN(self, 0x28, void (*)(struct CGameMode *))(self);
@@ -265,7 +265,7 @@ struct CGameMode_AskAgain *CGameMode_AskAgain_ctor(struct CGameMode_AskAgain *se
 /* 0x00012bd0  Core/CGameMode_AskAgain.cpp: pushed */
 void CGameMode_AskAgain_Pushed(struct CGameMode_AskAgain *self)
 {
-	self->font = FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
+	self->font = (int)FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
 }
 
 /* 0x00012c00  Core/CGameMode_AskAgain.cpp: suspend: fade the texts out */
@@ -538,8 +538,8 @@ void CGameMode_AttractMode_Resume(struct CGameMode_AttractMode *self)
 /* 0x000133c0  Core/CGameMode_AskAgain.cpp: pushed: the two fonts */
 void CGameMode_BGEffects_Pushed(struct CGameMode_BGEffects *self)
 {
-	self->font1 = FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
-	self->font2 = FUN_0004bb30(0, "ocraext.ttf", 3, 0xdefa);
+	self->font1 = (int)FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
+	self->font2 = (int)FUN_0004bb30(0, "ocraext.ttf", 3, 0xdefa);
 }
 
 /* 0x00013400  Core/CGameMode_AskAgain.cpp: popped */
