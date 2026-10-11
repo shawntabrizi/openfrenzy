@@ -32,7 +32,7 @@ Companion documents:
 |  src/vfs      D: drive on the disc image (XDVDFS)               |        |
 |  src/xkernel  kernel + XAPI HLE                                 | XDK    |
 |  src/d3d8     Direct3D 8 on GLES 3, NV2A shaders, swizzle       | layer  |
-|  src/dsound   DirectSound on SDL3 audio, WMA, Bink null         | (HLE)  |
+|  src/dsound   DirectSound on SDL3 audio, WMA, Bink on FFmpeg    | (HLE)  |
 |  src/input    XInput on SDL3 gamepad/keyboard                  /         |
 |  port/guest/runtime  musl start, threads, SDL/GL/posix wrappers          |
 |  musl 1.2.5 (libguestc.a)                                                |
@@ -165,8 +165,8 @@ The disc (XDVDFS, game partition at offset 0, 125 files):
 | Files | What | Port |
 |---|---|---|
 | `default.xbe` | the game (2.8 MB) | analysis only |
-| `Packages/*.xbp` (89, 596 MB), `Packages/<Language>/*.xbp` | Babel packages: textures, models, sounds, per minigame and variant (`bump-v01`, `drill-v3`, ...). Loaded by bKernel (`FUN_0004d320` "%s.xbp", `FUN_0004e250` "Package", file cache `xbCache.cpp` needs 2 KB-aligned sizes). Header: a 32-bit hash/ID, then 0x80, then table fields (not decoded yet). | bkernel decodes |
-| `Packages/Music.xbp` (37 MB) | 29 WMA (ASF) streams; `InitMusic` "%s.wma" (0x00071b60) | dsound needs a WMA decoder |
+| `Packages/*.xbp` (89, 596 MB), `Packages/<Language>/*.xbp` | Babel packages: textures, models, sounds, per minigame and variant (`bump-v01`, `drill-v3`, ...). Loaded by bKernel (`FUN_0004d320` "%s.xbp", `FUN_0004e250` "Package", file cache `xbCache.cpp` needs 2 KB-aligned sizes). Header: a 32-bit hash/ID, then 0x80, then table fields. The decompiled bKernel loader reads them; the port has no separate decoder. | bkernel |
+| `Packages/Music.xbp` (37 MB) | 29 WMA (ASF) streams; `InitMusic` "%s.wma" (0x00071b60) | `wma_decoder.c` (port of FFmpeg's WMA v1/v2 decoder) |
 | `Packages/MetaLevs/*.lnd` | text level scripts for the board game (`LANDSCAPE sitemesh01.obe 0 0 0`, `PLAY_TIME 4800`); parsed by `Meta/LevelLoad.cpp` (0x00166db0) | meta |
 | `Packages/Video/*.bik`, `XDemos/videos/*.bik` | Bink videos (Blitz logos, attract mode, demos) | `bink_host.c` + host FFmpeg |
 | `layer0-*.zro`, `layer1-*.zro` (16 x 64 MB) | zero padding (verified: all bytes 0) | ignored |
@@ -186,7 +186,7 @@ equivalent (`ref/OpenCE/port/linux/src/` at `231708d`), split into platform modu
 |---|---|---|
 | `D3D` (D3D8 1.0.3925), `XGRPH` | `d3d8_gl.c`, `d3d8_resources.c`, `nv2a_vsh.c`, `nv2a_psh.c`, `xbox_textures.c`, `gl_functions.c`, `xgpu_text.c`, `xgpu_post.c` | d3d8 |
 | `DSOUND` (3925) | `dsound_sdl.c` | dsound |
-| `WMADEC`, `WMADECXM` | a WMA decoder (to write or port; music in `Music.xbp` is WMA) | dsound |
+| `WMADEC`, `WMADECXM` | `wma_xmo.c` (`WmaCreateDecoder`) on `wma_decoder.c` (port of FFmpeg n4.4.4 WMA v1/v2) | dsound |
 | `.text` region `bink` (RAD Bink) | `bink_host.c` (started from OpenCE's `bink_null.c`): the host decodes with FFmpeg (`host_bink.c`); audio goes to a DirectSound stream | dsound |
 | `XPP` | `xinput_sdl.c` | input |
 | `.text` regions `xapi`, `libc` | `xbox_kernel.c`, `xbox_xapi.c`, `xbox_memory.c` + musl + `msvc_crt.c`/`msvc_wide.c` | xkernel, runtime |
@@ -383,11 +383,16 @@ kept to ease merges from OpenCE; rename only inside your own module, not across 
 
 ## 16. Open questions
 
-- The `.xbp` package format is not decoded (bkernel).
-- WMA decoding for music (`Music.xbp`, 29 streams): port a decoder or stay silent (dsound).
-- 54 rarely called library functions are not identified yet (`docs/LIBRARY_CALLS.md`).
-- About 20 XDK entry points are `MISSING`/`UNKNOWN` in `xdk_entry_points.inc` (d3d8, dsound).
-- The `.app` bundle is not built; run the host binary with the image (docs/BUILD.md).
+Current state: `docs/STATUS.md`. The game plays; these questions are still open:
+
+- 53 rarely called library functions are not identified yet (`docs/LIBRARY_CALLS.md`). The game
+  runs without a name for them.
+- The `.app` bundle is not built. Run the host binary with the image (docs/BUILD.md).
+- Custom soundtracks are not supported. `XFindFirstSoundtrack` always returns none.
+- The debug menu callback FUN_00026d40 is a hand-written weak stub. Only the debug menu reaches it.
+
+Closed: the `.xbp` packages load through the decompiled bKernel code. Music plays through
+`wma_decoder.c`. `xdk_entry_points.inc` has no `MISSING` or `UNKNOWN` entry.
 
 ## 17. Attribution
 

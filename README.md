@@ -1,9 +1,11 @@
 # openfrenzy
 
 A decompilation of an original-Xbox party game (Blitz Games, 2001; internal codename
-`BlitzParty`), with the goal of a native port to modern platforms (first target: Apple Silicon macOS).
+`BlitzParty`), and a native port to Apple Silicon macOS. The port plays the whole game at about
+60 fps: boot videos, attract mode, 6-stage tournaments, Minigame Frenzy and Options.
+`docs/STATUS.md` tells what works and what is not verified.
 
-This repository contains no game code or data. You must supply your own copy of the game.
+This repository contains decompiled C, but no game data. You must supply your own copy of the game.
 
 ## Target
 
@@ -54,6 +56,8 @@ cmake -S . -B build -G Ninja && cmake --build build && ctest --test-dir build
 ```
 
 ## Status
+
+Current state of the port: `docs/STATUS.md`.
 
 Initial analysis (Ghidra auto-analysis + XbSymbolDatabase):
 

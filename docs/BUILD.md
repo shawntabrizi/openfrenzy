@@ -47,7 +47,8 @@ the rebase pass). Outputs in `build-<id>/`:
 
 Tests (`ctest`): `guest_skeleton_runs` (exit 0), `guest_probe_runs` (exit 42),
 `guest_adrp_runs` (global addresses have a zero upper half; exit N = check N failed),
-`guest_platform_check_runs`, `guest_guest_runs` (the game image boots and exits 0),
+`guest_platform_check_runs`, `guest_guest_runs` (the game image runs its static constructors
+and exits 0; `OPENFRENZY_BOOT_ONLY=1` skips the game's `main`),
 `guest_smoke_runs` (needs `orig/game.xiso.iso`; not registered without it). Tests run headless
 (`SDL_VIDEO_DRIVER=dummy`), so they also pass in the sandbox.
 
@@ -69,7 +70,7 @@ found at `$OPENFRENZY_DATA_ROOT/game.xiso.iso`.
 mkdir -p build-<id>/run/saves
 export OPENFRENZY_DATA_ROOT=$PWD/orig OPENFRENZY_SAVE_ROOT=$PWD/build-<id>/run/saves
 
-# the game (today: static constructors and main run as stubs, then exit 0)
+# the game: boot videos, title, menus and play, until you quit (close the window)
 build-<id>/openfrenzy build-<id>/openfrenzy_guest.elf
 
 # the smoke test in a real window for 4 seconds
