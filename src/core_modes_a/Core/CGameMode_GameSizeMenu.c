@@ -180,7 +180,7 @@ struct CGameMode_GameSizeMenu *CGameMode_GameSizeMenu_ctor(struct CGameMode_Game
 {
 	int i;
 
-	FUN_00030090((undefined4 *)self, (undefined4 *)"GameSizeMenu");
+	FUN_00030090((struct CMenuMode *)self, "GameSizeMenu");
 	self->menu.base.vtbl = vtable_00255078;
 	for (i = 0; i < 3; i++) /* 'eh vector constructor iterator', element constructor 0x00018ee0 */
 		CMA_VectorShape_ctor(self->shapes[i]);
@@ -212,7 +212,7 @@ void CGameMode_GameSizeMenu_dtor(struct CGameMode_GameSizeMenu *self)
 
 	for (i = 2; i >= 0; i--) /* 'eh vector destructor iterator', element destructor 0x00018ef0 */
 		CMA_VectorShape_dtor(self->shapes[i]);
-	FUN_00030190((undefined4 *)self);
+	FUN_00030190((struct CMenuMode *)self);
 }
 
 /* 0x00019380  Core/CGameMode_GameSizeMenu.cpp: resume: shapes, labels, title, help line */
@@ -244,7 +244,7 @@ void CGameMode_GameSizeMenu_Resume(struct CGameMode_GameSizeMenu *self)
 
 		sprintf(name, "%s.wir", PTR_s_gamesize2_0028360c[i]);
 		data = ((int (*)(int, const char *, int, int, int, int))FUN_0004c6b0)(self->package, name, 0, 0, 0, 0);
-		FUN_0002f5a0((int *)shape, (int *)data, DAT_0028362c);
+		FUN_0002f5a0((struct CVectorShape *)shape, (int *)data, DAT_0028362c);
 		pos[1] = 0.0f;
 		pos[2] = 0.0f;
 		pos[3] = 1.0f;
@@ -253,7 +253,7 @@ void CGameMode_GameSizeMenu_Resume(struct CGameMode_GameSizeMenu *self)
 		toLight[1] = DAT_0028364c[1] - pos[1];
 		toLight[2] = DAT_0028364c[2] - pos[2];
 		SHAPE_MODEL(shape) = 0;
-		FUN_0002f710((struct CVectorShape *)shape, (undefined4 *)toLight, &SHAPE_MODEL(shape), DAT_0028363c, 0);
+		FUN_0002f710((struct CVectorShape *)shape, (const float *)toLight, &SHAPE_MODEL(shape), DAT_0028363c, 0);
 		SHAPE_SCALE(shape)[0] = 1.0f;
 		SHAPE_SCALE(shape)[1] = 1.0f;
 		SHAPE_SCALE(shape)[2] = 1.0f;
@@ -331,8 +331,8 @@ void CGameMode_GameSizeMenu_Render(struct CGameMode_GameSizeMenu *self, int acti
 		FUN_0004ff30(world, translation, scale);
 	else
 		FUN_00050150(world, translation, scale);
-	FUN_00043930((undefined4 *)world);
-	FUN_0002f4a0((int *)shape);
+	FUN_00043930((float *)world);
+	FUN_0002f4a0((struct CVectorShape *)shape);
 	FUN_00044b00(3, 1, 0);
 	for (i = 0; i < 3; i++) {
 		int level = i == self->selection ? 0x7f : 0x40;
@@ -341,7 +341,7 @@ void CGameMode_GameSizeMenu_Render(struct CGameMode_GameSizeMenu *self, int acti
 		pos = SHAPE_POS(shape);
 		FUN_00038440(level, level, level);
 		CMA_MatrixTranslation(translation, pos[0], pos[1], pos[2]);
-		FUN_00043930((undefined4 *)translation);
+		FUN_00043930((float *)translation);
 		FUN_0003f4a0(3, (struct bdVertexBuffer *)SHAPE_MODEL(shape), 0, FUN_0003ef90((struct bdVertexBuffer *)SHAPE_MODEL(shape)));
 	}
 	D3DDevice_SetTextureState_Deferred(0, (D3DTEXTURESTAGESTATETYPE)9, 0);

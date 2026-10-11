@@ -72,7 +72,7 @@ static void CMA_StartCurrentGame(void)
 /* 0x00018800  Core (unplaced; CGameMode_FullGame) */
 struct CGameMode_FullGame *CGameMode_FullGame_ctor(struct CGameMode_FullGame *self)
 {
-	FUN_00030090((undefined4 *)self, (undefined4 *)"FullGame");
+	FUN_00030090((struct CMenuMode *)self, "FullGame");
 	self->menu.base.refCount = self->menu.base.refCount + 1;
 	self->menu.base.vtbl = vtable_00254fd8;
 	self->finished = 0;
@@ -151,7 +151,7 @@ void CGameMode_FullGame_Resume(struct CGameMode_FullGame *self)
 				CMA_FIELD(int, &DAT_002baed0[i], 0x18) = 0;
 				CMA_SCORE_SUM(CMA_SCORE_ROUND, i) = 0;
 			}
-			FUN_0001bd70(DAT_002b9968);
+			FUN_0001bd70((struct CScoreTable *)DAT_002b9968);
 			if (CMA_SCORE_TIES > 1) {
 				/* a tie: the tie breaker game */
 				self->state = 6;
@@ -216,8 +216,8 @@ void CGameMode_FullGame_Resume(struct CGameMode_FullGame *self)
 		/* a bonus round: random scores */
 		for (i = 0; i < 4; i++)
 			scores[i] = ((int)Core_Rand() % 10) * 100;
-		FUN_0001c0f0(DAT_002b9968, scores);
-		FUN_0001c1b0(DAT_002b9968);
+		FUN_0001c0f0((struct CScoreTable *)DAT_002b9968, scores);
+		FUN_0001c1b0((struct CScoreTable *)DAT_002b9968);
 		self->state = 1;
 		memory = CMA_New(0x13c, s_FullGame_cpp, 0x51, 0x1001);
 		mode = memory == 0 ? 0 : CGameMode_GameStats_ctorShow(memory, 1);

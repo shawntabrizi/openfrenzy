@@ -153,11 +153,11 @@ void CGameMode_CharacterSelect_Resume(struct CGameMode_CharacterSelect *self)
 	lightDir[1] = DAT_00281b28;
 	lightDir[2] = DAT_00281b2c;
 	lightDir[3] = 1.0f;
-	FUN_000382f0((undefined4 *)DAT_002b95e8, 0);
+	FUN_000382f0((struct BLight *)DAT_002b95e8, 0);
 	CMA_FIELD(int, DAT_002b95e8, 0x14) = DAT_00281b18;
 	CMA_FIELD(int, DAT_002b95e8, 0x18) = DAT_00281b1c;
 	CMA_FIELD(int, DAT_002b95e8, 0x1c) = DAT_00281b20;
-	FUN_00038550((undefined4 *)DAT_002b95e8, (undefined4 *)lightDir);
+	FUN_00038550((struct BLight *)DAT_002b95e8, (const float *)lightDir);
 	FUN_00038370((struct BLight *)DAT_002b95e8, 1);
 	FUN_00071880(1);
 	FUN_00026bf0();
@@ -397,7 +397,7 @@ void CGameMode_CharacterSelect_Update(struct CGameMode_CharacterSelect *self, in
 		lightDir[3] = 1.0f;
 		CMA_FIELD(int, DAT_002b95e8, 0x18) = DAT_00281b1c;
 		CMA_FIELD(int, DAT_002b95e8, 0x1c) = DAT_00281b20;
-		FUN_00038550((undefined4 *)DAT_002b95e8, (undefined4 *)lightDir);
+		FUN_00038550((struct BLight *)DAT_002b95e8, (const float *)lightDir);
 		FUN_00038440(DAT_00281b0c, DAT_00281b10, DAT_00281b14);
 	}
 	CMA_MenuMode_Process(self, active);
@@ -1015,7 +1015,7 @@ void CGameMode_CharacterSelect_Input(struct CGameMode_CharacterSelect *self, int
 			return;
 		break;
 	}
-	FUN_0002fe60((int *)self, active);
+	FUN_0002fe60((struct CMenuMode *)self, active);
 	if (self->quit != 0)
 		CMA_ModeStack_Pop(1);
 }
@@ -1120,7 +1120,7 @@ void CharSel_StartCelebration(struct CGameMode_CharacterSelect *self)
 		model = (int)FUN_0004bb30(0, DAT_002900c8 + DAT_002baed0[i].character * 0x108, 1, 0xdefa);
 		actor = (int)FUN_00036b20(0, (struct BActor *)model, 6, (const char *)s_CharacterSelect_cpp, 0x7d3);
 		self->actors[i] = actor;
-		FUN_00034e70((struct BActorInstance *)actor, (undefined4 *)ACTOR_TRACK(actor), 0, 1);
+		FUN_00034e70((struct BActorInstance *)actor, (struct BActorNode *)ACTOR_TRACK(actor), 0, 1);
 		FUN_00038190((void *)self->actors[i], (struct BActorNode *)ACTOR_TRACK(self->actors[i]), 1, 0);
 		FUN_00034bf0((struct BActorInstance *)self->actors[i], 1);
 		actor = self->actors[i];

@@ -188,8 +188,8 @@ void Core_FinishCharacterSelPackage(void)
 			CMA_VFN(top, 0x24, void (*)(struct CGameMode *))(top);
 		}
 	}
-	FUN_0004e010(FUN_0004dce0((undefined4 *)DAT_002b9670));
-	FUN_0004db40((int *)DAT_002b9670);
+	FUN_0004e010(FUN_0004dce0((struct bkPackage *)DAT_002b9670));
+	FUN_0004db40((struct bkPackage *)DAT_002b9670);
 	DAT_002b9670 = 0;
 	DAT_002b95ac = 0;
 }
@@ -232,7 +232,7 @@ void Core_LoadCharacterVoices(int flush)
 		if (j < count && DAT_002b95b0[i] != 0)
 			continue;
 		if (!used && CMA_CHAR_VOICE(i) != 0) {
-			FUN_0004db40((int *)CMA_CHAR_VOICE(i));
+			FUN_0004db40((struct bkPackage *)CMA_CHAR_VOICE(i));
 			CMA_CHAR_VOICE(i) = 0;
 			FUN_00071130(i);
 			count = DAT_002bae94;
@@ -251,7 +251,7 @@ void Core_LoadCharacterVoices(int flush)
 /* 0x00012b50  Core/CGameMode_AskAgain.cpp */
 struct CGameMode_AskAgain *CGameMode_AskAgain_ctor(struct CGameMode_AskAgain *self)
 {
-	FUN_00030090((undefined4 *)self, (undefined4 *)"AskAgain");
+	FUN_00030090((struct CMenuMode *)self, "AskAgain");
 	self->menu.base.vtbl = vtable_00253928;
 	CMA_List_Init(&self->overlays);
 	FUN_00026bf0();
@@ -376,7 +376,7 @@ struct CGameMode_AskAgain *CGameMode_AskAgain_Delete(struct CGameMode_AskAgain *
 void CGameMode_AskAgain_dtor(struct CGameMode_AskAgain *self)
 {
 	FUN_001d5950(); /* ~CMA_List (nothing) */
-	FUN_00030190((undefined4 *)self);
+	FUN_00030190((struct CMenuMode *)self);
 }
 
 /* 0x00012ee0  Core/CGameMode_AskAgain.cpp: resume: build the question and the two answers */
@@ -546,7 +546,7 @@ void CGameMode_BGEffects_Pushed(struct CGameMode_BGEffects *self)
 void CGameMode_BGEffects_Popped(struct CGameMode_BGEffects *self)
 {
 	if (self->package != 0)
-		FUN_0004db40((int *)self->package);
+		FUN_0004db40((struct bkPackage *)self->package);
 	Core_FinishCharacterSelPackage();
 	DAT_002b95d4 = 0;
 }

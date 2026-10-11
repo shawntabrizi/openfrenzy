@@ -279,7 +279,7 @@ const void *const vtable_00254e58[] = {
 /* 0x00017c70  Core (unplaced; CGameMode_Credits) */
 struct CGameMode_Credits *CGameMode_Credits_ctor(struct CGameMode_Credits *self)
 {
-	FUN_00030090((undefined4 *)self, (undefined4 *)"Credits");
+	FUN_00030090((struct CMenuMode *)self, "Credits");
 	self->menu.base.vtbl = vtable_00254e58;
 	return self;
 }

@@ -118,7 +118,7 @@ const void *const vtable_00255260[] = {
 /* 0x0001a7e0  Core (unplaced; CGameMode_GameWinner) */
 struct CGameMode_GameWinner *CGameMode_GameWinner_ctor(struct CGameMode_GameWinner *self)
 {
-	FUN_00030090((undefined4 *)self, (undefined4 *)"GameWinner");
+	FUN_00030090((struct CMenuMode *)self, "GameWinner");
 	self->menu.base.flags |= 3;
 	self->menu.repeatRate[6] = 100000000;
 	self->menu.repeatRate[5] = 100000000;
@@ -150,8 +150,8 @@ void CGameMode_GameWinner_Pushed(struct CGameMode_GameWinner *self)
 	self->voice = -1;
 	self->crowdVoice = -1;
 	for (k = 0; k < 2; k++) {
-		FUN_000382f0((undefined4 *)self->lights[k], 0);
-		FUN_00038550((undefined4 *)self->lights[k], (undefined4 *)&DAT_0028372c[k * 4]);
+		FUN_000382f0((struct BLight *)self->lights[k], 0);
+		FUN_00038550((struct BLight *)self->lights[k], (const float *)&DAT_0028372c[k * 4]);
 		FUN_00038470((struct BLight *)self->lights[k], DAT_00283724[k * 4], DAT_00283724[k * 4 + 1],
 			DAT_00283724[k * 4 + 2]);
 	}
@@ -175,7 +175,7 @@ void CGameMode_GameWinner_Render(struct CGameMode_GameWinner *self, int active)
 	if (self->menu.base.loadState == 0) {
 		FUN_00038440(DAT_00283720 & 0xff, DAT_00283720 >> 8 & 0xff, DAT_00283720 >> 16 & 0xff);
 		for (k = 0; k < 2; k++) {
-			FUN_00038550((undefined4 *)self->lights[k], (undefined4 *)&DAT_0028372c[k * 4]);
+			FUN_00038550((struct BLight *)self->lights[k], (const float *)&DAT_0028372c[k * 4]);
 			FUN_00038470((struct BLight *)self->lights[k], DAT_00283724[k * 4], DAT_00283724[k * 4 + 1],
 				DAT_00283724[k * 4 + 2]);
 			FUN_00038370((struct BLight *)self->lights[k], 1);
@@ -261,7 +261,7 @@ void GameWinner_LoadCamera(struct CGameMode_GameWinner *self, int stage)
 /* 0x0001ac80  Core/CGameMode_GameWinner.cpp: the menu modes' destructor (a jump to core's) */
 void CGameModeMenu_dtor_thunk(void *self)
 {
-	FUN_00030190((undefined4 *)self);
+	FUN_00030190((struct CMenuMode *)self);
 }
 
 /* a new place text at y with TEXT, big and transparent; it shrinks and fades in */
@@ -504,7 +504,7 @@ void CGameMode_GameWinner_Popped(struct CGameMode_GameWinner *self)
 	for (k = 0; k < 4; k++)
 		FUN_00034930((struct BActorInstance *)self->actors[k]);
 	FUN_0007d590();
-	FUN_0004db40((int *)self->package);
+	FUN_0004db40((struct bkPackage *)self->package);
 }
 
 /* a model of the package, posed at its first frame */
@@ -514,7 +514,7 @@ static int GameWinner_LoadActor(int model, int line)
 
 	FUN_00035cc0((struct BActorInstance *)actor, 0, 1, 0);
 	FUN_00035cc0((struct BActorInstance *)actor, 1, 0, 0);
-	FUN_00034e70((struct BActorInstance *)actor, (undefined4 *)CMA_FIELD(int, actor, 0x134), 0, 1);
+	FUN_00034e70((struct BActorInstance *)actor, (struct BActorNode *)CMA_FIELD(int, actor, 0x134), 0, 1);
 	FUN_00038190((void *)actor, (struct BActorNode *)CMA_FIELD(int, actor, 0x134), 1, 0);
 	return actor;
 }
@@ -536,7 +536,7 @@ void CGameMode_GameWinner_LoadingStarted(struct CGameMode_GameWinner *self)
 	FUN_00034bf0((struct BActorInstance *)self->podium, 1);
 	self->background = GameWinner_LoadActor((int)FUN_0004bb30(0, "background.obe", 1, 0), 0x2a5);
 	FUN_00034bf0((struct BActorInstance *)self->background, 1);
-	FUN_0001bd70(DAT_002b9968);
+	FUN_0001bd70((struct CScoreTable *)DAT_002b9968);
 	for (i = 0; i < 4; i++) {
 		int character = DAT_002baed0[CMA_SCORE_BY_PLACE(i)].character;
 		float rotation[4];

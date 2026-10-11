@@ -147,7 +147,7 @@ void CGameMode_CharacterSelect_dtor(struct CGameMode_CharacterSelect *self)
 	for (i = 3; i >= 0; i--) /* 'eh vector destructor iterator' */
 		CMA_CharSelPanel_dtor(&self->panels[i]);
 	FUN_001d5950(); /* ~CMA_List of self->overlays (nothing) */
-	FUN_00030190((undefined4 *)self);
+	FUN_00030190((struct CMenuMode *)self);
 }
 
 /* 0x00013c80  Core (unplaced): pushed: reset the selection state */
@@ -393,7 +393,7 @@ struct CGameMode_CharacterSelect *CGameMode_CharacterSelect_ctor(struct CGameMod
 {
 	int i;
 
-	FUN_00030090((undefined4 *)self, (undefined4 *)"CharacterSelect");
+	FUN_00030090((struct CMenuMode *)self, "CharacterSelect");
 	self->menu.base.vtbl = vtable_00253dc4;
 	CMA_List_Init(&self->overlays);
 	for (i = 0; i < 4; i++) /* 'eh vector constructor iterator' */
@@ -454,7 +454,7 @@ const void *const vtable_0025513c[] = {
 /* 0x000199c0  Core (unplaced): CGameMode_GameStats constructor (over another mode) */
 struct CGameMode_GameStats *CGameMode_GameStats_ctor(struct CGameMode_GameStats *self)
 {
-	FUN_00030090((undefined4 *)self, (undefined4 *)"GameStats");
+	FUN_00030090((struct CMenuMode *)self, "GameStats");
 	self->menu.base.vtbl = vtable_0025513c;
 	CMA_List_Init(&self->overlays);
 	self->menu.base.flags |= 2;
@@ -467,7 +467,7 @@ struct CGameMode_GameStats *CGameMode_GameStats_ctor(struct CGameMode_GameStats 
 struct CGameMode_GameStats *CGameMode_GameStats_ctorShow(struct CGameMode_GameStats *self,
 	unsigned char standalone)
 {
-	FUN_00030090((undefined4 *)self, (undefined4 *)"GameStats");
+	FUN_00030090((struct CMenuMode *)self, "GameStats");
 	self->menu.base.vtbl = vtable_0025513c;
 	CMA_List_Init(&self->overlays);
 	self->menu.base.flags |= 2;
@@ -522,7 +522,7 @@ struct CGameMode_GameStats *CGameMode_GameStats_Delete(struct CGameMode_GameStat
 void CGameMode_GameStats_dtor(struct CGameMode_GameStats *self)
 {
 	FUN_001d5950(); /* ~CMA_List (nothing) */
-	FUN_00030190((undefined4 *)self);
+	FUN_00030190((struct CMenuMode *)self);
 }
 
 /* set the common fields of a centred text overlay */

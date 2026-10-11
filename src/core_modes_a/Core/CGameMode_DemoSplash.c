@@ -60,7 +60,7 @@ const void *const vtable_00254ed0[] = {
 /* 0x00018350  Core (unplaced; CGameMode_DemoSplash) */
 struct CGameMode_DemoSplash *CGameMode_DemoSplash_ctor(struct CGameMode_DemoSplash *self)
 {
-	FUN_00030090((undefined4 *)self, (undefined4 *)"DemoSplash");
+	FUN_00030090((struct CMenuMode *)self, "DemoSplash");
 	self->menu.base.vtbl = vtable_00254ed0;
 	CMA_List_Init(&self->list);
 	return self;
@@ -71,7 +71,7 @@ void CGameMode_DemoSplash_Suspend(struct CGameMode_DemoSplash *self)
 {
 	if (self->text != 0)
 		CMA_VFN(self->text, 0, void *(*)(void *, unsigned int))(self->text, 1);
-	FUN_0004db40((int *)self->package);
+	FUN_0004db40((struct bkPackage *)self->package);
 }
 
 /* 0x000183e0  Core/CGameMode_DemoSplash.cpp: fade in, wait 300 frames; when leaving, fade out
@@ -161,7 +161,7 @@ struct CGameMode_DemoSplash *CGameMode_DemoSplash_Delete(struct CGameMode_DemoSp
 void CGameMode_DemoSplash_dtor(struct CGameMode_DemoSplash *self)
 {
 	FUN_001d5950(); /* ~CMA_List (nothing) */
-	FUN_00030190((undefined4 *)self);
+	FUN_00030190((struct CMenuMode *)self);
 }
 
 /* 0x000186a0  Core/CGameMode_DemoSplash.cpp: resume: the package, the picture, the message */

@@ -228,7 +228,7 @@ void CBGMatrixText_Render(struct CBGMatrixText *self)
 	m[12] = self->x;
 	m[13] = self->y;
 	m[15] = 1.0f;
-	FUN_00043930((undefined4 *)m);
+	FUN_00043930((float *)m);
 	row = self->buffer;
 	for (i = 0; i < self->rows; i++) {
 		CMA_PrintText(DAT_002b95d0->font1, row, self->cols, 0.0f, (float)i * -20.0f, i,
@@ -256,7 +256,7 @@ void CBGText_Render(struct CBGText *self)
 	m[10] = self->scale;
 	m[12] = self->x;
 	m[13] = self->y;
-	FUN_00043930((undefined4 *)m);
+	FUN_00043930((float *)m);
 	CMA_PrintText(self->font, self->text, self->length, 0.0f, 0.0f, self->color[0], self->color[1],
 		self->color[2], self->color[3], 0, 0);
 }
@@ -766,13 +766,13 @@ void CBGTypeText_Render(struct CBGTypeText *self)
 		if (style & 4) {
 			m[12] = m[12] + 1.0f;
 			m[13] = m[13] - 1.0f;
-			FUN_00043930((undefined4 *)m);
+			FUN_00043930((float *)m);
 			CMA_PrintTextBox(text->font, text->text, text->length, &layout, 0, 0, 0,
 				(int)self->alpha, cb, ctx);
 			m[12] = m[12] - 1.0f;
 			m[13] = m[13] + 1.0f;
 		}
-		FUN_00043930((undefined4 *)m);
+		FUN_00043930((float *)m);
 		self->glyphCount = 0;
 		CMA_PrintTextBox(text->font, text->text, text->length, &layout, text->color[0],
 			text->color[1], text->color[2], (int)self->alpha, cb, ctx);
@@ -896,7 +896,7 @@ void CBGTypeTextBox_Render(struct CBGTypeTextBox *self)
 	m[0] = text->scale;
 	m[5] = text->scale;
 	m[10] = text->scale;
-	FUN_00043930((undefined4 *)m);
+	FUN_00043930((float *)m);
 	if (type->style & 4) {
 		layout->x = layout->x + 1.0f;
 		layout->y = layout->y - 1.0f;
