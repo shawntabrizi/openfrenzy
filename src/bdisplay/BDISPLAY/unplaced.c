@@ -601,15 +601,15 @@ int FUN_00047070(void)
 	DAT_002caf74 = 0;
 	DAT_002caf78 = 0x7f;
 	DAT_002caf7c = (struct BInputMap *)FUN_000488c0(9);
-	DAT_002caf80 = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Left", 1, 4, 0, 0, 0);
-	DAT_002caf84 = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Right", 1, 4, 0, 0, 0);
-	DAT_002caf88 = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Up", 1, 4, 0, 0, 0);
-	DAT_002caf8c = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Down", 1, 4, 0, 0, 0);
-	DAT_002caf90 = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Select", 1, 4, 0, 0, 0);
-	DAT_002caf94 = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Deselect", 1, 1, 0, 0, 0);
-	DAT_002caf9c = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Prior", 1, 4, 0, 0, 0);
-	DAT_002caf98 = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Next", 1, 4, 0, 0, 0);
-	DAT_002cafa0 = (struct BInputChannel *)FUN_00048a10(DAT_002caf7c, "Exit", 1, 1, 0, 0, 0);
+	DAT_002caf80 = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Left", 1, 4, 0, 0, 0);
+	DAT_002caf84 = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Right", 1, 4, 0, 0, 0);
+	DAT_002caf88 = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Up", 1, 4, 0, 0, 0);
+	DAT_002caf8c = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Down", 1, 4, 0, 0, 0);
+	DAT_002caf90 = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Select", 1, 4, 0, 0, 0);
+	DAT_002caf94 = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Deselect", 1, 1, 0, 0, 0);
+	DAT_002caf9c = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Prior", 1, 4, 0, 0, 0);
+	DAT_002caf98 = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Next", 1, 4, 0, 0, 0);
+	DAT_002cafa0 = (struct BInputChannel *)FUN_00048a10((struct biMap *)DAT_002caf7c, "Exit", 1, 1, 0, 0, 0);
 	DAT_002cb540 = &DAT_002cafa4;
 	DAT_002cb53c = &DAT_002cafa4;
 	DAT_002cb548 = NULL;
@@ -661,7 +661,7 @@ void FUN_00047300(void *callback)
 		DAT_002cb558 = (int (*)(struct BGuiEvent *))callback;
 		DAT_002cc1b4 = DAT_002caf7c;
 		DAT_002cb550 = 1;
-		FUN_00048d40(DAT_002cafa0);
+		FUN_00048d40((struct biChannel *)DAT_002cafa0);
 		if (DAT_002cb548 != NULL)
 		{
 			DAT_002cb54c = DAT_002cb548;

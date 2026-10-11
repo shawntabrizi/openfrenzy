@@ -98,7 +98,7 @@ int bdInit(void)
 	if (FUN_000a6fa0() == 0)
 		return 0;
 	DAT_002bc464 = &DAT_002bcc98;
-	FUN_0004f890(DAT_002bd620, 0x1e);
+	FUN_0004f890((struct bkProfileTimer *)DAT_002bd620, 0x1e);
 	memcpy(DAT_002be330, DAT_002855f0, sizeof(DAT_002be330));
 	return 1;
 }
@@ -153,14 +153,14 @@ void bdFlip(unsigned int r, unsigned int g, unsigned int b, int a)
 	D3DDevice_Present(NULL, NULL, NULL, NULL);
 	now = FUN_0004c5f0();
 	DAT_002be240 = bdTimerDelta(last, now);
-	if (FUN_0004f8c0(DAT_002bd620) != 0)
+	if (FUN_0004f8c0((struct bkProfileTimer *)DAT_002bd620) != 0)
 	{
 		long long ticks;
 
 		memcpy(&ticks, DAT_002bd620, sizeof(ticks));
 		DAT_002be248 = bdTimerRate(ticks);
 	}
-	FUN_0004f8b0(DAT_002bd620);
+	FUN_0004f8b0((struct bkProfileTimer *)DAT_002bd620);
 	DAT_002bd218 = now;
 	flags = DAT_002be648;
 	if (flags != 0)

@@ -121,7 +121,7 @@ void bAssembleShader(struct BShaderMode *mode, struct BActorInstance *inst)
 		decl = s_declRigid;
 	else
 		decl = s_declSkinned;
-	hr = D3DDevice_CreateVertexShader(decl, (const DWORD *)XGBuffer_GetBufferPointer(compiled), &mode->handle, 0);
+	hr = D3DDevice_CreateVertexShader(decl, (const DWORD *)XGBuffer_GetBufferPointer(compiled), (unsigned long *)&mode->handle, 0);
 	XGBuffer_Release(compiled);
 	XGBuffer_Release(errors);
 	XGBuffer_Release(constants);
