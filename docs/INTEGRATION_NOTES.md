@@ -590,6 +590,34 @@ guest (`ofr5*`), `OPENFRENZY_BKLOG=1`. No run logged `quit requested`.
 - Timing: the main menu takes input at about 14-20 s with videos skipped in a window (the
   round-3 note said 6 s START then 11 s); presses at 9-12 s land on the title transition.
 
+## Integration round 6 (2026-10-11)
+
+- Clean build in `build/` (rm -rf, configure, build: 25 s) links with no errors; ctest 6/6.
+  No stubs had to be regenerated. The final link has the same 5 hand-written weak FUN_
+  symbols as round 5 (FUN_00026d40, FUN_000ad830, FUN_001c1a90, FUN_001c1c10, FUN_001c2080).
+  The build prints about 140,000 warnings (most are the `GetLastError` / `WSAGetLastError`
+  redeclaration notes, 290 objects x 4).
+- Headless (sandbox) 90 s, round-2 input, videos skipped: title, menus, character select, Map,
+  MouseWhack to `countdown PLAYING`. No fault.
+- Window, real audio device (`OPENFRENZY_AUDIO_VOLUME=0.1`), round-2 input, videos skipped,
+  frame dumps every 600 frames, 300 s (stopped by SIGALRM): title, menus, character select,
+  Map, TankedUp (played to ScoreScreen), Clusteroids (played to ScoreScreen), TankedUp again
+  to PLAYING. 60.0 fps in play (1-2 frames over 20 ms per 10 s), 57 fps in the load windows.
+  Device pace 47987-48090 Hz, longest callback interval 25.5 ms, no underrun. Capture: RMS
+  -44.9 dBFS, peak -23.7 dBFS at volume 0.1 (the round-5 level less 20 dB). Frame dumps look
+  correct (TankedUp arenas, Clusteroids dome). No fault, no UNIMPLEMENTED, no assertion.
+  `sound_report.py --misses`: 1005 `Could not find` lines (302 names), only 2 after a holder
+  package loaded (`dub.obe`); the rest are probes.
+- Window, videos on, no input, 200 s: MICROSOFT.bik, BLITZ60.bik, ATTRACT.bik (25 fps), title,
+  ATTRACT.bik again after the idle time, title, then the RollerBall attract demo. No fault.
+- Default display mode (no `OPENFRENZY_WINDOWED`), 30 s: borderless fullscreen on the built-in
+  display (Metal drawable 3456x2234), frame dumps 2979x2234 (4:3, pillarboxed), main menu
+  correct, 60 fps.
+- Changed: the platform log prefix is now `openfrenzy:` (was `halo-linux:`, from OpenCE).
+  The scripts match the text after the prefix, so they are not affected.
+- Not verified: audible sound (nobody listened), a real gamepad, keyboard focus from a real OS
+  focus change, anything past 300 s in this round (rounds 3-5 cover full tournaments).
+
 ## Frame pacing (integration round 5, fix-frame-pacing)
 
 - New: the host logs one line every 10 s from the swap path (`host_sdl_gl_swap_window`,

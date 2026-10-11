@@ -27,7 +27,7 @@ void platform_log(const char *format, ...)
 {
 	va_list arguments;
 
-	fputs("halo-linux: ", stderr);
+	fputs("openfrenzy: ", stderr);
 	va_start(arguments, format);
 	vfprintf(stderr, format, arguments);
 	va_end(arguments);
