@@ -32,8 +32,10 @@ Initialise 0x001d6d90). Its fields are the tweakable settings that this module r
 (ambient light, draw switches); see TU_DBG_* below.
 
 Functions missing from src/include/of_functions.tsv, defined here with their FUN_ names:
-0x001c3490 (the debris ground test, TankedUp/unplaced_debris.c) and 0x001c9f50 (the world
-objects' animation callback, TankedUp/CTank_World.c).
+0x001c3490 (the debris ground test, TankedUp/unplaced_debris.c), 0x001c9f50 (the world
+objects' animation callback, TankedUp/CTank_World.c), and 0x001c1a90, 0x001c1c10,
+0x001c2080 (CTank_Game's Pushed, Resume and Start, TankedUp/CTank_Game.c; tankedup_b's game
+mode jumps to them).
 
 __thiscall methods that do not use `this` and that tankedup_b calls without it are written
 without it: 0x001c38a0, 0x001cdc30, 0x001cebd0 (see tankedup_a.decls).
@@ -158,6 +160,11 @@ OF_ASSERT_SIZE(struct CTank_Game, 0x2160);
 
 #define TU_GAME (&TU_VAR(struct CTank_Game, 0x00312f50))
 #define TU_SYS(game, off) ((void *)((char *)(game) + (off)))
+
+/* CTank_Game methods missing from the function table (TankedUp/CTank_Game.c) */
+void FUN_001c1a90(struct CTank_Game *self);
+void FUN_001c1c10(struct CTank_Game *self);
+void FUN_001c2080(struct CTank_Game *self);
 
 /* ---------- the timer system (CTank_Game +0xf78; also inside the camera at +0x20) */
 

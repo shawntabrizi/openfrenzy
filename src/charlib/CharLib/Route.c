@@ -368,6 +368,19 @@ void CLRouteHeights_Dtor(struct CLRouteHeights *self)
 	self->top = NULL;
 }
 
+/* 0x000ad830  CharLib/Route.cpp (missing from the function table: Ghidra did not make a
+function here; between 0x000ad810 and 0x000ad880)
+The 0x18-byte route object that CGameMode_Meta allocates per route cell (new[]): two
+buffers, route_cells * 2 and route_cells bytes. CLRouteHeights_Free2 frees them. */
+undefined4 *FUN_000ad830(undefined4 *self)
+{
+	self[0] = (undefined4)(uintptr_t)chl_Alloc(route_cells * 2,
+		"C:\\BlitzParty\\Game\\Src\\CharLib\\Route.cpp", 0x23d, 0x2001);
+	self[1] = (undefined4)(uintptr_t)chl_Alloc(route_cells,
+		"C:\\BlitzParty\\Game\\Src\\CharLib\\Route.cpp", 0x23e, 0x2001);
+	return self;
+}
+
 /* 0x000ad880  CharLib/Route.cpp (bracketed)
 Frees both pointers separately (no caller in the game). */
 void CLRouteHeights_Free2(struct CLRouteHeights *self)

@@ -68,7 +68,7 @@ asks for the disc image once. Direct launch of one minigame:
 | App bundle | Self-contained, 26 MB (was 54 MB with Homebrew's FFmpeg): 7 dylibs in `Frameworks` (20 MB): ANGLE (2), SDL3, and the 4 LGPL FFmpeg 9.0.2 libraries (libavformat, libavcodec, libswscale, libavutil; 2.6 MB). The codec libraries of Homebrew's FFmpeg (x264, x265, SVT-AV1, libvpx, dav1d, LAME, Opus, OpenSSL) and libswresample are gone. `otool -L` and `otool -l` find no `/opt/homebrew` path in any Mach-O file of the bundle. Ad-hoc signature with the hardened runtime and 2 entitlements (`allow-unsigned-executable-memory`, `disable-library-validation`; each tested, `docs/BUILD.md`). `codesign --verify --strict --deep` passes. `lsof` and `vmmap` of the running bundled host show every dylib from `Contents/Frameworks` and none from `/opt/homebrew`. No GPL code: the FFmpeg libraries report `LGPL version 2.1 or later` (`avutil_license`, `avcodec_license`, `avformat_license`, `swscale_license`) and `avcodec_configuration` has `--disable-gpl`, no `--enable-gpl`. Not started from the Finder (the sandbox blocks `open`); not tested on a Mac without Homebrew |
 | Bink videos (LGPL FFmpeg) | Bundled host, videos on, window, stopped after 100 s: MICROSOFT.bik (105 of 105 frames), BLITZ60.bik (172 of 172, audio 2 ch 44100 Hz) and ATTRACT.bik (1599 of 1599, audio 2 ch 44100 Hz) decode and close; the title and the second ATTRACT.bik follow. Debug screenshots during BLITZ60.bik and ATTRACT.bik show the video frames. The audio capture is silent until BLITZ60.bik opens (3.27 s); from there until the menu music starts (67.6 s) the only voice is the Bink audio stream, with sound in both videos. The audio device was SDL's `dummy` driver: nobody listened |
 | Virtual pad names | `OPENFRENZY_DEBUG_VIRTUAL_PADS=4`: the host logs `gamepad 2: Pad 1 OpenFrenzy virtual` to `gamepad 5: Pad 4 OpenFrenzy virtual` (was "OpenFrenzy virtual pad 1" for all 4) |
-| Weak stubs | `llvm-nm` of `openfrenzy_guest.elf`: 5 weak `FUN_` symbols, the same as round 6 (list in "Known limits") |
+| Weak stubs | `llvm-nm` of `openfrenzy_guest.elf`: 0 weak `FUN_` symbols (build `build-open-decomp`; was 5 until the five functions were decompiled, `docs/INTEGRATION_NOTES.md` "Weak FUN_ symbols decompiled") |
 | XDK entry points | `src/runtime/entry/xdk_entry_points.inc`: 0 `MISSING`, 0 `UNKNOWN`. D3D 62 HLE + 27 internal, DSOUND 27 HLE + 54 internal, XGRPH 4 + 1, XPP 8 + 3 |
 
 ## Decompilation coverage
@@ -183,9 +183,6 @@ tests above.
 
 ## Known limits
 
-- 5 hand-written weak `FUN_` symbols stay: FUN_00026d40 (debug menu callback; logs as
-  unimplemented, only the debug menu reaches it), FUN_000ad830, FUN_001c1a90, FUN_001c1c10,
-  FUN_001c2080.
 - `docs/LIBRARY_CALLS.md` lists 53 library functions as unidentified. The game runs without a
   name for them.
 - `-Wint-conversion`, `-Wincompatible-pointer-types`, `-Wincompatible-function-pointer-types`
@@ -234,6 +231,5 @@ tests above.
    with a Developer ID, test without `disable-library-validation`, notarize (`docs/BUILD.md`),
    and start it on a Mac without Homebrew.
 6. Measure performance on a slower Mac (M1 base).
-7. Decompile the 5 weak `FUN_` symbols (the debug menu callback first) and name the 53
-   unidentified library calls.
+7. Name the 53 unidentified library calls. (The 5 weak `FUN_` symbols: done.)
 8. Low: custom soundtracks. (SMAA: done, `display.anti_aliasing = smaa`.)

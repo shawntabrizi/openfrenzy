@@ -64,12 +64,200 @@ extern int DAT_002ed340;          /* classlib_fx: debris off */
 #define ext_MusicVolume ((int (*)(void *, int, int, int))FUN_000564e0)
 #define ext_MusicMaster ((void (*)(int))FUN_00056530)
 
-/* 0x00026d40: the debug menu handler (menu event), in core_modes_b's address range and
-missing from the function table. Weak: until its owner defines it, it logs like a stub. */
-__attribute__((weak)) void FUN_00026d40(void *event)
+/* the score table object (core_modes_b): +0x00 the round, rows of 0x19 ints by round from
+   +0x38 (0x002b99a0) and +0x48 (0x002b99b0) */
+extern unsigned char DAT_002b9968[];
+#define g_DebugRound (*(int *)DAT_002b9968)
+#define g_DebugRow38(round) ((int *)(DAT_002b9968 + 0x38) + (round) * 0x19)
+#define g_DebugRow48(round) ((int *)(DAT_002b9968 + 0x48) + (round) * 0x19)
+/* charlib: the route grid (columns, rows, cells) */
+extern int DAT_00292c4c, DAT_00292c50, DAT_00292c78;
+
+/* pushes MODE (NULL when its allocation failed, as the original does) */
+static void root_debug_push(void *mode)
 {
-	(void)event;
-	of_unimplemented(0x00026d40, "FUN_00026d40");
+	CGameModeStack_Push(&g_ModeStack, (struct CGameMode *)mode, 1);
+}
+
+/* 0x00026d40  Core/CGameMode_Root.cpp (missing from the function table; between
+core_modes_b's 0x00026ce0 and core's 0x00027540, strings of CGameMode_Root.cpp)
+The debug menu callback (CGameMode_Root_Update hands it to the debug GUI). EVENT: [0] the
+event type (only 0, a selection, is handled), [1] the item id of CGameMode_Root_CreateDebugMenu:
+0-5 the board zones, 6.. the minigame variations (4 ids a game), 999 the extra variation 5 of
+game 9, 0x3e9-0x400 the "Screens"/"Map"/"Debug" items; other ids go to the tweak menu.
+Returns 0 when the tweak menu took the event, else 1. */
+int FUN_00026d40(const int *event)
+{
+	void *memory;
+	void *mode;
+	int game, variation, ok, i, k, r;
+
+	if (event[0] != 0)
+		return 1;
+	if (event[1] < 1000) {
+		CGameModeStack_PopTo(&g_ModeStack, "BGeffects", 0);
+		g_StartState = 0;
+		if (event[1] < 6) {
+			/* a board zone: random scores 3-18 for this round, then the board (game 0) */
+			for (k = 0; k < 4; k++) {
+				DAT_00285630 = DAT_00285630 * 0x343fd + 0x269ec3;
+				g_DebugRow48(g_DebugRound)[k] = (int)((DAT_00285630 >> 16) & 0x7fff) % 16 + 3;
+			}
+			CORE_VAR(int, 0x002baeac) = 0;
+			CORE_VAR(int, 0x002baeb0) = event[1];
+			game = 0;
+			variation = -1 - event[1];
+		} else if (event[1] == 999) {
+			game = 9;
+			variation = 5;
+			CORE_VAR(int, 0x002baeac) = game;
+			CORE_VAR(int, 0x002baeb0) = variation;
+			CORE_VAR(int, 0x002baed0) = 1;
+		} else {
+			game = (event[1] - 6) / 4 + 1;
+			CORE_VAR(int, 0x002baeac) = game;
+			variation = (event[1] - 6) % 4 + 1;
+			CORE_VAR(int, 0x002baeb0) = variation;
+			CORE_VAR(int, 0x002baed0) = 0;
+		}
+		/* players without a character get their own index */
+		for (i = 0; i < CORE_VAR(int, 0x002bae94); i++)
+			if (CORE_VAR(int, 0x002baed4 + i * CORE_PLAYER_STRIDE) == -1)
+				CORE_VAR(int, 0x002baed4 + i * CORE_PLAYER_STRIDE) = i;
+		g_StartState = 2;
+		DAT_00292c50 = 0x18;
+		DAT_00292c4c = 0x18;
+		DAT_00292c78 = 0x240;
+		ok = g_Games[game]->vtbl->start(g_Games[game], variation);
+		ext_DebugPrintf("Starting game %d (%s) variation %d %s\n", game, g_Games[game]->name,
+			variation, ok != 0 ? "SUCCEEDED" : "FAILED");
+		return 1;
+	}
+
+	switch (event[1]) {
+	case 0x3e9: /* Quit */
+		g_Quit = 1;
+		break;
+	case 0x3ea: /* the object viewer: close it when it is open, else open it */
+		if (CGameModeStack_Find(&g_ModeStack, "ObjectViewer") != NULL) {
+			CGameModeStack_Pop(&g_ModeStack, 1);
+			break;
+		}
+		memory = ext_New(0x74, root_cpp, 0x13f, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_ObjectViewer_ctor((struct CGameMode_ObjectViewer *)memory) : NULL);
+		break;
+	case 0x3eb: /* Main Menu */
+		CGameModeStack_PopTo(&g_ModeStack, "BGeffects", 0);
+		root_debug_push(g_Mode560);
+		break;
+	case 0x3ec: /* Character Select */
+		CGameModeStack_PopTo(&g_ModeStack, "BGeffects", 0);
+		root_debug_push(g_Mode554);
+		break;
+	case 0x3ed: /* Score Screen */
+		CGameModeStack_PopTo(&g_ModeStack, "BGeffects", 0);
+		memory = ext_New(0xed0, root_cpp, 0x12f, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_Scores_Ctor((struct CGameMode_Scores *)memory, 0) : NULL);
+		break;
+	case 0x3ef: /* Gamble Screen: random scores 0-14 and one 0-2 for this round */
+		for (i = 0; i < 4; i++)
+			g_DebugRow48(g_DebugRound)[i] = (int)Core_Rand() % 15;
+		r = (int)Core_Rand() % 3;
+		k = (int)Core_Rand() % 4;
+		g_DebugRow48(g_DebugRound)[k] = r;
+		memory = ext_New(0x2b8, root_cpp, 0x16f, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_MetaVote_ctor((struct CGameMode_MetaVote *)memory) : NULL);
+		break;
+	case 0x3f0: /* Game Winner */
+		CGameModeStack_PopTo(&g_ModeStack, "PressStart", 0);
+		memory = ext_New(0x1f0, root_cpp, 0x195, 0x1001);
+		mode = memory != NULL
+			? (void *)CGameMode_GameWinner_ctor((struct CGameMode_GameWinner *)memory) : NULL;
+		CORE_VAR(void *, 0x002ba540) = mode;
+		root_debug_push(mode);
+		break;
+	case 0x3f1: /* Game Statistics: random points (0-490, steps of 10) for this round */
+		for (i = 0; i < 4; i++)
+			g_DebugRow38(g_DebugRound)[i] = (int)Core_Rand() % 50 * 10;
+		g_DebugRound = g_DebugRound + 1;
+		memory = ext_New(0x13c, root_cpp, 400, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_GameStats_ctorShow((struct CGameMode_GameStats *)memory, 1) : NULL);
+		break;
+	case 0x3f2: /* Map: Select route */
+		memory = ext_New(0x5e8, root_cpp, 0x173, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_Map_ctor((struct CGameMode_Map *)memory, 1) : NULL);
+		break;
+	case 0x3f3: /* Map: Pick minigame */
+		memory = ext_New(0x5e8, root_cpp, 0x177, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_Map_ctor((struct CGameMode_Map *)memory, 2) : NULL);
+		break;
+	case 0x3f4: /* Map: Change zone (next round) */
+		g_DebugRound = g_DebugRound + 1;
+		memory = ext_New(0x5e8, root_cpp, 0x180, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_Map_ctor((struct CGameMode_Map *)memory, 4) : NULL);
+		break;
+	case 0x3f5: /* Map: Futon Frenzy */
+		memory = ext_New(0x5e8, root_cpp, 0x17b, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_Map_ctor((struct CGameMode_Map *)memory, 3) : NULL);
+		break;
+	case 0x3f6: /* Map: Test */
+		memory = ext_New(0x5e8, root_cpp, 0x184, 0x1001);
+		root_debug_push(memory != NULL
+			? (void *)CGameMode_Map_ctor((struct CGameMode_Map *)memory, 6) : NULL);
+		break;
+	case 0x3f7: /* Team Screen */
+		CGameModeStack_PopTo(&g_ModeStack, "BGeffects", 0);
+		root_debug_push(g_Mode568);
+		break;
+	case 0x3f8: /* Mini Game Select */
+		CGameModeStack_PopTo(&g_ModeStack, "BGeffects", 0);
+		root_debug_push(g_Mode55C);
+		break;
+	case 0x3f9:
+		ext_LogSelect(g_DebugLog);
+		ext_DebugPrintf("Dumping mode stack :\n");
+		CGameModeStack_Show(&g_ModeStack);
+		ext_LogSelect(g_Log2);
+		break;
+	case 0x3fa:
+		ext_LogSelect(g_DebugLog);
+		ext_DebugPrintf("Dumping resource list :\n");
+		ext_FUN_0004b620(-1);
+		ext_LogSelect(g_Log2);
+		break;
+	case 0x3fb:
+		ext_LogSelect(g_DebugLog);
+		ext_DebugPrintf("Dumping heap :\n");
+		FUN_001d5950(); /* the heap dump (0xffff, 10): empty in the retail build */
+		ext_LogSelect(g_Log2);
+		break;
+	case 0x3fc:
+	case 0x3fd: /* (the retail build only selects the two logs) */
+		ext_LogSelect(g_DebugLog);
+		ext_LogSelect(g_Log2);
+		break;
+	case 0x3fe:
+		break;
+	case 0x3ff: /* Pop */
+		CGameModeStack_Pop(&g_ModeStack, 1);
+		break;
+	case 0x400:
+		CScoreTable_Rank((struct CScoreTable *)DAT_002b9968);
+		break;
+	default:
+		if (CTweakMenu_HandleSelect(event[1], 1) != 0)
+			return 0;
+		break;
+	}
+	return 1;
 }
 
 /* 0x00027540  Core/CGameMode_Root.cpp

@@ -121,7 +121,8 @@ extern const void *const vtable_0026f678[4];   /* CModule_Meta (unplaced_player.
 /* XDK (xkernel HLE) */
 void DbgBreakPoint(void);
 
-/* functions missing from the function table (Meta/meta_a_foreign.c) */
+/* functions missing from the function table: 0x000ad830 (charlib, CharLib/Route.c), the
+   constructor of the 0x18-byte route object of a route cell */
 undefined4 *FUN_000ad830(undefined4 *self);
 
 #endif

@@ -28,6 +28,8 @@ Owner: tankedup_a.
 #define TUB_Debug_Initialise ((int (*)(void *))FUN_001d6d90)
 #define TUB_Debug_Free ((void (*)(void *))FUN_001d79d0)
 #define TUB_Debug_ReleaseInput ((void (*)(void *))FUN_001d6d40)
+#define TUB_Debug_CreateInput ((void (*)(void *))FUN_001d6ce0)
+#define TUB_Debug_Setup ((void (*)(void *))FUN_001d6f10)
 /* 0x001d6820 / 0x001d6860  render states for the floor decals (no `this`) */
 #define TUB_Decal_BeginStates ((void (*)(void))FUN_001d6820)
 #define TUB_Decal_StencilOn ((void (*)(void))FUN_001d6860)

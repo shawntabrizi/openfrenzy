@@ -13,9 +13,9 @@ core.decls through of_decls.h.
 /* 0x001f4e10: destructor (atexit) of the object at 0x002ba4f0; not in the table */
 void FUN_001f4e10(void);
 
-/* 0x00026d40: debug menu handler (core_modes_b range, not in the table); weak stub in
-Core/CGameMode_Root.c */
-void FUN_00026d40(void *event);
+/* 0x00026d40: the debug menu callback (Core/CGameMode_Root.c; between core_modes_b's and
+core's table entries, not in the table). EVENT: [0] type, [1] item id. */
+int FUN_00026d40(const int *event);
 
 /* port (src/runtime/of_launch.c): fills the settings table from OPENFRENZY_GAME and
 OPENFRENZY_VARIATION; the retail game leaves it empty */

@@ -170,4 +170,7 @@ struct CLRouteHeights {
 /* 0x002f27e8  the four vertices of the debug grid quad (0x24 bytes each) */
 #define route_debug_quad CHL_ARR(unsigned char, 0x002f27e8)
 
+/* 0x000ad830  CharLib/Route.cpp, missing from the function table (meta_a calls it) */
+undefined4 *FUN_000ad830(undefined4 *self);
+
 #endif

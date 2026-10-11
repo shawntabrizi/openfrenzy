@@ -391,7 +391,6 @@ Current state: `docs/STATUS.md`. The game plays; these questions are still open:
 - The `.app` bundles Homebrew's SDL3 and an LGPL FFmpeg built from source for Bink only
   (`docs/BUILD.md`); a notarized release is not done.
 - Custom soundtracks are not supported. `XFindFirstSoundtrack` always returns none.
-- The debug menu callback FUN_00026d40 is a hand-written weak stub. Only the debug menu reaches it.
 
 Closed: the `.xbp` packages load through the decompiled bKernel code. Music plays through
 `wma_decoder.c`. `xdk_entry_points.inc` has no `MISSING` or `UNKNOWN` entry.

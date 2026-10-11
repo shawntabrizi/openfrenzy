@@ -13,6 +13,10 @@ and 0x001c2240-0x001c2cf0 are placed here because their debug strings name CTank
 
 #include "tankedup_a.h"
 
+/* classlib_ui 0x00071f90 CLLoading_AddPackage returns the package (its table prototype says
+   void) */
+#define tu_AddPackage ((int (*)(const char *, int))FUN_00071f90)
+
 /* 0x001c1880  TankedUp/CTank_Game.cpp (inferred)
 The constructor (core's static constructor runs it on 0x00312f50): constructs the
 subsystems in member order. 0x000befa0 stores 0 into the first word, 0x00162f20 does
@@ -48,6 +52,32 @@ void CTankGame_Dtor(struct CTank_Game *self)
 	CTankPlayers_Dtor(TU_SYS(self, TG_PLAYERS));
 }
 
+/* 0x001c1a90  TankedUp/CTank_Game.cpp (inferred: "CTank_Game::Pushed"; missing from the
+function table, the game mode's Pushed (tankedup_b 0x001d7b30) jumps here)
+Starts loading "packages\\tankedup" and "packages\\tank-v<variation>". When a package
+cannot be loaded the game stays invalid (+0x18 = 0). */
+void FUN_001c1a90(struct CTank_Game *self)
+{
+	char name[0x200];
+
+	TU_I32(self->mode, 0x14) = 1;
+	self->valid = 1;
+	self->started = 0;
+	self->package = (void *)(uintptr_t)tu_AddPackage("packages\\tankedup", 0);
+	if (self->package == NULL) {
+		TU_DPRINTF("CTank_Game::Pushed - Failed to load common package [%s]\n",
+			"packages\\tankedup");
+		self->valid = 0;
+		return;
+	}
+	_snprintf(name, 0x3f, "packages\\tank-v%02d", self->variation);
+	self->levelPackage = (void *)(uintptr_t)tu_AddPackage(name, 0);
+	if (self->levelPackage != NULL)
+		return;
+	TU_DPRINTF("CTank_Game::Pushed - Failed to load variation package [%s]\n", name);
+	self->valid = 0;
+}
+
 /* 0x001c1b20  TankedUp/CTank_Game.cpp (inferred)
 Frees the game at the end of a variation: every subsystem, the overlays, the projectors
 and both packages. */
@@ -78,6 +108,20 @@ void CTankGame_Free(struct CTank_Game *self)
 		bkClosePackageThunk((struct bkPackage *)self->package);
 	if (self->levelPackage != NULL)
 		bkClosePackageThunk((struct bkPackage *)self->levelPackage);
+}
+
+/* 0x001c1c10  TankedUp/CTank_Game.cpp (inferred; missing from the function table, the
+game mode's Resume (tankedup_b 0x001d7b60) jumps here)
+Resume: the planes 1-80000; once the game runs, the input maps of the players, the debug
+object and the camera. */
+void FUN_001c1c10(struct CTank_Game *self)
+{
+	bdSetNearFar(1.0f, 80000.0f);
+	if (self->valid != 0 && self->started != 0) {
+		CTankPlayers_CreateInput(TU_SYS(self, TG_PLAYERS));
+		TUB_Debug_CreateInput(TU_ADDR(0x003150b0));
+		CTankCamera_CreateInput(TU_SYS(self, TG_CAMERA));
+	}
 }
 
 /* 0x001c1c60  TankedUp/CTank_Game.cpp (inferred)
@@ -204,6 +248,47 @@ int CTankGame_Start(struct CTank_Game *self, int variation)
 		return 0;
 	}
 	return 1;
+}
+
+/* 0x001c2080  TankedUp/CTank_Game.cpp (inferred; missing from the function table, the
+game mode's Start (tankedup_b 0x001d7c40) jumps here)
+Start: the planes 1-80000, then (when the game is valid) the input maps, an empty list,
+the HUD flag, every subsystem's start in member order, and state 1 for every subsystem. */
+void FUN_001c2080(struct CTank_Game *self)
+{
+	bdSetNearFar(1.0f, 80000.0f);
+	if (self->valid == 0)
+		return;
+	CTankPlayers_CreateInput(TU_SYS(self, TG_PLAYERS));
+	TUB_Debug_CreateInput(TU_ADDR(0x003150b0));
+	CTankCamera_CreateInput(TU_SYS(self, TG_CAMERA));
+	FUN_00072720((undefined4)(uintptr_t)self->list);
+	self->hud = 1;
+	self->started = 1;
+	CTankEntities_Start(TU_SYS(self, TG_ENTITIES));
+	/* boom and route: empty Start (0x001d5950) */
+	CTankWorld_Start(TU_SYS(self, TG_WORLD));
+	CTankPlayers_Start(TU_SYS(self, TG_PLAYERS));
+	CTankCamera_Start(TU_SYS(self, TG_CAMERA));
+	/* spawn points and characters: empty Start (0x001d5950) */
+	CTankLights_Start((struct TuLight *)TU_SYS(self, TG_LIGHTS));
+	CTankTimer_Resume((struct TuTimer *)TU_SYS(self, TG_TIMER));
+	TUB_Debug_Setup(TU_ADDR(0x003150b0));
+	/* debris: empty Start (0x001d5950) */
+	self->state = 1;
+	TU_DPRINTF("****************\n* STATE CHANGE *\n* ------------ *\n* New state %d  *\n"
+		"****************\n", 1);
+	/* each call reads the state again, as the original does */
+	TU_EmptyStateChange(TU_SYS(self, TG_WORLD), self->state, self->state);
+	TUB_Entities_StateChange(TU_SYS(self, TG_ENTITIES), self->state, self->state);
+	TU_EmptyStateChange(TU_SYS(self, TG_BOOM), self->state, self->state);
+	CTankPlayers_StateChange(TU_SYS(self, TG_PLAYERS), self->state, self->state);
+	CTankCamera_StateChange(TU_SYS(self, TG_CAMERA), self->state, self->state);
+	TU_EmptyStateChange(TU_SYS(self, TG_ROUTE), self->state, self->state);
+	TU_EmptyStateChange(TU_SYS(self, TG_SPAWN), self->state, self->state);
+	TUB_Chars_StateChange(TU_SYS(self, TG_CHARS), self->state, self->state);
+	TU_EmptyStateChange(TU_SYS(self, TG_LIGHTS), self->state, self->state);
+	TU_EmptyStateChange(TU_SYS(self, TG_DEBRIS), self->state, self->state);
 }
 
 /* the new state of one subsystem: logs a change, keeps the highest state */

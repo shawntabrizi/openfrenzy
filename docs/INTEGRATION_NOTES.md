@@ -1149,6 +1149,43 @@ Play test of the Rowing suffix change in "String literals in asm_convert.py".
 - New ctest tests: `gameplay_game_Jetboats_2`, `_3`, `_4` (direct launch, 60 s each, the
   same checks as `gameplay_game_Jetboats`). All 4 Jetboats tests pass.
 
+## Weak FUN_ symbols decompiled (open-decomp)
+
+The 5 hand-written weak `FUN_` symbols are now strong definitions in their owner modules.
+None is in `src/include/of_functions.tsv` (Ghidra made no function at these addresses; they
+are reached by a jump or through a pointer). Source: Ghidra `DecompileAt.java` and an
+`llvm-objdump` disassembly of the XBE `.text`.
+
+| Address | Now in | What |
+|---|---|---|
+| 0x00026d40 | core, `Core/CGameMode_Root.c` | the debug menu callback (was a stub that logged UNIMPLEMENTED) |
+| 0x000ad830 | charlib, `CharLib/Route.c` | the constructor of the 0x18-byte route object of a route cell (CGameMode_Meta); was weak in `meta_a/Meta/meta_a_foreign.c` (file removed) |
+| 0x001c1a90 | tankedup_a, `TankedUp/CTank_Game.c` | CTank_Game::Pushed (load the packages) |
+| 0x001c1c10 | tankedup_a, same file | CTank_Game's resume (planes, input) |
+| 0x001c2080 | tankedup_a, same file | CTank_Game's start (subsystems, state 1) |
+
+- 0x00026d40 lies between core_modes_b's 0x00026ce0 and core's 0x00027540, and its strings
+  are `CGameMode_Root.cpp` (allocation lines 0x12f-0x195), so it goes with
+  `CGameMode_Root.c`. Its type is `int (const int *event)`: the debug GUI's callback
+  (`DAT_002cb558`, event [0] type, [1] item id). The 24-entry jump table at 0x000274d8 was
+  read from the XBE to map the ids 0x3e9-0x400. Ids 0-5 start the board on a zone (variation
+  -1 - zone) after random scores; ids 6.. start game (id - 6) / 4 + 1, variation
+  (id - 6) % 4 + 1; 999 starts game 9 variation 5.
+- The retail XBE never writes `g_DebugMenuOn` (0x002ba6a8; one read, at 0x00027dde), so the
+  game cannot open this menu. Test: a temporary hook (not committed) called the callback
+  from `CGameMode_Root_Update` after 300 frames, headless. Ids 0x3f9 and 0x3fa printed the
+  mode stack and the resource list; id 43 logged `Starting game 10 (Jetboats) variation 2
+  SUCCEEDED` and reached `countdown PLAYING`; id 2 started the board (`Starting game 0
+  (Meta) variation -3 SUCCEEDED`, Meta, then MetaVote); ids 0x3f1, 0x3ef and 0x3f2 pushed
+  GameStats, MetaVote and Map. No fault, no UNIMPLEMENTED, no assertion.
+- The TankedUp bodies match the weak versions (which were translated from the x86); they
+  now use tankedup_a's `struct CTank_Game` fields and two new casts
+  (`TUB_Debug_CreateInput` 0x001d6ce0, `TUB_Debug_Setup` 0x001d6f10). tankedup_b keeps only
+  the prototypes.
+- `llvm-nm` of `openfrenzy_guest.elf`: 0 weak `FUN_` symbols; the five are `T`.
+- Tests: ctest `gameplay_board`, `gameplay_game_TankedUp`, `_Hopper`, `_Demolition` pass;
+  module tests of core, meta_a, tankedup_a and tankedup_b exit 0 (charlib has none).
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and
