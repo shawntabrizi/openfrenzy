@@ -145,4 +145,8 @@ static inline void bd_matrix_multiply(float *out, float *a, float *b)
 #define BD_RGBA(r, g, b, a) \
 	(DAT_002bce18[(r)] | DAT_002bc490[(g)] | DAT_002bd640[(b)] | DAT_002bc898[(a)])
 
+/* port (src/d3d8/d3d8_gl.c): the screen's width in the game's units: 640, or wider with
+display.aspect_ratio (bdOpenDisplay; Hor+ in bdSetupProjection) */
+long halo_screen_width(void);
+
 #endif

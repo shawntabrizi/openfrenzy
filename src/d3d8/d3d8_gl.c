@@ -79,10 +79,14 @@ presentation. The width and the scale change only between frames, after one
 is presented (halo_screen_commit). */
 
 #define SCREEN_HEIGHT 480
-/* Fuzion Frenzy: always 640 columns. Its camera and HUD are not checked for
-a wider screen, so a wider window gets the 4:3 picture, scaled the same both
-ways, with black bars at the sides (screen_mode_choose, D3DDevice_Present). */
-#define SCREEN_MAXIMUM_WIDTH 640
+/* Fuzion Frenzy: 640 columns (4:3), unless display.aspect_ratio asks for a
+wider screen (screen_aspect_width): 768 (16:10) or 854 (16:9). The width is
+fixed for the run, as the game takes it once, when it opens its display
+(bdOpenDisplay, bdisplay); there its camera widens the view (Hor+:
+bdSetupProjection) and its 2D overlays, laid out from the screen's centre,
+stay centred. A window of another shape gets the picture scaled the same
+both ways, with black bars (screen_mode_choose, D3DDevice_Present). */
+#define SCREEN_MAXIMUM_WIDTH 854
 
 /* the width the game draws, 0 until first asked, and how many pixels a
 render target the size of the screen has per unit of it */
@@ -176,6 +180,34 @@ static int anti_aliasing(void)
 	return anti_aliasing_values[anti_aliasing_value].mode;
 }
 
+/* display.aspect_ratio's width in the game's units, read once (the game
+lays out its screen once): "4:3" (the default, the Xbox's) 640, "16:10"
+768, "16:9" 854 (480 lines x 16 / 9, made even) */
+static long screen_aspect_width(void)
+{
+	static const struct
+	{
+		const char *name;
+		long width;
+	} aspects[] = { { "4:3", 640 }, { "16:10", 768 }, { "16:9", 854 } };
+	static long width;
+	const char *setting;
+	unsigned long index;
+
+	if (width)
+		return width;
+	setting = config_string("display.aspect_ratio");
+	width = 640;
+	for (index = 0; index < sizeof(aspects) / sizeof(aspects[0]); index++)
+	{
+		if (!strcmp(setting, aspects[index].name))
+			width = aspects[index].width;
+	}
+	if (width == 640 && strcmp(setting, "4:3"))
+		platform_log("display: aspect ratio \"%s\" is unknown, so 4:3", setting);
+	return width;
+}
+
 static void screen_mode_choose(long *width, float scale[2])
 {
 #ifdef HALO_ANDROID
@@ -194,14 +226,15 @@ static void screen_mode_choose(long *width, float scale[2])
 	scale[0] = scale[1] = 1.0f;
 #else
 	long display_width, display_height;
+	long aspect_width = screen_aspect_width();
 
-	*width = 640;
+	*width = aspect_width;
 	scale[0] = scale[1] = 1.0f;
 	if (platform_screen_mode(&display_width, &display_height) && display_width > 0 && display_height > 0)
 	{
 		long wanted = (SCREEN_HEIGHT * display_width + display_height / 2) / display_height;
 
-		*width = wanted < 640 ? 640 : wanted > SCREEN_MAXIMUM_WIDTH ? SCREEN_MAXIMUM_WIDTH : wanted & ~1L;
+		*width = aspect_width;
 		scale[0] = (float)display_width / (float)*width;
 		scale[1] = (float)display_height / (float)SCREEN_HEIGHT;
 		/* a display narrower or wider than the game can be: the picture
@@ -1840,6 +1873,17 @@ HRESULT WINAPI Direct3D_CreateDevice(UINT adapter, D3DDEVTYPE device_type, void 
 			device.presentation = *presentation_parameters;
 		width = device.presentation.BackBufferWidth ? device.presentation.BackBufferWidth : 640;
 		height = device.presentation.BackBufferHeight ? device.presentation.BackBufferHeight : 480;
+#ifndef HALO_ANDROID
+		/* Fuzion Frenzy: the first device is bdBlankScreen's 640x480 one, and
+		later ones are not made (device.created); its back buffer is the
+		screen's width (display.aspect_ratio), which bdOpenDisplay gives the
+		game */
+		if (width == 640 && height == SCREEN_HEIGHT)
+		{
+			width = (unsigned long)halo_screen_width();
+			device.presentation.BackBufferWidth = (UINT)width;
+		}
+#endif
 #ifdef HALO_ANDROID
 		d3d8_surface_initialize(&device.back_buffer, D3DFMT_LIN_A8R8G8B8, width, height);
 		d3d8_surface_initialize(&device.depth_buffer, D3DFMT_LIN_D24S8, width, height);

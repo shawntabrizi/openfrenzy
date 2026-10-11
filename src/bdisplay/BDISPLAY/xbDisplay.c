@@ -659,6 +659,11 @@ int bdOpenDisplay(int width, int height, int unused3, int unused4, int flags)
 		bdPrintf("bdOpenDisplay: Display is already open\n");
 		return 0;
 	}
+	/* port: display.aspect_ratio (src/d3d8/d3d8_gl.c) can make the screen wider than the
+	Xbox's 640 columns; the game asks for 640 x 480 (Core_OpenDisplay). The original
+	takes width as given. */
+	if (width == 640 && height == 480)
+		width = (int)halo_screen_width();
 	DAT_002bc40c = width;
 	DAT_002bc410 = height;
 	DAT_002bc41c = 0x20;

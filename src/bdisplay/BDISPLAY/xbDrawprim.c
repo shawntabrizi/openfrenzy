@@ -177,21 +177,72 @@ static void set_immediate_shader(int fvf)
 	}
 }
 
+/* port: with display.aspect_ratio the screen is wider than 640 columns (bdOpenDisplay).
+The game draws its fades and full-screen tints as an untextured quad over the 4:3
+screen: x -320 to 320 in the 2D projection (centred), or 0 to 640 for screen-space
+vertices. Such a quad of four vertices that covers all 640 columns and all 480 lines,
+on the screen, is widened to the screen's width: a plain colour, so nothing stretches.
+A textured quad keeps its 4:3 place (a picture would stretch). Returns the vertices
+to draw: a widened copy in copy (4 * stride bytes), or v. The original has no such
+step. */
+static BYTE *widen_screen_fill(BYTE *v, int stride, int screen_space, BYTE *copy)
+{
+	float left = 1e30f, right = -1e30f, top = 1e30f, bottom = -1e30f;
+	float extra, low, high, x;
+	int i;
+
+	if (DAT_002bc40c <= 640 || DAT_002bc464 != &DAT_002bcc98 || DAT_002be5d4[0] != NULL ||
+		(!screen_space && DAT_002be57c != 0) || stride > 0x50)
+		return v;
+	for (i = 0; i < 4; i++)
+	{
+		float *p = (float *)(v + i * stride);
+
+		left = p[0] < left ? p[0] : left;
+		right = p[0] > right ? p[0] : right;
+		top = p[1] < top ? p[1] : top;
+		bottom = p[1] > bottom ? p[1] : bottom;
+	}
+	low = screen_space ? 0.0f : -320.0f;
+	high = screen_space ? 640.0f : 320.0f;
+	if (left > low + 1.0f || right < high - 1.0f || top > (screen_space ? 1.0f : -239.0f) ||
+		bottom < (screen_space ? 479.0f : 239.0f))
+		return v;
+	extra = (float)(DAT_002bc40c - 640);
+	memcpy(copy, v, (size_t)(4 * stride));
+	for (i = 0; i < 4; i++)
+	{
+		float *p = (float *)(copy + i * stride);
+
+		x = p[0];
+		if (x <= low + 1.0f)
+			p[0] = screen_space ? x : x - extra * 0.5f;
+		else if (x >= high - 1.0f)
+			p[0] = screen_space ? x + extra : x + extra * 0.5f;
+	}
+	return copy;
+}
+
 /* 0x0003f2d0  BDISPLAY/xbDrawprim.cpp: draws bdVertex (FVF 0x152) from memory */
 void bdDrawPrimitive(int type, void *vertices, int count)
 {
 	BYTE *v = (BYTE *)vertices;
+
+	BYTE copy[4 * 0x50];
 
 	set_immediate_shader(BD_FVF_VERTEX);
 	if (type == BDPRIMTYPE_QUADLIST)
 	{
 		for (; count != 0; count -= 4)
 		{
-			D3DDevice_DrawVerticesUP(D3DPT_TRIANGLESTRIP, 4, v, sizeof(bdVertex));
+			D3DDevice_DrawVerticesUP(D3DPT_TRIANGLESTRIP, 4, widen_screen_fill(v, sizeof(bdVertex), 0, copy),
+				sizeof(bdVertex));
 			v += 4 * sizeof(bdVertex);
 		}
 		return;
 	}
+	if (count == 4 && (type == BDPRIMTYPE_TRISTRIP || type == BDPRIMTYPE_TRIFAN))
+		v = widen_screen_fill(v, sizeof(bdVertex), 0, copy);
 	D3DDevice_DrawVerticesUP((D3DPRIMITIVETYPE)DAT_00284c14[type], count, v, sizeof(bdVertex));
 }
 
@@ -200,16 +251,21 @@ void bdDrawPrimitiveTL(int type, void *vertices, int count)
 {
 	BYTE *v = (BYTE *)vertices;
 
+	BYTE copy[4 * 0x50];
+
 	set_immediate_shader(BD_FVF_TLVERTEX);
 	if (type == BDPRIMTYPE_QUADLIST)
 	{
 		for (; count != 0; count -= 4)
 		{
-			D3DDevice_DrawVerticesUP(D3DPT_TRIANGLESTRIP, 4, v, sizeof(bdTLVertex));
+			D3DDevice_DrawVerticesUP(D3DPT_TRIANGLESTRIP, 4, widen_screen_fill(v, sizeof(bdTLVertex), 1, copy),
+				sizeof(bdTLVertex));
 			v += 4 * sizeof(bdTLVertex);
 		}
 		return;
 	}
+	if (count == 4 && (type == BDPRIMTYPE_TRISTRIP || type == BDPRIMTYPE_TRIFAN))
+		v = widen_screen_fill(v, sizeof(bdTLVertex), 1, copy);
 	D3DDevice_DrawVerticesUP((D3DPRIMITIVETYPE)DAT_00284c14[type], count, v, sizeof(bdTLVertex));
 }
 
@@ -219,6 +275,7 @@ void bdDrawPrimitiveFVF(int type, void *vertices, int count, int fvf)
 	BYTE *v = (BYTE *)vertices;
 	int stride;
 	unsigned int quads;
+	BYTE copy[4 * 0x50];
 
 	if ((uint32_t)fvf != DAT_002bc400)
 	{
@@ -238,13 +295,16 @@ void bdDrawPrimitiveFVF(int type, void *vertices, int count, int fvf)
 			quads = ((unsigned int)(count - 1) >> 2) + 1;
 			do
 			{
-				D3DDevice_DrawVerticesUP(D3DPT_TRIANGLESTRIP, 4, v, stride);
+				D3DDevice_DrawVerticesUP(D3DPT_TRIANGLESTRIP, 4,
+					widen_screen_fill(v, stride, (fvf & D3DFVF_XYZRHW) != 0, copy), stride);
 				v += stride * 4;
 				quads--;
 			} while (quads != 0);
 		}
 		return;
 	}
+	if (count == 4 && (type == BDPRIMTYPE_TRISTRIP || type == BDPRIMTYPE_TRIFAN) && bdFVFStride(fvf) != 0)
+		v = widen_screen_fill(v, bdFVFStride(fvf), (fvf & D3DFVF_XYZRHW) != 0, copy);
 	D3DDevice_DrawVerticesUP((D3DPRIMITIVETYPE)DAT_00284c14[type], count, v, bdFVFStride(fvf));
 }
 

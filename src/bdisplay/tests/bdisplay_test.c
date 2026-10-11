@@ -445,6 +445,42 @@ static void test_projection(void)
 	CHECK(PTR_DAT_00284c70 == DAT_002be2b0, "3D mode uses the perspective projection");
 }
 
+/* port, display.aspect_ratio 16:9 (Hor+, xbRender.c screen_widening): the game gives its
+fields of view for 4:3, so on an 854-column screen what was at the 4:3 edge stays at 320
+from the centre (no stretch), the vertical field of view stays, the view reaches further to
+the side (to 427), and an object there is not culled. A render target of the game's keeps
+its shape. */
+static void test_widescreen_projection(void)
+{
+	float edge43[4] = { 100.0f, 0.0f, 100.0f, 1.0f };
+	float edge169[4] = { 133.4375f, 0.0f, 100.0f, 1.0f };
+	float out[4];
+	bdRenderTarget other;
+
+	DAT_002bc40c = 854;
+	set_up_view();
+	bdSetViewport(0, 0, 854, 480);
+	bdSetFieldOfView(1.5707964f, 0.0f);
+	CHECK(near_equal(DAT_002be58c, 2.0f * atanf(0.75f), 1e-5f), "16:9: fov y is 4:3's (%g)", DAT_002be58c);
+	bdProjectPoints(out, edge43, 1);
+	CHECK(near_equal(out[0], 320.0f, 0.05f), "16:9: the 4:3 edge stays 320 from the centre (%g)", out[0]);
+	bdProjectPoints(out, edge169, 1);
+	CHECK(near_equal(out[0], 427.0f, 0.05f), "16:9: the view reaches 427 to the side (%g)", out[0]);
+	CHECK(bdBoxVisible(DAT_002855f0, 105.0f, 125.0f, -1.0f, 1.0f, 99.0f, 101.0f) == 1,
+		"16:9: a box beyond the 4:3 edge is visible, not culled");
+	CHECK(bdSphereVisible(edge169, 1.0f) == 1, "16:9: a sphere at the new edge is visible");
+	memset(&other, 0, sizeof(other));
+	DAT_002bc464 = &other;
+	bdSetViewport(0, 0, 640, 480);
+	bdSetFieldOfView(1.5707964f, 0.0f);
+	bdProjectPoints(out, edge43, 1);
+	CHECK(near_equal(out[0], 320.0f, 0.05f) && near_equal(DAT_002be2b0[0], 1.0f, 1e-5f),
+		"16:9: a render target keeps the 4:3 projection (%g)", out[0]);
+	DAT_002bc464 = &DAT_002bcc98;
+	DAT_002bc40c = 0;
+	set_up_view();
+}
+
 static void test_sprite(void)
 {
 	float pos[4] = { 0.0f, 0.0f, 100.0f, 1.0f };
@@ -525,6 +561,8 @@ int main(void)
 	test_text_layout();
 	fprintf(stderr, "test_projection\n");
 	test_projection();
+	fprintf(stderr, "test_widescreen_projection\n");
+	test_widescreen_projection();
 	fprintf(stderr, "test_sprite\n");
 	test_sprite();
 	fprintf(stderr, "test_near_clip\n");

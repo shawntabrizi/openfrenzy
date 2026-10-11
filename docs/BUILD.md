@@ -449,14 +449,31 @@ macOS has no `timeout`; use `perl -e 'alarm shift; exec @ARGV' 70 build-<id>/ope
 
 ### Display settings
 
-The game is 4:3 only: it always has 640 columns and 480 lines in its own units. A wider or
-taller window gets black bars.
+By default the game is 4:3, as on the Xbox: 640 columns and 480 lines in its own units. A
+wider or taller window gets black bars. `OPENFRENZY_DISPLAY_ASPECT_RATIO` (opt-in) gives a wider
+screen; a window of another shape still gets black bars.
 
 | Variable | Values | Effect |
 |---|---|---|
 | `OPENFRENZY_DISPLAY_RESOLUTION_SCALING` | `native` (default), `original` | `native` draws at the window's real pixels (Retina: 2 for each point), with the same scale both ways. `original` draws 640x480 and scales it up. |
 | `OPENFRENZY_DISPLAY_ANTI_ALIASING` | `off` (default), `fxaa`, `smaa`, `msaa2x`, `msaa4x`, `msaa8x`, `ssaa2x` | `fxaa`: one pass over the 3D scene before the HUD (`COverlay_DrawAll`), or over the full frame at present when the frame has no HUD (menus). `smaa`: SMAA (HIGH preset, 3 passes; `port/third_party/smaa`, MIT), at the same points as `fxaa`. `msaaNx`: N samples a pixel. `ssaa2x`: draws at 2 times the size each way, then scales down (with `native` only). |
 | `OPENFRENZY_DISPLAY_VSYNC` | `true` (default), `false` | wait for the display's refresh |
+| `OPENFRENZY_DISPLAY_ASPECT_RATIO` | `4:3` (default), `16:10`, `16:9` | the screen's width in the game's units: 640, 768 or 854. Read once at start. The 3D view gets wider (Hor+): the vertical field of view stays as in 4:3, and the view shows more at the sides. The HUD, menus and other 2D overlays keep their 4:3 layout in the centre. A full-screen untextured fade or tint covers the whole width. |
+
+Widescreen, how (`display.aspect_ratio`): `bdOpenDisplay` (bdisplay) opens the display at
+`halo_screen_width()` columns instead of 640, so every game layout that uses the screen width
+(`DAT_002bc40c`: viewports, the character select's quarters, the map zoom) follows.
+`bdSetupProjection` multiplies the horizontal tangent of the field of view by the width / 640 when
+the screen is the render target (`screen_widening`); a render target of the game's own keeps 4:3.
+The frustum culling (`bdBoxVisible`, `bdSphereVisible`) reads that projection, so objects at
+the new edges are not culled. Overlays are placed from the screen's centre (the 2D projection),
+so they stay centred. The original layout gives an overlay no anchor to an edge, so corner
+elements (timer, score boxes) stay at the 4:3 corners: anchoring them would need a per-game
+list. `bdDrawPrimitive`, `bdDrawPrimitiveTL` and `bdDrawPrimitiveFVF` widen an untextured quad
+that covers the whole 4:3 screen (fades, the Drillers white flash). A textured full-screen quad
+keeps its 4:3 place. No game splits the screen: the only callers of `bdSetViewport` are the
+display, RollerBall (the full screen) and the character select (its four quarters). Checked at 16:9 and 16:10: the 12 games
+(variation 1) and the board path (title, menus, character select, map, intro, pause).
 
 Every 10 s the host logs `frame pacing: N frames in 10.0 s, F fps, worst W ms, K over 20 ms,
 swap S ms avg` (frame time = swap to swap; docs/INTEGRATION_NOTES.md "Frame pacing").

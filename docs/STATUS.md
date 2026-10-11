@@ -154,6 +154,7 @@ tests above.
 | Frame rate | 59.5-60 fps in play; about 1 frame over 20 ms per 10 s. After f0ecccb the board path's lowest 10 s window is 59.6 fps (was 56.5) | Frame pacing (round 5), draw overhead (round 6) |
 | Audio device | Real device at 48 kHz stereo; WMA music, ADPCM effects and voices mix; no underrun in 610 s | Round 5, round 6 |
 | Fullscreen | Default is borderless fullscreen, 4:3 pillarboxed, 60 fps | Round 6 |
+| Widescreen (opt-in) | `OPENFRENZY_DISPLAY_ASPECT_RATIO=16:9` or `16:10`: Hor+ 3D view, HUD centred 4:3, fades full width. 12 games and the board path checked by screenshots; 60.0 fps at 3416x1920 (TankedUp) | `docs/BUILD.md` "Display settings" |
 
 ## By design
 

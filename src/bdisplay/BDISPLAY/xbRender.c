@@ -18,6 +18,19 @@ out = b x a.
 
 #define HALF_PI 1.57079625f /* 0x3fc90fda (1.5707964f would be 0x3fc90fdb) */
 
+/* port: how much wider than 4:3 the view is drawn (Hor+). With display.aspect_ratio the
+screen has more than 640 columns (bdOpenDisplay). The game gives its fields of view for
+4:3, so on the screen the horizontal one widens by the screen's width over 640 and the
+vertical one stays: the picture shows more at the sides and nothing is stretched. Each
+viewport on the screen widens with it (the whole screen, the character select's quarters).
+A render target of the game's own keeps its shape: 1. The original has no such factor. */
+static float screen_widening(void)
+{
+	if (DAT_002bc464 != &DAT_002bcc98 || DAT_002bc40c <= 640)
+		return 1.0f;
+	return (float)DAT_002bc40c / 640.0f;
+}
+
 /* the world * view * projection matrix after a change of the projection */
 static void update_world_view_projection(void)
 {
@@ -177,7 +190,7 @@ void bdSetupProjection(void)
 	float q = DAT_002be584 / (DAT_002be584 - DAT_002be580);
 
 	memset(perspective, 0, sizeof(perspective));
-	perspective[0] = 1.0f / tanf(DAT_002be588 * 0.5f);
+	perspective[0] = 1.0f / (tanf(DAT_002be588 * 0.5f) * screen_widening());
 	perspective[5] = 1.0f / tanf(DAT_002be58c * 0.5f);
 	perspective[10] = q;
 	perspective[11] = 1.0f;
@@ -500,7 +513,8 @@ void bdSetFieldOfView(float fovX, float fovY)
 	DAT_002be588 = fovX;
 	if (fovY == 0.0f)
 	{
-		fov = atan2f((DAT_002be594 / DAT_002be590) * tanf(fovX * 0.5f), 1.0f);
+		/* (port: the aspect of the viewport as 4:3 had it: screen_widening) */
+		fov = atan2f((DAT_002be594 / DAT_002be590) * screen_widening() * tanf(fovX * 0.5f), 1.0f);
 		fov = fov + fov;
 	}
 	else
