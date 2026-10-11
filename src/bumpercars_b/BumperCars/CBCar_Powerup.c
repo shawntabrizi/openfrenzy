@@ -55,7 +55,7 @@ void BCarPowerup_Load(struct BCarTextReader *reader)
 			status = 2;
 			if (BCarText_GetName(line, word, 0x1ff) != 0)
 			{
-				powerup->actor = bLoadResource(NULL, word, 1, 0xdefa);
+				powerup->actor = (struct BActor *)bLoadResource(NULL, word, 1, 0xdefa);
 				status = 1;
 			}
 		}

@@ -129,7 +129,7 @@ Constructor of the explosion list: the shock wave texture and the spark sprites.
 struct BCarExplosions *BCarExplosions_Construct(struct BCarExplosions *self)
 {
 	self->first = NULL;
-	self->texture = bLoadResource(NULL, "debris\\textures\\shockwave.bmp", 0, 0xdefa);
+	self->texture = (struct bdTexture *)bLoadResource(NULL, "debris\\textures\\shockwave.bmp", 0, 0xdefa);
 	Sprite_LoadDefs((struct CSpriteDef *)DAT_00292940, 3, 0);
 	return self;
 }

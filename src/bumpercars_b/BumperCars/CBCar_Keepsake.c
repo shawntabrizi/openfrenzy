@@ -60,7 +60,7 @@ void BCarKeepsake_Load(struct BCarTextReader *reader)
 			status = 2;
 			if (BCarText_GetName(line, word, 0x1ff) != 0)
 			{
-				keepsake->actor = bLoadResource(NULL, word, 1, 0xdefa);
+				keepsake->actor = (struct BActor *)bLoadResource(NULL, word, 1, 0xdefa);
 				status = 1;
 			}
 		}
@@ -69,7 +69,7 @@ void BCarKeepsake_Load(struct BCarTextReader *reader)
 			status = 2;
 			if (BCarText_GetName(line, word, 0x1ff) != 0)
 			{
-				keepsake->disableModel = bLoadResource(NULL, word, 1, 0xdefa);
+				keepsake->disableModel = (struct BActor *)bLoadResource(NULL, word, 1, 0xdefa);
 				status = 1;
 			}
 		}
@@ -118,7 +118,7 @@ void BCarKeepsake_Load(struct BCarTextReader *reader)
 			status = 2;
 			if (BCarText_GetName(line, word, 0x1ff) != 0)
 			{
-				keepsake->colourTexture = bLoadResource(NULL, word, 0, 0xdefa);
+				keepsake->colourTexture = (struct bdTexture *)bLoadResource(NULL, word, 0, 0xdefa);
 				status = 1;
 			}
 		}

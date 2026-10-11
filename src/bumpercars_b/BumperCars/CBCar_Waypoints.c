@@ -175,7 +175,7 @@ void BCarWaypoint_LoadInformation(struct BCarTextReader *reader)
 				status = 2;
 				if (BCarText_GetName(line, word, 0x1ff) != 0)
 				{
-					wp->texture = bLoadResource(NULL, word, 0, 0xdefa);
+					wp->texture = (struct bdTexture *)bLoadResource(NULL, word, 0, 0xdefa);
 					status = 1;
 				}
 			}
@@ -441,11 +441,11 @@ int BCarWaypoint_LoadFile(struct bkPackage *package, char *file)
 	if (mem == NULL)
 		g_GenericGoals = NULL;
 	else
-		g_GenericGoals = BCarGenericGoal_Construct((struct BCarGenericGoal *)mem, 1);
+		g_GenericGoals = BCarGenericGoal_Construct((struct CParticleEffect *)mem, 1);
 	BCarWaypoint_LoadInformation(&reader);
 	if (0 < g_NumGates)
 	{
-		actor = bLoadResource(NULL, "world\\models\\bumperalpha.obe", 1, 0xdefa);
+		actor = (struct BActor *)bLoadResource(NULL, "world\\models\\bumperalpha.obe", 1, 0xdefa);
 		if (actor == NULL)
 		{
 			bkPrintf("%s(%d) : Waypoint_LoadFile - Could not find active shell actor\n", s_WaypointFile, 0x35);
@@ -475,8 +475,8 @@ int BCarWaypoint_LoadFile(struct bkPackage *package, char *file)
 		bcb_GoalSwitch(g_Waypoints[g_ActiveGate].goal, 1);
 		bcb_PlaceShell();
 	}
-	g_HelixTexture = bLoadResource(NULL, "genericgoal\\textures\\helixtwist.bmp", 0, 0xdefa);
-	g_SparkTexture = bLoadResource(NULL, "genericgoal\\textures\\sparkburst.bmp", 0, 0xdefa);
+	g_HelixTexture = (struct bdTexture *)bLoadResource(NULL, "genericgoal\\textures\\helixtwist.bmp", 0, 0xdefa);
+	g_SparkTexture = (struct bdTexture *)bLoadResource(NULL, "genericgoal\\textures\\sparkburst.bmp", 0, 0xdefa);
 	if (g_Laps == 0 || g_NumWaypoints < 1 || g_NumWaypoints == g_NumGates)
 	{
 		g_LapEffects[0] = NULL;
@@ -512,7 +512,7 @@ int BCarWaypoint_LoadFile(struct bkPackage *package, char *file)
 Waypoints_Delete: the goals, the shell and the fountains. */
 void BCarWaypoints_Delete(void)
 {
-	struct BCarGenericGoal *goals = g_GenericGoals;
+	struct CParticleEffect *goals = g_GenericGoals;
 	int i;
 
 	if (g_NumWaypoints != 0)

@@ -114,7 +114,7 @@ gate, 0x002f0a7c the previous one; 0x002f0a80 the waypoints (stride 0x4c) */
 #define g_Waypoints ((struct BCarWaypoint *)BCB_ADDR(0x002f0a80))
 #define BCB_MAX_WAYPOINTS 40
 /* 0x002f1368  the generic goals (CBCar_GenericGoal, 0x28 bytes) */
-#define g_GenericGoals BCB_VAR(struct BCarGenericGoal *, 0x002f1368)
+#define g_GenericGoals BCB_VAR(struct CParticleEffect *, 0x002f1368)
 /* 0x002f136c  the two lap-end particle systems (classlib_fx CParticleSystem, 0xa8 bytes) */
 #define g_LapEffects ((void **)BCB_ADDR(0x002f136c))
 #define g_HelixTexture BCB_VAR(struct bdTexture *, 0x002f1374)
