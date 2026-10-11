@@ -306,8 +306,8 @@ int CGameMode_MiniGameSelect_OnButton(struct CGameMode_MiniGameSelect *self, int
 		}
 		DAT_002838f4 = DAT_002ba238[DAT_002ba4d8].game;
 		DAT_002838f8 = DAT_002ba238[DAT_002ba4d8].variant;
-		_DAT_0028198c = 1;
-		_DAT_002ba4cc = 0;
+		DAT_0028198c = 1;
+		DAT_002ba4cc = 0;
 		CMB_VFN(self, CMB_VT_SUSPEND, void (*)(void *))(self);
 		cmb_start_selected();
 		return 0;
@@ -342,17 +342,17 @@ void CGameMode_MiniGameSelect_Start(struct CGameMode_MiniGameSelect *self)
 	DAT_002ba4e4 = 1;
 	DAT_00284408 = 1;
 	DAT_00292c78 = 0x240;
-	if (_DAT_002ba4cc != 0) {
+	if (DAT_002ba4cc != 0) {
 		/* back from a game: add its points */
 		((void (*)(int *, int *, int))FUN_00028ab0)(&winner, points, 1);
-		_DAT_002ba4cc = 0;
+		DAT_002ba4cc = 0;
 		self->totals[0] += points[0];
 		self->totals[1] += points[1];
 		self->totals[2] += points[2];
 		self->totals[3] += points[3];
 	}
 	DAT_002baebc = 0;
-	if (_DAT_0028198c == -1) {
+	if (DAT_0028198c == -1) {
 		if (DAT_002bae9c == 0) {
 			DAT_002ba4d8 = 0;
 			DAT_002ba4d4 = DAT_002ba4dc - 4 < 0 ? 0 : DAT_002ba4dc - 4;

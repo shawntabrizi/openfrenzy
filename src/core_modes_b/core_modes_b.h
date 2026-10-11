@@ -460,11 +460,11 @@ extern int DAT_002ba4d4;                  /* first visible entry */
 extern int DAT_002ba4d8;                  /* selected entry */
 extern int DAT_002ba4c4, DAT_002ba230;    /* fonts */
 extern float _DAT_002ba4c8;               /* arrow offset */
-extern int _DAT_002ba4cc;                 /* scores to add when back from a game */
+extern int DAT_002ba4cc;                  /* scores to add when back from a game (set by classlib_ui's HUD) */
 extern int DAT_002ba4e4;                  /* fade in on the next render */
 extern int DAT_002839f0[0x31];            /* core: variant availability [game * 4 + variant - 4] */
 extern int DAT_002838f4, DAT_002838f8;    /* last game and variant */
-extern int _DAT_0028198c;
+extern int DAT_0028198c;                  /* core: the AskAgain answer (1 play again, -1 no) */
 extern int DAT_00283984;                  /* frames before input is accepted */
 extern float _DAT_00283988;               /* scroll speed */
 extern int DAT_0028452c[4];               /* heading colour */

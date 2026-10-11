@@ -150,7 +150,8 @@ int DAT_002ba4d8;
 int DAT_002ba4c4;
 int DAT_002ba230;
 float _DAT_002ba4c8;
-int _DAT_002ba4cc;
+/* 0x002ba4cc: one storage with classlib_ui's HUD, which sets it when a game ends */
+int DAT_002ba4cc;
 int DAT_002ba4e4;
 void *DAT_002ba954[13];
 __attribute__((weak)) int DAT_002839f0[0x31] = {
@@ -159,7 +160,8 @@ __attribute__((weak)) int DAT_002839f0[0x31] = {
 };
 __attribute__((weak)) int DAT_002838f4 = -1;
 __attribute__((weak)) int DAT_002838f8 = -1;
-__attribute__((weak)) int _DAT_0028198c = -1;
+/* 0x0028198c: core's AskAgain answer; weak like core's own definition, so one storage */
+__attribute__((weak)) int DAT_0028198c = -1;
 __attribute__((weak)) int DAT_00283984 = 5;
 __attribute__((weak)) float _DAT_00283988 = 0.15f;
 __attribute__((weak)) int DAT_0028452c[4] = { 0xff, 0xff, 0xff, 0xdc };
