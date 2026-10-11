@@ -57,7 +57,7 @@ cmake -S . -B build -G Ninja && cmake --build build && ctest --test-dir build
 
 ## Web build
 
-The game also runs in a desktop browser as WebAssembly (Chrome, Firefox 157; not Safari 26.6),
+The game also runs in a desktop browser as WebAssembly (Chrome, Firefox 157; Safari 26.6 through a slower Asyncify build),
 with your own disc image, which the page copies into the browser's storage once. See
 `docs/WEB.md`:
 
