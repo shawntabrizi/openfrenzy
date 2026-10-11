@@ -1186,6 +1186,39 @@ are reached by a jump or through a pointer). Source: Ghidra `DecompileAt.java` a
 - Tests: ctest `gameplay_board`, `gameplay_game_TankedUp`, `_Hopper`, `_Demolition` pass;
   module tests of core, meta_a, tankedup_a and tankedup_b exit 0 (charlib has none).
 
+## Library functions named (open-decomp)
+
+`docs/LIBRARY_CALLS.md` had 53 rows "unidentified" (9 xapi, 43 libc, 1 WMADECXM). Now it
+has 0. The names were already in `src/xkernel/xkernel_libcalls.h` (the xkernel module's
+table) and in `src/dsound/wma_xmo.c`, but `scripts/gen_library_calls.py` did not have them.
+
+- Check of each name: the Ghidra body (`export/funcs/<addr>.c`) and, where the body was not
+  clear, the x86 code (`llvm-objdump` of `.text`). Examples: 0x001e05b0 and 0x001e067c
+  differ only by one `fxch` before `fpatan`, so the first is acos and the second asin;
+  0x001e10f8 and 0x001e0af2 name their error tables "atan2" (0x002b7c8c) and "fmod"
+  (0x002b74f0); 0x0003463a and 0x00034655 look up an XBE section by name and call
+  XeLoadSection / XeUnloadSection; 0x002324a0 takes (callback, context, yield rate,
+  WAVEFORMATEX *, XMediaObject **), the form that later XDKs call WmaCreateDecoderEx.
+- XbSymbolDatabase gave none of the 53 (they are the unnamed ones). No other source was
+  used.
+- Port call sites: a script (not committed) took the game callers of each function from
+  `export/functions*.jsonl` and searched the port body of each caller for the replacement.
+  All call sites use it, directly or through a helper (`bkFopen` = `vfs_fopen`,
+  `bdPhysicalProtect` = `XPhysicalProtect`, `bmQuaternionSlerpTo` calls acos, the Rowing ASE
+  reader calls atoi). No replacement was wrong, so no game code changed.
+- Correction in `xkernel_libcalls.h`: 0x001e105c (sin) and 0x001e1120 (cos) are the cdecl
+  functions with the double on the stack (`lea edx, [esp+4]; call __fload_withFB`), not
+  the x87 intrinsics _CIsin/_CIcos. The port's calls were already right.
+- 7 rows had a misleading Ghidra/FID name and now carry the right one: 0x001df03e atoi
+  (FID: _atol), 0x001df688 pow (_CIpow; was "thunk_FUN_001df68a (C library)"), 0x001dfded
+  fread, 0x001e02d7 fwrite (FID: _fread), 0x001e0873 fputc, 0x001e0c90 fprintf (FID:
+  _fwprintf), 0x001e8833 XPhysicalFree (was "MmFreeContiguousMemory (C library)").
+- `scripts/gen_xdk_entry_points.py` now also reads the `WMADECXM` section:
+  `xdk_entry_points.inc` has one more row, `0x002324a0 WMADECXM WmaCreateDecoder HLE`
+  (regenerated with `src/runtime/build_check.sh`; no other row changed).
+- Not in `docs/LIBRARY_CALLS.md` (their callers are not Ghidra functions; see
+  `xkernel_libcalls.h`): 0x0003082d WaitForSingleObjectEx and 0x001e1276 _isnan.
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and

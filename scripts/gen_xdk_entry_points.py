@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate src/runtime/entry/xdk_entry_points.inc.
 
-The XBE statically links the XDK libraries (sections D3D, DSOUND, XGRPH, XPP).
+The XBE statically links the XDK libraries (sections D3D, DSOUND, XGRPH, XPP, WMADECXM).
 The port does not decompile them: game code that calls into them is routed to
 the OpenCE-derived HLE layer in src/<platform modules>. This script writes one X-macro
 row per library function that matters:
@@ -24,7 +24,7 @@ Usage: gen_xdk_entry_points.py <functions.jsonl> <hle_symbols.txt> <output.inc>
 import json
 import sys
 
-SECTIONS = ("D3D", "DSOUND", "XGRPH", "XPP")
+SECTIONS = ("D3D", "DSOUND", "XGRPH", "XPP", "WMADECXM")
 
 # Unnamed (FUN_) functions identified by reading export/funcs/<addr>.c.
 IDENTIFIED = {
@@ -41,6 +41,10 @@ IDENTIFIED = {
     "00221874": "XGBuffer_GetBufferPointer",
     # assembles vertex shader text (d3d8/xgraphics.c)
     "0022835a": "XGAssembleShader",
+    # WMADECXM: (callback, context, yield rate, WAVEFORMATEX *, XMediaObject **): makes the
+    # WMA decoder media object that pulls the file through the callback (later XDKs call this
+    # form WmaCreateDecoderEx); dsound/wma_xmo.c
+    "002324a0": "WmaCreateDecoder",
 }
 
 

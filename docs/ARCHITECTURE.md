@@ -194,7 +194,7 @@ equivalent (`ref/OpenCE/port/linux/src/` at `231708d`), split into platform modu
 | `DOLBY` | nothing (DSP microcode, unused with SDL audio) | - |
 | `.text` region `eh_funclets` | nothing (C++ exception unwind funclets; the port has no C++ exceptions) | - |
 
-`src/runtime/entry/xdk_entry_points.inc` maps each `D3D`/`DSOUND`/`XGRPH`/`XPP` function to its
+`src/runtime/entry/xdk_entry_points.inc` maps each `D3D`/`DSOUND`/`XGRPH`/`XPP`/`WMADECXM` function to its
 HLE function (`HLE`, `MISSING`, `UNKNOWN`, `INTERNAL`). `docs/LIBRARY_CALLS.md` lists every
 library function the game calls (192: 75 libc, 27 xapi, 52 D3D, 23 DSOUND, 7 XPP, 4 XGRPH,
 3 Bink, 1 WMA) with its replacement. Decompiled code calls the replacement by its XDK or C name
@@ -386,8 +386,6 @@ kept to ease merges from OpenCE; rename only inside your own module, not across 
 
 Current state: `docs/STATUS.md`. The game plays; these questions are still open:
 
-- 53 rarely called library functions are not identified yet (`docs/LIBRARY_CALLS.md`). The game
-  runs without a name for them.
 - The `.app` bundles Homebrew's SDL3 and an LGPL FFmpeg built from source for Bink only
   (`docs/BUILD.md`); a notarized release is not done.
 - Custom soundtracks are not supported. `XFindFirstSoundtrack` always returns none.

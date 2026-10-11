@@ -94,7 +94,7 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 
 | address | XBE name | replacement | called from modules |
 |---|---|---|---|
-| 0x002324a0 | `FUN_002324a0` | unidentified: read export/funcs/002324a0.c and add it to IDENTIFIED | engine_misc |
+| 0x002324a0 | `FUN_002324a0` | WmaCreateDecoder (HLE, HLE) | engine_misc |
 
 ## XGRPH (4 functions)
 
@@ -133,76 +133,76 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 | 0x001dee6e | `FUN_001dee6e` | sprintf(buffer, format, ...) | bactor, bdisplay, bkernel, carryon_a, charlib, classlib_fx, classlib_ui, clusteroids, core, core_modes_a, core_modes_b, demolition_a, demolition_b, demolition_c, drillers, foxhunt, hopper, meta_a, meta_b, mousewhack, rollerball_a, rollerball_b, rowing_a, rowing_b, scratchmatch, tankedup_a, tankedup_b |
 | 0x001def24 | `??_M@YGXPAXIHP6EX0@Z@Z` | C++ 'eh vector constructor iterator' (??_M): construct each element of an array; write a loop | bumpercars_a, carryon_a, classlib_fx, core, core_modes_a, core_modes_b, demolition_a, demolition_b, demolition_c, demolition_d, drillers, foxhunt, hopper, meta_a, meta_b, mousewhack, rollerball_a, rollerball_b |
 | 0x001def84 | `??_L@YGXPAXIHP6EX0@Z1@Z` | C++ 'eh vector destructor iterator' (??_L): destroy each element of an array; write a loop | bumpercars_a, bumpercars_b, carryon_a, core, core_modes_a, core_modes_b, demolition_a, demolition_b, demolition_c, demolition_d, drillers, foxhunt, hopper, meta_a, meta_b, mousewhack, rollerball_a, rollerball_b |
-| 0x001df03e | `_atol` | atol (C library) | bumpercars_a, bumpercars_b, carryon_a, classlib_ui, core, demolition_a, demolition_b, drillers, rollerball_a, rowing_a, rowing_b, tankedup_a |
+| 0x001df03e | `_atol` | atoi (Ghidra's FID says _atol; the same code on ILP32) | bumpercars_a, bumpercars_b, carryon_a, classlib_ui, core, demolition_a, demolition_b, drillers, rollerball_a, rowing_a, rowing_b, tankedup_a |
 | 0x001df984 | `FUN_001df984` | sscanf(text, format, ...) | bumpercars_a, bumpercars_b, carryon_a, core, demolition_c, foxhunt, meta_a, meta_b, rollerball_b, rowing_b, tankedup_a, tankedup_b |
 | 0x001df950 | `__allmul` | __allmul: 64-bit multiply; write a * b on 64-bit types | bkernel, carryon_a, carryon_b, meta_b, mousewhack, rollerball_a, rowing_a, rowing_b |
-| 0x001df0f0 | `FUN_001df0f0` | unidentified: read export/funcs/001df0f0.c and add it to IDENTIFIED | carryon_a, core_modes_a, demolition_b, demolition_c, rollerball_b, rowing_b, tankedup_b |
-| 0x001df688 | `thunk_FUN_001df68a` | thunk_FUN_001df68a (C library) | bkernel, charlib, classlib_ui, core, meta_a, rowing_a, rowing_b |
-| 0x001e03fc | `FUN_001e03fc` | unidentified: read export/funcs/001e03fc.c and add it to IDENTIFIED | carryon_a, classlib_ui, core, core_modes_a, demolition_b, drillers, rowing_a |
+| 0x001df0f0 | `FUN_001df0f0` | strstr(text, pattern) | carryon_a, core_modes_a, demolition_b, demolition_c, rollerball_b, rowing_b, tankedup_b |
+| 0x001df688 | `thunk_FUN_001df68a` | pow(x, y) (_CIpow: x87 intrinsic, x = ST1, y = ST0) | bkernel, charlib, classlib_ui, core, meta_a, rowing_a, rowing_b |
+| 0x001e03fc | `FUN_001e03fc` | _strlwr(text) (A-Z only; no caller uses the result) | carryon_a, classlib_ui, core, core_modes_a, demolition_b, drillers, rowing_a |
 | 0x001e0516 | `FUN_001e0516` | _snprintf(buffer, count, format, ...) | bumpercars_a, bumpercars_b, clusteroids, foxhunt, scratchmatch, tankedup_a, tankedup_b |
 | 0x001e056d | `__stricmp` | stricmp (C library) | bkernel, bumpercars_a, bumpercars_b, classlib_ui, core, tankedup_a, tankedup_b |
 | 0x001e1010 | `_strncmp` | strncmp (C library) | bumpercars_a, bumpercars_b, drillers, foxhunt, tankedup_a, tankedup_b |
 | 0x001ec550 | `__strnicmp` | strnicmp (C library) | bumpercars_a, bumpercars_b, foxhunt, tankedup_a, tankedup_b |
-| 0x001df180 | `FUN_001df180` | unidentified: read export/funcs/001df180.c and add it to IDENTIFIED | classlib_ui, core, core_modes_a, core_modes_b |
-| 0x001df9c0 | `FUN_001df9c0` | unidentified: read export/funcs/001df9c0.c and add it to IDENTIFIED | bactor, bkernel, core, engine_misc |
+| 0x001df180 | `FUN_001df180` | swprintf(buffer, format, ...) (MSVC form: no count, 16-bit wchar_t; msvc_wide.c) | classlib_ui, core, core_modes_a, core_modes_b |
+| 0x001df9c0 | `FUN_001df9c0` | memmove(destination, source, size) (MSVC memcpy/memmove: safe for overlap) | bactor, bkernel, core, engine_misc |
 | 0x001dfe85 | `_fclose` | fclose (C library) | bdisplay, bkernel, classlib_ui, core |
-| 0x001e041f | `FUN_001e041f` | unidentified: read export/funcs/001e041f.c and add it to IDENTIFIED | bkernel, carryon_a, demolition_a, rowing_a |
-| 0x001df170 | `FUN_001df170` | unidentified: read export/funcs/001df170.c and add it to IDENTIFIED | bumpercars_a, core, core_modes_a |
-| 0x001e01ad | `FUN_001e01ad` | unidentified: read export/funcs/001e01ad.c and add it to IDENTIFIED | bdisplay, bkernel, classlib_ui |
-| 0x001e05b0 | `FUN_001e05b0` | unidentified: read export/funcs/001e05b0.c and add it to IDENTIFIED | bkernel, classlib_ui, rowing_a |
+| 0x001e041f | `FUN_001e041f` | vsprintf(buffer, format, va_list) | bkernel, carryon_a, demolition_a, rowing_a |
+| 0x001df170 | `FUN_001df170` | _chkstk / _alloca_probe (stack probe, size in EAX): no C call; delete it | bumpercars_a, core, core_modes_a |
+| 0x001e01ad | `FUN_001e01ad` | fopen(name, mode) (_fsopen(name, mode, _SH_DENYNO)) | bdisplay, bkernel, classlib_ui |
+| 0x001e05b0 | `FUN_001e05b0` | acos(x) (_CIacos: x87 intrinsic, x = ST0) | bkernel, classlib_ui, rowing_a |
 | 0x001e133e | `_rand` | rand (C library) | scratchmatch, tankedup_a, tankedup_b |
-| 0x001df043 | `FUN_001df043` | unidentified: read export/funcs/001df043.c and add it to IDENTIFIED | meta_a, meta_b |
+| 0x001df043 | `FUN_001df043` | strtok(text, delimiters) (MSVC keeps the position per thread, musl globally) | meta_a, meta_b |
 | 0x001df8a0 | `__alldiv` | __alldiv: 64-bit divide; write a / b | bkernel, hopper |
-| 0x001dfded | `FID_conflict:_fread` | FID_conflict:_fread (C library) | bkernel, classlib_ui |
+| 0x001dfded | `FID_conflict:_fread` | fread(buffer, size, count, file) | bkernel, classlib_ui |
 | 0x001e0038 | `_ftell` | ftell (C library) | bkernel, classlib_ui |
 | 0x001e0108 | `_fseek` | fseek (C library) | bkernel, classlib_ui |
-| 0x001e02d7 | `FID_conflict:_fread` | FID_conflict:_fread (C library) | bdisplay, core |
-| 0x001e0340 | `FUN_001e0340` | unidentified: read export/funcs/001e0340.c and add it to IDENTIFIED | bactor, classlib_ui |
+| 0x001e02d7 | `FID_conflict:_fread` | fwrite(buffer, size, count, file) (Ghidra's FID says _fread) | bdisplay, core |
+| 0x001e0340 | `FUN_001e0340` | strchr(text, character) | bactor, classlib_ui |
 | 0x001e0750 | `_strncat` | strncat (C library) | bactor, bkernel |
 | 0x001e0a69 | `__controlfp` | controlfp (C library) | bdisplay, bkernel |
-| 0x001e0d53 | `FUN_001e0d53` | unidentified: read export/funcs/001e0d53.c and add it to IDENTIFIED | bkernel, rowing_a |
-| 0x001e8e5f | `FUN_001e8e5f` | unidentified: read export/funcs/001e8e5f.c and add it to IDENTIFIED | bkernel, scratchmatch |
-| 0x001e8e74 | `FUN_001e8e74` | unidentified: read export/funcs/001e8e74.c and add it to IDENTIFIED | bkernel, scratchmatch |
-| 0x001e93a9 | `FUN_001e93a9` | unidentified: read export/funcs/001e93a9.c and add it to IDENTIFIED | bkernel, engine_misc |
-| 0x001e93e4 | `FUN_001e93e4` | unidentified: read export/funcs/001e93e4.c and add it to IDENTIFIED | bkernel, engine_misc |
+| 0x001e0d53 | `FUN_001e0d53` | free(memory) (small-block heap or HeapFree) | bkernel, rowing_a |
+| 0x001e8e5f | `FUN_001e8e5f` | QueryPerformanceCounter(counter) | bkernel, scratchmatch |
+| 0x001e8e74 | `FUN_001e8e74` | QueryPerformanceFrequency(frequency) | bkernel, scratchmatch |
+| 0x001e93a9 | `FUN_001e93a9` | GetFileSize(file, high size) | bkernel, engine_misc |
+| 0x001e93e4 | `FUN_001e93e4` | CreateFileA(name, access, share, security, disposition, flags, template) | bkernel, engine_misc |
 | 0x001defe6 | `_atol` | atol (C library) | scratchmatch |
-| 0x001df260 | `FUN_001df260` | unidentified: read export/funcs/001df260.c and add it to IDENTIFIED | core_modes_b |
-| 0x001df4f0 | `FUN_001df4f0` | unidentified: read export/funcs/001df4f0.c and add it to IDENTIFIED | core_modes_b |
+| 0x001df260 | `FUN_001df260` | qsort(base, count, size, compare) (MSVC's algorithm in xbox_crt.c: same order of equal keys) | core_modes_b |
+| 0x001df4f0 | `FUN_001df4f0` | _snwprintf(buffer, count, format, ...) (16-bit wchar_t; msvc_wide.c) | core_modes_b |
 | 0x001df672 | `_atexit` | atexit (C library) | core |
-| 0x001e067c | `FUN_001e067c` | unidentified: read export/funcs/001e067c.c and add it to IDENTIFIED | charlib |
-| 0x001e0873 | `FID_conflict:_fputc` | FID_conflict:_fputc (C library) | bdisplay |
-| 0x001e0a24 | `FUN_001e0a24` | unidentified: read export/funcs/001e0a24.c and add it to IDENTIFIED | mousewhack |
+| 0x001e067c | `FUN_001e067c` | asin(x) (_CIasin: x87 intrinsic, x = ST0) | charlib |
+| 0x001e0873 | `FID_conflict:_fputc` | fputc(character, file) | bdisplay |
+| 0x001e0a24 | `FUN_001e0a24` | _clearfp() (fnstsw, fnclex; returns the abstract status word) | mousewhack |
 | 0x001e0a80 | `__aulldiv` | __aulldiv: unsigned 64-bit divide; write a / b | bkernel |
-| 0x001e0af2 | `FUN_001e0af2` | unidentified: read export/funcs/001e0af2.c and add it to IDENTIFIED | bkernel |
+| 0x001e0af2 | `FUN_001e0af2` | fmod(x, y) (_CIfmod: x87 intrinsic, x = ST1, y = ST0) | bkernel |
 | 0x001e0b10 | `__allrem` | __allrem: 64-bit remainder; write a % b | bkernel |
-| 0x001e0bc2 | `FUN_001e0bc2` | unidentified: read export/funcs/001e0bc2.c and add it to IDENTIFIED | bkernel |
-| 0x001e0c90 | `FID_conflict:_fwprintf` | FID_conflict:_fwprintf (C library) | bkernel |
+| 0x001e0bc2 | `FUN_001e0bc2` | floor(x) | bkernel |
+| 0x001e0c90 | `FID_conflict:_fwprintf` | fprintf(file, format, ...) (Ghidra's FID says _fwprintf; it calls the narrow _output) | bkernel |
 | 0x001e0d41 | `_malloc` | malloc (C library) | bkernel |
-| 0x001e0dab | `FUN_001e0dab` | unidentified: read export/funcs/001e0dab.c and add it to IDENTIFIED | rowing_a |
+| 0x001e0dab | `FUN_001e0dab` | realloc(memory, size) | rowing_a |
 | 0x001e0ea0 | `_strrchr` | strrchr (C library) | bkernel |
-| 0x001e0fa8 | `FUN_001e0fa8` | unidentified: read export/funcs/001e0fa8.c and add it to IDENTIFIED | classlib_ui |
-| 0x001e105c | `FUN_001e105c` | unidentified: read export/funcs/001e105c.c and add it to IDENTIFIED | bumpercars_a |
-| 0x001e10f8 | `FUN_001e10f8` | unidentified: read export/funcs/001e10f8.c and add it to IDENTIFIED | bumpercars_a |
-| 0x001e1120 | `FUN_001e1120` | unidentified: read export/funcs/001e1120.c and add it to IDENTIFIED | bumpercars_a |
-| 0x001e87e0 | `FUN_001e87e0` | unidentified: read export/funcs/001e87e0.c and add it to IDENTIFIED | bkernel |
-| 0x001e8823 | `FUN_001e8823` | unidentified: read export/funcs/001e8823.c and add it to IDENTIFIED | bdisplay |
-| 0x001e8833 | `MmFreeContiguousMemory` | MmFreeContiguousMemory (C library) | bkernel |
-| 0x001e893c | `FUN_001e893c` | unidentified: read export/funcs/001e893c.c and add it to IDENTIFIED | bkernel |
-| 0x001e8de0 | `FUN_001e8de0` | unidentified: read export/funcs/001e8de0.c and add it to IDENTIFIED | bkernel |
-| 0x001e904c | `FUN_001e904c` | unidentified: read export/funcs/001e904c.c and add it to IDENTIFIED | bkernel |
-| 0x001e90d0 | `FUN_001e90d0` | unidentified: read export/funcs/001e90d0.c and add it to IDENTIFIED | bkernel |
-| 0x001e91ca | `FUN_001e91ca` | unidentified: read export/funcs/001e91ca.c and add it to IDENTIFIED | bkernel |
-| 0x001e9307 | `FUN_001e9307` | unidentified: read export/funcs/001e9307.c and add it to IDENTIFIED | bkernel |
-| 0x001e9358 | `FUN_001e9358` | unidentified: read export/funcs/001e9358.c and add it to IDENTIFIED | bkernel |
-| 0x001e95db | `FUN_001e95db` | unidentified: read export/funcs/001e95db.c and add it to IDENTIFIED | bkernel |
-| 0x001e96e8 | `FUN_001e96e8` | unidentified: read export/funcs/001e96e8.c and add it to IDENTIFIED | bkernel |
+| 0x001e0fa8 | `FUN_001e0fa8` | atof(text) | classlib_ui |
+| 0x001e105c | `FUN_001e105c` | sin(x) (cdecl, x a double on the stack) | bumpercars_a |
+| 0x001e10f8 | `FUN_001e10f8` | atan2(y, x) (cdecl, two doubles) | bumpercars_a |
+| 0x001e1120 | `FUN_001e1120` | cos(x) (cdecl, x a double on the stack) | bumpercars_a |
+| 0x001e87e0 | `FUN_001e87e0` | XPhysicalAlloc(size, address, alignment, protect) (MmAllocateContiguousMemoryEx) | bkernel |
+| 0x001e8823 | `FUN_001e8823` | XPhysicalProtect(address, size, protect) (MmSetAddressProtect when size != 0) | bdisplay |
+| 0x001e8833 | `MmFreeContiguousMemory` | XPhysicalFree(address) (a jump to MmFreeContiguousMemory) | bkernel |
+| 0x001e893c | `FUN_001e893c` | GetTickCount() (KeTickCount) | bkernel |
+| 0x001e8de0 | `FUN_001e8de0` | GetLocalTime(time) (system time less the time zone bias) | bkernel |
+| 0x001e904c | `FUN_001e904c` | SetEndOfFile(file) | bkernel |
+| 0x001e90d0 | `FUN_001e90d0` | SetFilePointer(file, distance, high distance, method) | bkernel |
+| 0x001e91ca | `FUN_001e91ca` | GetFileInformationByHandle(file, information) | bkernel |
+| 0x001e9307 | `FUN_001e9307` | ReadFileEx(file, buffer, size, overlapped, completion) (completion by APC) | bkernel |
+| 0x001e9358 | `FUN_001e9358` | WriteFileEx(file, buffer, size, overlapped, completion) (completion by APC) | bkernel |
+| 0x001e95db | `FUN_001e95db` | FindFirstFileA(pattern, data) | bkernel |
+| 0x001e96e8 | `FUN_001e96e8` | FindNextFileA(find, data) | bkernel |
 | 0x001e9739 | `MoveFileA` | MoveFileA (C library) | bkernel |
-| 0x001e97cf | `FUN_001e97cf` | unidentified: read export/funcs/001e97cf.c and add it to IDENTIFIED | bkernel |
-| 0x001e997f | `FUN_001e997f` | unidentified: read export/funcs/001e997f.c and add it to IDENTIFIED | engine_misc |
-| 0x001e999e | `FUN_001e999e` | unidentified: read export/funcs/001e999e.c and add it to IDENTIFIED | engine_misc |
-| 0x001e9a4d | `FUN_001e9a4d` | unidentified: read export/funcs/001e9a4d.c and add it to IDENTIFIED | engine_misc |
-| 0x001e9c76 | `FUN_001e9c76` | unidentified: read export/funcs/001e9c76.c and add it to IDENTIFIED | engine_misc |
-| 0x001e9d06 | `FUN_001e9d06` | unidentified: read export/funcs/001e9d06.c and add it to IDENTIFIED | engine_misc |
+| 0x001e97cf | `FUN_001e97cf` | DeleteFileA(name) | bkernel |
+| 0x001e997f | `FUN_001e997f` | XFindNextSoundtrack(find, data) (no soundtracks in the port) | engine_misc |
+| 0x001e999e | `FUN_001e999e` | XFindFirstSoundtrack(data) (no soundtracks in the port) | engine_misc |
+| 0x001e9a4d | `FUN_001e9a4d` | XGetSoundtrackSongInfo(soundtrack, index, song, length, name, name size) | engine_misc |
+| 0x001e9c76 | `FUN_001e9c76` | XOpenSoundtrackSong(song, asynchronous) (...\TDATA\FFFE0000\MUSIC\%04x\%08x.WMA) | engine_misc |
+| 0x001e9d06 | `FUN_001e9d06` | XFindClose(find) (soundtrack and nickname find handles) | engine_misc |
 | 0x001ec5e3 | `__itoa` | itoa (C library) | hopper |
 
 ## xapi (27 functions)
@@ -213,7 +213,7 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 | 0x0003096f | `FUN_0003096f` | Sleep(milliseconds) (SleepEx(ms, FALSE)) | bdisplay, bkernel, core_modes_b, engine_misc |
 | 0x00030603 | `XLaunchNewImageA` | XLaunchNewImageA (XDK, HLE) | bkernel, core_modes_a, core_modes_b |
 | 0x00030ade | `FUN_00030ade` | GlobalMemoryStatus(status) | bkernel, core |
-| 0x0003105c | `FUN_0003105c` | unidentified: read export/funcs/0003105c.c and add it to IDENTIFIED | core, scratchmatch |
+| 0x0003105c | `FUN_0003105c` | lstrcpynA(destination, source, count) (at most count - 1 characters, always terminated) | core, scratchmatch |
 | 0x0003417a | `FUN_0003417a` | CloseHandle(handle) | bkernel, engine_misc |
 | 0x0003055a | `XGetLaunchInfo` | XGetLaunchInfo (XDK, HLE) | bkernel |
 | 0x00030716 | `CreateEventA` | CreateEventA (XDK, HLE) | bkernel |
@@ -223,16 +223,16 @@ Owners: `libc`/`xapi` -> xkernel (and musl), `D3D`/`XGRPH` -> d3d8, `DSOUND`/`WM
 | 0x00030943 | `FUN_00030943` | WaitForSingleObject(handle, milliseconds) (WaitForSingleObjectEx(h, ms, FALSE)) | bkernel |
 | 0x00030982 | `KeQuerySystemTime` | KeQuerySystemTime (XDK, HLE) | bkernel |
 | 0x0003099f | `FUN_0003099f` | wsprintfA(buffer, format, ...) | scratchmatch |
-| 0x000309d4 | `FUN_000309d4` | unidentified: read export/funcs/000309d4.c and add it to IDENTIFIED | core |
-| 0x000309f9 | `FUN_000309f9` | unidentified: read export/funcs/000309f9.c and add it to IDENTIFIED | core |
-| 0x00030a22 | `FUN_00030a22` | unidentified: read export/funcs/00030a22.c and add it to IDENTIFIED | core |
-| 0x00030ab6 | `FUN_00030ab6` | unidentified: read export/funcs/00030ab6.c and add it to IDENTIFIED | core |
-| 0x00030b2d | `FUN_00030b2d` | unidentified: read export/funcs/00030b2d.c and add it to IDENTIFIED | bkernel |
+| 0x000309d4 | `FUN_000309d4` | XGetLanguage() (ExQueryNonVolatileSetting(XC_LANGUAGE)) | core |
+| 0x000309f9 | `FUN_000309f9` | XGetVideoStandard() (XC_FACTORY_AV_REGION >> 8 & 0xff) | core |
+| 0x00030a22 | `FUN_00030a22` | XGetVideoFlags() (XC_VIDEO_FLAGS >> 16 & 0x5f) | core |
+| 0x00030ab6 | `FUN_00030ab6` | XGetGameRegion() (XC_FACTORY_GAME_REGION) | core |
+| 0x00030b2d | `FUN_00030b2d` | GetDiskFreeSpaceExA(path, free, total, total free) (NtQueryVolumeInformationFile) | bkernel |
 | 0x00030e25 | `XMountUtilityDrive` | XMountUtilityDrive (XDK, HLE) | core |
-| 0x0003101e | `FUN_0003101e` | unidentified: read export/funcs/0003101e.c and add it to IDENTIFIED | scratchmatch |
+| 0x0003101e | `FUN_0003101e` | lstrcpyA(destination, source) (strcpy in an SEH frame) | scratchmatch |
 | 0x000310c1 | `FUN_000310c1` | lstrlenA(text) | scratchmatch |
 | 0x00031227 | `OutputDebugStringA` | OutputDebugStringA (XDK, HLE) | bkernel |
 | 0x00034274 | `QueueUserAPC` | QueueUserAPC (XDK, HLE) | bkernel |
 | 0x0003439f | `CreateThread` | CreateThread (XDK, HLE) | bkernel |
-| 0x0003463a | `FUN_0003463a` | unidentified: read export/funcs/0003463a.c and add it to IDENTIFIED | bkernel |
-| 0x00034655 | `FUN_00034655` | unidentified: read export/funcs/00034655.c and add it to IDENTIFIED | bkernel |
+| 0x0003463a | `FUN_0003463a` | XLoadSection(name) (XeLoadSection of the named XBE section; returns its address) | bkernel |
+| 0x00034655 | `FUN_00034655` | XFreeSection(name) (XeUnloadSection of the named XBE section) | bkernel |

@@ -92,9 +92,9 @@ the x87 stack before the call (ST0 is the last one loaded).
 | 0x001e0ea0 | strrchr                         | (Ghidra) |
 | 0x001e0fa8 | atof                            | |
 | 0x001e1010 | strncmp                         | (Ghidra) |
-| 0x001e105c | sin(x)                          | _CIsin: x = ST0 |
+| 0x001e105c | sin(x)                          | cdecl: x is a double on the stack (not _CIsin) |
 | 0x001e10f8 | atan2(y, x)                     | cdecl, two doubles (table "atan2" 0x002b7c8c) |
-| 0x001e1120 | cos(x)                          | _CIcos: x = ST0 |
+| 0x001e1120 | cos(x)                          | cdecl: x is a double on the stack (not _CIcos) |
 | 0x001e1276 | _isnan                          | (Ghidra) not in LIBRARY_CALLS: called 3x from 0x00134040 (foxhunt) |
 | 0x001e133e | rand                            | (Ghidra) MSVC generator in xbox_crt.c |
 | 0x001e87e0 | XPhysicalAlloc                  | MmAllocateContiguousMemoryEx wrapper |
