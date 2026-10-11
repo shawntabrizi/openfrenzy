@@ -38,6 +38,10 @@ try {
   process.exit(77);
 }
 
+function bidiKey(key) {
+  return key === 'Space' ? ' ' : key === 'Enter' ? '\uE006' : key;
+}
+
 // The browser and its page, behind the few calls this driver makes. chrome (the installed
 // Chrome), firefox and webkit go through Playwright (firefox and webkit: Playwright's own
 // builds); firefox-system is the installed Firefox, through Puppeteer and WebDriver BiDi (a
@@ -64,10 +68,11 @@ async function openBrowser(kind, profile, headless, viewport) {
       setInputFiles: async (selector, file) => (await page.$(selector)).uploadFile(file),
       click: (selector) => page.click(selector),
       screenshot: (options) => page.screenshot(options),
-      // (BiDi names the space bar by its character)
+      // (BiDi names the space bar by its character, and Puppeteer's "Enter" is the keypad's
+      // Enter there: WebDriver's Return key, U+E006, is the main one, SDL's RETURN)
       keyboard: {
-        down: (key) => page.keyboard.down(key === 'Space' ? ' ' : key),
-        up: (key) => page.keyboard.up(key === 'Space' ? ' ' : key),
+        down: (key) => page.keyboard.down(bidiKey(key)),
+        up: (key) => page.keyboard.up(bidiKey(key)),
       },
       evaluate: (fn, arg) => page.evaluate(fn, arg),
     };
@@ -199,6 +204,8 @@ try {
         pad.timestamp = performance.now();
       };
     };
+    // the key events the page receives (to tell a driver problem from a game one)
+    window.addEventListener('keydown', (event) => console.log(`page: keydown ${event.code} on ${event.target.id || event.target.nodeName}`), true);
     window.openfrenzyAudioLevel = () => {
       let peak = 0, sum = 0, count = 0, state = 'none';
       for (const analyser of window.openfrenzyAudioTaps) {

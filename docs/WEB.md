@@ -16,8 +16,8 @@ it on your own computer (`scripts/web_serve.py` serves it on 127.0.0.1 only).
 | M1 Toolchain: Emscripten, CMake preset, platform layer and game link to `.wasm` | Done |
 | M2 Boot in a browser | Done: title screen at 60 fps in Chrome |
 | M3 Play: menus, input, audio, saves | Done: board path to a minigame's `countdown PLAYING` with real key events; a scripted Gamepad API pad drives the menus; sound in the Web Audio graph; the game's files persist in OPFS |
-| M4 Bink videos | Done: MICROSOFT.bik, BLITZ60.bik, ATTRACT.bik play to the last frame, with sound |
-| M5 Quality: settings, 60 fps, browsers | See "Measured" and "Browsers" |
+| M4 Bink videos | Done: MICROSOFT.bik and BLITZ60.bik play to their last frame, ATTRACT.bik plays (seen for 28 s), with sound |
+| M5 Quality: settings, 60 fps, browsers | Done: every display setting at 58-61 fps; a full 6-stage tournament in Chrome; Chrome, Firefox 157 and WebKit play; Safari 26.6 needs the Asyncify build. See "Measured" and "Browsers" |
 | M6 Tests and docs | `ctest --test-dir build-web -L web` (4 tests); this file; `docs/BUILD.md`; README |
 
 ## Build
@@ -37,7 +37,7 @@ cmake --build build-web          # build-web/site/: index.html, app.js, openfren
 ```
 
 Options (`cmake -S . -B build-web -D...`): `OPENFRENZY_WEB_ASYNCIFY=ON` (also build
-`openfrenzy-asyncify.js` and `.wasm`, 7.4 MB, for browsers without JSPI, such as Safari 26; the
+`openfrenzy-asyncify.js` and `.wasm`, 6.9 MB, for browsers without JSPI, such as Safari 26; the
 page loads it only there), `OPENFRENZY_WEB_BINK_FFMPEG=OFF` (no FFmpeg; the
 videos are skipped), `OPENFRENZY_WEB_WASM_OPT=` (empty: no Binaryen optimisation, every function
 apart in stack traces; default `-O2`), `OPENFRENZY_WEB_ASSERTIONS=ON` (Emscripten's run-time
@@ -87,8 +87,8 @@ Checked on one Mac (Apple Silicon M3 Max, macOS 26), each with the same build:
 
 | Browser | Result |
 |---|---|
-| Chrome 154 (installed, headless through Playwright) | Plays: boot videos, title, menus, character select, Map, minigames, score screen; 60 fps; sound in the Web Audio graph; real key events and a scripted Gamepad API pad. The 6-stage tournament: see "Measured" |
-| Firefox 157 (installed, headless through Puppeteer and WebDriver BiDi) | Plays: boot videos with sound, title at 60-61 fps, Hopper to `countdown PLAYING` at 60-61 fps; the game's own screenshot of its frame is correct. A browser screenshot of the page shows the canvas black (the worker draws it; OpenCE notes the same); taking one stalls the game for about 10 s |
+| Chrome 154 (installed, headless through Playwright) | Plays: boot videos, title, menus, character select, Map, minigames, score screen, a full 6-stage tournament to the winner and back to the title; 60 fps; sound in the Web Audio graph; real key events and a scripted Gamepad API pad |
+| Firefox 157 (installed, headless through Puppeteer and WebDriver BiDi) | Plays: boot videos with sound, the board path with real key events to a minigame's `countdown PLAYING` (114 of 115 seconds at 55 fps or more), Hopper at 60-61 fps; the game's own screenshot of its frame is correct. A browser screenshot of the page shows the canvas black (the worker draws it; OpenCE notes the same); taking one stalls the game for about 10 s |
 | WebKit 26.5 (Playwright's build) | Plays: Hopper to `countdown PLAYING`, 50-61 fps, picture correct |
 | Safari 26.6.2 (installed) | No JSPI (`WebAssembly.Suspending` is undefined). With the Asyncify build (`OPENFRENZY_WEB_ASYNCIFY=ON`): the checks pass, the image is imported from the test server (1.0 s), the game boots and the scripted pad (`OPENFRENZY_DEBUG_TEST_INPUT`) takes it into Hopper's intro and the minigame. The frame rate was not measured: the display was locked, and Safari slows (about 6 fps) and then stops the animation frames of a window that cannot be seen, so the game waits. Without the Asyncify build the page says that JSPI is missing |
 | Firefox 146 (Playwright's build) | No JSPI. The Asyncify build plays Hopper to `countdown PLAYING` (see "Measured" for its frame rate) |
@@ -102,15 +102,27 @@ browser). About 2.1 GB of storage for the disc image.
 In Chrome 154 on the M3 Max (headless, ANGLE on Metal), release build:
 
 - Frame rate: 60-61 fps at the title, in the menus and in Hopper with every display setting
-  (native resolution, 640x480, FXAA, SMAA, 16:9). On the board path most seconds are at 60;
-  seconds with a package loading drop lower (one at 19 fps at a load).
+  (native resolution, 640x480, FXAA, SMAA, 16:9). On the board path 114 of 118 seconds are at
+  55 fps or more; seconds with a package loading drop lower (one at 30 fps). TankedUp (7,500
+  draws a frame, 1.6 MB of vertices streamed a frame): 58-61 fps, also at 16:9 with SMAA in a
+  1600x899 canvas. MSAA 4x and SSAA 2x in TankedUp: 58-61 fps.
+- A full 6-stage tournament (the native recipe of docs/INTEGRATION_NOTES.md as key events,
+  2700 s): 19 minigames (18 and the final one), the winner (`GameWinner` at 2452 s) and back to
+  the title (2489 s); no wasm trap, fault, `UNIMPLEMENTED` or assertion. 82 % of the seconds at
+  55 fps or more, 72 % at 59 or more, the lowest 16 (other browser runs used the same GPU
+  during parts of it). The game's renderer process grew from 641 MB to 961 MB resident.
 - Game work per frame (the game's worker between two yields): about 1 ms at the title, about
-  10 ms in Hopper (4 players).
+  10 ms in Hopper and TankedUp (4 players).
+- The Asyncify build, Hopper, each pair measured the same way: in Chrome 60-61 fps with
+  404 ms of game work per second against 340 ms with JSPI (19 % more); in headless WebKit 26.5
+  44-51 fps and 447 ms against 48-58 fps and 362 ms (24 % more).
+- Build: a clean `build-web` (both builds, FFmpeg and SDL from the caches) takes 24 s on the
+  M3 Max.
 - Start: from **Play** to the title's first frame about 1 s with the videos off; the
   WebAssembly module is 5.6 MB (`openfrenzy.wasm`), the loader 1.4 MB (`openfrenzy.js`).
 - Memory: the WebAssembly memory is 2.125 GB (reserved; pages are used as the game touches
-  them). Resident in a run of the tournament: the game's renderer process 641 MB, all Chrome
-  processes of the profile 1.65 GB.
+  them). Resident during the tournament: the game's renderer process 641 MB after 2 minutes,
+  961 MB at the end; all Chrome processes of the profile 1.65 GB, then 2.16 GB.
 - Disc image copy: 1.1 s (Chrome), 1.6 s (Firefox), 0.8 s (WebKit), 2.08 GB from the local SSD.
 
 ## Tests
@@ -226,4 +238,5 @@ The site's code is the project's (CC0) and OpenCE's (CC0). `openfrenzy.wasm` als
 SDL 3 (zlib licence), Emscripten's C library (MIT and University of Illinois/NCSA; musl: MIT)
 and FFmpeg 9.0.2 (LGPL 2.1 or later; `deps/ffmpeg-web-*/LICENSES/SOURCE.txt` has the source and
 the configure line). FFmpeg is linked statically: the source and the build files to build it
-again and relink are in this repository.
+again and relink are in this repository. The build writes these notices to
+`build-web/site/licenses.txt`, which the page links in its footer.

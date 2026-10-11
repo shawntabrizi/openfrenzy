@@ -286,6 +286,36 @@ foreach(_f ${_site_files})
     DEPENDS "${_f}")
   list(APPEND _site_outputs "${SITE}/${_name}")
 endforeach()
+# licenses.txt: the licences of the third-party code in the modules (FFmpeg's LGPL notice with
+# its source and configure line, SDL, Emscripten's runtime and C library)
+set(_licence_head "${GEN}/licenses-head.txt")
+file(WRITE "${_licence_head}" "OpenFrenzy web build: third-party licences
+
+openfrenzy.wasm and openfrenzy-asyncify.wasm contain, besides OpenFrenzy's own code (CC0) and
+OpenCE's (CC0): FFmpeg (LGPL 2.1 or later; its notice, source and configure line follow), SDL 3
+(zlib licence) and Emscripten's runtime and C library (MIT / University of Illinois NCSA; its
+musl part: MIT). The game's data is not part of this site: the player supplies it.
+
+")
+set(_licence_parts "${_licence_head}")
+if(OPENFRENZY_WEB_BINK_FFMPEG)
+  list(APPEND _licence_parts "${OPENFRENZY_WEB_FFMPEG_DIR}/LICENSES/SOURCE.txt"
+       "${OPENFRENZY_WEB_FFMPEG_DIR}/LICENSES/COPYING.LGPLv2.1")
+endif()
+file(GLOB _sdl_licence "${OPENFRENZY_EM_CACHE}/ports/openfrenzy_sdl3/SDL-*/LICENSE.txt")
+# (emsdk has Emscripten's LICENSE in its root; Homebrew one level up)
+set(_em_licence "${OPENFRENZY_EM_ROOT}/LICENSE")
+if(NOT EXISTS "${_em_licence}")
+  get_filename_component(_em_licence "${OPENFRENZY_EM_ROOT}/../LICENSE" ABSOLUTE)
+endif()
+if(NOT _sdl_licence OR NOT EXISTS "${_em_licence}")
+  message(FATAL_ERROR "port/web: the SDL or Emscripten licence file is missing (${_sdl_licence} ${_em_licence})")
+endif()
+list(APPEND _licence_parts ${_sdl_licence} "${_em_licence}")
+add_custom_command(OUTPUT "${SITE}/licenses.txt"
+  COMMAND "${CMAKE_COMMAND}" -E cat ${_licence_parts} > "${SITE}/licenses.txt"
+  DEPENDS ${_licence_parts} VERBATIM)
+list(APPEND _site_outputs "${SITE}/licenses.txt")
 add_custom_target(web_site ALL DEPENDS ${_site_outputs})
 
 # ---------- tests (ctest --test-dir build-web -L web): docs/WEB.md "Tests"
