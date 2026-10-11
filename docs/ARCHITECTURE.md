@@ -422,9 +422,18 @@ at commit `e0b581b1`, CC0):
   (OffscreenCanvas) and may block. OpenCE runs one iteration of Halo's main loop per browser
   frame; this game presents from many nested loops (the mode loop, loading screens, the Bink
   player), so instead `platform_video_swap` suspends the WebAssembly stack with JSPI until the
-  worker's next animation frame (`port/web/src/web_frame.c`). JSPI is incompatible with
-  Emscripten's `EMULATE_FUNCTION_POINTER_CASTS`, so every indirect call must have the callee's
-  exact type (a mismatch traps); direct calls are checked at link time (`--fatal-warnings`).
+  worker's next animation frame (`port/web/src/web_frame.c`).
+- **Calls whose type is not the callee's.** WebAssembly traps on an indirect call whose type
+  differs from the callee's; AArch64 and x86 do not care (extra arguments are ignored), and the
+  decompiled code has such calls (vtable slots, `code *`, callbacks). Emscripten's
+  `EMULATE_FUNCTION_POINTER_CASTS` cannot be used with JSPI. `port/web/tools/wasm_icall_adapt.py`
+  runs after the link: every `call_indirect` goes through a small function per call type that
+  checks the callee's real type (a `br_table` over the static function table) and, on a
+  mismatch, passes the arguments as AArch64 would (integer and float classes in order, a
+  missing one 0). It also gives LLVM's trapping `_bitcast_invalid` stubs (direct calls through
+  a cast that LLVM could not fix) the same adapted body, and fails the build if one is left.
+  Emscripten therefore links at `-O1` and the tool runs `wasm-opt -O2` afterwards. Direct
+  calls are checked at link time (`--fatal-warnings`).
 - **No weak stubs.** `gen/of_stubs.c` is not linked: every table function has a definition, and
   a missing one is a link error.
 - **Inline assembly.** The data files' file-scope assembly is Mach-O syntax for the native

@@ -138,7 +138,7 @@ extern unsigned char DAT_00290718[];
 #define co_Sky_Ctor ((void *(*)(void *))FUN_000d18a0)
 #define co_Sky_Delete ((void (*)(void *))FUN_000d0fb0)
 #define co_Sky_Update ((void (*)(void *, float))FUN_000d15c0)
-#define co_Sky_CreateLight ((void *(*)(void *, int, void *, int, int, int, int))FUN_000d10d0)
+#define co_Sky_CreateLight ((void *(*)(void *, int, void *, int, int, int, unsigned char))FUN_000d10d0)
 #define co_Obj2c_Delete ((void (*)(void *))FUN_000d1dd0)
 #define co_Obj2c_Update ((void (*)(void *, float))FUN_000d19f0)
 #define co_Timer_Start ((void (*)(void *, unsigned int))FUN_000d1fc0)
@@ -167,7 +167,7 @@ extern unsigned char DAT_00290718[];
 #define co_Rack_AddRocket ((int (*)(void *, int))FUN_000cb050)
 #define co_Rack_HasRoom ((int (*)(void *, int))FUN_000cb0c0)
 #define co_Conveyor_FindNearest ((void *(*)(void *, float *, int))FUN_000ca4c0)
-#define co_Sparks_Stream ((void (*)(void *, float *, float *, int, int, int))FUN_000d4600)
+#define co_Sparks_Stream ((void (*)(void *, float *, float *, short, short, short))FUN_000d4600)
 
 /* rowing_a: the frame timer's mark (the timer object is the resource's +0x18) */
 #define co_Timer_Mark ((void (*)(void *, int))FUN_001af540)

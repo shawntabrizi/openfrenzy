@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenFrenzy</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="launcher">
+  <h1>OpenFrenzy</h1>
+  <p class="lead">Fuzion Frenzy, decompiled, in your browser. The page needs your own disc image
+  of the game. Nothing is uploaded: the image is copied into this browser's private storage for
+  this site, once.</p>
+
+  <section>
+    <h2>This browser</h2>
+    <ul id="checks"></ul>
+    <p id="checks-note" class="note" hidden></p>
+  </section>
+
+  <section>
+    <h2>Game data</h2>
+    <p id="data-status">Looking for the disc image&hellip;</p>
+    <label id="image-label" class="button">Choose a disc image&hellip;
+      <input id="image-input" type="file" accept=".iso,.xiso,application/octet-stream" hidden>
+    </label>
+    <button id="delete-data" type="button" disabled>Delete the disc image</button>
+    <div id="import-progress" hidden>
+      <div class="bar"><div id="import-bar"></div></div>
+      <p id="import-text"></p>
+    </div>
+    <p id="storage-status" class="note"></p>
+  </section>
+
+  <section>
+    <h2>Settings</h2>
+    <div class="settings">
+      <label>Resolution
+        <select id="set-resolution">
+          <option value="native">Native (the window's pixels)</option>
+          <option value="original">Original (640&times;480, scaled)</option>
+        </select>
+      </label>
+      <label>Anti-aliasing
+        <select id="set-aa">
+          <option value="off">Off</option>
+          <option value="fxaa">FXAA</option>
+          <option value="smaa">SMAA</option>
+        </select>
+      </label>
+      <label>Aspect ratio
+        <select id="set-aspect">
+          <option value="4:3">4:3 (original)</option>
+          <option value="16:10">16:10</option>
+          <option value="16:9">16:9</option>
+        </select>
+      </label>
+      <label>Videos
+        <select id="set-videos">
+          <option value="on">On</option>
+          <option value="off">Off (skip the Bink videos)</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section>
+    <button id="play" type="button" class="primary" disabled>Play</button>
+    <span id="play-note" class="note"></span>
+    <p class="note">Controls: arrow keys or WASD move, Enter or Space is A, Escape or Backspace is B,
+    and a gamepad works once one of its buttons is pressed. Sound starts after the first click or
+    key press. <button id="export-saves" type="button" class="link">Export saves</button>
+    <button id="download-log" type="button" class="link">Download the log</button></p>
+  </section>
+  <footer class="note">OpenFrenzy is a fan project, not made or approved by Microsoft or Blitz
+  Games. Fuzion Frenzy is a trademark of its owners. The page serves no game data.</footer>
+</main>
+
+<div id="game" hidden>
+  <canvas id="canvas" tabindex="0"></canvas>
+  <div id="toolbar">
+    <span id="fps"></span>
+    <button id="fullscreen" type="button">Fullscreen</button>
+  </div>
+  <div id="starting"><p id="starting-text">Starting&hellip;</p></div>
+  <div id="fatal" hidden>
+    <h2>The game stopped</h2>
+    <p id="fatal-text"></p>
+    <pre id="fatal-log"></pre>
+    <button id="fatal-reload" type="button">Reload</button>
+    <button id="fatal-log-download" type="button">Download the log</button>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

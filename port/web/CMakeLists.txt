@@ -37,6 +37,12 @@ set(CMAKE_C_FLAGS_RELEASE "")
 set(CMAKE_C_FLAGS_DEBUG "")
 
 option(OPENFRENZY_WEB_ASSERTIONS "Emscripten run-time assertions (slower)" OFF)
+# Binaryen's optimisation of the linked module: -O2, or empty to keep every function apart in
+# stack traces. Emscripten links at -O1, which does not run Binaryen: port/web/tools/
+# wasm_icall_adapt.py must see the module before any inlining (it gives bodies to LLVM's
+# trapping "_bitcast_invalid" stubs, which -O2 would inline into their callers), and then
+# runs wasm-opt with this level itself.
+set(OPENFRENZY_WEB_WASM_OPT "-O2" CACHE STRING "wasm-opt level of the web build after the call adapter")
 
 set(OPENFRENZY_PLATFORM_MODULES runtime vfs xkernel d3d8 dsound input)
 set(SDL_PORT "${WEB}/openfrenzy_sdl3.py")
@@ -98,7 +104,7 @@ endforeach()
 list(FILTER _platform_sources EXCLUDE REGEX "/src/runtime/(of_boot|of_main)\\.c$")
 list(APPEND _platform_sources "${GEN}/xgpu_smaa.c"
      "${WEB}/src/web_gl_host.c" "${WEB}/src/web_memory_watch.c" "${WEB}/src/web_frame.c"
-     "${WEB}/src/web_bink.c")
+     "${WEB}/src/web_bink.c" "${WEB}/src/web_icall.c")
 add_library(ofplatform_web STATIC ${_platform_sources})
 add_dependencies(ofplatform_web web_generated)
 target_compile_options(ofplatform_web PRIVATE ${PLATFORM_FLAGS})
@@ -171,7 +177,7 @@ if(OPENFRENZY_WEB_ASSERTIONS)
   set(_assertions 1)
 endif()
 target_link_options(openfrenzy_web PRIVATE
-  -O2 -pthread "--use-port=${SDL_PORT}"
+  -O1 -pthread "--use-port=${SDL_PORT}"
   # a direct call whose type does not match its callee is an error, not a trap at run time
   -Wl,--fatal-warnings
   # the game's main on a worker of its own, where it may block; the page's thread passes events
@@ -200,6 +206,23 @@ target_link_options(openfrenzy_web PRIVATE
   "SHELL:--pre-js ${_pre_js}")
 set_target_properties(openfrenzy_web PROPERTIES OUTPUT_NAME openfrenzy SUFFIX ".js"
   RUNTIME_OUTPUT_DIRECTORY "${SITE}" LINK_DEPENDS "${_library_js};${_pre_js};${SDL_PORT}")
+
+# Indirect calls whose declared type is not the callee's are adapted after the link, as
+# AArch64 would pass the arguments (port/web/tools/wasm_icall_adapt.py, docs/WEB.md).
+set(_binaryen "${OPENFRENZY_EM_ROOT}/binaryen/bin")
+if(NOT EXISTS "${_binaryen}/wasm-opt")
+  get_filename_component(_binaryen "${OPENFRENZY_EM_ROOT}/../bin" ABSOLUTE)
+endif()
+if(NOT EXISTS "${_binaryen}/wasm-opt")
+  message(FATAL_ERROR "port/web: Binaryen (wasm-opt, wasm-dis) not found next to Emscripten (${OPENFRENZY_EM_ROOT})")
+endif()
+add_custom_command(TARGET openfrenzy_web POST_BUILD
+  COMMAND "${Python3_EXECUTABLE}" -I "${WEB}/tools/wasm_icall_adapt.py" --binaryen "${_binaryen}"
+          "--opt=${OPENFRENZY_WEB_WASM_OPT}" --map "${CMAKE_BINARY_DIR}/openfrenzy.icall.txt"
+          "${SITE}/openfrenzy.wasm" "${SITE}/openfrenzy.adapted.wasm"
+  COMMAND "${CMAKE_COMMAND}" -E rename "${SITE}/openfrenzy.adapted.wasm" "${SITE}/openfrenzy.wasm"
+  COMMENT "Adapting indirect calls (wasm_icall_adapt.py)"
+  VERBATIM)
 
 # ---------- the page (port/web/site), copied beside openfrenzy.js
 

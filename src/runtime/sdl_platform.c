@@ -160,6 +160,9 @@ static BOOL video_initialize(unsigned long width, unsigned long height)
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
 #ifdef HALO_WEB
+	/* SDL_GL_SwapWindow would yield to the browser itself (emscripten_sleep, since JSPI counts
+	as Asyncify); platform_video_swap does it once a frame instead (port/web/src/web_frame.c) */
+	SDL_SetHint(SDL_HINT_EMSCRIPTEN_ASYNCIFY, "0");
 	/* an opaque canvas: the game keeps scratch values in destination alpha, which a page
 	would otherwise blend the picture by (OpenCE's web build) */
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 0);

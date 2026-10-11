@@ -34,7 +34,7 @@ owner fixes the prototype, the cast does nothing.
 	((void *(*)(int, const char *, int, int))FUN_0004c480)((size), (file), (line), (flags))
 /* 0x0004c420 allocate(size, fill, file, line, flags, name) */
 #define bdAllocFill(size, fill, file, line, flags, name) \
-	((void *(*)(int, int, const char *, int, int, const char *))FUN_0004c420)( \
+	((void *(*)(int, unsigned char, const char *, int, int, const char *))FUN_0004c420)( \
 		(size), (fill), (file), (line), (flags), (name))
 /* 0x0004c110 free */
 #define bdFree(p) ((void (*)(void *))FUN_0004c110)((void *)(p))

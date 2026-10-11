@@ -30,4 +30,5 @@ if(OPENFRENZY_EM_PYTHON)
 endif()
 execute_process(COMMAND "${_em_bin}/em-config" EMSCRIPTEN_ROOT
                 OUTPUT_VARIABLE _em_root OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
+set(OPENFRENZY_EM_ROOT "${_em_root}" CACHE PATH "Emscripten root (em-config EMSCRIPTEN_ROOT)")
 include("${_em_root}/cmake/Modules/Platform/Emscripten.cmake")

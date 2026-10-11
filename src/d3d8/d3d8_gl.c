@@ -4718,12 +4718,39 @@ static void index_extent(const WORD *indices, unsigned long count, unsigned long
 
 /* ---------- vertex data */
 
+#ifdef HALO_WEB
+/* WebGL (ANGLE on Metal in Chrome on a Mac) copies a whole buffer that draws already queued
+still read before it writes part of it: the streaming ring's 16 MB for each of the hundreds of
+uploads in a frame (4 fps at the title). On the web each upload instead fills a buffer object
+of its own with glBufferData, which gives it new storage and needs no copy. The objects are
+reused round the pool; a draw still queued keeps the storage it was given. Every caller takes
+the buffer from device.stream_buffer or device.index_buffer after the upload. */
+#define WEB_UPLOAD_BUFFERS 4096
+
+static GLuint web_upload_buffers[WEB_UPLOAD_BUFFERS];
+static unsigned long web_upload_next;
+
+static GLuint web_upload_buffer(void)
+{
+	GLuint *buffer = &web_upload_buffers[web_upload_next++ % WEB_UPLOAD_BUFFERS];
+
+	if (!*buffer)
+		glGenBuffers(1, buffer);
+	return *buffer;
+}
+#endif
+
 /* makes room for size bytes of uploads, orphaning the stream buffer if it
 is full. A draw reserves room for all of its streams at once: orphaning
 between two of them would leave the attributes already pointed at the
 buffer reading its new, empty storage. */
 static void stream_reserve(unsigned long size)
 {
+#ifdef HALO_WEB
+	/* (each upload has a buffer of its own: stream_upload) */
+	(void)size;
+	return;
+#endif
 	if (device.stream_offset + size > STREAM_BUFFER_SIZE)
 	{
 		/* orphan the buffer and start again */
@@ -4740,6 +4767,12 @@ static unsigned long stream_upload(const void *data, unsigned long size)
 	unsigned long length = size;
 
 	size = (size + 15) & ~15UL;
+#ifdef HALO_WEB
+	device.stream_buffer = web_upload_buffer();
+	state_array_buffer(device.stream_buffer);
+	glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(length ? length : 16), data, GL_STREAM_DRAW);
+	return 0;
+#endif
 	stream_reserve(size);
 	offset = device.stream_offset;
 	state_array_buffer(device.stream_buffer);
@@ -4803,6 +4836,12 @@ static unsigned long index_upload(const void *data, unsigned long size)
 	unsigned long length = size;
 
 	size = (size + 15) & ~15UL;
+#ifdef HALO_WEB
+	device.index_buffer = web_upload_buffer();
+	state_element_array_buffer(device.index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)(length ? length : 16), data, GL_STREAM_DRAW);
+	return 0;
+#endif
 	state_element_array_buffer(device.index_buffer);
 	if (device.index_offset + size > INDEX_BUFFER_SIZE)
 	{
@@ -5218,8 +5257,44 @@ void WINAPI D3DDevice_End(void)
 	if (!count || !prepare_draw(TRUE))
 		return;
 	trace_draw("immediate", type, count, device.immediate_vertices);
+#ifdef HALO_WEB
+	{
+		/* A vertex of all sixteen registers is 256 bytes, more than WebGL's largest stride
+		(255): each attribute goes in an array of its own (OpenCE's web build, CC0) */
+		static float *planar;
+		static unsigned long planar_capacity;
+		unsigned long vertex, attribute_size = 4 * sizeof(float);
+
+		if (planar_capacity < count)
+		{
+			free(planar);
+			planar_capacity = count + 256;
+			planar = malloc(planar_capacity * stride);
+			if (!planar)
+			{
+				planar_capacity = 0;
+				return;
+			}
+		}
+		for (index = 0; index < XGPU_VERTEX_ATTRIBUTE_COUNT; index++)
+		{
+			for (vertex = 0; vertex < count; vertex++)
+				memcpy(planar + (index * count + vertex) * 4,
+					device.immediate_vertices + (vertex * XGPU_VERTEX_ATTRIBUTE_COUNT + index) * 4, attribute_size);
+		}
+		offset = stream_upload(planar, count * stride);
+		for (index = 0; index < XGPU_VERTEX_ATTRIBUTE_COUNT; index++)
+		{
+			state_attribute_stream(index, 0, device.stream_buffer, 4, GL_FLOAT, GL_FALSE, FALSE,
+				(GLsizei)attribute_size, offset, index * count * attribute_size);
+		}
+	}
+#else
 	offset = stream_upload(device.immediate_vertices, count * stride);
-#ifdef HALO_GLES
+#endif
+#if defined(HALO_WEB)
+	/* (the attributes are pointed above) */
+#elif defined(HALO_GLES)
 	for (index = 0; index < XGPU_VERTEX_ATTRIBUTE_COUNT; index++)
 	{
 		state_attribute_stream(index, 0, device.stream_buffer, 4, GL_FLOAT, GL_FALSE, FALSE, (GLsizei)stride,

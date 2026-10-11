@@ -125,7 +125,7 @@ struct CGameMode;
 
 /* ---------- engine_misc debug menus */
 #define ext_MenuCreate ((void *(*)(int))FUN_00047370)
-#define ext_MenuAdd ((char *(*)(void *, const char *, int, void *, int))FUN_00047480)
+#define ext_MenuAdd ((char *(*)(void *, const char *, unsigned short, void *, unsigned short))FUN_00047480)
 #define ext_MenuFree ((void (*)(void *))FUN_000473f0)
 #define ext_MenuFind ((int (*)(void *, int))FUN_00047da0)
 #define ext_MenuRemove ((void (*)(void *, int))FUN_00047d20)

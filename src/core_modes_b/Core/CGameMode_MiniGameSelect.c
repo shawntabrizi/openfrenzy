@@ -234,7 +234,7 @@ void CGameMode_MiniGameSelect_ShowGame(struct CGameMode_MiniGameSelect *self, in
 
 	sprintf(name, "%s%d.bmp", cmb_game_prefix[DAT_002ba238[index].game], DAT_002ba238[index].variant);
 	picture = CMB_RESOURCE4(0, name, 0, 0xdefa);
-	((void (*)(void *, int, int, int, int))FUN_0002da90)(self->info, DAT_002ba238[index].game,
+	((void (*)(void *, int, int, int, char))FUN_0002da90)(self->info, DAT_002ba238[index].game,
 		DAT_002ba238[index].variant, picture, from_below != 0);
 }
 

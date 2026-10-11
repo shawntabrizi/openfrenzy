@@ -2580,7 +2580,7 @@ void CRollerBallGame_Initialise(unsigned char *self)
 		bkPrintf("CRollerBall_Game::Initialise - respawnSystem.Initialise FAILED!\n");
 	} else if (CRollerBallSpotFX_Init(self + RB_GO_SPOTFX, gen) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - spotFXSystem.Initialise FAILED!\n");
-	} else if (RB_CALL(FUN_001966a0, unsigned char (*)(void *, void *, const char *))(self + RB_GO_WORLD,
+	} else if (RB_CALL(FUN_001966a0, int (*)(void *, void *, const char *))(self + RB_GO_WORLD,
 			RB_PTR(self, RB_GO_PACKAGE),
 			RB_VAR(const char *, 0x002b4b90u + RB_I32(self, RB_GO_VARIATION) * 4)) == 0) {
 		bkPrintf("CRollerBall_Game::Initialise - world.Initialise FAILED!\n");
