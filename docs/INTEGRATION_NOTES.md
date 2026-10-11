@@ -719,6 +719,103 @@ Explicit function casts whose parameter types differ from the callee are outside
 classes: `scripts/check_call_arity.py` and `scripts/check_float_abi.py` cover them for direct calls, and
 calls through vtables are still not covered.
 
+### Object pointer type audit (fix-ptrtypes)
+
+`GAME_FLAGS` hid `-Wincompatible-pointer-types` (object pointers of different types). Method
+as in the audit above: the 415 game units compiled again with `-fsyntax-only -ferror-limit=0`,
+the class on, and clang's source ranges. Hits before: **264**, after: **0**.
+
+By module (before): bumpercars_a 92, core_modes_a 57, classlib_ui 37, meta_a 16,
+bumpercars_b 16, bdisplay 13, mousewhack 10, classlib_fx 5, foxhunt 5, meta_b 4,
+clusteroids 4, drillers 2, demolition_c 2, bactor 1.
+
+Result: **no real bug**. A pointer conversion does not change the address, so a hit can be real
+only when the callee reads the memory with a different meaning than the x86 code, or when the
+expression has the wrong address or the wrong level of indirection. Each hit was put into one of
+these groups and checked:
+
+| Hits | Kind | Check |
+|---|---|---|
+| 88 | bumpercars_a: `CBCar_Game` subobjects (`debug`, `camera`, `goal`, `sound`, `light`, `flames`) are byte arrays in `bumpercars_a.h`, given to their class methods | the struct definitions are private to their `.c` files; the member offsets have `OF_ASSERT_OFFSET`; the address is the subobject |
+| 78 | a pointer the code holds, cast to a wrong pointer spelling or not cast, given to a typed method (`bkPackage` 16, `CMenuMode` 16, `biMap` 7, `BLight` 6, `CPointSprites`/`CFire_PointSprites` 8, `CScoreTable` 4, `CLightningMgr` 4, `BActorNode` 3, `CSpriteVB` 3, `HopSparks` 3, 8 others) | value casts of pointer-holding `int` variables and fields (`OV_I`, `CMA_FIELD`, `self->package`, `DAT_002b9670`, which is an `int` that holds the package pointer); array globals (`DAT_00308460`, `DAT_00290ea8`, `DAT_002b95e8`, `DAT_002b9968`) give their address |
+| 51 | `undefined4 *` for `float *` / `const float *` | every operand is `float` data: local `float[4]`/`float[16]`, `DAT_002855f0` (`float[16]` in every module), `DAT_0028372c` (`float[8]`, 4 floats a light), actor fields at +0xd0 (byte offsets on an `int`), `DR_PTR` data. No `undefined4` array is filled with converted values |
+| 17 | two names for one layout or a wrong declaration: `BInputMap`/`biMap` 9 and `BInputChannel`/`biChannel` 1 (engine_misc vs bkernel), `uint32_t[8]` for `bkProfileTimer` (0x20) 3, bumpercars_b `g_GenericGoals` declared `struct BCarGenericGoal *` (an incomplete tag; the `.decls` use `struct CParticleEffect *`) 4 | same offsets and sizes |
+| 12 | bumpercars_b: `bLoadResource` (returns `struct bkResource *`) stored in `BActor *`/`bdTexture *` fields | the original stores EAX as is |
+| 9 | `(undefined4 *)"Name"` for `const char *` (`CMenuMode` names) | string literals |
+| 9 | single cases: `char *`/`float *` byte offsets 2, `CBCarAI *` 3, `const char **` 1, `void **` 1, `PlatformAnim *` 1, `unsigned long *` 1 | below |
+
+The `CPointSprites`/`CFire_PointSprites` pair (classlib_fx vs carryon_b) is also one layout:
+0x9c bytes, the same fields. Cleanup to do (not done here, the casts keep the code the same):
+one type for each of these pairs (`BInputMap`/`biMap`, `BInputChannel`/`biChannel`,
+`CPointSprites`/`CFire_PointSprites`), and the bumpercars_a subobject structs in
+`bumpercars_a.h` so that `CBCar_Game` can use them as member types.
+
+Checked against the x86 code or the callee:
+
+- `CMetaRain_Init((struct CMetaRain *)MA_ADDR(self, 0xa0), ...)` (meta_a 0x0014f670): the
+  rain object is embedded at +0xa0. The original passes the address (0x0014f9d5
+  `lea ecx, [ebp + 0xa0]`); +0xa0 read as a value elsewhere is the rain's first field (`system`).
+- `HopSparks_Delete(self)` in foxhunt 0x00133f90: the original gives the caller's ECX
+  (`mov esi, ecx` ... `mov ecx, esi` before `call 0x0013b460`).
+- `CLSparks_Draw` (0x0007f6a0) gives `[edi + 0x10]` to both `PointSprites_Begin` and
+  `CFire_PointSprites_Flush`: one object with two names.
+- Searchlight `pathTime` (`float[5]`, meta_b) given to `PlatformAnim_Advance` (charlib), which
+  reads +0x08 `length` and +0x0c `mode` as `int`. The only writers store 0.0f (all bits zero, the
+  same as int 0), so the reads are the same. The member comment already says "int last key time,
+  int behaviour".
+- `CRColl_RayCast(..., (void **)&hit)` with `int hit` (meta_a): the callee writes one 32-bit
+  pointer into the `int`.
+- `FUN_001667e0(word, PTR_s_VAR_EQUAL_002b2398)`: an array of 35 string pointers, given as
+  `const char **` (the table address).
+- `CIntroCam` `key + 4`, foxhunt `POS(...)` stored into a `char *` field, bumpercars_a
+  `(char *)slot + 0x10` and `players[i] + 0x10` for `CBCarAI *`: byte offsets, the same as the
+  neighbouring field reads.
+- `&mode->handle` (`uint32_t *`) for `unsigned long *` (bactor): `long` is 32 bits (ILP32).
+
+Fixes:
+
+- Declaration (bumpercars_b, 4 hits): `g_GenericGoals` (`bcb_items.h`) and the two locals in
+  `CBCar_Waypoints.c` are `struct CParticleEffect *`, the type the `.decls` use.
+- 260 call sites and assignments: an explicit cast to the parameter type. An existing wrong
+  cast (`(undefined4 *)`, `(int *)`, `(ushort *)`, `(uint *)`) is replaced (124), the 9 casts
+  of string literals are removed, else the expression is wrapped (127). A script made these
+  edits from clang's source ranges (the range end is one column after the last character).
+  No `.decls` prototype was wrong.
+- `port/guest/CMakeLists.txt`: `-Wno-incompatible-pointer-types` removed;
+  `-Werror=incompatible-pointer-types` added. The flag-order issue of the audit above is gone:
+  no `-Wno-` of the group is left. A probe file compiled with the game flags stops with both
+  errors (`unsigned int[4]` for `float *`, and `void (float)` for `void (*)(int)`).
+
+Proof that the code did not change: the `*.c.ll` IR that guest_cc.py leaves (before the rebase
+pass) is byte-identical before and after for 414 of 415 game objects. The one difference,
+`bdisplay/BDISPLAY/xbDisplay.c`, is two `!srcloc` metadata values of inline asm (byte offsets
+in the source file, +75 = three casts of 25 characters before the asm).
+
+Verified (build-fix-ptrtypes): clean build with the new flags (230 warning lines, as before),
+`ctest -LE gameplay` 6/6, `ctest -L gameplay -j8 --timeout 300` 13/13 (240 s), all 31
+`src/*/tests/run_tests.sh` pass (each under a 300 s alarm; they compile their tests with the
+game flags, so the test sources also have no hit). No minigame run was made beyond the gameplay
+tests, because no real bug was found.
+
+Still hidden, not audited (hits counted with the class on; the default warning set where the
+flag is `-w`):
+
+| Where | Flag | Hits | Risk |
+|---|---|---:|---|
+| game | `-Wno-nonportable-include-path` | 853 | none for the code; an `#include` case mismatch breaks only a build on a case-sensitive file system |
+| game | `-Wno-pointer-sign` | 126 | low: `char *` vs `unsigned char *`, same width; the callee's type decides how a byte is read |
+| game | `-Wno-parentheses` | 16 (13 `&`/`|`, 3 `<<`/`+`) | low to medium: C precedence decides; a hand-written Ghidra expression can be grouped wrongly. Worth a short look |
+| game | `-Wno-unused-value`, `-Wno-microsoft-anon-tag`, `-Wno-ignored-pragmas` | 0 each | none now; the flags can go |
+| platform layer (`ofplatform`, smoke, platform check) | `-w` | 80 (62 nonportable-include-path, 18 `weak identifier ... never declared`, the pragma lines noted in "Build warnings") | low |
+| guest runtime | `-w` | 3 (2 unsupported-visibility, 1 macro-redefined) | low |
+| musl (`guestc`) | `-w` | 433 (232 shift-op-parentheses, 184 unsupported-visibility, 7 string-plus-int, 6 tautological compare, 2 constant-conversion, 1 parentheses, 1 deprecated-non-prototype) | low: upstream musl code, its own idioms |
+| game stubs | `-w` | 0 | none |
+
+The `-w` counts are for clang's default set only; `-Wint-conversion` and
+`-Wincompatible-pointer-types` are in that set, so the platform layer, runtime and musl have no
+hit of the two audited classes either. Calls through explicit function casts and vtables stay
+outside these warnings (see the audit above).
+
 ### Gamepad path with virtual pads (fix-gamepad-virtual-test, round 6)
 
 Until now only scripted pad states (`OPENFRENZY_DEBUG_TEST_INPUT`, which skips SDL) and pushed
