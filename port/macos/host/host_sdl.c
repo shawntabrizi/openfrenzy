@@ -27,6 +27,7 @@ enum handle_type {
     _handle_context,
     _handle_gamepad,
     _handle_audio,
+    _handle_joystick,
 };
 
 struct handle {
@@ -61,6 +62,18 @@ static uint32_t handle_new(int type, void *object) {
     pthread_mutex_unlock(&handle_lock);
     host_logf(HOST_LOG_ERROR, "out of SDL handles");
     return 0;
+}
+
+/* openfrenzy: frees a handle (the object is closed by the caller) */
+static void handle_free(uint32_t handle, int type) {
+    if (handle == 0 || handle >= HANDLE_COUNT)
+        return;
+    pthread_mutex_lock(&handle_lock);
+    if (handles[handle].type == type) {
+        handles[handle].type = _handle_free;
+        handles[handle].object = NULL;
+    }
+    pthread_mutex_unlock(&handle_lock);
 }
 
 static void *handle_get(uint32_t handle, int type) {
@@ -327,6 +340,91 @@ int host_sdl_rumble_gamepad(uint32_t gamepad, uint32_t low, uint32_t high, uint3
     SDL_Gamepad *object = handle_get(gamepad, _handle_gamepad);
 
     return object ? SDL_RumbleGamepad(object, (Uint16)low, (Uint16)high, milliseconds) : 0;
+}
+
+/* openfrenzy: closes a gamepad that the guest opened (hot-plug: SDL keeps a removed
+ * pad's SDL_Gamepad open until it is closed) and frees its handle */
+void host_sdl_close_gamepad(uint32_t gamepad) {
+    SDL_Gamepad *object = handle_get(gamepad, _handle_gamepad);
+
+    if (!object)
+        return;
+    handle_free(gamepad, _handle_gamepad);
+    SDL_CloseGamepad(object);
+}
+
+/* ---------- openfrenzy: virtual gamepads (debug.virtual_pads, src/runtime/sdl_platform.c)
+ *
+ * The guest's SDL_VirtualJoystickDesc has 32-bit pointers and guest callbacks, which SDL
+ * cannot call, so the guest passes the plain fields and the host sets its own callbacks:
+ * Rumble logs each request the game sends (XInputSetState -> SDL_RumbleGamepad, and SDL's
+ * own stop when a rumble's duration ends). */
+struct virtual_pad {
+    SDL_JoystickID id;
+};
+
+static bool SDLCALL virtual_pad_rumble(void *userdata, Uint16 low, Uint16 high) {
+    struct virtual_pad *pad = userdata;
+
+    host_logf(HOST_LOG_INFO, "virtual gamepad %u: rumble low %u high %u", (unsigned)pad->id,
+              (unsigned)low, (unsigned)high);
+    return true;
+}
+
+static void SDLCALL virtual_pad_cleanup(void *userdata) { SDL_free(userdata); }
+
+uint32_t host_sdl_attach_virtual_joystick(int type, int naxes, int nbuttons, uint32_t button_mask,
+                                          uint32_t axis_mask, const char *name) {
+    struct virtual_pad *pad = SDL_calloc(1, sizeof(*pad));
+    SDL_VirtualJoystickDesc desc;
+
+    if (!pad)
+        return 0;
+    SDL_INIT_INTERFACE(&desc);
+    desc.type = (Uint16)type;
+    desc.naxes = (Uint16)naxes;
+    desc.nbuttons = (Uint16)nbuttons;
+    desc.button_mask = button_mask;
+    desc.axis_mask = axis_mask;
+    desc.name = name;
+    desc.userdata = pad;
+    desc.Rumble = virtual_pad_rumble;
+    desc.Cleanup = virtual_pad_cleanup;
+    pad->id = SDL_AttachVirtualJoystick(&desc);
+    if (!pad->id) {
+        SDL_free(pad);
+        return 0;
+    }
+    return pad->id;
+}
+
+int host_sdl_detach_virtual_joystick(uint32_t id) {
+    return SDL_DetachVirtualJoystick((SDL_JoystickID)id) ? 1 : 0;
+}
+
+uint32_t host_sdl_open_joystick(uint32_t id) {
+    return handle_new(_handle_joystick, SDL_OpenJoystick((SDL_JoystickID)id));
+}
+
+void host_sdl_close_joystick(uint32_t joystick) {
+    SDL_Joystick *object = handle_get(joystick, _handle_joystick);
+
+    if (!object)
+        return;
+    handle_free(joystick, _handle_joystick);
+    SDL_CloseJoystick(object);
+}
+
+int host_sdl_set_joystick_virtual_axis(uint32_t joystick, int axis, int value) {
+    SDL_Joystick *object = handle_get(joystick, _handle_joystick);
+
+    return object ? SDL_SetJoystickVirtualAxis(object, axis, (Sint16)value) : 0;
+}
+
+int host_sdl_set_joystick_virtual_button(uint32_t joystick, int button, int down) {
+    SDL_Joystick *object = handle_get(joystick, _handle_joystick);
+
+    return object ? SDL_SetJoystickVirtualButton(object, button, down != 0) : 0;
 }
 
 /* ---------- audio */

@@ -67,6 +67,8 @@ static struct setting settings[] =
 	{ "debug.screenshot_directory", "" },
 	{ "debug.test_input", "" },
 	{ "debug.test_keys", "" },
+	{ "debug.virtual_pads", "" },
+	{ "debug.input_log", "false" },
 	{ "debug.texture_dump_directory", "" },
 };
 

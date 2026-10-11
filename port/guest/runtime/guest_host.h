@@ -77,6 +77,17 @@ int host_sdl_gamepad_axis(unsigned int gamepad, int axis);
 int host_sdl_gamepad_button(unsigned int gamepad, int button);
 int host_sdl_gamepad_type(unsigned int gamepad);
 int host_sdl_rumble_gamepad(unsigned int gamepad, unsigned int low, unsigned int high, unsigned int milliseconds);
+/* openfrenzy: closes a gamepad (hot-plug) and frees its handle */
+void host_sdl_close_gamepad(unsigned int gamepad);
+/* openfrenzy: virtual gamepads (debug.virtual_pads). The host sets the callbacks: its
+Rumble logs each request. Returns the SDL joystick id, 0 on failure. */
+unsigned int host_sdl_attach_virtual_joystick(int type, int naxes, int nbuttons, unsigned int button_mask,
+	unsigned int axis_mask, const char *name);
+int host_sdl_detach_virtual_joystick(unsigned int id);
+unsigned int host_sdl_open_joystick(unsigned int id);
+void host_sdl_close_joystick(unsigned int joystick);
+int host_sdl_set_joystick_virtual_axis(unsigned int joystick, int axis, int value);
+int host_sdl_set_joystick_virtual_button(unsigned int joystick, int button, int down);
 /* callback: void (*)(void *userdata, unsigned int stream, int additional, int total),
 called on the audio thread */
 unsigned int host_sdl_open_audio_stream(unsigned int device, const void *spec, unsigned int callback, unsigned int userdata);

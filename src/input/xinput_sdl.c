@@ -408,6 +408,15 @@ DWORD WINAPI XInputGetState(HANDLE device, PXINPUT_STATE state)
 	{
 		controllers[port].packet_number++;
 		controllers[port].previous = pad;
+		/* debug.input_log (OPENFRENZY_DEBUG_INPUT_LOG=true): each new state the game reads */
+		if (config_boolean("debug.input_log"))
+			fprintf(stderr, "xinput: port %d packet %u: buttons 0x%04x A %u B %u X %u Y %u black %u white %u "
+				"LT %u RT %u LX %d LY %d RX %d RY %d\n", port, (unsigned)controllers[port].packet_number,
+				pad.wButtons, pad.bAnalogButtons[XINPUT_GAMEPAD_A], pad.bAnalogButtons[XINPUT_GAMEPAD_B],
+				pad.bAnalogButtons[XINPUT_GAMEPAD_X], pad.bAnalogButtons[XINPUT_GAMEPAD_Y],
+				pad.bAnalogButtons[XINPUT_GAMEPAD_BLACK], pad.bAnalogButtons[XINPUT_GAMEPAD_WHITE],
+				pad.bAnalogButtons[XINPUT_GAMEPAD_LEFT_TRIGGER], pad.bAnalogButtons[XINPUT_GAMEPAD_RIGHT_TRIGGER],
+				pad.sThumbLX, pad.sThumbLY, pad.sThumbRX, pad.sThumbRY);
 	}
 	state->dwPacketNumber = controllers[port].packet_number;
 	state->Gamepad = pad;
@@ -436,6 +445,10 @@ DWORD WINAPI XInputSetState(HANDLE device, PXINPUT_FEEDBACK feedback)
 		id = port_ids[port];
 	if (id)
 		source->rumble(id, feedback->Rumble.wLeftMotorSpeed, feedback->Rumble.wRightMotorSpeed);
+	if (config_boolean("debug.input_log"))
+		fprintf(stderr, "xinput: port %d set state: left %u right %u (%s)\n", port,
+			(unsigned)feedback->Rumble.wLeftMotorSpeed, (unsigned)feedback->Rumble.wRightMotorSpeed,
+			port < 0 ? "not connected" : (id ? "to the SDL gamepad" : "no gamepad: keyboard or script"));
 	pthread_mutex_unlock(&input_lock);
 	if (port < 0)
 	{

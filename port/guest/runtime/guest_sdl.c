@@ -183,6 +183,46 @@ bool SDL_RumbleGamepad(SDL_Gamepad *gamepad, Uint16 low, Uint16 high, Uint32 mil
 	return host_sdl_rumble_gamepad((unsigned int)gamepad, low, high, milliseconds) != 0;
 }
 
+/* openfrenzy: hot-plug (xinput_sdl.c closes a removed pad) */
+void SDL_CloseGamepad(SDL_Gamepad *gamepad)
+{
+	host_sdl_close_gamepad((unsigned int)gamepad);
+}
+
+/* openfrenzy: virtual gamepads for debug.virtual_pads (sdl_platform.c). Only the plain
+fields of desc go to the host; SDL cannot call guest callbacks, so desc's callbacks and
+userdata are ignored and the host's Rumble callback logs each rumble request instead. */
+SDL_JoystickID SDL_AttachVirtualJoystick(const SDL_VirtualJoystickDesc *desc)
+{
+	return (SDL_JoystickID)host_sdl_attach_virtual_joystick(desc->type, desc->naxes, desc->nbuttons,
+		desc->button_mask, desc->axis_mask, desc->name ? desc->name : "");
+}
+
+bool SDL_DetachVirtualJoystick(SDL_JoystickID id)
+{
+	return host_sdl_detach_virtual_joystick(id) != 0;
+}
+
+SDL_Joystick *SDL_OpenJoystick(SDL_JoystickID id)
+{
+	return (SDL_Joystick *)host_sdl_open_joystick(id);
+}
+
+void SDL_CloseJoystick(SDL_Joystick *joystick)
+{
+	host_sdl_close_joystick((unsigned int)joystick);
+}
+
+bool SDL_SetJoystickVirtualAxis(SDL_Joystick *joystick, int axis, Sint16 value)
+{
+	return host_sdl_set_joystick_virtual_axis((unsigned int)joystick, axis, value) != 0;
+}
+
+bool SDL_SetJoystickVirtualButton(SDL_Joystick *joystick, int button, bool down)
+{
+	return host_sdl_set_joystick_virtual_button((unsigned int)joystick, button, down) != 0;
+}
+
 /* ---------- audio */
 
 SDL_AudioStream *SDL_OpenAudioDeviceStream(SDL_AudioDeviceID device, const SDL_AudioSpec *spec,

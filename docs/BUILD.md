@@ -157,6 +157,8 @@ Environment:
 | `OPENFRENZY_VARIATION=<n>` | its variation, 1-4 for every minigame (1 when not set); needs `OPENFRENZY_GAME`. A bad value stops the run before the game starts (exit 2). See "Direct launch variations" below |
 | `OPENFRENZY_DSOUND_LOG=1` | log the audio device (its real format, from the host), DirectSound buffers, the mix level and the WMA decode level, and each 10 s the device pace (callbacks, frames and their rate, longest interval and mix, underruns, silent time) and every silence gap of 100 ms or more (`src/dsound/dsound_sdl.c`). Agent shells may set `OPENFRENZY_AUDIO_ENABLED=false` and `SDL_AUDIO_DRIVER=dummy`; unset both to test a real device (`env -u ...`) |
 | `OPENFRENZY_DEBUG_TEST_KEYS=<script>` | real SDL key and focus events for automated runs of the keyboard path; see "Scripted keys" below |
+| `OPENFRENZY_DEBUG_VIRTUAL_PADS=<n>[,script]` | attach n SDL virtual gamepads and drive them from a timed script (buttons, sticks, triggers, unplug and re-plug); the host logs each rumble request. See "Virtual gamepads" below |
+| `OPENFRENZY_DEBUG_INPUT_LOG=true` | log each new pad state the game reads (`XInputGetState`) and each `XInputSetState` (motor speeds) (`src/input/xinput_sdl.c`) |
 | `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` | skip the Bink videos (boot logos, attract video), as builds without FFmpeg do. Boot reaches the title in a few seconds instead of about 75 s; use it for scripted runs whose presses assume the title at once (`START@6000`) |
 | `OPENFRENZY_DSOUND_CAPTURE=<path>` | write the final audio output (after the limiter) to a WAV file: 48 kHz, stereo, 16-bit. It works without an audio device too (sandbox). See "Audio capture" below |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
@@ -221,7 +223,8 @@ the window focus events.
 - The events go into SDL's own queue (`SDL_PushEvent`, host `host_sdl_push_event`) on the event
   thread. Then `SDL_PollEvent`, `platform_handle_event`, `platform_input_read` and
   `input_keyboard_to_pad` (`src/input/xinput_map.c`) handle them, as they do a real key. Use it
-  to test the keyboard layout. Use `OPENFRENZY_DEBUG_TEST_INPUT` for pads 2-4.
+  to test the keyboard layout. Use `OPENFRENZY_DEBUG_TEST_INPUT` or `OPENFRENZY_DEBUG_VIRTUAL_PADS`
+  for pads 2-4.
 - Each press is logged: `test_keys: SPACE at 9004 ms`. Focus changes are logged:
   `window focus lost: keyboard off, keys released`, `window focus gained: keyboard on`.
 - While the window has no focus, the keyboard gives an empty pad (keys pushed then are ignored).
@@ -229,6 +232,48 @@ the window focus events.
   `RETURN@6000,SPACE@9000,SPACE@11000,SPACE@13000,RETURN@16000,RETURN@20000,RETURN@24000,
   RETURN@28000,SPACE@32000,RETURN@36000`, then `SPACE` every 3 s. Add `LEFT@52000+700` (d-pad
   and left stick) or `K@52500` (B) for minigame input.
+
+### Virtual gamepads (real gamepad path, no hardware)
+
+`OPENFRENZY_DEBUG_VIRTUAL_PADS="N[,ITEM...]"`, with `ITEM` = `[P<k>:]CONTROL@MS[+HOLD]`. Port-only
+(`src/runtime/sdl_platform.c`). N SDL virtual gamepads (1-4, `SDL_AttachVirtualJoystick`, type
+`SDL_JOYSTICK_TYPE_GAMEPAD`, 15 buttons and 6 axes) are attached when SDL starts, so the game
+finds them at `bInitInput`. Then they go the real gamepad path: `SDL_GetGamepads`, SDL's gamepad
+mapping, `input_gamepad_to_pad`, the sticky ports, `XGetDeviceChanges` and `SDL_RumbleGamepad`.
+Virtual pad k (default 1) sets CONTROL MS milliseconds after the first keyboard read (the time
+base of `OPENFRENZY_DEBUG_TEST_KEYS`) and releases it HOLD ms later (default 150).
+
+| Controls | Effect |
+|---|---|
+| `A B X Y WHITE BLACK START BACK UP DOWN LEFT RIGHT LTHUMB RTHUMB` | SDL buttons as `xinput_map.c` maps them (A = south, WHITE = left shoulder, BLACK = right shoulder) |
+| `LT RT` | full trigger |
+| `LX+ LX- LY+ LY- RX+ RX- RY+ RY-` | full stick deflection, in Xbox terms (`LY+` is up) |
+| `LEFTX=V LEFTY=V RIGHTX=V RIGHTY=V` | one SDL axis value, -32768..32767 (SDL terms: +Y is down) |
+| `LEFT_TRIGGER=V RIGHT_TRIGGER=V` | one SDL trigger value, 0..32767 |
+| `UNPLUG`, `PLUG` | detach the pad (`SDL_DetachVirtualJoystick`), attach it again (a new SDL id); HOLD is not used |
+
+- With no other gamepad, virtual pad k is on port k - 1 (pad 1 shares port 0 with the keyboard).
+  A re-plugged pad takes the lowest free port, so it comes back to its old port.
+- Logs: `virtual_pads: pad 2 attached (SDL joystick id 3)`, `virtual_pads: P2:A at 27508 ms`,
+  `virtual_pads: pad 2 detached ...`, `gamepad 3 removed`. The host's Rumble callback logs
+  each request: `virtual gamepad 3: rumble low 27362 high 27362` (low = left motor).
+- A release sets the control to rest even when another item still holds it.
+- Add `OPENFRENZY_DEBUG_INPUT_LOG=true` to see what the game reads:
+  `xinput: port 1 packet 66: buttons 0x0000 A 0 ... LT 0 RT 255 LX 0 LY 0 RX -12000 RY 0` and
+  `xinput: port 1 set state: left 27362 right 27362 (to the SDL gamepad)`.
+- Works headless (`SDL_VIDEO_DRIVER=dummy`, in the sandbox). The xinput tests
+  (`src/input/tests/run_tests.sh`) use the same descriptor.
+- Example, the 4-human tournament of "Scripted input" with virtual pads only (headless, videos
+  skipped; Bombstruck reaches `countdown PLAYING` at about 61 s), then pad 2 unplugged at 70 s
+  and plugged in again at 76 s, A on pad 2 to close the pause menu:
+  `4,START@6000,A@11000,A@15500,A@23000,A@27000,P2:A@27500,P3:A@28000,P4:A@28500,
+  P2:RIGHT@30000,P3:LX+@30000,P3:LX+@31000,P4:LX-@30000,A@33000,P2:A@33500,P3:A@34000,
+  P4:A@34500,START@38000,START@42000,START@46000,A@52000,A@55000,A@58000,A@61000,A@64000,P2:UNPLUG@70000,
+  P2:PLUG@76000,P2:A@80000`.
+- Example, rumble on each pad from the Options menu (vibration: the first A switches it off,
+  the second switches it on and the game plays a short rumble on the pad that pressed):
+  `4,START@6000,DOWN@20000,DOWN@21500,A@23500,DOWN@27000,DOWN@28500,A@31000,A@33000,
+  P2:A@35000,P2:A@37000,P3:A@39000,P3:A@41000,P4:A@43000,P4:A@45000`.
 
 ### Audio capture
 

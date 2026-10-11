@@ -653,6 +653,70 @@ The guest image is the same as before: identical symbol table and `.text` bytes 
   is on by default; `-Wimplicit-int-float-conversion` and `-Wfloat-conversion` are not on in
   the build (nothing turns them off; clang does not enable them without a flag).
 
+### Gamepad path with virtual pads (fix-gamepad-virtual-test, round 6)
+
+Until now only scripted pad states (`OPENFRENZY_DEBUG_TEST_INPUT`, which skips SDL) and pushed
+key events had run. New port-only switch `OPENFRENZY_DEBUG_VIRTUAL_PADS` (docs/BUILD.md "Virtual
+gamepads", `src/runtime/sdl_platform.c`): SDL virtual gamepads with a timed script. New guest SDL
+calls (`port/guest/runtime/guest_sdl.c`): `SDL_AttachVirtualJoystick`, `SDL_DetachVirtualJoystick`,
+`SDL_OpenJoystick`, `SDL_CloseJoystick`, `SDL_SetJoystickVirtualAxis/Button`, `SDL_CloseGamepad`;
+host imports in `port/macos/host/host_sdl.c`. SDL cannot call guest callbacks, so the host sets
+the virtual pad's Rumble callback itself and logs each request. New log switch
+`OPENFRENZY_DEBUG_INPUT_LOG=true` (`src/input/xinput_sdl.c`). All runs headless
+(`SDL_VIDEO_DRIVER=dummy`), videos skipped, build `build-fix-gamepad-virtual-test`.
+
+- (a) 4-human tournament, virtual pads only (the BUILD.md 4-human recipe on pads 1-4, A every
+  3 s from 52 s; 120 s): `GetAttachedDevices: device mask 0x0000000f` (4 pads at bInitInput),
+  title, main menu, character select (A from each of pads 1-4 reaches ports 0-3), Map,
+  Bombstruck (Demolition v1), `countdown PLAYING` at about 61 s. No fault. Proof that pads 2-4
+  are humans: run (c) below. The game logs no player list; the per-player unplug check in
+  `Core_UpdatePads` (0x0002c020) and the pause on re-plug act only for players whose "present"
+  flag (0x002baed8 + 0x28 * i) is set, and both happened for pads 2, 3 and 4.
+- (b) Sticks and triggers (`xinput:` lines, the values `XInputGetState` gives the game):
+  `LY+` gives LY 32767, `LY-` gives LY -32768, `LX+` / `LX-` give LX 32767 / -32768,
+  `LEFT_TRIGGER=20000` gives LT 155 (20000 * 255 / 32767), `RT` gives RT 255,
+  `RIGHTX=-12000` gives RX -12000. Each comes back to 0 on release.
+  **Mapping bug, fixed** (`src/input/xinput_map.c` `flip`): a centred SDL Y axis gave LY = RY =
+  -1 (the flip was `-value - 1`, from OpenCE). Inside the game's dead zone (10000), so nothing
+  moved, but a pad at rest did not read 0 and merged -1 into the keyboard's pad. Now 0 stays 0
+  and SDL -32768 gives 32767.
+- (c) Hot-plug during Bombstruck (same run plus `P2:UNPLUG@70000,P2:PLUG@76000,P2:A@80000`, then
+  the same for pads 3 (90/96/100 s) and 4 (110/116/120 s); 140 s). What happens, each time:
+  `gamepad 3 removed`, `bInput: There are now 3 input devices connected (add 0x00000000, remove
+  0x00000002)`; on re-plug the new SDL id goes back to port 1, `bInput: There are now 4 input
+  devices connected (add 0x00000002 ...)`, then `Paused!` (the pause menu opens for that
+  player: `g_PadChangedPort`), A on the re-plugged pad gives `End pause`. After all three,
+  stick moves on pads 2-4 reach ports 1-3. No fault.
+  While a pad is out, `Core_UpdatePads` adds 20 to 0x002ecdec and pauses the sound; with
+  0x002ecdec >= 20 the main loop skips `CGameModeStack_Update` (the game stops) and
+  `CLPause_DrawMessages` draws the "controller unplugged" message. That part is from the code
+  and the `Paused!` that follows (it needs 0x002ecdec >= 20); headless, nothing was seen on screen.
+  **Hot-plug bug, fixed** (`src/runtime/sdl_platform.c`, `SDL_EVENT_GAMEPAD_REMOVED`): SDL keeps a
+  removed pad's `SDL_Gamepad` open until it is closed, and `xinput_sdl.c` opens every pad it lists
+  but never closed one. Each unplug leaked the gamepad and a host handle (256 handles in all; then
+  `out of SDL handles` and new pads are lost). The event now closes it (`SDL_CloseGamepad`, host
+  `host_sdl_close_gamepad` frees the handle).
+  Player 1 cannot be unplugged: port 0 stays connected for the keyboard (by design).
+- (d) Rumble. Direct launch TankedUp and BumperCars (vibration on, the default; 95 s; pads fire
+  and drive): after `countdown PLAYING`, hits give `virtual gamepad 2: rumble low 0 high 29618`,
+  `... low 39854 high 24802`, then `low 0 high 0`; BumperCars bumps give `low 17560 high 0` and
+  others. Only port 0: a direct launch has one human, and `CLRumble_Allowed` rumbles humans only.
+  Options menu (vibration line, A twice with each pad): the "off" press sends nothing, the "on"
+  press sends the game's test rumble to that pad only: ports 0-3 get e.g. `left 27362 right
+  27362`, `left 59120 right 59120`, then `left 0 right 0` on the matching virtual gamepad (ids
+  2-5). Each `XInputSetState` is one SDL rumble request (the game sends only changes, 15 times a
+  second at most).
+- Tests (`src/input/tests/run_tests.sh`): new `test_sdl_virtual` attaches two virtual pads
+  through the real SDL source: port mask 0x3, button/stick/trigger on port 1, `XInputSetState`,
+  unplug is a removal on port 1 and closes the `SDL_Gamepad`, re-plug is an insertion on port 1.
+  New `test_gamepad` checks: a centred SDL stick reads 0. With either fix undone, the tests fail
+  (4 failures); with both, 0.
+- Not verified: a physical gamepad (button layouts of real pads, SDL's mappings for them, real
+  rumble motors), the on-screen "controller unplugged" message and the frozen game (headless
+  runs draw nothing), a fifth pad, rumble while a pad is unplugged. Cosmetic: the host's
+  `gamepad N:` line names every virtual pad "OpenFrenzy virtual pad 1" (the cause is not
+  checked; probably the four pads get one SDL GUID, so one mapping name, as identical real pads do).
+
 ## Frame pacing (integration round 5, fix-frame-pacing)
 
 - New: the host logs one line every 10 s from the swap path (`host_sdl_gl_swap_window`,

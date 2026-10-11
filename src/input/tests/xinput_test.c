@@ -23,6 +23,7 @@ What they protect:
 #include "port_config.h"
 
 #include <SDL3/SDL_scancode.h>
+#include <SDL3/SDL.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -104,6 +105,16 @@ static void test_gamepad(void)
 	CHECK(pad.sThumbLY == 32767); /* Xbox: up is positive */
 	CHECK(pad.sThumbRX == 1000);
 	CHECK(pad.bAnalogButtons[XINPUT_GAMEPAD_RIGHT_TRIGGER] == 255);
+
+	/* a centred SDL stick is a centred Xbox stick (not -1), and fully down is the
+	mirror of fully up: what the virtual pad runs read (integration round 6) */
+	memset(&reading, 0, sizeof(reading));
+	memset(&pad, 0, sizeof(pad));
+	input_gamepad_to_pad(&reading, &pad);
+	CHECK(pad.sThumbLX == 0 && pad.sThumbLY == 0 && pad.sThumbRX == 0 && pad.sThumbRY == 0);
+	reading.axes[SDL_GAMEPAD_AXIS_RIGHTY] = 32767; /* SDL: pulled down */
+	input_gamepad_to_pad(&reading, &pad);
+	CHECK(pad.sThumbRY == -32767);
 
 	/* a stick pushed less than the keyboard does not override it */
 	pad.sThumbLX = 32767;
@@ -415,6 +426,86 @@ static void test_sdl(void)
 	XInputClose(pad0);
 }
 
+/* ---------- SDL virtual gamepads, headless (integration round 6)
+
+The real gamepad path with no hardware: SDL's virtual joysticks (the same descriptor as
+debug.virtual_pads in sdl_platform.c) go through SDL_GetGamepads, the gamepad mapping,
+input_gamepad_to_pad and the port assignment. Protects: pad 2 lands on port 1, its button
+and stick reach XInputGetState, an unplug is a removal for bInput (0x00049ac0) and closes
+the removed SDL_Gamepad (else every re-plug leaks a gamepad and a host handle), and a
+re-plugged pad is an insertion on the same port. */
+
+static SDL_JoystickID virtual_attach(void)
+{
+	SDL_VirtualJoystickDesc desc;
+
+	SDL_INIT_INTERFACE(&desc);
+	desc.type = SDL_JOYSTICK_TYPE_GAMEPAD;
+	desc.naxes = SDL_GAMEPAD_AXIS_COUNT;
+	desc.nbuttons = SDL_GAMEPAD_BUTTON_DPAD_RIGHT + 1;
+	desc.button_mask = (1u << (SDL_GAMEPAD_BUTTON_DPAD_RIGHT + 1)) - 1;
+	desc.axis_mask = (1u << SDL_GAMEPAD_AXIS_COUNT) - 1;
+	desc.name = "xinput_test virtual pad";
+	return SDL_AttachVirtualJoystick(&desc);
+}
+
+static void test_sdl_virtual(void)
+{
+	XDEVICE_PREALLOC_TYPE types[2] = { { XDEVICE_TYPE_GAMEPAD, 4 }, { XDEVICE_TYPE_MEMORY_UNIT, 4 } };
+	XINPUT_FEEDBACK feedback;
+	XINPUT_STATE state;
+	DWORD insertions, removals;
+	SDL_JoystickID first, second;
+	SDL_Joystick *joystick;
+	HANDLE pad1;
+
+	input_set_source(NULL);
+	XInitDevices(2, types);
+	first = virtual_attach();
+	second = virtual_attach();
+	CHECK(first != 0 && second != 0);
+	/* the first pad shares port 0 with the keyboard, the second is player 2 */
+	CHECK(XGetDevices(XDEVICE_TYPE_GAMEPAD) == (XDEVICE_PORT0_MASK | XDEVICE_PORT1_MASK));
+	pad1 = XInputOpen(XDEVICE_TYPE_GAMEPAD, XDEVICE_PORT1, XDEVICE_NO_SLOT, NULL);
+	CHECK(pad1 != NULL);
+	CHECK(XInputGetState(pad1, &state) == ERROR_SUCCESS);
+	CHECK(state.Gamepad.sThumbLX == 0 && state.Gamepad.sThumbLY == 0 && state.Gamepad.bAnalogButtons[XINPUT_GAMEPAD_LEFT_TRIGGER] == 0);
+	joystick = SDL_OpenJoystick(second);
+	CHECK(joystick != NULL);
+	CHECK(SDL_SetJoystickVirtualButton(joystick, SDL_GAMEPAD_BUTTON_SOUTH, true));
+	CHECK(SDL_SetJoystickVirtualAxis(joystick, SDL_GAMEPAD_AXIS_LEFTY, -32768)); /* SDL: up */
+	CHECK(SDL_SetJoystickVirtualAxis(joystick, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, 32767));
+	CHECK(XInputGetState(pad1, &state) == ERROR_SUCCESS);
+	CHECK(state.Gamepad.bAnalogButtons[XINPUT_GAMEPAD_A] == 0xff);
+	CHECK(state.Gamepad.sThumbLY == 32767);
+	CHECK(state.Gamepad.bAnalogButtons[XINPUT_GAMEPAD_RIGHT_TRIGGER] == 0xff);
+	memset(&feedback, 0, sizeof(feedback));
+	feedback.Rumble.wLeftMotorSpeed = 1000;
+	feedback.Rumble.wRightMotorSpeed = 2000;
+	CHECK(XInputSetState(pad1, &feedback) == ERROR_IO_PENDING && feedback.Header.dwStatus == ERROR_SUCCESS);
+	SDL_CloseJoystick(joystick);
+
+	/* unplug player 2 */
+	CHECK(SDL_DetachVirtualJoystick(second));
+	CHECK(XGetDeviceChanges(XDEVICE_TYPE_GAMEPAD, &insertions, &removals));
+	CHECK(insertions == 0 && removals == XDEVICE_PORT1_MASK);
+	CHECK(XInputGetState(pad1, &state) == ERROR_DEVICE_NOT_CONNECTED);
+	CHECK(SDL_GetGamepadFromID(second) == NULL);
+	XInputClose(pad1);
+
+	/* plug it back in: a new SDL id, the same port */
+	second = virtual_attach();
+	CHECK(second != 0);
+	CHECK(XGetDeviceChanges(XDEVICE_TYPE_GAMEPAD, &insertions, &removals));
+	CHECK(insertions == XDEVICE_PORT1_MASK && removals == 0);
+	pad1 = XInputOpen(XDEVICE_TYPE_GAMEPAD, XDEVICE_PORT1, XDEVICE_NO_SLOT, NULL);
+	CHECK(pad1 != NULL);
+	CHECK(XInputGetState(pad1, &state) == ERROR_SUCCESS);
+	XInputClose(pad1);
+	SDL_DetachVirtualJoystick(second);
+	SDL_DetachVirtualJoystick(first);
+}
+
 int main(void)
 {
 	test_keyboard();
@@ -423,6 +514,7 @@ int main(void)
 	test_xpp();
 	test_script();
 	test_sdl();
+	test_sdl_virtual();
 	printf("xinput_test: %d failure(s)\n", failures);
 	return failures;
 }

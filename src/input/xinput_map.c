@@ -104,12 +104,12 @@ void input_keyboard_to_pad(const unsigned char *keys, XINPUT_GAMEPAD *pad)
 	stick_from_keys(x, y, &pad->sThumbRX, &pad->sThumbRY);
 }
 
-/* SDL's Y axes point down, the Xbox's up */
+/* SDL's Y axes point down, the Xbox's up. A centred stick (0) stays 0; SDL's -32768
+(fully up) has no positive mirror and gives 32767. (Until round 6 this was -value - 1,
+so a centred SDL stick gave LY = RY = -1: found with debug.virtual_pads.) */
 static SHORT flip(short value)
 {
-	int result = -(int)value - 1;
-
-	return (SHORT)(result < -32768 ? -32768 : (result > 32767 ? 32767 : result));
+	return (SHORT)(value == -32768 ? 32767 : -(int)value);
 }
 
 static int magnitude(int value)

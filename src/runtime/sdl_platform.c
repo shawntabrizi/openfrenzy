@@ -54,6 +54,8 @@ static BOOL menus_active;
 static struct platform_keystroke keystroke_queue[KEYSTROKE_QUEUE_SIZE];
 static unsigned long keystroke_head, keystroke_count;
 
+static void virtual_pads_attach_all(void);
+
 BOOL platform_sdl_initialize(void)
 {
 	if (platform_sdl_started)
@@ -66,6 +68,7 @@ BOOL platform_sdl_initialize(void)
 	}
 	platform_sdl_started = TRUE;
 	input_state.focused = TRUE;
+	virtual_pads_attach_all();
 	return TRUE;
 }
 
@@ -407,6 +410,17 @@ void platform_handle_event(const SDL_Event *event)
 	case SDL_EVENT_MOUSE_WHEEL:
 		input_state.mouse_wheel += event->wheel.y;
 		break;
+	case SDL_EVENT_GAMEPAD_REMOVED:
+		/* SDL keeps a removed pad's SDL_Gamepad (and the host its handle) until it is
+		closed; xinput_sdl.c opens each pad it lists, so close it here (hot-plug) */
+		{
+			SDL_Gamepad *gamepad = SDL_GetGamepadFromID(event->gdevice.which);
+
+			if (gamepad)
+				SDL_CloseGamepad(gamepad);
+			platform_log("gamepad %u removed", (unsigned)event->gdevice.which);
+		}
+		break;
 	case SDL_EVENT_WINDOW_FOCUS_GAINED:
 		if (!input_state.focused)
 			platform_log("window focus gained: keyboard on");
@@ -526,6 +540,300 @@ static void test_keys_push(void)
 	}
 }
 
+/* debug.virtual_pads (OPENFRENZY_DEBUG_VIRTUAL_PADS), port-only: SDL virtual gamepads for
+automated runs of the real gamepad path (SDL_GetGamepads, SDL_GetGamepadButton/Axis, hot-plug,
+SDL_RumbleGamepad), with no hardware. "N[,ITEM...]": N pads (1-4) are attached when SDL starts,
+so the game finds them at bInitInput. ITEM = "[P<k>:]CONTROL@MS[+HOLD]": virtual pad k (1-N,
+default 1) sets CONTROL MS milliseconds after the first keyboard read (the time base of
+debug.test_keys and, within a few ms, debug.test_input) and releases it HOLD ms later
+(default 150). Controls:
+	A B X Y BLACK WHITE START BACK UP DOWN LEFT RIGHT LTHUMB RTHUMB   buttons (as xinput_map.c:
+	                            A = south, WHITE = left shoulder, BLACK = right shoulder)
+	LT RT                       full trigger
+	LX+ LX- LY+ LY- RX+ RX- RY+ RY-   full stick deflection, Xbox axes (LY+ is up)
+	LEFTX=V LEFTY=V RIGHTX=V RIGHTY=V   an SDL axis value, -32768..32767 (SDL: +Y is down)
+	LEFT_TRIGGER=V RIGHT_TRIGGER=V      an SDL trigger value, 0..32767
+	UNPLUG, PLUG                detach the pad (SDL_DetachVirtualJoystick) / attach it again
+	                            (a new SDL id); HOLD is not used
+The events go to SDL on the event thread before SDL_PollEvent (platform_pump_events). The host
+logs each rumble request a pad gets (`virtual gamepad <id>: rumble low L high H`). A pad's
+release sets the control to rest even when another item still holds it. (integration round 6) */
+#define VIRTUAL_PAD_MAX 4
+#define VIRTUAL_PAD_ITEM_COUNT 512
+/* the virtual descriptor: the 15 standard buttons (SOUTH..DPAD_RIGHT) and 6 axes, so a
+joystick button / axis index is the SDL_GamepadButton / SDL_GamepadAxis */
+#define VIRTUAL_PAD_BUTTONS (SDL_GAMEPAD_BUTTON_DPAD_RIGHT + 1)
+#define VIRTUAL_PAD_AXES SDL_GAMEPAD_AXIS_COUNT
+enum virtual_pad_kind { VIRTUAL_BUTTON, VIRTUAL_AXIS, VIRTUAL_UNPLUG, VIRTUAL_PLUG };
+
+static struct virtual_pad
+{
+	SDL_JoystickID id; /* 0 while unplugged */
+	SDL_Joystick *joystick;
+} virtual_pads[VIRTUAL_PAD_MAX];
+static int virtual_pad_count;
+
+static struct virtual_pad_item
+{
+	int pad;
+	int kind;
+	int index;  /* button or axis */
+	int value;  /* button: 1; axis: the joystick value while set */
+	Uint64 at, hold;
+	int sent;   /* 0 nothing, 1 set, 2 released */
+	char name[24];
+} virtual_pad_items[VIRTUAL_PAD_ITEM_COUNT];
+static int virtual_pad_item_count;
+
+/* an SDL gamepad axis value as the virtual joystick's raw value: SDL maps a trigger's full
+joystick range -32768..32767 to 0..32767 */
+static int virtual_axis_raw(int axis, int value)
+{
+	if (axis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER || axis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)
+	{
+		if (value < 0)
+			value = 0;
+		if (value > 32767)
+			value = 32767;
+		return value * 2 - 32767;
+	}
+	return value < -32768 ? -32768 : (value > 32767 ? 32767 : value);
+}
+
+/* a released axis: sticks centred, triggers at the low end of the joystick range */
+static int virtual_axis_rest(int axis)
+{
+	return axis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER || axis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER ? -32768 : 0;
+}
+
+/* the item's control from its name; FALSE if unknown */
+static BOOL virtual_pad_control(struct virtual_pad_item *item)
+{
+	static const struct { const char *name; SDL_GamepadButton button; } buttons[] =
+	{
+		{ "A", SDL_GAMEPAD_BUTTON_SOUTH }, { "B", SDL_GAMEPAD_BUTTON_EAST },
+		{ "X", SDL_GAMEPAD_BUTTON_WEST }, { "Y", SDL_GAMEPAD_BUTTON_NORTH },
+		{ "WHITE", SDL_GAMEPAD_BUTTON_LEFT_SHOULDER }, { "BLACK", SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER },
+		{ "START", SDL_GAMEPAD_BUTTON_START }, { "BACK", SDL_GAMEPAD_BUTTON_BACK },
+		{ "UP", SDL_GAMEPAD_BUTTON_DPAD_UP }, { "DOWN", SDL_GAMEPAD_BUTTON_DPAD_DOWN },
+		{ "LEFT", SDL_GAMEPAD_BUTTON_DPAD_LEFT }, { "RIGHT", SDL_GAMEPAD_BUTTON_DPAD_RIGHT },
+		{ "LTHUMB", SDL_GAMEPAD_BUTTON_LEFT_STICK }, { "RTHUMB", SDL_GAMEPAD_BUTTON_RIGHT_STICK },
+	};
+	static const struct { const char *name; SDL_GamepadAxis axis; } axes[] =
+	{
+		{ "LEFTX", SDL_GAMEPAD_AXIS_LEFTX }, { "LEFTY", SDL_GAMEPAD_AXIS_LEFTY },
+		{ "RIGHTX", SDL_GAMEPAD_AXIS_RIGHTX }, { "RIGHTY", SDL_GAMEPAD_AXIS_RIGHTY },
+		{ "LEFT_TRIGGER", SDL_GAMEPAD_AXIS_LEFT_TRIGGER }, { "RIGHT_TRIGGER", SDL_GAMEPAD_AXIS_RIGHT_TRIGGER },
+	};
+	const char *name = item->name;
+	const char *equals = strchr(name, '=');
+	size_t length = equals ? (size_t)(equals - name) : strlen(name);
+	unsigned int index;
+
+	if (!equals)
+	{
+		for (index = 0; index < sizeof(buttons) / sizeof(buttons[0]); index++)
+		{
+			if (!strcmp(name, buttons[index].name))
+			{
+				item->kind = VIRTUAL_BUTTON;
+				item->index = buttons[index].button;
+				item->value = 1;
+				return TRUE;
+			}
+		}
+		if (!strcmp(name, "UNPLUG") || !strcmp(name, "PLUG"))
+		{
+			item->kind = name[0] == 'U' ? VIRTUAL_UNPLUG : VIRTUAL_PLUG;
+			return TRUE;
+		}
+		item->kind = VIRTUAL_AXIS;
+		if (!strcmp(name, "LT") || !strcmp(name, "RT"))
+		{
+			item->index = name[0] == 'L' ? SDL_GAMEPAD_AXIS_LEFT_TRIGGER : SDL_GAMEPAD_AXIS_RIGHT_TRIGGER;
+			item->value = virtual_axis_raw(item->index, 32767);
+			return TRUE;
+		}
+		/* Xbox stick names: +Y is up, SDL's +Y is down */
+		if ((name[0] == 'L' || name[0] == 'R') && (name[1] == 'X' || name[1] == 'Y') &&
+			(name[2] == '+' || name[2] == '-') && name[3] == 0)
+		{
+			BOOL up = name[2] == '+';
+
+			if (name[1] == 'X')
+				item->index = name[0] == 'L' ? SDL_GAMEPAD_AXIS_LEFTX : SDL_GAMEPAD_AXIS_RIGHTX;
+			else
+			{
+				item->index = name[0] == 'L' ? SDL_GAMEPAD_AXIS_LEFTY : SDL_GAMEPAD_AXIS_RIGHTY;
+				up = !up;
+			}
+			item->value = up ? 32767 : -32768;
+			return TRUE;
+		}
+		return FALSE;
+	}
+	for (index = 0; index < sizeof(axes) / sizeof(axes[0]); index++)
+	{
+		if (strlen(axes[index].name) == length && !strncmp(name, axes[index].name, length))
+		{
+			item->kind = VIRTUAL_AXIS;
+			item->index = axes[index].axis;
+			item->value = virtual_axis_raw(item->index, (int)strtol(equals + 1, NULL, 10));
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+static void virtual_pads_parse(const char *script)
+{
+	char *end;
+
+	virtual_pad_count = (int)strtol(script, &end, 10);
+	if (virtual_pad_count < 0)
+		virtual_pad_count = 0;
+	if (virtual_pad_count > VIRTUAL_PAD_MAX)
+	{
+		platform_log("virtual_pads: %d pads asked, %d attached", virtual_pad_count, VIRTUAL_PAD_MAX);
+		virtual_pad_count = VIRTUAL_PAD_MAX;
+	}
+	script = end + strspn(end, ",");
+	while (*script && virtual_pad_item_count < VIRTUAL_PAD_ITEM_COUNT)
+	{
+		struct virtual_pad_item *item = &virtual_pad_items[virtual_pad_item_count];
+		size_t length;
+
+		memset(item, 0, sizeof(*item));
+		if (script[0] == 'P' && script[1] >= '1' && script[1] <= '4' && script[2] == ':')
+		{
+			item->pad = script[1] - '1';
+			script += 3;
+		}
+		length = strcspn(script, "@,");
+		if (script[length] != '@' || length >= sizeof(item->name))
+		{
+			platform_log("virtual_pads: syntax error at '%s'; the rest is ignored", script);
+			break;
+		}
+		memcpy(item->name, script, length);
+		item->name[length] = 0;
+		item->at = strtoull(script + length + 1, &end, 10);
+		item->hold = *end == '+' ? strtoull(end + 1, &end, 10) : 150;
+		if (item->pad >= virtual_pad_count)
+			platform_log("virtual_pads: P%d:%s names a pad that is not attached", item->pad + 1, item->name);
+		else if (!virtual_pad_control(item))
+			platform_log("virtual_pads: unknown control '%s'", item->name);
+		else
+			virtual_pad_item_count++;
+		script = end + strcspn(end, ",");
+		if (*script == ',')
+			script++;
+	}
+}
+
+static void virtual_pad_attach(int pad)
+{
+	SDL_VirtualJoystickDesc desc;
+	char name[32];
+	int axis;
+
+	snprintf(name, sizeof(name), "OpenFrenzy virtual pad %d", pad + 1);
+	SDL_INIT_INTERFACE(&desc);
+	desc.type = SDL_JOYSTICK_TYPE_GAMEPAD;
+	desc.naxes = VIRTUAL_PAD_AXES;
+	desc.nbuttons = VIRTUAL_PAD_BUTTONS;
+	desc.button_mask = (1u << VIRTUAL_PAD_BUTTONS) - 1;
+	desc.axis_mask = (1u << VIRTUAL_PAD_AXES) - 1;
+	desc.name = name;
+	virtual_pads[pad].id = SDL_AttachVirtualJoystick(&desc);
+	if (!virtual_pads[pad].id)
+	{
+		platform_log("virtual_pads: pad %d: SDL_AttachVirtualJoystick failed: %s", pad + 1, SDL_GetError());
+		return;
+	}
+	virtual_pads[pad].joystick = SDL_OpenJoystick(virtual_pads[pad].id);
+	if (!virtual_pads[pad].joystick)
+		platform_log("virtual_pads: pad %d: SDL_OpenJoystick failed: %s", pad + 1, SDL_GetError());
+	for (axis = 0; axis < VIRTUAL_PAD_AXES; axis++)
+		SDL_SetJoystickVirtualAxis(virtual_pads[pad].joystick, axis, (Sint16)virtual_axis_rest(axis));
+	platform_log("virtual_pads: pad %d attached (SDL joystick id %u)", pad + 1, (unsigned)virtual_pads[pad].id);
+}
+
+static void virtual_pad_detach(int pad)
+{
+	SDL_JoystickID id = virtual_pads[pad].id;
+
+	if (!id)
+		return;
+	SDL_CloseJoystick(virtual_pads[pad].joystick);
+	virtual_pads[pad].joystick = NULL;
+	virtual_pads[pad].id = 0;
+	if (!SDL_DetachVirtualJoystick(id))
+		platform_log("virtual_pads: pad %d: SDL_DetachVirtualJoystick failed: %s", pad + 1, SDL_GetError());
+	else
+		platform_log("virtual_pads: pad %d detached (SDL joystick id %u)", pad + 1, (unsigned)id);
+}
+
+/* platform_sdl_initialize, after SDL_Init: before the game's first XGetDevices */
+static void virtual_pads_attach_all(void)
+{
+	const char *script = config_string("debug.virtual_pads");
+	int pad;
+
+	if (!script || !*script)
+		return;
+	virtual_pads_parse(script);
+	for (pad = 0; pad < virtual_pad_count; pad++)
+		virtual_pad_attach(pad);
+}
+
+static void virtual_pads_push(void)
+{
+	Uint64 elapsed;
+	int index;
+
+	if (!virtual_pad_item_count || !test_keys_start)
+		return;
+	elapsed = SDL_GetTicks() - test_keys_start;
+	for (index = 0; index < virtual_pad_item_count; index++)
+	{
+		struct virtual_pad_item *item = &virtual_pad_items[index];
+		struct virtual_pad *pad = &virtual_pads[item->pad];
+		BOOL set;
+
+		if (item->sent == 2 || elapsed < item->at)
+			continue;
+		if (item->kind == VIRTUAL_UNPLUG || item->kind == VIRTUAL_PLUG)
+		{
+			item->sent = 2;
+			platform_log("virtual_pads: P%d:%s at %llu ms", item->pad + 1, item->name, (unsigned long long)elapsed);
+			if (item->kind == VIRTUAL_UNPLUG)
+				virtual_pad_detach(item->pad);
+			else if (!pad->id)
+				virtual_pad_attach(item->pad);
+			continue;
+		}
+		set = item->sent == 0;
+		if (!set && elapsed < item->at + item->hold)
+			continue;
+		item->sent = set ? 1 : 2;
+		if (!pad->joystick)
+		{
+			if (set)
+				platform_log("virtual_pads: P%d:%s at %llu ms: the pad is unplugged", item->pad + 1, item->name,
+					(unsigned long long)elapsed);
+			continue;
+		}
+		if (item->kind == VIRTUAL_BUTTON)
+			SDL_SetJoystickVirtualButton(pad->joystick, item->index, set ? true : false);
+		else
+			SDL_SetJoystickVirtualAxis(pad->joystick, item->index,
+				(Sint16)(set ? item->value : virtual_axis_rest(item->index)));
+		if (set)
+			platform_log("virtual_pads: P%d:%s at %llu ms", item->pad + 1, item->name, (unsigned long long)elapsed);
+	}
+}
+
 /* main thread only (the thread that made the window): macOS delivers window events there */
 void platform_pump_events(void)
 {
@@ -534,6 +842,7 @@ void platform_pump_events(void)
 	if (!platform_sdl_started || (platform_event_thread && SDL_GetCurrentThreadID() != platform_event_thread))
 		return;
 	test_keys_push();
+	virtual_pads_push();
 	while (SDL_PollEvent(&event))
 		platform_handle_event(&event);
 }
