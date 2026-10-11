@@ -104,7 +104,7 @@ int *CLSparks_Init(int *self, int count, uint batch_a, uint batch_b)
 	if (batch == 0)
 		batch = 0;
 	else
-		batch = (int)FUN_00084f30((uint *)batch, 2, batch_a, count, batch_b);
+		batch = (int)FUN_00084f30((struct CPointSprites *)batch, 2, batch_a, count, batch_b);
 	self[4] = batch;
 	return self;
 }
@@ -166,15 +166,15 @@ void CLSparks_Draw(int self)
 
 	if (OV_I(self, 8) == 0)
 		return;
-	FUN_00043930((undefined4 *)DAT_002855f0);
-	FUN_00085060((undefined4 *)OV_I(self, 0x10));
+	FUN_00043930((float *)DAT_002855f0);
+	FUN_00085060((struct CPointSprites *)OV_I(self, 0x10));
 	for (spark = OV_I(self, 8); spark != 0; spark = OV_I(spark, 0)) {
 		colour = DAT_002bd640[(int)OV_F(spark, 0x34)] | DAT_002bc490[(int)OV_F(spark, 0x30)];
 		colour = colour | DAT_002bce18[(int)OV_F(spark, 0x2c)];
 		colour = colour | DAT_002bc898[(int)OV_F(spark, 0x28)];
 		CLPoints_Add((int *)OV_I(self, 0x10), (float *)(spark + 4), colour);
 	}
-	FUN_000d31f0((int *)OV_I(self, 0x10));
+	FUN_000d31f0((struct CFire_PointSprites *)OV_I(self, 0x10));
 }
 
 /* 0x0007f730  ClassLib/CFireworks.cpp (thiscall)
@@ -240,7 +240,7 @@ int *CLTrails_Init(int *self, int count, uint batch_a, int size)
 	if (batch == 0)
 		batch = 0;
 	else
-		batch = (int)FUN_00084f30((uint *)batch, 1, batch_a, count, size);
+		batch = (int)FUN_00084f30((struct CPointSprites *)batch, 1, batch_a, count, size);
 	self[5] = batch;
 	return self;
 }
@@ -289,15 +289,15 @@ void CLTrails_Draw(int self)
 	int trail;
 	unsigned int colour;
 
-	FUN_00043930((undefined4 *)DAT_002855f0);
-	FUN_00085060((undefined4 *)OV_I(self, 0x14));
+	FUN_00043930((float *)DAT_002855f0);
+	FUN_00085060((struct CPointSprites *)OV_I(self, 0x14));
 	for (trail = OV_I(self, 0xc); trail != 0; trail = OV_I(trail, 0)) {
 		colour = DAT_002bd640[(int)OV_F(trail, 0x34)] | DAT_002bc490[(int)OV_F(trail, 0x30)];
 		colour = colour | DAT_002bce18[(int)OV_F(trail, 0x2c)];
 		colour = colour | DAT_002bc898[(int)OV_F(trail, 0x24)];
 		CLPoints_Add((int *)OV_I(self, 0x14), (float *)(trail + 4), colour);
 	}
-	FUN_000d31f0((int *)OV_I(self, 0x14));
+	FUN_000d31f0((struct CFire_PointSprites *)OV_I(self, 0x14));
 }
 
 /* 0x0007fa50  ClassLib/CFireworks.cpp (thiscall)

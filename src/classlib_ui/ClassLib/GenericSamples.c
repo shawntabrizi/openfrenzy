@@ -220,15 +220,15 @@ void CLSamples_Shutdown(void)
 		clu_commentary_sets[kind].count = 0;
 	}
 	if (clu_charvoice_package != 0)
-		FUN_0004fe80((int *)clu_charvoice_package);
+		FUN_0004fe80((struct bkPackage *)clu_charvoice_package);
 	if (clu_commentator_package != 0)
-		FUN_0004fe80((int *)clu_commentator_package);
+		FUN_0004fe80((struct bkPackage *)clu_commentator_package);
 	if (clu_commentator_memory != 0) {
 		FUN_0004c110((void *)clu_commentator_memory);
 		clu_commentator_memory = 0;
 	}
 	if (clu_welsh_package != 0)
-		FUN_0004fe80((int *)clu_welsh_package);
+		FUN_0004fe80((struct bkPackage *)clu_welsh_package);
 }
 
 /* ---------- commentator */
@@ -319,7 +319,7 @@ Loads the Welsh commentary package (replaces the language commentary). */
 void CLSamples_LoadWelsh(void)
 {
 	if (clu_welsh_package != 0)
-		FUN_0004fe80((int *)clu_welsh_package);
+		FUN_0004fe80((struct bkPackage *)clu_welsh_package);
 	clu_welsh_package = (int)FUN_0004fd50(0, "Packages\\Welsh", 0);
 	if (clu_welsh_package != 0) {
 		FUN_0004b870((struct bkPackage *)clu_welsh_package, 0xffffffff, 0xdefa, 0);
@@ -396,7 +396,7 @@ void CLSamples_LoadCommentatorSet(int set)
 
 	if (DAT_00283d74 == 0) {
 		if (clu_welsh_package != 0) {
-			FUN_0004fe80((int *)clu_welsh_package);
+			FUN_0004fe80((struct bkPackage *)clu_welsh_package);
 			clu_welsh_package = 0;
 			CLSamples_AllocCommentatorMemory();
 			CLSamples_LoadCommentary();
@@ -408,8 +408,8 @@ void CLSamples_LoadCommentatorSet(int set)
 	}
 	CLSamples_AllocCommentatorMemory();
 	if (clu_commentator_package != 0) {
-		FUN_0004e010(FUN_0004dce0((undefined4 *)clu_commentator_package));
-		FUN_0004fe80((int *)clu_commentator_package);
+		FUN_0004e010(FUN_0004dce0((struct bkPackage *)clu_commentator_package));
+		FUN_0004fe80((struct bkPackage *)clu_commentator_package);
 	}
 	sprintf(path, "%s\\%s", DAT_002ba544, clu_commentator_packages[set]);
 	clu_commentator_package = (int)FUN_0004fd50(0, path, (void *)clu_commentator_memory);
@@ -532,6 +532,6 @@ void CLMusic_Release(void)
 
 	for (i = 0; i < CL_MUSIC_TRACK_COUNT; i++) {
 		if (clu_music_samples[i] != 0)
-			FUN_0004b6e0((int *)clu_music_samples[i]);
+			FUN_0004b6e0((struct bkResource *)clu_music_samples[i]);
 	}
 }

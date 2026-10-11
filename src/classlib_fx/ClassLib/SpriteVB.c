@@ -161,7 +161,7 @@ void SpriteVB_Lock(CSpriteVB *self)
 		b->write = self->lockStart + b->firstVertex * 0x1c;
 		b->start = b->write;
 	}
-	FUN_00043930((undefined4 *)&DAT_002855f0);
+	FUN_00043930((float *)&DAT_002855f0);
 }
 
 /* 0x00086500  ClassLib/SpriteVB.cpp

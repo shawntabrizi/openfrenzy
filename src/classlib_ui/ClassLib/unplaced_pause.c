@@ -123,8 +123,8 @@ void CLPause_CreateInput(int self)
 	OV_I(self, 0x34) = (int)FUN_000488c0(8);
 	for (player = 0; player < DAT_002bae94; player++) {
 		pad = (unsigned int)DAT_002baee0[player * 10];
-		OV_I(self, 0x38 + player * 4) = (int)FUN_00048a10((int *)OV_I(self, 0x34), "Pause", 1, 1, 0, 0, 0);
-		OV_I(self, 0x48 + player * 4) = (int)FUN_00048a10((int *)OV_I(self, 0x34), "Any", 3, 0, 0, 0, 0);
+		OV_I(self, 0x38 + player * 4) = (int)FUN_00048a10((struct biMap *)OV_I(self, 0x34), "Pause", 1, 1, 0, 0, 0);
+		OV_I(self, 0x48 + player * 4) = (int)FUN_00048a10((struct biMap *)OV_I(self, 0x34), "Any", 3, 0, 0, 0, 0);
 		FUN_00048b20((struct biChannel *)OV_I(self, 0x38 + player * 4), pad | 0xc1, 0);
 		FUN_00048b20((struct biChannel *)OV_I(self, 0x48 + player * 4), pad | 0xc5, pad | 0xc6);
 		FUN_00048b20((struct biChannel *)OV_I(self, 0x48 + player * 4), pad | 0xc7, pad | 0xc8);
@@ -780,11 +780,11 @@ void CLPause_Begin(int self, int player)
 	OV_I(self, 0x64) = 0;
 	FUN_00054800(1);
 	OV_I(self, 0x1c) = (int)FUN_000488c0(5);
-	OV_I(self, 0x20) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "y", 3, 0, 0, 0, 0);
-	OV_I(self, 0x24) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "x", 3, 0, 0, 0, 0);
-	OV_I(self, 0x28) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "select", 1, 1, 0, 0, 0);
-	OV_I(self, 0x2c) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "back", 1, 1, 0, 0, 0);
-	OV_I(self, 0x30) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "cheat", 1, 0, 0, 0, 0);
+	OV_I(self, 0x20) = (int)FUN_00048a10((struct biMap *)OV_I(self, 0x1c), "y", 3, 0, 0, 0, 0);
+	OV_I(self, 0x24) = (int)FUN_00048a10((struct biMap *)OV_I(self, 0x1c), "x", 3, 0, 0, 0, 0);
+	OV_I(self, 0x28) = (int)FUN_00048a10((struct biMap *)OV_I(self, 0x1c), "select", 1, 1, 0, 0, 0);
+	OV_I(self, 0x2c) = (int)FUN_00048a10((struct biMap *)OV_I(self, 0x1c), "back", 1, 1, 0, 0, 0);
+	OV_I(self, 0x30) = (int)FUN_00048a10((struct biMap *)OV_I(self, 0x1c), "cheat", 1, 0, 0, 0, 0);
 	FUN_00048b20((struct biChannel *)OV_I(self, 0x20), DAT_002baee0[player * 10] | 0xbe, DAT_002baee0[player * 10] | 0xbd);
 	FUN_00048b20((struct biChannel *)OV_I(self, 0x24), DAT_002baee0[player * 10] | 0xc0, DAT_002baee0[player * 10] | 0xbf);
 	FUN_00048b20((struct biChannel *)OV_I(self, 0x20), DAT_002baee0[player * 10] | 0xba, 0);

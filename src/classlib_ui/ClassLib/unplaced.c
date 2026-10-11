@@ -838,7 +838,7 @@ void CLSprite_DrawBlurred(undefined4 a1, undefined4 a2, undefined4 a3, float *po
 		for (j = 0; j < 3; j++) {
 			matrix[12] = pos[0] - dx;
 			matrix[13] = (float)((double)pos[1] - ((double)j - 1.0) * (double)spacing);
-			FUN_00043930((undefined4 *)matrix);
+			FUN_00043930((float *)matrix);
 			if (sprite != 0) {
 				*(int *)(sprite + 0x88) = 0;
 				FUN_00043400((struct bdFont *)a1, (const unsigned short *)a2, a3, (struct bdPrintFormat *)local_pos, a5, a6, a7,
@@ -1043,7 +1043,7 @@ void CLDebris_Start(void)
 	DAT_002ed348 = 1;
 	if (DAT_002ed34c != 0)
 		FUN_0003c8b0((struct BExtraSystem *)DAT_002ed34c);
-	FUN_00086350((int *)DAT_00290ea8);
+	FUN_00086350((struct CSpriteVB *)DAT_00290ea8);
 	FUN_00085200();
 }
 
@@ -1054,8 +1054,8 @@ bumpercars_a (ClassLib/Debris.c), which owns the debris system. */
 Stops the debris effects. */
 void CLDebris_Stop(void)
 {
-	FUN_000863c0((int *)DAT_00290ea8);
+	FUN_000863c0((struct CSpriteVB *)DAT_00290ea8);
 	FUN_0003c690((struct BExtraSystem *)DAT_002ed34c, 0);
-	FUN_000861b0((undefined4 *)DAT_00290ea8);
+	FUN_000861b0((struct CSpriteVB *)DAT_00290ea8);
 	FUN_0003c690((struct BExtraSystem *)DAT_002ed44c, 0);
 }

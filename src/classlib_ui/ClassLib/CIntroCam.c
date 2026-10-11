@@ -524,7 +524,7 @@ static int CLIntroCam_EvalVector(float *out, float t, int track, unsigned int be
 	while (KEY_FRAME(key) < frame)
 		key = KEY_NEXT(key);
 	if (frame == 0) {
-		FUN_000127e0((undefined4 *)out, (undefined4 *)(key + 4));
+		FUN_000127e0((float *)out, (float *)(key + 4));
 		return 1;
 	}
 	prev = KEY_PREV(key);

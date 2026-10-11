@@ -58,7 +58,7 @@ void CLRumble_FreeTracks(int *self)
 		}
 		object = OV_I(track, 0x10);
 		if (object != 0) {
-			FUN_000d2770((int *)object);
+			FUN_000d2770((struct CFire_PointSprites *)object);
 			FUN_0004c110((void *)object);
 			OV_I(track, 0x10) = 0;
 		}
@@ -72,7 +72,7 @@ void CLRumble_FreeTracks(int *self)
 		}
 		object = OV_I(track, 0x14);
 		if (object != 0) {
-			FUN_000d2770((int *)object);
+			FUN_000d2770((struct CFire_PointSprites *)object);
 			FUN_0004c110((void *)object);
 			OV_I(track, 0x14) = 0;
 		}

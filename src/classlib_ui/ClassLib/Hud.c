@@ -391,7 +391,7 @@ void CLHud_UpdateMarkers(int self)
 				OV_I(marker, 0xa0) = OV_I(self, 0x20);
 			}
 		}
-		FUN_00043930((undefined4 *)DAT_002855f0);
+		FUN_00043930((float *)DAT_002855f0);
 		in[1] = DAT_002ed350[player * 4 + 1] + OV_F(self, 0xa8 + player * 4);
 		in[0] = DAT_002ed350[player * 4];
 		in[2] = DAT_002ed350[player * 4 + 2];
@@ -1730,7 +1730,7 @@ void CLHud_DrawScoreBars(int self, float s0, float s1, float s2, float s3, float
 	FUN_00044b00(10, 0, 0);
 	FUN_00044b00(4, 0, 0);
 	FUN_00044b00(7, 1, 0);
-	FUN_00043930((undefined4 *)DAT_002855f0);
+	FUN_00043930((float *)DAT_002855f0);
 	FUN_000416c0(0, (struct bdTexture *)OV_I(self, 0x5c));
 	for (i = 0; i < 4; i++) {
 		if (score[i] > 1.0f)

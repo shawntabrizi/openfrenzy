@@ -430,11 +430,11 @@ void COverlay_DrawText(int self, int shadow)
 		clu_text_scale_x = OV_F(self, 0x374);
 		clu_text_scale_y = OV_F(self, 0x37c);
 		if ((*(unsigned char *)(self + 0x2e8) & 2) != 0) {
-			FUN_000502a0((undefined4 *)scale_rotate, OV_F(self, 0x374), OV_F(self, 0x37c), OV_F(self, 0x384));
-			FUN_00050250((undefined4 *)translate, OV_F(self, 0x300), OV_F(self, 0x304), OV_F(self, 0x308));
+			FUN_000502a0((float *)scale_rotate, OV_F(self, 0x374), OV_F(self, 0x37c), OV_F(self, 0x384));
+			FUN_00050250((float *)translate, OV_F(self, 0x300), OV_F(self, 0x304), OV_F(self, 0x308));
 			/* the original picks 0x0004ff30 for unaligned matrices; both multiply */
 			FUN_00050150(world, translate, scale_rotate);
-			FUN_00043930((undefined4 *)world);
+			FUN_00043930((float *)world);
 			box.y = 0.0f;
 			box.x = 0.0f;
 		}
@@ -547,7 +547,7 @@ void COverlay_InitModel(int self, undefined4 *desc)
 		OV_I(self, 0x74) = actor;
 		FUN_00035cc0((struct BActorInstance *)actor, 0, 1, 0);
 		FUN_00035cc0((struct BActorInstance *)OV_I(self, 0x74), 1, 0, 0);
-		FUN_00034e70((struct BActorInstance *)OV_I(self, 0x74), (undefined4 *)OV_I(OV_I(self, 0x74), 0x134), 0x18, 1);
+		FUN_00034e70((struct BActorInstance *)OV_I(self, 0x74), (struct BActorNode *)OV_I(OV_I(self, 0x74), 0x134), 0x18, 1);
 		FUN_00038190((void *)OV_I(self, 0x74), (struct BActorNode *)OV_I(OV_I(self, 0x74), 0x134), 1, 0);
 	}
 	OV_U(self, 0x78) = desc[7];

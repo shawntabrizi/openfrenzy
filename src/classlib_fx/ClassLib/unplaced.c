@@ -259,7 +259,7 @@ void PointSprites_Begin(CPointSprites *self)
 	switch (self->blendMode) {
 	case 0:
 		FUN_00044b00(6, 0, 0);
-		FUN_00043930((undefined4 *)&DAT_002855f0);
+		FUN_00043930((float *)&DAT_002855f0);
 		return;
 	case 1:
 		mode = 0;
@@ -274,13 +274,13 @@ void PointSprites_Begin(CPointSprites *self)
 		mode = 2;
 		break;
 	default:
-		FUN_00043930((undefined4 *)&DAT_002855f0);
+		FUN_00043930((float *)&DAT_002855f0);
 		return;
 	}
 	FUN_00044b00(5, 0, 0);
 	FUN_00044b00(6, 1, 0);
 	Blend_SetMode(mode);
-	FUN_00043930((undefined4 *)&DAT_002855f0);
+	FUN_00043930((float *)&DAT_002855f0);
 }
 
 /* ======================================================================== weighted texture frames, actor animation switch

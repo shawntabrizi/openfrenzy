@@ -281,7 +281,7 @@ void CToken_DrawShadowAll(void)
 	CToken *t;
 
 	if (DAT_002ff9d4.count != 0 && DAT_002ff9c8 != 0) {
-		FUN_00043930((undefined4 *)DAT_002855f0);
+		FUN_00043930((float *)DAT_002855f0);
 		FUN_00044b00(3, 0, 0);
 		FUN_00044b00(6, 1, 0);
 		FUN_00044b00(7, 2, 0);
