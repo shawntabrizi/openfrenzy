@@ -229,7 +229,7 @@ void CFire_Game_BeginLoad(struct CFireGame *self)
 			co_RouteTable_Ctor(tables + i * 0x18);
 	}
 	DAT_002f6b88 = tables;
-	FUN_000c39b0(DAT_002f6ba0, tables, 0x18, 0x18);
+	FUN_000c39b0((undefined4)DAT_002f6ba0, (undefined4)tables, 0x18, 0x18);
 	sprintf(name, "packages\\carryon_v%d", CO_VARIANT(&g_fireGame) + 1);
 	bkPrintf("Background Loading Begin...\n");
 	DAT_002f6b90 = co_LoadPackage(name, 0);

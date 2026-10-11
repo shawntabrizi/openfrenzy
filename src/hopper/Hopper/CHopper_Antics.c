@@ -233,7 +233,7 @@ void HopAntics_Reset(void *self)
 			r = (float)i * 140.0f + 800.0f;
 			x = -(sinf(a) * r);
 			z = -(cosf(a) * r);
-			FUN_00142d50((int)(uintptr_t)HOP_ADDR(0x002aec10), 0);
+			FUN_00142d50((void *)(uintptr_t)HOP_ADDR(0x002aec10), 0);
 			break;
 		}
 		actor = hop_PlayerActor(i);

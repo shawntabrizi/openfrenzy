@@ -617,9 +617,9 @@ void CBCar_Game_EndRound(struct CBCar_Game *self)
 		car = *(void **)(player + 0x138);
 		BCA_I32(DAT_002ecfac, 0xb8 + i * 4) = 0;
 		if (BCA_I32(player, 0x154) != 0)
-			FUN_00048d40(BCA_I32(player, 0x154));
+			FUN_00048d40((struct biChannel *)BCA_I32(player, 0x154));
 		if (BCA_I32(player, 0x150) != 0)
-			FUN_00048d40(BCA_I32(player, 0x150));
+			FUN_00048d40((struct biChannel *)BCA_I32(player, 0x150));
 		BCA_F32(car, 0x3c) = 1.0f;
 		BCA_I32(player, 0x2b4) = 0;
 		BCA_AT(car, 0x8a6, short) = 0;

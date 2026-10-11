@@ -206,7 +206,7 @@ static void hop_SparkBurst(float *hit)
 		vel[1] = ((float)r2 * 3.0518509e-05f + 1.5f) * DAT_0028fda8;
 		vel[2] = (float)r3 * DAT_0028fda8 * 3.0518509e-05f;
 		vel[3] = 1.0f;
-		FUN_00134000(0x2b, (undefined4)(uintptr_t)hit, (undefined4)(uintptr_t)vel, 0, 0xffffffff);
+		FUN_00134000(0x2b, (float *)(uintptr_t)hit, (float *)(uintptr_t)vel, 0, 0xffffffff);
 	}
 }
 

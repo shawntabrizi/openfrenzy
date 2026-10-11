@@ -677,7 +677,7 @@ void CBbash_Game_Intro(void *self)
 			MW_F(0x0030a310) = 1.0f;
 		if ((DAT_002baeb8 != 0 || status != 0) && MW_S(0x0030ce02) == 0) {
 			/* the intro camera ended: game camera, RefBot, HUD bars */
-			FUN_000d6e80((int)(uintptr_t)mw_Camera);
+			FUN_000d6e80((void *)(uintptr_t)mw_Camera);
 			if (mw_Variation == 3 || mw_Variation == 0) {
 				MW_AF(mw_Camera, 0x538) = MW_AF(mw_Camera, 0x538) + 200.0f;
 				bdSetCameraLookAt(MW_AV(mw_Camera, 0x534), MW_AV(mw_Camera, 0x544), 0.0f);
@@ -695,7 +695,7 @@ void CBbash_Game_Intro(void *self)
 			MW_S(0x0030ce02) = 1;
 			GM_I(0x34) = 0;
 			bsSetSfxVolume((DAT_002bae6c * 0xff) / 0xff);
-			FUN_000d6e80((int)(uintptr_t)mw_Camera);
+			FUN_000d6e80((void *)(uintptr_t)mw_Camera);
 			if (mw_Variation == 3 || mw_Variation == 0) {
 				MW_AF(mw_Camera, 0x538) = MW_AF(mw_Camera, 0x538) + 200.0f;
 				bdSetCameraLookAt(MW_AV(mw_Camera, 0x534), MW_AV(mw_Camera, 0x544), 0.0f);
@@ -1195,7 +1195,7 @@ void CBbash_Game_Update(void *self)
 			MW_AF(mw_Camera, 0x308) = 3100.0f;
 		if (mw_Variation == 0)
 			MW_AF(mw_Camera, 0x308) = 1600.0f;
-		FUN_000d6e80((int)(uintptr_t)mw_Camera);
+		FUN_000d6e80((void *)(uintptr_t)mw_Camera);
 		if (mw_Variation == 3) {
 			MW_AF(mw_Camera, 0x538) = MW_AF(mw_Camera, 0x538) + 200.0f;
 			bdSetCameraLookAt(MW_AV(mw_Camera, 0x534), MW_AV(mw_Camera, 0x544), 0.0f);

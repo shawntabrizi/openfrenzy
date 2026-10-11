@@ -351,7 +351,7 @@ static void *mw_NewCamera(int line)
 
 	if (camera == NULL)
 		return NULL;
-	return (void *)(uintptr_t)FUN_000d63f0((int)(uintptr_t)camera, 5);
+	return (void *)(uintptr_t)FUN_000d63f0((void *)(uintptr_t)camera, 5);
 }
 
 /* the camera follows every player */
@@ -360,8 +360,8 @@ static void mw_CameraAddPlayers(void)
 	int i;
 
 	for (i = 0; i < DAT_002bae94; i++)
-		FUN_000d62c0((int)(uintptr_t)mw_Camera, (undefined4)(uintptr_t)MW_AV(MW_AP(mw_Players[i], 0x30), 0xd0), 0,
-			(undefined4)(uintptr_t)DAT_002ea478);
+		FUN_000d62c0((void *)(uintptr_t)mw_Camera, (float *)(uintptr_t)MW_AV(MW_AP(mw_Players[i], 0x30), 0xd0), 0,
+			(float *)(uintptr_t)DAT_002ea478);
 }
 
 /* the subway train of "Brawl" and "Pied Pipers" (an actor instance at 0x0030a340) */
@@ -759,10 +759,10 @@ void CGameMode_MouseWhack_Init(void *self)
 		MW_FV(0x0030a2e0)[1] = 400.0f;
 		MW_FV(0x0030a2e0)[2] = 800.0f;
 		MW_FV(0x0030a2e0)[3] = 1.0f;
-		FUN_000d62c0((int)(uintptr_t)mw_Camera, (undefined4)(uintptr_t)MW_FV(0x0030a2b0), 0, (undefined4)(uintptr_t)DAT_002ea478);
-		FUN_000d62c0((int)(uintptr_t)mw_Camera, (undefined4)(uintptr_t)MW_FV(0x0030a2c0), 0, (undefined4)(uintptr_t)DAT_002ea478);
-		FUN_000d62c0((int)(uintptr_t)mw_Camera, (undefined4)(uintptr_t)MW_FV(0x0030a2d0), 0, (undefined4)(uintptr_t)DAT_002ea478);
-		FUN_000d62c0((int)(uintptr_t)mw_Camera, (undefined4)(uintptr_t)MW_FV(0x0030a2e0), 0, (undefined4)(uintptr_t)DAT_002ea478);
+		FUN_000d62c0((void *)(uintptr_t)mw_Camera, (float *)(uintptr_t)MW_FV(0x0030a2b0), 0, (float *)(uintptr_t)DAT_002ea478);
+		FUN_000d62c0((void *)(uintptr_t)mw_Camera, (float *)(uintptr_t)MW_FV(0x0030a2c0), 0, (float *)(uintptr_t)DAT_002ea478);
+		FUN_000d62c0((void *)(uintptr_t)mw_Camera, (float *)(uintptr_t)MW_FV(0x0030a2d0), 0, (float *)(uintptr_t)DAT_002ea478);
+		FUN_000d62c0((void *)(uintptr_t)mw_Camera, (float *)(uintptr_t)MW_FV(0x0030a2e0), 0, (float *)(uintptr_t)DAT_002ea478);
 		MW_AF(mw_Camera, 0x4b0) = -2000.0f;
 		MW_AF(mw_Camera, 0x4b4) = -2500.0f;
 		MW_AF(mw_Camera, 0x4b8) = 500.0f;
@@ -792,8 +792,8 @@ void CGameMode_MouseWhack_Init(void *self)
 		MW_FV(0x0030a2c0)[0] = -1147.0f;
 		MW_FV(0x0030a2c0)[1] = 0.0f;
 		MW_FV(0x0030a2c0)[2] = -1752.0f;
-		FUN_000d62c0((int)(uintptr_t)mw_Camera, (undefined4)(uintptr_t)MW_FV(0x0030a2b0), 0, (undefined4)(uintptr_t)DAT_002ea478);
-		FUN_000d62c0((int)(uintptr_t)mw_Camera, (undefined4)(uintptr_t)MW_FV(0x0030a2c0), 0, (undefined4)(uintptr_t)DAT_002ea478);
+		FUN_000d62c0((void *)(uintptr_t)mw_Camera, (float *)(uintptr_t)MW_FV(0x0030a2b0), 0, (float *)(uintptr_t)DAT_002ea478);
+		FUN_000d62c0((void *)(uintptr_t)mw_Camera, (float *)(uintptr_t)MW_FV(0x0030a2c0), 0, (float *)(uintptr_t)DAT_002ea478);
 		break;
 	}
 	bkPrintf("initing projectors\n");
@@ -883,7 +883,7 @@ void CGameMode_MouseWhack_Exit(void *self)
 	}
 	object = mw_Camera;
 	if (object != NULL) {
-		FUN_000d64a0((int)(uintptr_t)object);
+		FUN_000d64a0((void *)(uintptr_t)object);
 		MW_DELETE(object);
 	}
 	mw_DeleteTweakMenu(mw_DebugMenu);

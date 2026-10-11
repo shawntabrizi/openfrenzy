@@ -1870,7 +1870,7 @@ fade_in:
 			return;
 		case 2:
 			p = FH_AP(self, 0x1c8);
-			FUN_00133490(p, pos, &heading);
+			FUN_00133490((int)p, pos, &heading);
 			pos[1] = pos[1] + 15.0f;
 			bdSetCameraPosition(pos[0], pos[1], pos[2]);
 			bdSetCameraAngles(0.0f, heading, 0.0f, 1);

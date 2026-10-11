@@ -137,7 +137,7 @@ map (rowing_a 0x001af950, thiscall) */
 void HopGame_Suspend(void *self)
 {
 	(void)self;
-	FUN_001af950((int)(uintptr_t)HOP_ADDR(0x002b0378));
+	FUN_001af950((void *)(uintptr_t)HOP_ADDR(0x002b0378));
 }
 
 /* 0x0013edb0  (gap; not in the function table): update: while the mode loads its packages,
