@@ -531,6 +531,65 @@ No new fault was found, so no code changed. `OPENFRENZY_BKLOG=1` is needed for t
   available. The real path differs only in where the focus event comes from:
   `platform_handle_event` handles both the same way.
 
+### Regression sweep after round 5 (fix-full-regression-after-r5)
+
+Build from `git archive HEAD` at e496cb3 (includes 9f792cc, the Demolition anim segment fix)
+in `build-fix-full-regression-after-r5/`: clean configure and build (25 s), ctest 5/5 (smoke
+not registered: no `orig/` in the archive). All runs used renamed copies of the host and the
+guest (`ofr5*`), `OPENFRENZY_BKLOG=1`. No run logged `quit requested`.
+
+- (a) Direct launch, all 12 games x all 4 variation names (BumperCars ... TankedUp 1-4,
+  Demolition and RollerBall 0-3), 90 s each, `SDL_VIDEO_DRIVER=dummy`, A every 3 s, 6 at a
+  time. 46 of 48 reach `countdown PLAYING` with no fault and no UNIMPLEMENTED; the only
+  assertion is the known ScratchMatch 1-3 `CScratchmatch_Game.cpp(815)`. The 4th variations
+  are new in this sweep (round 4 ran 1-3 only). Two faults:
+  - Jetboats 4 (Current Affair): fault 10 at 0x10000000000 in `memset` <-
+    `bsPlayAudioStreamWMA` <- `bsPlayAudioStream` <- `CLMusic_Play` <-
+    `CGameMode_MiniGameIntro_Enter` <- `CGameModeStack_Push` <- `FUN_0019e970` (Rowing start)
+    <- `FUN_001a2890` <- `CGameModeStack_Process` <- `Core_Init` <- `main`, after
+    `EnsureAllocBkg: *** Out of memory on Babel heap` (row_v4, 5.6 MB) and
+    `xbAudioStreamWMA.cpp(614) : bkHeapAllocDebug: Out of memory`, at the start of round 3.
+    **Port bug, fixed** (9767d62): in the replay branch of the Rowing update (state 6,
+    `DAT_002bae98 == 2`) the port called `CGameModeStack_PopTo(..., "BGeffects", 1)`; the
+    XBE pushes the name buffer 0x00283b18 (`push 0x283b18` at 0x001a38d9), which Core_Init
+    sets to "Root" for a direct launch. With the literal, nothing was popped: the old Rowing
+    mode never got `Popped` (no `Free3DBuffers` line), so it never closed row_v<n> and
+    row_gen, and Babel free memory at each intro fell 28 MB -> 11 MB -> out of memory. Only
+    Jetboats 4 has rounds short enough to reach round 3 in 90 s; 1-3 leak the same way. In a
+    tournament or Minigame Frenzy the buffer holds "BGeffects", so nothing changes there.
+    CarryOn (0x000be2d5) and core are the other users of 0x00283b18 and already use the
+    buffer. Verified: Jetboats 1-4, 300 s each, headless: 4-6 rounds each, no fault, no
+    out of memory; v4 Babel free memory at each intro 27.8 MB every round, one
+    `Free3DBuffers` line per round.
+  - ScratchMatch 4 (Hardcore): fault 10 at 0x100ffffffe4 in `bkLoadPackageFile` <-
+    `baLoadActor` <- `baLoadActor` <- `bLoadResource` <- `SMScenic_Load` <-
+    `CGameMode_ScratchMatch_Init` <- `CGameMode_MiniGameIntro_Render`. Not a valid
+    variation: the playable table 0x002839e4 (`[game * 4 + variation]`, read by
+    CMapCube_FindValidGames) is 0 for ScratchMatch 4, Clusteroids 3 (Mines) and RollerBall
+    3 (Roll of Honour; setting 2): the 3 variations the retail game never offers (48 - 3 =
+    45 minigames). Bad input, not fixed. Clusteroids 3 and RollerBall setting 2 happen to
+    run without a fault.
+- (b) 6-stage tournament, window, round-3 recipe, `OPENFRENZY_DEBUG_SKIP_VIDEOS=true`, 2700 s,
+  frame dumps every 300 frames (`original` scaling). Run 1 at e496cb3: 24 launches (6 Meta
+  stages, 18 minigames, among them Blast Man Standing, Tailblazer, Rollmentum, Rhythm,
+  Armored Antics, Exterminator, Water Gate Scramble), GameWinner after the last A at about
+  2389 s, "Samson Wins!", then "Press START to play". Run 2 with the Rowing fix (at the same
+  time as run 1, so about 53 fps): 25 launches (24 plus the tie break "Jetboat Sprint"),
+  among them Mystery Beat and Scratch Match (no assertion), Water Gate Scramble and Money
+  Pool (Jetboats, which pop normally in a tournament), Tank Tangle and Tank Tracks;
+  GameWinner at about 2389 s, then the title. Both: no fault, no UNIMPLEMENTED, no assertion,
+  no out of memory.
+- (c) Window, videos skipped, fixed build. Options (`START@6000,DOWN@20000,DOWN@21500,
+  A@23500`, then one change on each line, A on credits, B three times; 80 s): sound volume
+  up, music volume down, vibration on -> off, song sample -> Radio Waves, Credits scroll, B
+  -> Options, B -> main menu; no fault. Minigame Frenzy (`START@6000,DOWN@20000,A@23000,
+  A@26000,START@29000,START@32000,START@35000`, then A every 3 s; 330 s): character select,
+  MiniGameSelect, Air Raid played 4 times through AskAgain ("play again"), no fault; Babel
+  free memory at MiniGameSelect stays 39.6 MB after each replay. Character select needs
+  START: A alone stays on it.
+- Timing: the main menu takes input at about 14-20 s with videos skipped in a window (the
+  round-3 note said 6 s START then 11 s); presses at 9-12 s land on the title transition.
+
 ## Frame pacing (integration round 5, fix-frame-pacing)
 
 - New: the host logs one line every 10 s from the swap path (`host_sdl_gl_swap_window`,
