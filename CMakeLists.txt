@@ -173,6 +173,15 @@ foreach(_case "skeleton;0" "probe;42" "adrp;0" "platform_check;0" "guest;0")
       -P "${CMAKE_SOURCE_DIR}/cmake/run_guest_test.cmake")
 endforeach()
 
+# Differential test (label "diff"; tests/diff/README.md): decompiled functions against the
+# original x86 code of orig/default.xbe in Unicorn, on the regression list. Skipped (exit 77)
+# without orig/default.xbe or without tools/diff-venv (tests/diff/setup_venv.sh).
+add_test(NAME diff_regression
+  COMMAND Python3::Interpreter -I "${CMAKE_SOURCE_DIR}/tests/diff/run_diff.py"
+    --build "${CMAKE_BINARY_DIR}" --ninja "${CMAKE_MAKE_PROGRAM}"
+    --list "${CMAKE_SOURCE_DIR}/tests/diff/regression.txt")
+set_tests_properties(diff_regression PROPERTIES LABELS diff TIMEOUT 300 SKIP_RETURN_CODE 77)
+
 # Smoke test of the full guest stack (musl, runtime, imports, vfs disc reader). Needs the
 # player's disc image; without it the test is not registered.
 set(OPENFRENZY_ISO "${CMAKE_SOURCE_DIR}/orig/game.xiso.iso" CACHE FILEPATH "Game disc image (XDVDFS)")

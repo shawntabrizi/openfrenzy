@@ -1,0 +1,57 @@
+# Functions that `ctest -L diff` runs (tests/diff/README.md). Format: address (hex), then a
+# comment. The run fails when one of them differs from x86 or is no longer tested.
+#
+# Bugs that the differential test found and that are fixed:
+00188870 CRollerBallSumo_GetTime: read the timer of the game object, not of the active platform
+00056440 bsGetAudioStreamInfo: second and third results came from +0x28 and +0x2c, not +0x20 and +0x28
+0015d260 CLightningBolt_Update: ended a bolt at life 0, x86 only below 0
+# (core_modes_b's two storages for 0x0028198c and 0x002ba4cc: every run checks that no
+# original address has two port locations)
+#
+# A fixed sample of functions that match (every 40th exact match and every 10th float-only
+# match of the leaf and level-1 run), so that the harness itself stays checked:
+00011160 CBGMatrixText_Init (core_modes_a, exact)
+0001c1b0 CScoreTable_EndRound (core_modes_b, exact)
+000382c0 baInitLights (bactor, exact)
+00047d80 bGuiGetItem (engine_misc, exact)
+0004dcf0 bkSetLanguage (bkernel, exact)
+00052ce0 bmSphereSideOfPlane (engine_misc, exact)
+00078960 CLHud_SetScores (classlib_ui, exact)
+000872b0 CBCar_Game_Ctor (bumpercars_a, exact)
+00094370 CBCar_Flame_Ctor (bumpercars_a, exact)
+000a5be0 BCarTextReader_Construct (bumpercars_b, exact)
+000add50 CLMath_TurnTowards (charlib, exact)
+000c3ac0 CFire_ASEImport_Ctor (carryon_a, exact)
+000d58d0 CCamera_Reset (charlib, exact)
+000e5480 ClustPods_ChooseVictim (clusteroids, exact)
+000ec2d0 CDemoTimer_Ctor (demolition_a, exact)
+000efa60 CDemoExplosion_Dtor (demolition_a, exact)
+000f9ee0 CDemolition_Player_CondWalk (demolition_b, exact)
+001028b0 DcDebrisSystem_Destruct (demolition_c, exact)
+00109ec0 DemoAI0_StateHunt (demolition_d, exact)
+001148f0 DrMap_FillCell (drillers, exact)
+001380d0 FoxHunt_NearestGate (foxhunt, exact)
+00152f30 FUN_00152f30 (meta_a, exact)
+001635e0 CMetaEmitter_SetRate (meta_b, exact)
+00187f60 CRollerBallVariation_Zero (rollerball_a, exact)
+0018e8c0 CRollerBallTimer_Ctor (rollerball_a, exact)
+00190ca0 CRollerBallGoalFx_Dtor (rollerball_a, exact)
+00198a20 CRollerballPlayer_Dtor (rollerball_b, exact)
+001a76e0 FUN_001a76e0 (rowing_a, exact)
+001b7370 RowRaceBuoy_ctor (rowing_b, exact)
+001c3790 CTankTimer_Ctor (tankedup_a, exact)
+001ce940 CTankEntities_WrapAngle (tankedup_a, exact)
+001f2a40 FUN_001f2a40 (core, exact)
+001f50b0 FUN_001f50b0 (core, exact)
+0001e940 CGameMode_Map_Fly (core_modes_b, float only)
+000505c0 bmTransformVector4 (bkernel, float only)
+000515c0 bmQuaternionToMatrix (bkernel, float only)
+00070940 CLVec3_Normalize (classlib_ui, float only)
+000aa810 CSmokeSystem_Emit (classlib_fx, float only)
+000d32b0 CFire_Sparks_Start (carryon_b, float only)
+000e55b0 ClustPods_NearestShip (clusteroids, float only)
+001071f0 DemoAI0_Restart (demolition_d, float only)
+0013ae50 AIState_Fall (classlib_fx, float only)
+001650d0 CBigGunCutter_StartSpark (meta_b, float only)
+0019c900 CRollerBallControlRace_Think (rollerball_b, float only)
+001b8df0 RowFloaty_AddPull (rowing_b, float only)

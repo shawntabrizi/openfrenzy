@@ -1,0 +1,31 @@
+# Known differences that are not port bugs. run_diff.py reports these functions as
+# "known" and does not fail on them. Each line was checked by hand against the x86 code.
+# Format: address (hex), then the reason.
+#
+# Port choices (documented at the function):
+0004d9c0 port choice: bkParseHex8 gives 0 for a character outside '0'-'f'; x86 indexes its table with any character (src/bkernel/bKernel/xbCache.c bkHexDigit)
+00105500 port choice: DcDustSystem_Emit without a shape: x86 uses an unset stack position, the port uses 0 (src/demolition_c)
+#
+# Harness limits:
+001136a0 harness: the Drillers worm item callback takes a va_list block; the port reads it with its own va_arg layout (its callers pass port va_lists), so x86-style blocks do not compare
+#
+# x87 range: the inputs hold tiny floats (scratch pointers read as floats, about -1e-34, and
+# small integers read as denormals). x87 keeps their products (1e-70) where float underflows
+# to 0, so a test against 0 or a normalisation takes another branch. The code matches x86.
+00054420 x87 range: bmClosestLinePoints (inputs about -1e-34)
+00070990 x87 range: CLVec3_Perpendicular (z = -9.9e-35, the squared length overflows in float only)
+00070be0 x87 range: CLVec3_Rotate (CLVec3_RotateAboutAxis length underflows in float only)
+000b1cd0 x87 range: CLVec3_MinLengthXZ (squared length 1e-68)
+000b22c0 x87 range: CRColl_ProjectInTri (inputs about -1e-34)
+000b8a40 x87 range: Platform_AddVelocity (dot product -4e-79 is -0.0 in float)
+00198590 x87 range: rollerball quaternion normalise (squared length 1e-68)
+001926e0 x87 range: CRollerballEntity_UpdateRoll (velocity -9.9e-35)
+001b9c30 x87 range: RowSegment_Distance (inputs about -1e-34)
+001bb8a0 x87 range: SMCamera_MoveTowards (bmVectorNormalise of a tiny vector)
+001d6c40 x87 range: TankPoint_SetDistance (bmVectorNormalise of a tiny vector)
+#
+# Out-of-range input that the harness does not flag by itself:
+0015be40 input: meta_a goal effect with player 4 (the table has 4 players), x86 and the port write past it into different globals
+000c10d0 input: CCarryOn_Player_PickRandomOpponent reads self->+0x30 before the player loop; x86 reads it inside the loop, which runs 0 times with 0 players. Same result for a valid player object
+000c11e0 input: CCarryOn_Player_PickWorstEnemy, as 0x000c10d0
+000c2e00 input: CCarryOn_Player_PickTarget, as 0x000c10d0

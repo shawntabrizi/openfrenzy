@@ -1,0 +1,33 @@
+# Data blocks of the port whose symbol name holds no original address (their DAT_ alias
+# symbols, where they exist, cover only parts of them).
+# run_diff.py maps [lo, hi) of the XBE to the block's start. Source: the block's
+# declaration in the module header (the range in its size expression or comment).
+#name	lo	hi
+sm_data	002b5b60	002b6950
+sm_bss	0030fe90	00312f50
+mw_data	002b26b8	002b4b8c
+mw_bss0	0030a0a8	0030a0e4
+mw_bss1	0030a138	0030a1d0
+mw_bss3	0030ea30	0030ed00
+mw_bss4	0030ed0c	0030ee30
+mw_bss5	0030ee40	0030ef04
+fh_bss0	00302138	003021ac
+fh_bss1	00302200	00302210
+fh_bss2	00302220	003022bc
+of_cl_data	00294bd8	00297508
+of_cl_bss	002f7a44	002ff858
+of_chl_data	00292c48	00293a50
+of_chl_bss	002f27d4	002f6b80
+of_clu_data	0028fda8	00290cc0
+of_clu_bss	002ea490	002ed33c
+of_core_data	002839b8	0028450c
+of_core_bss	002ba4f0	002bb138
+of_core_tweaks	002ad120	002adf38
+of_bcb_bss	002ed458	002f27c4
+of_hop_data	002ae814	002b04e4
+of_hop_bss	003023d4	00304558
+of_rb_data	002b4b8c	002b5474
+of_row_data	002b5474	002b5b60
+of_row_bss	0030ef08	0030fe94
+of_tu_data	002b6950	002b74a4
+of_tu_bss	00312f50	003153a0
