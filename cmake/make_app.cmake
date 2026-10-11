@@ -2,10 +2,11 @@
 # Layout and install-name steps follow ref/OpenCE-mac-innerhat tools/macos_build.py
 # (package_into, CC0): ANGLE's two frameworks become plain dylibs in Contents/Frameworks.
 # The bundle holds no game data: the player's disc image stays outside it (docs/BUILD.md).
-# SDL3, FFmpeg and their own dependencies (Homebrew) are copied by cmake/bundle_dylibs.py, so
-# the app runs on a Mac without Homebrew. Licence files go to Contents/Resources/licenses.
+# SDL3 and its dependencies (Homebrew) and FFmpeg (built in deps/, FFMPEG_DIR) are copied by
+# cmake/bundle_dylibs.py, so the app runs on a Mac without Homebrew. Licence files go to
+# Contents/Resources/licenses.
 # Usage: cmake -DAPP=... -DHOST=... -DGUEST=... -DPLIST=... -DEGL_DIR=... -DGLES_DIR=...
-#        -DPYTHON=... -DENTITLEMENTS=... -DLICENSES=... -P make_app.cmake
+#        -DPYTHON=... -DENTITLEMENTS=... -DLICENSES=... [-DFFMPEG_DIR=...] -P make_app.cmake
 
 file(REMOVE_RECURSE "${APP}")
 set(_contents "${APP}/Contents")
@@ -35,8 +36,12 @@ endforeach()
 _run(install_name_tool -add_rpath "@executable_path/../Frameworks" "${_exe}")
 
 # SDL3, FFmpeg and their dependencies: copied, install names @rpath/<name>, no /opt/homebrew.
+set(_local)
+if(FFMPEG_DIR)
+  set(_local --local "${FFMPEG_DIR}")
+endif()
 _run("${PYTHON}" -I "${CMAKE_CURRENT_LIST_DIR}/bundle_dylibs.py" "${_exe}"
-     "${_contents}/Frameworks" "${_contents}/Resources/licenses")
+     "${_contents}/Frameworks" "${_contents}/Resources/licenses" ${_local})
 file(COPY "${LICENSES}/ANGLE.txt" "${LICENSES}/musl.txt" DESTINATION "${_contents}/Resources/licenses")
 
 # Ad-hoc signature with the hardened runtime: each dylib first, then the bundle

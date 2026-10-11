@@ -387,7 +387,8 @@ Current state: `docs/STATUS.md`. The game plays; these questions are still open:
 
 - 53 rarely called library functions are not identified yet (`docs/LIBRARY_CALLS.md`). The game
   runs without a name for them.
-- The `.app` uses Homebrew's SDL3 and FFmpeg; a self-contained, notarized release is not done.
+- The `.app` bundles Homebrew's SDL3 and an LGPL FFmpeg built from source for Bink only
+  (`docs/BUILD.md`); a notarized release is not done.
 - Custom soundtracks are not supported. `XFindFirstSoundtrack` always returns none.
 - The debug menu callback FUN_00026d40 is a hand-written weak stub. Only the debug menu reaches it.
 

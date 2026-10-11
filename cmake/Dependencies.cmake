@@ -68,3 +68,109 @@ set(OPENFRENZY_MUSL_VERSION "${_ver}")
 if(NOT EXISTS "${OPENFRENZY_MUSL_DIR}/COPYRIGHT")
   file(ARCHIVE_EXTRACT INPUT "${OPENFRENZY_DEPS_DIR}/musl-${_ver}.tar.gz" DESTINATION "${OPENFRENZY_DEPS_DIR}")
 endif()
+
+# FFmpeg for the Bink videos (port/macos/host/host_bink.c), built from the pinned source archive
+# -> deps/ffmpeg-<version>-<key>. LGPL only: no GPL, no nonfree, no version3 code, no external
+# library; only the Bink demuxer and decoders, libavformat, libavcodec, libswscale and libavutil
+# (shared, so a user can replace them). <key> is a hash of the tarball and the configure line, so
+# a changed line gives a new build and an unchanged one is never built again. Called from
+# CMakeLists.txt when OPENFRENZY_BINK_FFMPEG is on. Sets OPENFRENZY_FFMPEG_DIR (include, lib,
+# LICENSES) and OPENFRENZY_FFMPEG_VERSION. Needs only Apple clang and make (no nasm on arm64).
+function(openfrenzy_ffmpeg)
+  string(JSON _url GET "${_of_manifest}" ffmpeg url)
+  string(JSON _sha GET "${_of_manifest}" ffmpeg sha256)
+  string(JSON _ver GET "${_of_manifest}" ffmpeg version)
+  # The app's minimum macOS (Info.plist), unless the build sets one.
+  set(_min "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  if(NOT _min)
+    file(READ "${CMAKE_SOURCE_DIR}/port/macos/Info.plist" _plist)
+    string(REGEX MATCH "<key>LSMinimumSystemVersion</key>[ \t\r\n]*<string>([0-9.]+)</string>" _ "${_plist}")
+    set(_min "${CMAKE_MATCH_1}")
+  endif()
+  # --prefix is only a name (make install DESTDIR=...): the configuration string that the
+  # libraries keep (avcodec_configuration) holds no local path.
+  set(_configure
+    --prefix=/usr/local --cc=/usr/bin/clang --arch=aarch64 --target-os=darwin
+    --install-name-dir=@rpath
+    --extra-cflags=-mmacosx-version-min=${_min} --extra-ldflags=-mmacosx-version-min=${_min}
+    --disable-everything --disable-gpl --disable-nonfree --disable-version3
+    --disable-programs --disable-doc --disable-network --disable-autodetect
+    --enable-shared --disable-static
+    --disable-avdevice --disable-avfilter --disable-swresample
+    --enable-demuxer=bink
+    --enable-decoder=bink --enable-decoder=binkaudio_rdft --enable-decoder=binkaudio_dct)
+  string(SHA256 _key "${_sha};${_configure}")
+  string(SUBSTRING "${_key}" 0 12 _key)
+  set(_prefix "${OPENFRENZY_DEPS_DIR}/ffmpeg-${_ver}-${_key}")
+  set(OPENFRENZY_FFMPEG_DIR "${_prefix}" PARENT_SCOPE)
+  set(OPENFRENZY_FFMPEG_VERSION "${_ver}" PARENT_SCOPE)
+  if(EXISTS "${_prefix}/BUILD_OK")
+    return()
+  endif()
+
+  # One build at a time: build directories share deps/.
+  file(LOCK "${OPENFRENZY_DEPS_DIR}/ffmpeg.lock" GUARD FUNCTION TIMEOUT 1800)
+  if(EXISTS "${_prefix}/BUILD_OK")
+    return()
+  endif()
+  set(_tarball "${OPENFRENZY_DEPS_DIR}/ffmpeg-${_ver}.tarball")
+  _of_download("${_url}" "${_sha}" "${_tarball}")
+  # Source and build tree in <prefix>.build, removed after a good build.
+  set(_work "${_prefix}.build")
+  set(_source "${_work}/source")
+  file(REMOVE_RECURSE "${_work}" "${_prefix}")
+  file(ARCHIVE_EXTRACT INPUT "${_tarball}" DESTINATION "${_work}/extract")
+  file(GLOB _top "${_work}/extract/*")  # (one top folder; its name does not matter)
+  file(RENAME "${_top}" "${_source}")
+  file(MAKE_DIRECTORY "${_work}/build")
+  find_program(OPENFRENZY_MAKE make REQUIRED)
+  cmake_host_system_information(RESULT _jobs QUERY NUMBER_OF_LOGICAL_CORES)
+  message(STATUS "Building FFmpeg ${_ver} (LGPL, Bink only) in ${_prefix} (log: ${_work}/build.log)")
+  # GIT_CEILING_DIRECTORIES: deps/ is inside this repository; FFmpeg's version.sh must not
+  # take this repository's git description as its version.
+  foreach(_step "${_source}/configure;${_configure}"
+                "${OPENFRENZY_MAKE};-j${_jobs}"
+                "${OPENFRENZY_MAKE};install;DESTDIR=${_work}/stage")
+    execute_process(
+      COMMAND "${CMAKE_COMMAND}" -E env "GIT_CEILING_DIRECTORIES=${OPENFRENZY_DEPS_DIR}" ${_step}
+      WORKING_DIRECTORY "${_work}/build" RESULT_VARIABLE _result
+      OUTPUT_FILE "${_work}/step.log" ERROR_FILE "${_work}/step.log")
+    file(READ "${_work}/step.log" _log)
+    file(APPEND "${_work}/build.log" "${_log}")
+    if(NOT _result EQUAL 0)
+      message(FATAL_ERROR "FFmpeg build step failed (${_result}): ${_step}\nLog: ${_work}/build.log")
+    endif()
+  endforeach()
+  file(RENAME "${_work}/stage/usr/local" "${_prefix}")
+
+  # Licence files and the source note, copied into the app by cmake/bundle_dylibs.py.
+  file(MAKE_DIRECTORY "${_prefix}/LICENSES")
+  file(COPY "${_source}/COPYING.LGPLv2.1" "${_source}/LICENSE.md" DESTINATION "${_prefix}/LICENSES")
+  list(JOIN _configure " " _line)
+  file(WRITE "${_prefix}/LICENSES/SOURCE.txt"
+"FFmpeg ${_ver} in OpenFrenzy.app
+
+The app uses FFmpeg only to play the game's Bink videos. The FFmpeg libraries in
+Contents/Frameworks (libavformat, libavcodec, libswscale, libavutil) are licensed under the
+GNU Lesser General Public License, version 2.1 or later (COPYING.LGPLv2.1, LICENSE.md).
+This build has no GPL, nonfree or version 3 part and no external library.
+
+Source code (the exact archive this build used, not changed):
+  ${_url}
+  SHA-256 ${_sha}
+
+Configure line (then make and make install):
+  ./configure ${_line}
+
+The libraries are dynamic libraries. The app loads them from Contents/Frameworks by their
+install names (@rpath/libavformat.<major>.dylib and so on). To use a changed FFmpeg: build
+it from the source above with the configure line above, copy your dylibs over the ones in
+Contents/Frameworks (the same file names), and sign the app again, for example:
+  codesign --force --options runtime --sign - OpenFrenzy.app/Contents/Frameworks/*.dylib
+  codesign --force --options runtime --entitlements OpenFrenzy.entitlements --sign - OpenFrenzy.app
+(OpenFrenzy.entitlements is port/macos/OpenFrenzy.entitlements in the OpenFrenzy source.)
+")
+  file(WRITE "${_prefix}/PACKAGE" "ffmpeg ${_ver}\n")
+  file(REMOVE_RECURSE "${_work}")
+  file(WRITE "${_prefix}/BUILD_OK" "${_line}\n")
+endfunction()

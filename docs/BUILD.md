@@ -5,15 +5,20 @@ Exact setup, build, run and test commands for Apple Silicon macOS. Design: `docs
 ## 1. One-time setup
 
 ```sh
-brew install python cmake ninja llvm@22 lld@22 sdl3 ffmpeg
+brew install python cmake ninja llvm@22 lld@22 sdl3
 ```
 
 - `llvm@22` is required for the guest (the `of-rebase` pass is built against it). Homebrew's
   default `llvm` (23 on this Mac) is not used. Override with `-DOPENFRENZY_LLVM_BIN=<dir>`.
 - `ld.lld` is taken from `lld@22` first.
 - The first CMake configure downloads, with SHA-256 checks, into `deps/` (git-ignored): ANGLE
-  (prebuilt xcframeworks, GLES on Metal), the Khronos EGL/GLES headers and musl 1.2.5
-  (`port/macos/dependencies.json`). After that no network is needed.
+  (prebuilt xcframeworks, GLES on Metal), the Khronos EGL/GLES headers, musl 1.2.5 and the
+  FFmpeg 9.0.2 source (`port/macos/dependencies.json`). After that no network is needed.
+- The first configure also builds FFmpeg for the Bink videos (about 40 s, once; see "Bink
+  videos" below). It needs only Apple's `/usr/bin/clang` and `/usr/bin/make` (Xcode Command
+  Line Tools). No `nasm` (x86 only) and no `pkg-config` are needed.
+- Homebrew's `ffmpeg` is not used by the build. Only `src/dsound/tests/compare_ffmpeg.sh` (an
+  optional WMA check) runs the `ffmpeg` program; install it for that script only.
 
 Game files (git-ignored, never commit them):
 
@@ -40,7 +45,7 @@ the rebase pass). Outputs in `build-<id>/`:
 |---|---|
 | `openfrenzy` | the Darwin host (native arm64) |
 | `openfrenzy_guest.elf` | the game image: decompiled code + weak stubs + platform layer |
-| `OpenFrenzy.app` | the app (target `openfrenzy_app`, part of the default build): host, game image, ANGLE, SDL3 and FFmpeg, ad-hoc signed with the hardened runtime; see "Run the app" |
+| `OpenFrenzy.app` | the app (target `openfrenzy_app`, part of the default build): host, game image, ANGLE, SDL3 and the LGPL FFmpeg, ad-hoc signed with the hardened runtime; see "Run the app" |
 | `openfrenzy_smoke.elf` | smoke test: SDL3 window + GLES clear + disc reads |
 | `openfrenzy_platform_check.elf` | links every platform object (catches undefined symbols) |
 | `openfrenzy_skeleton.elf`, `openfrenzy_probe.elf`, `openfrenzy_adrp.elf` | toolchain tests without musl |
@@ -87,12 +92,51 @@ Rebuild after editing: `cmake --build build-<id>` (new files under `src/` are fo
 automatically). The guest is an ExternalProject (`build-<id>/guest-main`); to see its errors in
 full, run `cmake --build build-<id>/guest-main`.
 
-Bink videos: the host decodes them with Homebrew FFmpeg (`ffmpeg`: libavformat, libavcodec,
-libswscale; `port/macos/host/host_bink.c`). CMake finds it with pkg-config and prints
-`Bink video: FFmpeg <version>`. Without FFmpeg, or with `-DOPENFRENZY_BINK_FFMPEG=OFF`, the host
-builds without it and the game skips every video (the old `bink_null.c` behaviour).
-**Homebrew's `ffmpeg` is built with `--enable-gpl --enable-version3` (GPL version 3 or later,
-with x264 and x265).** The app bundle copies it (see "Run the app", "Licences").
+Bink videos: the host decodes them with FFmpeg (`port/macos/host/host_bink.c`). The project
+builds its own FFmpeg (`openfrenzy_ffmpeg` in `cmake/Dependencies.cmake`) from the pinned FFmpeg
+9.0.2 source, LGPL version 2.1 or later, with only what `host_bink.c` uses:
+
+| Part | Used for |
+|---|---|
+| libavformat, `bink` demuxer | `av_find_input_format("bink")`, `avformat_open_input` on a custom `AVIOContext` (`pread` from the disc image), `av_read_frame`. No protocol: the input is the custom I/O, not a file name |
+| libavcodec, decoders `bink`, `binkaudio_rdft`, `binkaudio_dct` | the video and the two Bink audio types |
+| libswscale | the decoded YUV 4:2:0 frame (with alpha plane when present) to BGRA (`sws_scale`) |
+| libavutil | frames, packets, `av_image_alloc` |
+
+Not built: libswresample (the host converts the audio samples itself), libavdevice, libavfilter,
+the programs, every other codec, format, parser, protocol and filter, and every external
+library. The configure line:
+
+```sh
+./configure --prefix=/usr/local --cc=/usr/bin/clang --arch=aarch64 --target-os=darwin \
+  --install-name-dir=@rpath --extra-cflags=-mmacosx-version-min=13.0 \
+  --extra-ldflags=-mmacosx-version-min=13.0 --disable-everything --disable-gpl \
+  --disable-nonfree --disable-version3 --disable-programs --disable-doc --disable-network \
+  --disable-autodetect --enable-shared --disable-static --disable-avdevice --disable-avfilter \
+  --disable-swresample --enable-demuxer=bink --enable-decoder=bink \
+  --enable-decoder=binkaudio_rdft --enable-decoder=binkaudio_dct
+```
+
+- The source is the archive of the release tag `n9.0.2` from FFmpeg's GitHub mirror
+  (`https://codeload.github.com/FFmpeg/FFmpeg/tar.gz/refs/tags/n9.0.2`, SHA-256 in
+  `port/macos/dependencies.json`). The release tarball
+  `https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz` (SHA-256
+  `8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e`, from Homebrew's formula)
+  is the better source, but ffmpeg.org did not answer while this was made (2026-10-11). To use
+  it, change `url` and `sha256` of `ffmpeg` in `port/macos/dependencies.json`; nothing else
+  changes (a new `<key>` builds FFmpeg again).
+- 13.0 is `LSMinimumSystemVersion` of `port/macos/Info.plist` (or `CMAKE_OSX_DEPLOYMENT_TARGET`
+  when the build sets it).
+- The result goes to `deps/ffmpeg-9.0.2-<key>/` (`include`, `lib`, `LICENSES`), `<key>` = hash
+  of the tarball and the configure line. Each build directory uses it; a later configure or
+  build does not build FFmpeg again. A changed configure line gives a new folder. The log of a
+  failed FFmpeg build stays in `deps/ffmpeg-9.0.2-<key>.build/build.log`.
+- `--prefix` is only a name (`make install DESTDIR=...`), so the configuration string in the
+  libraries holds no local path.
+- CMake prints `Bink video: FFmpeg 9.0.2 (LGPL) in <folder>`. The plain host
+  (`build-<id>/openfrenzy`) finds the dylibs with an rpath to that folder.
+- With `-DOPENFRENZY_BINK_FFMPEG=OFF` nothing is downloaded or built, the host has no FFmpeg and
+  the game skips every video (the old `bink_null.c` behaviour).
 
 ## 3. Run
 
@@ -108,8 +152,9 @@ Finder. The app is self-contained: it runs on a Mac without Homebrew.
 | `Contents/MacOS/openfrenzy` | the host; rpath `@executable_path/../Frameworks` |
 | `Contents/Resources/openfrenzy_guest.elf` | the game image |
 | `Contents/Frameworks/libEGL.dylib`, `libGLESv2.dylib` | ANGLE, as plain dylibs (as OpenCE-mac-innerhat does; signed code belongs in `Frameworks`, not `Resources`) |
-| `Contents/Frameworks/libSDL3.0.dylib`, `libav*`, `libsw*` and 10 more | SDL3, the 5 FFmpeg libraries the host needs (libavformat, libavcodec, libswscale, libavutil, and libswresample, which libavformat needs) and their own dependencies, found recursively with `otool` (`cmake/bundle_dylibs.py`) |
-| `Contents/Resources/licenses/` | the licence files of each bundled Homebrew formula, `ANGLE.txt`, `musl.txt` (in the game image), and `BUNDLED_LIBRARIES.txt` (library, formula, version, FFmpeg configuration) |
+| `Contents/Frameworks/libSDL3.0.dylib` | SDL3 (Homebrew) |
+| `Contents/Frameworks/libavformat.63.dylib`, `libavcodec.63.dylib`, `libswscale.10.dylib`, `libavutil.61.dylib` | the project's LGPL FFmpeg 9.0.2 (see "Bink videos" above). The libraries are found recursively with `otool` (`cmake/bundle_dylibs.py`) |
+| `Contents/Resources/licenses/` | `sdl3/` (Homebrew licence file), `ffmpeg/` (`COPYING.LGPLv2.1`, `LICENSE.md`, `SOURCE.txt`), `ANGLE.txt`, `musl.txt` (in the game image), and `BUNDLED_LIBRARIES.txt` (library, source, version, FFmpeg configuration) |
 
 - The bundle holds no game data. It is not a release build: ad-hoc signature (with the
   hardened runtime), no notarization.
@@ -130,17 +175,17 @@ Finder. The app is self-contained: it runs on a Mac without Homebrew.
   unchanged: no settings file, no dialog, log on stderr. The tests use this form.
 - To choose another disc image: delete `disc_path.txt` (or set `OPENFRENZY_ISO`).
 
-Size with FFmpeg 8.0.1 and SDL 3.4.18: 54 MB (`Frameworks` 47 MB, of which ANGLE is 15 MB; game
-image 6.2 MB). Homebrew's libavcodec and libavformat link codecs and libraries that Bink never
-uses (x264, x265, SVT-AV1, libvpx, dav1d, LAME, Opus, OpenSSL): 18 MB of the 47 MB. They must
-be bundled because the FFmpeg libraries load them at start. Only an FFmpeg built for Bink alone
-can remove them.
+Size with FFmpeg 9.0.2 (LGPL, Bink only) and SDL 3.4.18: 26 MB (`Frameworks` 20 MB: ANGLE 15
+MB, SDL3 2.5 MB, the 4 FFmpeg libraries 2.6 MB; game image 6.2 MB). With Homebrew's GPL FFmpeg
+8.0.1 and its 10 dependency libraries the app was 54 MB.
 
 `cmake/bundle_dylibs.py` copies each dylib that is not in `/usr/lib` or `/System`, sets its
 install name to `@rpath/<name>`, changes every reference to `@rpath/<name>`, removes rpaths
 that point outside the bundle and gives each dylib the rpath `@loader_path`. The host keeps one
-rpath, `@executable_path/../Frameworks`. It stops the build if a library is not from a
-Homebrew formula (no licence file is known for it). Check a build:
+rpath, `@executable_path/../Frameworks`. It stops the build if a library is neither from a
+Homebrew formula nor from a local package of `deps/` (`--local`): no licence file is known for
+it. It also stops the build if the FFmpeg to bundle has `--enable-gpl`, `--enable-version3` or `--enable-nonfree`
+in its configuration. Check a build:
 
 ```sh
 A=build-<id>/OpenFrenzy.app
@@ -205,23 +250,20 @@ spctl --assess --type exec --verbose=4 $A
 
 | Library | Formula | Licence |
 |---|---|---|
-| libSDL3 | sdl3 3.4.18 | zlib |
-| libavformat, libavcodec, libswscale, libswresample, libavutil | ffmpeg 8.0.1_3 | **GPL version 3 or later** (this build: `--enable-gpl --enable-version3`; FFmpeg itself is LGPL only when built without them) |
-| libx264 | x264 r3222 | **GPL version 2 or later** |
-| libx265 | x265 4.1 | **GPL version 2 or later** |
-| libmp3lame | lame 3.100 | LGPL version 2 or later |
-| libdav1d | dav1d 1.5.3 | BSD-2-Clause |
-| libvpx | libvpx 1.15.2 | BSD-3-Clause |
-| libopus | opus 1.6.1 | BSD-3-Clause |
-| libSvtAv1Enc | svt-av1 4.0.1 | BSD-3-Clause-Clear (`LICENSE.md`) and BSD-2-Clause (`LICENSE-BSD2.md`) |
-| libssl, libcrypto | openssl@3 3.6.4 | Apache-2.0 |
+| libSDL3 | sdl3 3.4.18 (Homebrew) | zlib |
+| libavformat, libavcodec, libswscale, libavutil | FFmpeg 9.0.2, built from source (deps/) | LGPL version 2.1 or later (`ffmpeg/COPYING.LGPLv2.1`, `ffmpeg/LICENSE.md`) |
 | libEGL, libGLESv2 | ANGLE (deps/) | BSD-3-Clause (`port/macos/licenses/ANGLE.txt`) |
 | musl (in the game image) | musl 1.2.5 | MIT (`port/macos/licenses/musl.txt`) |
 
-**WARNING: the bundled FFmpeg is GPL.** A copy of the app that includes it must meet the GPL
-terms (for example, the corresponding source code on offer). This note does not change the
-project licence. To get an LGPL app, build FFmpeg without `--enable-gpl` (only the Bink demuxer and
-decoders are needed) and point `PKG_CONFIG_PATH` at it.
+The app has no GPL code. The LGPL lets you give the app to another person when that person can
+get the FFmpeg source and can replace the FFmpeg libraries:
+
+- `Contents/Resources/licenses/ffmpeg/SOURCE.txt` gives the source URL and SHA-256 of the exact
+  source archive (not changed), the configure line, and the steps to replace the libraries.
+- The FFmpeg libraries stay dynamic (`Contents/Frameworks/*.dylib`, install names
+  `@rpath/<name>`). A user can build the same version with the same configure line, copy the
+  dylibs over the bundled ones and sign the app again.
+- This note does not change the project licence and is not legal advice.
 
 
 ### Run from a shell

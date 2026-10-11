@@ -10,6 +10,11 @@ Later change (build directory `build-fix-app`): the self-contained app (SDL3, FF
 dependencies in the bundle, hardened runtime) and the virtual gamepad names. The rows "App
 bundle" and "Virtual pad names" below come from that run; the other rows are from f0ecccb.
 
+Later change (build directory `build-fix-lgpl-ffmpeg`): the project builds its own LGPL FFmpeg
+9.0.2 for Bink only, instead of Homebrew's GPL FFmpeg. The rows "App bundle" and "Bink videos
+(LGPL FFmpeg)" below come from that run. In that build: clean build, ctest 6/6 (`-LE gameplay`)
+and 13/13 (`-L gameplay -j8`), and the `dsound` and `bdisplay` module tests passed.
+
 ## Summary
 
 Fuzion Frenzy plays natively on Apple Silicon. Every function of the game and engine has
@@ -24,10 +29,11 @@ physical gamepad).
 One-time setup (details: `docs/BUILD.md`):
 
 ```sh
-brew install python cmake ninja llvm@22 lld@22 sdl3 ffmpeg
+brew install python cmake ninja llvm@22 lld@22 sdl3
 ```
 
-Build and test (the first configure downloads ANGLE, EGL/GLES headers and musl into `deps/`):
+Build and test (the first configure downloads ANGLE, EGL/GLES headers, musl and the FFmpeg
+source into `deps/`, and builds FFmpeg once, about 40 s):
 
 ```sh
 cd openfrenzy   # the root of your clone
@@ -59,7 +65,8 @@ asks for the disc image once. Direct launch of one minigame:
 | ctest, fast | 6/6 passed (`-LE gameplay`) |
 | ctest, gameplay | 13/13 passed in 240 s at `-j8`: `gameplay_board` (title, character select, Map, first minigame to `countdown PLAYING`) and a 60 s direct launch of each of the 12 games. Each test fails on a fault, `UNIMPLEMENTED`, `Out of memory` or an assertion |
 | Module tests | All 31 `src/*/tests/run_tests.sh` exit 0, headless. `d3d8` skips its drawing tests without a window. `runtime` reports 1 expected failure (`test_toolchain_strings`, see "Known bugs") |
-| App bundle | Self-contained, 54 MB: 17 dylibs in `Frameworks` (ANGLE, SDL3, 5 FFmpeg libraries, 10 of their dependencies). `otool -l` finds no `/opt/homebrew` path in any Mach-O file of the bundle. Ad-hoc signature with the hardened runtime and 2 entitlements (`allow-unsigned-executable-memory`, `disable-library-validation`; each tested, `docs/BUILD.md`). `codesign --verify --strict --deep` passes. `Contents/MacOS/openfrenzy` with no argument (headless, scripted input, stopped after 40 s) reaches `MainMenu`; `lsof` and `vmmap` of the process show every dylib from `Contents/Frameworks` and none from `/opt/homebrew`. **The bundled FFmpeg (Homebrew) is GPL version 3 or later** (`docs/BUILD.md` "Licences"). Not started from the Finder (the sandbox blocks `open`); not tested on a Mac without Homebrew |
+| App bundle | Self-contained, 26 MB (was 54 MB with Homebrew's FFmpeg): 7 dylibs in `Frameworks` (20 MB): ANGLE (2), SDL3, and the 4 LGPL FFmpeg 9.0.2 libraries (libavformat, libavcodec, libswscale, libavutil; 2.6 MB). The codec libraries of Homebrew's FFmpeg (x264, x265, SVT-AV1, libvpx, dav1d, LAME, Opus, OpenSSL) and libswresample are gone. `otool -L` and `otool -l` find no `/opt/homebrew` path in any Mach-O file of the bundle. Ad-hoc signature with the hardened runtime and 2 entitlements (`allow-unsigned-executable-memory`, `disable-library-validation`; each tested, `docs/BUILD.md`). `codesign --verify --strict --deep` passes. `lsof` and `vmmap` of the running bundled host show every dylib from `Contents/Frameworks` and none from `/opt/homebrew`. No GPL code: the FFmpeg libraries report `LGPL version 2.1 or later` (`avutil_license`, `avcodec_license`, `avformat_license`, `swscale_license`) and `avcodec_configuration` has `--disable-gpl`, no `--enable-gpl`. Not started from the Finder (the sandbox blocks `open`); not tested on a Mac without Homebrew |
+| Bink videos (LGPL FFmpeg) | Bundled host, videos on, window, stopped after 100 s: MICROSOFT.bik (105 of 105 frames), BLITZ60.bik (172 of 172, audio 2 ch 44100 Hz) and ATTRACT.bik (1599 of 1599, audio 2 ch 44100 Hz) decode and close; the title and the second ATTRACT.bik follow. Debug screenshots during BLITZ60.bik and ATTRACT.bik show the video frames. The audio capture is silent until BLITZ60.bik opens (3.27 s); from there until the menu music starts (67.6 s) the only voice is the Bink audio stream, with sound in both videos. The audio device was SDL's `dummy` driver: nobody listened |
 | Virtual pad names | `OPENFRENZY_DEBUG_VIRTUAL_PADS=4`: the host logs `gamepad 2: Pad 1 OpenFrenzy virtual` to `gamepad 5: Pad 4 OpenFrenzy virtual` (was "OpenFrenzy virtual pad 1" for all 4) |
 | Weak stubs | `llvm-nm` of `openfrenzy_guest.elf`: 5 weak `FUN_` symbols, the same as round 6 (list in "Known limits") |
 | XDK entry points | `src/runtime/entry/xdk_entry_points.inc`: 0 `MISSING`, 0 `UNKNOWN`. D3D 62 HLE + 27 internal, DSOUND 27 HLE + 54 internal, XGRPH 4 + 1, XPP 8 + 3 |
@@ -186,8 +193,8 @@ tests above.
   none changes behaviour) and `-Wnonportable-include-path` (853). The platform layer, runtime
   and musl compile with `-w` (516 hits of the default set, none of the audited classes).
 - The `.app` has an ad-hoc signature and no notarization (that needs the owner's Apple
-  Developer account; steps in `docs/BUILD.md`). It bundles Homebrew's FFmpeg, which is GPL
-  and links unused encoders (18 MB of the 47 MB in `Frameworks`).
+  Developer account; steps in `docs/BUILD.md`). It bundles an LGPL FFmpeg built for Bink only
+  (`docs/BUILD.md` "Licences").
 - No SMAA ("smaa" gives FXAA). Settings come from defaults, `settings.ini` (app only) and
   `OPENFRENZY_*` variables.
 - Custom soundtracks: `XFindFirstSoundtrack` always returns none.
@@ -199,6 +206,9 @@ tests above.
   events and SDL virtual gamepads were used.
 - The on-screen "controller unplugged" message (the headless runs draw nothing).
 - A real OS focus change. Only synthetic focus events were sent.
+- The FFmpeg source comes from the `n9.0.2` tag archive of FFmpeg's GitHub mirror, not from
+  the ffmpeg.org release tarball: ffmpeg.org did not answer during the change (`docs/BUILD.md`
+  "Bink videos"). A build from the ffmpeg.org tarball was not made.
 - Starting `OpenFrenzy.app` from the Finder, its disc image file dialog, and a windowed run of
   the app.
 - In this update: no window run and no full tournament. The tournament, Minigame Frenzy and
@@ -218,9 +228,9 @@ tests above.
 4. Run a full 6-stage tournament and Minigame Frenzy at the current commit (the last ones ran
    before the draw-overhead and input changes). Add a long tournament test under a new ctest
    label if its run time is acceptable.
-5. Release `.app`: decide the FFmpeg licence (an FFmpeg built for Bink alone is LGPL and
-   smaller), sign with a Developer ID, test without `disable-library-validation`, notarize
-   (`docs/BUILD.md`), and start it on a Mac without Homebrew.
+5. Release `.app`: done: an LGPL FFmpeg built for Bink only (26 MB app). Still to do: sign
+   with a Developer ID, test without `disable-library-validation`, notarize (`docs/BUILD.md`),
+   and start it on a Mac without Homebrew.
 6. Measure performance on a slower Mac (M1 base).
 7. Decompile the 5 weak `FUN_` symbols (the debug menu callback first) and name the 53
    unidentified library calls.

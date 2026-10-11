@@ -87,23 +87,19 @@ target_link_options(openfrenzy PRIVATE
   "-Wl,-rpath,${OPENFRENZY_EGL_FRAMEWORKS}" "-Wl,-rpath,${OPENFRENZY_GLES_FRAMEWORKS}")
 set_target_properties(openfrenzy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-# Bink video (port/macos/host/host_bink.c) decodes with FFmpeg (brew install ffmpeg). Without it
-# (or with -DOPENFRENZY_BINK_FFMPEG=OFF) every BinkOpen fails and the game skips its videos.
+# Bink video (port/macos/host/host_bink.c) decodes with FFmpeg, built once from source into
+# deps/ (LGPL, Bink only; cmake/Dependencies.cmake). With -DOPENFRENZY_BINK_FFMPEG=OFF every
+# BinkOpen fails and the game skips its videos.
 option(OPENFRENZY_BINK_FFMPEG "Play Bink videos with FFmpeg (libavformat, libavcodec, libswscale)" ON)
 set(_bink_ffmpeg 0)
 if(OPENFRENZY_BINK_FFMPEG)
-  find_package(PkgConfig QUIET)
-  if(PkgConfig_FOUND)
-    set(ENV{PKG_CONFIG_PATH} "/opt/homebrew/opt/ffmpeg/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
-    pkg_check_modules(OPENFRENZY_FFMPEG IMPORTED_TARGET libavformat libavcodec libswscale libavutil)
-  endif()
-  if(OPENFRENZY_FFMPEG_FOUND)
-    set(_bink_ffmpeg 1)
-    target_link_libraries(openfrenzy PRIVATE PkgConfig::OPENFRENZY_FFMPEG)
-    message(STATUS "Bink video: FFmpeg ${OPENFRENZY_FFMPEG_libavcodec_VERSION}")
-  else()
-    message(WARNING "Bink video: FFmpeg not found (brew install ffmpeg); videos will be skipped")
-  endif()
+  openfrenzy_ffmpeg()
+  set(_bink_ffmpeg 1)
+  target_include_directories(openfrenzy PRIVATE "${OPENFRENZY_FFMPEG_DIR}/include")
+  foreach(_lib avformat avcodec swscale avutil)
+    target_link_libraries(openfrenzy PRIVATE "${OPENFRENZY_FFMPEG_DIR}/lib/lib${_lib}.dylib")
+  endforeach()
+  message(STATUS "Bink video: FFmpeg ${OPENFRENZY_FFMPEG_VERSION} (LGPL) in ${OPENFRENZY_FFMPEG_DIR}")
 endif()
 target_compile_definitions(openfrenzy PRIVATE OPENFRENZY_BINK_FFMPEG=${_bink_ffmpeg})
 
@@ -154,7 +150,7 @@ add_custom_command(OUTPUT "${OPENFRENZY_APP}/Contents/MacOS/openfrenzy"
     "-DGUEST=${CMAKE_BINARY_DIR}/openfrenzy_guest.elf" "-DPLIST=${OF_MACOS}/Info.plist"
     "-DEGL_DIR=${OPENFRENZY_EGL_FRAMEWORKS}" "-DGLES_DIR=${OPENFRENZY_GLES_FRAMEWORKS}"
     "-DPYTHON=${Python3_EXECUTABLE}" "-DENTITLEMENTS=${OF_MACOS}/OpenFrenzy.entitlements"
-    "-DLICENSES=${OF_MACOS}/licenses"
+    "-DLICENSES=${OF_MACOS}/licenses" "-DFFMPEG_DIR=${OPENFRENZY_FFMPEG_DIR}"
     -P "${CMAKE_SOURCE_DIR}/cmake/make_app.cmake"
   DEPENDS openfrenzy guest_main "${CMAKE_BINARY_DIR}/openfrenzy_guest.elf"
           "${OF_MACOS}/Info.plist" "${OF_MACOS}/OpenFrenzy.entitlements"

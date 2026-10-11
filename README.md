@@ -51,7 +51,7 @@ See `docs/ARCHITECTURE.md` (design and rules), `docs/BUILD.md` (setup, build, ru
 `docs/MODULES.md` (work modules), `docs/LIBRARY_CALLS.md` and `docs/STATUS.md`.
 
 ```sh
-brew install python cmake ninja llvm@22 lld@22 sdl3 ffmpeg
+brew install python cmake ninja llvm@22 lld@22 sdl3
 cmake -S . -B build -G Ninja && cmake --build build && ctest --test-dir build
 ```
 
@@ -84,4 +84,5 @@ The platform layer, renderer, audio and the macOS guest/host design come from
 [OpenCE](https://github.com/OpenCommunityEdition/OpenCE) and its macOS forks by
 [innerhat-dev](https://github.com/innerhat-dev/OpenCE) and
 [zimm3rmann](https://github.com/zimm3rmann/halo-ce-ios-macos), all CC0. Third-party libraries
-(ANGLE, musl, SDL3, FFmpeg) are downloaded at build time under their own licences.
+(ANGLE, musl, SDL3, FFmpeg) are downloaded at build time under their own licences. The build
+makes its own LGPL FFmpeg (Bink only) from the FFmpeg source.
