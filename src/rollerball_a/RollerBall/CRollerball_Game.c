@@ -586,14 +586,14 @@ float CRollerBallSumo_GetValueB(void *self)
 }
 
 /* 0x00188870  RollerBall/CRollerball_Game.cpp: vtable +0x2c (sumo)
-The variation timer while a platform object is active (+0x78), else 60. */
+The timer (+0x08) of the first active platform object (+0x78), else 60. */
 float CRollerBallSumo_GetTime(void *self)
 {
 	int i;
 
 	for (i = 0; i < 5; i++) {
 		if (RB_U8(RB_PTR(self, 0x5c + i * 0x18), 0x78) != 0)
-			return CRollerBallTimer_Remaining((unsigned char *)self + 0x08);
+			return CRollerBallTimer_Remaining((unsigned char *)RB_PTR(self, 0x5c + i * 0x18) + 0x08);
 	}
 	return 60.0f;
 }
