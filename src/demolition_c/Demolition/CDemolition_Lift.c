@@ -740,7 +740,7 @@ void CDemolition_Lift_InitGirders(struct CDemolition_Lift *self)
 				pos[0] = -2500.0f;
 				angle = 1.57079637f;
 			}
-			FUN_0010e050((int)wall, (undefined4 *)pos);
+			FUN_0010e050((int)wall, (float *)pos);
 			dc_wall_set_angle(wall, angle);
 			FUN_0010f5b0((int)wall);
 			FUN_0010dbe0((int)wall, DC_I32(DC_GAME, 0x6c84));

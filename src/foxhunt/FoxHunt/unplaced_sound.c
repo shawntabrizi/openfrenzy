@@ -96,7 +96,7 @@ void FUN_00133f90(void *self)
 	Sprite_FreeDefs((struct CSpriteDef *)FH_ADDR(0x002ac1c8), 0xc);
 	Sprite_FreeDefs((struct CSpriteDef *)DAT_00290f00, 6);
 	CLDebris_Start();
-	FUN_0013b460((undefined4 *)self);
+	FUN_0013b460((struct HopSparks *)self);
 	SpriteVB_Release((struct CSpriteVB *)DAT_00290ea8);
 }
 
@@ -111,7 +111,7 @@ void FoxHunt_Effects_Update(void *self, float dt)
 void FoxHunt_Effects_Draw(void *self)
 {
 	CLDebris_Stop();
-	FUN_0013b4b0((undefined4 *)self);
+	FUN_0013b4b0((struct HopSparks *)self);
 }
 
 /* 0x00134000  (gap, stdcall; the callers' ECX is unused): adds a debris particle of type
@@ -126,7 +126,7 @@ moving by `vel`) */
 void FUN_00134030(undefined4 *self, float *pos, float *vel, float a, undefined4 r, undefined4 g,
 	undefined4 b, undefined4 alpha, float size)
 {
-	FUN_0013b140(self, pos, vel, a, r, g, b, alpha, size);
+	FUN_0013b140((struct HopSparks *)self, pos, vel, a, r, g, b, alpha, size);
 }
 
 /* 0x00134040  (not in the function table; the debris ground callback given to Debris_Init

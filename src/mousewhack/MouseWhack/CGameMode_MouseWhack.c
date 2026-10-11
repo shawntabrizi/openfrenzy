@@ -417,7 +417,7 @@ void CGameMode_MouseWhack_Init(void *self)
 	MW_S(0x0030ce76) = 0;
 	bLoadPackageResources((struct bkPackage *)mw_LevelPackage, 0xffffffff, 0xdefa, 0);
 	bLoadPackageResources((struct bkPackage *)mw_VariationPackage, 0xffffffff, 0xdefa, 0);
-	FUN_000a74d0((undefined4 *)MW_A(0x0030ea70), 0x40);
+	FUN_000a74d0((struct BCarFloatyScore *)MW_A(0x0030ea70), 0x40);
 	MW_F(0x0030eaf4) = 0.15f;
 	for (i = 0; i < 5; i++)
 		MW_I(0x002b2db4 + i * 0x10) = 0;
@@ -529,31 +529,31 @@ void CGameMode_MouseWhack_Init(void *self)
 		pos[0] = 300.0f;
 		pos[2] = -300.0f;
 		if ((object = MW_NEW(0x20, 0x5b6)) != NULL)
-			FUN_000b9b20((undefined4 *)object, (undefined4 *)pos, 0);
+			FUN_000b9b20((undefined4 *)object, (float *)pos, 0);
 		pos[2] = 300.0f;
 		if ((object = MW_NEW(0x20, 0x5b8)) != NULL)
-			FUN_000b9b20((undefined4 *)object, (undefined4 *)pos, 0);
+			FUN_000b9b20((undefined4 *)object, (float *)pos, 0);
 		pos[0] = -300.0f;
 		if ((object = MW_NEW(0x20, 0x5ba)) != NULL)
-			FUN_000b9b20((undefined4 *)object, (undefined4 *)pos, 0);
+			FUN_000b9b20((undefined4 *)object, (float *)pos, 0);
 		pos[2] = -300.0f;
 		object = MW_NEW(0x20, 0x5bc);
 	} else {
 		pos[0] = 500.0f;
 		pos[2] = -500.0f;
 		if ((object = MW_NEW(0x20, 0x5c4)) != NULL)
-			FUN_000b9b20((undefined4 *)object, (undefined4 *)pos, 0);
+			FUN_000b9b20((undefined4 *)object, (float *)pos, 0);
 		pos[2] = 500.0f;
 		if ((object = MW_NEW(0x20, 0x5c6)) != NULL)
-			FUN_000b9b20((undefined4 *)object, (undefined4 *)pos, 0);
+			FUN_000b9b20((undefined4 *)object, (float *)pos, 0);
 		pos[0] = -500.0f;
 		if ((object = MW_NEW(0x20, 0x5c8)) != NULL)
-			FUN_000b9b20((undefined4 *)object, (undefined4 *)pos, 0);
+			FUN_000b9b20((undefined4 *)object, (float *)pos, 0);
 		pos[2] = -500.0f;
 		object = MW_NEW(0x20, 0x5ca);
 	}
 	if (object != NULL)
-		FUN_000b9b20((undefined4 *)object, (undefined4 *)pos, 0);
+		FUN_000b9b20((undefined4 *)object, (float *)pos, 0);
 	pos[1] = 0.0f;
 	/* the bug models: 6 x {model, resource, low detail model, resource} at 0x002b26b8 */
 	for (i = 0; i < 6; i++) {
@@ -821,12 +821,12 @@ static void mw_ClosePackages(void)
 {
 	if (mw_LevelPackage != NULL) {
 		bkPrintf("closing MouseWhack level package\n");
-		FUN_0004db40((int *)mw_LevelPackage);
+		FUN_0004db40((struct bkPackage *)mw_LevelPackage);
 		mw_LevelPackage = NULL;
 	}
 	if (mw_VariationPackage != NULL) {
 		bkPrintf("closing MouseWhack variationPakIndex package\n");
-		FUN_0004db40((int *)mw_VariationPackage);
+		FUN_0004db40((struct bkPackage *)mw_VariationPackage);
 		mw_VariationPackage = NULL;
 	}
 }

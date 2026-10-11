@@ -472,7 +472,7 @@ int CDemolition_LiftShaft_InitPlatforms(struct CDemolition_LiftShaft *self)
 			DC_I32(sys, 0x7c) = 0xc;
 			CParticleSystem_SetTexture((struct CPSHeader *)sys, DC_I32(DC_GAME, 0x6c54));
 			CParticleSystem_SetTexture2((struct CParticleSystem *)sys, DC_I32(DC_GAME, 0x6c78));
-			FUN_000ab4c0((void *)sys, (undefined4 *)s_up);
+			FUN_000ab4c0((void *)sys, (float *)s_up);
 		}
 		sprintf(name, "platform0%d", i);
 		crc = bkCRCString(name);

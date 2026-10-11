@@ -105,7 +105,7 @@ crossed:
 				pos[2] = z;
 				pos[3] = 1.0f;
 				bsPlaySample(DR_VAR(struct BSample *, 0x002aa9c8), 200, 0, 0, 0);
-				FUN_00112de0((struct DrFxGroup *)(uintptr_t)DR_ADDR(0x00301578 + (unsigned int)p * 0x10c), (undefined4 *)pos, p);
+				FUN_00112de0((struct DrFxGroup *)(uintptr_t)DR_ADDR(0x00301578 + (unsigned int)p * 0x10c), (float *)pos, p);
 				baEnableLight(DR_VAR(struct BLight *, 0x002aa994 + (unsigned int)p * 4), 0);
 				if (DR_VAR(int, 0x002ff9fc) == 3)
 					baAddExtraItem(DR_VAR(struct BExtraSystem *, 0x003014b8), (double)x,

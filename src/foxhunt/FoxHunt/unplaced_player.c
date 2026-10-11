@@ -579,7 +579,7 @@ void FoxHunt_Player_Think(void *self)
 					FH_VFN(self, 0x18, void (*)(void *, int))(self, 6);
 					FH_AI(self, 0x24) = 0x14;
 				}
-				FH_AP(self, 0x1c) = POS(FH_AP(DAT_002f289c[i], 0x30));
+				FH_AP(self, 0x1c) = (char *)POS(FH_AP(DAT_002f289c[i], 0x30));
 			}
 			break;
 		}

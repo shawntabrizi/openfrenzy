@@ -371,8 +371,8 @@ void CGameModeClusteroids_Update(void *self, int active)
 		CL_U32(pl, PL_WIND + 8) = CL_U32(pl, PL_Z);
 		CL_U32(pl, PL_WIND + 12) = 0;
 	}
-	FUN_00082b20((undefined4 *)CL_P(CL_PLAYER(0), PL_WIND), (undefined4 *)CL_P(CL_PLAYER(1), PL_WIND),
-		(undefined4 *)CL_P(CL_PLAYER(2), PL_WIND), (undefined4 *)CL_P(CL_PLAYER(3), PL_WIND));
+	FUN_00082b20((float *)CL_P(CL_PLAYER(0), PL_WIND), (float *)CL_P(CL_PLAYER(1), PL_WIND),
+		(float *)CL_P(CL_PLAYER(2), PL_WIND), (float *)CL_P(CL_PLAYER(3), PL_WIND));
 }
 
 /* 0x000da1f0  Clusteroids/CGameMode_Clusteroids.cpp

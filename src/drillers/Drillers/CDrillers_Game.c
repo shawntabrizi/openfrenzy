@@ -710,10 +710,10 @@ void CDrillersGame_Initialise(void *self)
 	if (DAT_002ba56c != 0) {
 		camera = DR_NEW(0x26c, DR_FILE_GAME, 0x168, 0x1001);
 		if (camera != NULL)
-			FUN_000a5ca0((undefined4 *)camera, 0, 20.0f, 1); /* height is a float */
+			FUN_000a5ca0((struct BCarFreeCamera *)camera, 0, 20.0f, 1); /* height is a float */
 		for (i = 0; i < 5; i++)
 			FUN_000a5f60((struct BCarFreeCamera *)(uintptr_t)DAT_002f26c4,
-				DR_PTR(undefined4, 0x00298d50u + i * 0x10));
+				(float *)DR_PTR(undefined4, 0x00298d50u + i * 0x10));
 	}
 	DR_VAR(int, 0x002aadf0) = 0x100;
 }
