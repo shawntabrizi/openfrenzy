@@ -8,7 +8,7 @@
 #
 # Usage: src/charlib/tools/build.sh [max lines]   (src/charlib/tools/build.sh update: move
 # the private tree to the current master first)
-R=/Users/shawntabrizi/Documents/GitHub/openfrenzy
+R=$(cd "$(dirname "$0")/../../.." && pwd)
 T=$R/build-charlib-tree
 if [ "$1" = "update" ]; then
 	rm -rf "$T/src/charlib"

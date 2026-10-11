@@ -30,7 +30,7 @@ brew install python cmake ninja llvm@22 lld@22 sdl3 ffmpeg
 Build and test (the first configure downloads ANGLE, EGL/GLES headers and musl into `deps/`):
 
 ```sh
-cd /Users/shawntabrizi/Documents/GitHub/openfrenzy
+cd openfrenzy   # the root of your clone
 cmake -S . -B build -G Ninja
 cmake --build build
 ctest --test-dir build -LE gameplay --output-on-failure        # 6 toolchain/boot tests, < 1 s

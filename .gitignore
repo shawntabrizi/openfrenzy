@@ -22,3 +22,10 @@ ref/
 build/
 build-*/
 deps/
+
+# Stray files from local runs and agents
+z:*
+COORDINATION.txt
+/CMakeFiles/
+/build-*.log
+__pycache__/

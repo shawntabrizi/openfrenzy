@@ -57,22 +57,31 @@ cmake -S . -B build -G Ninja && cmake --build build && ctest --test-dir build
 
 ## Status
 
-Current state of the port: `docs/STATUS.md`.
+Fuzion Frenzy plays natively on Apple Silicon macOS: boot videos, attract mode, full tournaments,
+Minigame Frenzy, Options and all 45 retail minigame variations, at about 60 fps. Every function of
+the game and engine has decompiled C. See `docs/STATUS.md` for what is verified and what is not.
 
-Initial analysis (Ghidra auto-analysis + XbSymbolDatabase):
+This is a functional decompilation: the C code does what the original code does, but it does not
+compile back to the same bytes.
 
-| Section | Functions | Named | Bytes |
-|---|---:|---:|---:|
-| `.text` (game, engine, statically linked libs) | 5358 | 195 | 1,563,302 |
-| `D3D` | 232 | 87 | 50,041 |
-| `DSOUND` | 333 | 81 | 32,595 |
-| `XGRPH` | 278 | 2 | 56,038 |
-| `WMADEC` + `WMADECXM` | 131 | 0 | 47,805 |
-| `XPP` | 191 | 12 | 24,693 |
+## How it was made
 
-A second pass (`scripts/ExportAt.java`) found about 1280 more `.text` functions that are reached
-only through tables (virtual methods, static constructors): 6636 in all, of which 5623 are game and
-engine code (`src/include/of_functions.tsv`).
+AI agents (Claude) wrote the decompiled code, the platform layer and the docs, from Ghidra output
+of the original executable. Expect errors that a human did not catch.
 
-The XBE keeps 241 original source paths (Blitz "Babel" engine under `C:\Babel\Xbox\Src\`, game under
-`C:\BlitzParty\Game\Src\`), which are used to name and group functions.
+## Legal
+
+- This project is not affiliated with or endorsed by Microsoft or Blitz Games. Fuzion Frenzy is a
+  trademark of Microsoft.
+- The project's own work is released under CC0 1.0 (`LICENSE.md`). That licence does not cover the
+  original game, its data or its trademarks.
+- Do not publish built binaries of this project. Build it yourself from source with your own copy
+  of the game.
+
+## Credits
+
+The platform layer, renderer, audio and the macOS guest/host design come from
+[OpenCE](https://github.com/OpenCommunityEdition/OpenCE) and its macOS forks by
+[innerhat-dev](https://github.com/innerhat-dev/OpenCE) and
+[zimm3rmann](https://github.com/zimm3rmann/halo-ce-ios-macos), all CC0. Third-party libraries
+(ANGLE, musl, SDL3, FFmpeg) are downloaded at build time under their own licences.
