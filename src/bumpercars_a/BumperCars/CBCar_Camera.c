@@ -276,7 +276,7 @@ void CBCar_Camera_UpdateScores(struct CBCar_Camera *self)
 		} else if (BCA_I32(slot, 0x248) == 3) {
 			shown[i] = BCA_I32(car, 0x40);
 		} else if (BCA_I32(slot, 0x248) == 4) {
-			shown[i] = FUN_0008fe4b(g_BCarGame->camera, i);
+			shown[i] = FUN_0008fe4b((struct CBCar_Camera *)g_BCarGame->camera, i);
 		}
 		car = BCA_AT(slot, 0x138, unsigned char *);
 		if (BCG(0x2598, int) < 1) {           /* LAPS */
@@ -637,7 +637,7 @@ void CBCar_Camera_SkipIntro(struct CBCar_Camera *self)
 	CLHud_StartBars((float *)DAT_002ecfac, 280.0f);
 	FUN_00096680();
 	bsSetSfxVolume(DAT_002bae6c);
-	FUN_00092120(g_BCarGame->sound, 0xe, 0xff, 0, -1);
+	FUN_00092120((struct CBCar_Sound *)g_BCarGame->sound, 0xe, 0xff, 0, -1);
 	BCG(0x254c, int) = 0; /* DAT_002ef9a4: the world is not frozen */
 	self->yaw0 = self->yaw;
 	Timer_Restart(GAME_TIMER);
@@ -697,7 +697,7 @@ void CBCar_Camera_Update(struct CBCar_Camera *self, int playing, float dt)
 		self->yaw = Heading(target[0] - eye[0], target[2] - eye[2]);
 		self->pitch = Heading(target[1] - eye[1], target[2] - eye[2]);
 		if (CLHud_UpdateCountdown((int)(uintptr_t)DAT_002ecfac) != 0) {
-			FUN_00092120(g_BCarGame->sound, 0xe, 0xff, 0, -1);
+			FUN_00092120((struct CBCar_Sound *)g_BCarGame->sound, 0xe, 0xff, 0, -1);
 			GAME_STATE = 3;
 			BCG(0x254c, int) = 0;
 			self->yaw0 = self->yaw;
@@ -1156,7 +1156,7 @@ void CBCar_Camera_Winners(struct CBCar_Camera *self)
 	car = PLAYER_CAR(p);
 	memcpy(target, car + 0x50, 16);
 	target[1] = target[1] + BCA_F32(car, 0xf4);
-	FUN_000927a0(g_BCarGame->light, target);
+	FUN_000927a0((struct CBCar_Light *)g_BCarGame->light, target);
 	self->yaw = -BCA_F32(PLAYER_CAR(p), 0x80) - 0x1.921fb4p+0f;
 	c = (float)cos((double)self->yaw);
 	eye[0] = target[0] - c * 650.0f;

@@ -191,7 +191,7 @@ void CBCar_Goal_Update(struct CBCar_Goal *self, int playing)
 		goal = CBCar_Goal_Find(self, (float *)(e + 0x50));
 		BCA_AT(e, 0x898, struct BCarGoalArea *) = goal;
 		if (goal != NULL)
-			FUN_00092120(g_BCarGame->sound, bca_rand() < 20000 ? 0x19 : 0x1a, 0xff, 0, -1);
+			FUN_00092120((struct CBCar_Sound *)g_BCarGame->sound, bca_rand() < 20000 ? 0x19 : 0x1a, 0xff, 0, -1);
 	}
 }
 

@@ -67,14 +67,14 @@ extern struct Settings *DAT_002ba9a0;
 /* 0x00086b80  (gap): constructor of a player slot (the array constructor's callback) */
 void *CBCar_Game_PlayerSlotCtor(void *slot)
 {
-	FUN_00089020((char *)slot + 0x10);
+	FUN_00089020((struct CBCarAI *)((char *)slot + 0x10));
 	return slot;
 }
 
 /* 0x00086b90  (missing from the table): destructor of a player slot (array callback) */
 void FUN_00086b90(void *slot)
 {
-	FUN_00089070((char *)slot + 0x10);
+	FUN_00089070((struct CBCarAI *)((char *)slot + 0x10));
 }
 
 /* 0x00086ba0  (gap): CBCar_Game::~CBCar_Game (the parts in reverse order; most of their
@@ -87,14 +87,14 @@ void CBCar_Game_Dtor(struct CBCar_Game *self)
 	FUN_001d5950(); /* list (0x4bc4) */
 	FUN_001d5950(); /* timer (0x4b50) */
 	FUN_001d5950(); /* 0x3f28 */
-	FUN_000924f0(self->light);
+	FUN_000924f0((struct CBCar_Light *)self->light);
 	FUN_001d5950(); /* sound (0x3320) */
-	FUN_000919f0(self->goal);
+	FUN_000919f0((struct CBCar_Goal *)self->goal);
 	for (i = 3; i >= 0; i--)
 		FUN_00086b90(self->players[i]);
-	FUN_0008d1ee(self->camera);
+	FUN_0008d1ee((struct CBCar_Camera *)self->camera);
 	FUN_001d5950(); /* effects (0x5c) */
-	FUN_0008bf90(self->debug);
+	FUN_0008bf90((struct CBCar_Debug *)self->debug);
 }
 
 /* 0x00086c80  (missing from the table): CModule_BumperCars::Init (via 0x00082910) */
@@ -155,11 +155,11 @@ void CBCar_Game_Start(struct CBCar_Game *self)
 	for (off = 0xa8; off < 0xb8; off += 4)
 		BCA_F32(DAT_002ecfac, off) = 50.0f;
 	FUN_00099fc0();
-	FUN_0008c9f0(self->debug);
+	FUN_0008c9f0((struct CBCar_Debug *)self->debug);
 	FUN_00096bd0();
 	BCA_I32(self, 0x254c) = 1;
 	Timer_Start(self->timer);
-	FUN_00092120(self->sound, 0xd, 200, 0, -1);
+	FUN_00092120((struct CBCar_Sound *)self->sound, 0xd, 200, 0, -1);
 	self->savedLight[1] = DAT_002ba940[1];
 	self->savedLight[0] = DAT_002ba940[0];
 	self->savedLight[2] = DAT_002ba940[2];
@@ -169,14 +169,14 @@ void CBCar_Game_Start(struct CBCar_Game *self)
 	DAT_002ba940[1] = DAT_00290ee4[1];
 	DAT_002ba940[2] = DAT_00290ee4[2];
 	if (DAT_002baeb8 != 0)
-		FUN_0008ea74(self->camera);
+		FUN_0008ea74((struct CBCar_Camera *)self->camera);
 }
 
 /* 0x00086ea0  (missing from the table): the mode is back on top */
 void FUN_00086ea0(struct CBCar_Game *self)
 {
 	if (self->state != 0 && self->started != 0) {
-		FUN_0008c9f0(self->debug);
+		FUN_0008c9f0((struct CBCar_Debug *)self->debug);
 		FUN_00096bd0();
 	}
 }
@@ -201,7 +201,7 @@ void CBCar_Game_Pause(struct CBCar_Game *self)
 {
 	BCA_FN(FUN_001c3770, void, (void *))(self->timer);
 	FUN_0009ed60();
-	FUN_00091b30(self->goal);
+	FUN_00091b30((struct CBCar_Goal *)self->goal);
 	FUN_00096cb0();
 	FUN_0009ae40();
 	FUN_000922b0();
@@ -214,7 +214,7 @@ void CBCar_Game_Unpause(struct CBCar_Game *self)
 		return;
 	Timer_Start(self->timer);
 	FUN_0009ed80();
-	FUN_00091b30(self->goal);
+	FUN_00091b30((struct CBCar_Goal *)self->goal);
 	FUN_00096d00();
 	FUN_0009ae90();
 	FUN_000922c0();
@@ -236,7 +236,7 @@ void CBCar_Game_DrawScene(struct CBCar_Game *self, int view, int pass)
 {
 	unsigned int fog;
 
-	if (FUN_0008c000(self->debug) == 0 && BCG(0x3614, int) != 0)
+	if (FUN_0008c000((struct CBCar_Debug *)self->debug) == 0 && BCG(0x3614, int) != 0)
 		fog = 1;
 	else
 		fog = 0;
@@ -255,7 +255,7 @@ void CBCar_Game_DrawScene(struct CBCar_Game *self, int view, int pass)
 		FUN_000a13d0(view, 0);
 		bdSetRenderState(3, fog, 0);
 		FUN_0008cb90(self->effects, view);
-		FUN_00092680(self->light, (byte)view);
+		FUN_00092680((struct CBCar_Light *)self->light, (byte)view);
 		FUN_000a3c40(view);
 		if (self->explosions != NULL)
 			BCA_FN(FUN_000a3af0, void, (void *, int))(self->explosions, view);
@@ -275,14 +275,14 @@ void CBCar_Game_DrawScene(struct CBCar_Game *self, int view, int pass)
 	} else if (pass == 2) {
 		FUN_0009f930(view, 1);
 		bdSetRenderState(8, 0, 0);
-		FUN_00092680(self->light, (byte)view);
+		FUN_00092680((struct CBCar_Light *)self->light, (byte)view);
 		goto done;
 	} else {
 		return;
 	}
 	BCA_FN(FUN_000a0ba0, void, (void *))(self->floatyScores);
 done:
-	bdSetRenderState(8, FUN_0008c060(self->debug), 0);
+	bdSetRenderState(8, FUN_0008c060((struct CBCar_Debug *)self->debug), 0);
 }
 
 /* ======================================================================== settings */
@@ -354,15 +354,15 @@ struct CBCar_Game *CBCar_Game_Ctor(struct CBCar_Game *self)
 	int i;
 
 	self->vtable = vtable_00263b80;
-	FUN_0008bf50(self->debug);
+	FUN_0008bf50((struct CBCar_Debug *)self->debug);
 	BCA_FN(FUN_00162f20, void, (void *))(self->effects);
-	FUN_0008d1e0(self->camera);
+	FUN_0008d1e0((struct CBCar_Camera *)self->camera);
 	for (i = 0; i < 4; i++)
 		CBCar_Game_PlayerSlotCtor(self->players[i]);
-	FUN_000919e0(self->goal);
-	FUN_00091ef0(self->sound);
-	FUN_000924e0(self->light);
-	FUN_00094360(self->flames);
+	FUN_000919e0((struct CBCar_Goal *)self->goal);
+	FUN_00091ef0((struct CBCar_Sound *)self->sound);
+	FUN_000924e0((struct CBCar_Light *)self->light);
+	FUN_00094360((struct CBCar_Flames *)self->flames);
 	BCA_FN(FUN_00096320, void, (void *))(self->timer);
 	CLList_Init(self->list);
 	self->mode = NULL;
@@ -436,7 +436,7 @@ void FUN_000874c0(struct CBCar_Game *self, int top)
 	bdSetFieldOfView(0x1.38c354p+0f, 0x1.d524fep-1f);
 	baSetBrightness(0x100);
 	bdSetFogColour((unsigned int)DAT_00290ee4[0], (unsigned int)DAT_00290ee4[1], (unsigned int)DAT_00290ee4[2]);
-	bdSetRenderState(8, FUN_0008c060(self->debug), 0);
+	bdSetRenderState(8, FUN_0008c060((struct CBCar_Debug *)self->debug), 0);
 	switch (self->variation) {
 	case 1:
 		fogFar = 22000.0f;
@@ -458,8 +458,8 @@ void FUN_000874c0(struct CBCar_Game *self, int top)
 	}
 	bdSetFogRange(fogNear, fogFar);
 	view = -1;
-	if (FUN_0009194d(self->camera, &view) != 0) {
-		FUN_00091422(self->camera, view, 0,
+	if (FUN_0009194d((struct CBCar_Camera *)self->camera, &view) != 0) {
+		FUN_00091422((struct CBCar_Camera *)self->camera, view, 0,
 			BCA_F32(*(void **)(self->players[view] + 0x138), 0xf4) * 0.5f);
 		bdSetFieldOfView(0x1.eb7c16p+0f, 0x1.709d10p+0f);
 	}
@@ -467,7 +467,7 @@ void FUN_000874c0(struct CBCar_Game *self, int top)
 	CBCar_Game_DrawScene(self, 1, 0);
 	if (view != -1 && BCA_AT(*(void **)(self->players[view] + 0x138), 0x8a4, short) != 0)
 		BCA_FN(FUN_000a5390, void, (int, int, int, int))(0, 0, 0xff, 0x60);
-	if (FUN_0008c050(self->debug) == 0)
+	if (FUN_0008c050((struct CBCar_Debug *)self->debug) == 0)
 		goto done;
 	bdSetNearFar(1.0f, 10000.0f);
 	COverlay_DrawAll(1);
@@ -495,11 +495,11 @@ void FUN_000874c0(struct CBCar_Game *self, int top)
 	bdSetRenderState(5, 1, 0);
 	bdSetRenderState(7, 3, 0);
 	bdSetRenderState(3, 1, 0);
-	FUN_00091287(self->camera);
+	FUN_00091287((struct CBCar_Camera *)self->camera);
 	bdSetFieldOfView(0x1.38c354p+0f, 0x1.d524fep-1f);
 	bdSetNearFar(DAT_00290ef4, DAT_00290ef8);
 done:
-	FUN_0008fc39(self->camera);
+	FUN_0008fc39((struct CBCar_Camera *)self->camera);
 }
 
 /* 0x00087800  BumperCars/CBCar_Game.cpp: Game_LoadSettings: reads this variation's section
@@ -605,13 +605,13 @@ void CBCar_Game_EndRound(struct CBCar_Game *self)
 	void *car;
 	void *actor;
 
-	FUN_000923d0(self->sound);
-	self->unknown4bd4 = FUN_0008d81d(self->camera);
+	FUN_000923d0((struct CBCar_Sound *)self->sound);
+	self->unknown4bd4 = FUN_0008d81d((struct CBCar_Camera *)self->camera);
 	CBCar_Game_RankPlayers(self);
 	Timer_Reset(self->timer);
 	BCG(0x4b44, int) = 4; /* DAT_002f1f9c: state = 4 (the round is over) */
 	BCA_I32(self, 0x254c) = 1;
-	FUN_00094950(self->flames, 0);
+	FUN_00094950((struct CBCar_Flames *)self->flames, 0);
 	for (i = 0; i < 4; i++) {
 		player = self->players[i];
 		car = *(void **)(player + 0x138);
@@ -662,7 +662,7 @@ void CBCar_Game_EndRound(struct CBCar_Game *self)
 	}
 	if (DAT_002baebc == 0)
 		self->unknown4bd4 = winners;
-	FUN_00092740(self->light, (char *)*(void **)(self->players[0] + 0x138) + 0x50);
+	FUN_00092740((struct CBCar_Light *)self->light, (float *)((char *)*(void **)(self->players[0] + 0x138) + 0x50));
 }
 
 /* the scoring entities of the world (bumpercars_b), a list from BCG(0x330c) (next at 0x8b8):
@@ -793,7 +793,7 @@ void CBCar_Game_RankCars(struct CBCar_Game *self, int active)
 		return;
 	if (self->variation == 4) {
 		for (i = 0; i < 4; i++)
-			BCA_I32(*(void **)(self->players[i] + 0x138), 0x44) = FUN_0008fe4b(self->camera, i);
+			BCA_I32(*(void **)(self->players[i] + 0x138), 0x44) = FUN_0008fe4b((struct CBCar_Camera *)self->camera, i);
 		CBCar_Game_EndRound(self);
 		return;
 	}
@@ -926,19 +926,19 @@ void CBCar_Game_Initialise(struct CBCar_Game *self)
 		FUN_0008cb60(self->effects);
 		goto fail;
 	}
-	if (FUN_00091fd0(self->sound) == 0) {
+	if (FUN_00091fd0((struct CBCar_Sound *)self->sound) == 0) {
 		BCA_Printf("CBCar_Sound::Initialise FAILED!\n");
 		FUN_001d5950();
 		FUN_0008cb60(self->effects);
-		FUN_000920b0(self->sound);
+		FUN_000920b0((struct CBCar_Sound *)self->sound);
 		goto fail;
 	}
-	if (self->lightInfo[0] != 0 && FUN_00094240(self->light, self->variantPackage, self->lightInfo) == 0) {
+	if (self->lightInfo[0] != 0 && FUN_00094240((struct CBCar_Light *)self->light, self->variantPackage, self->lightInfo) == 0) {
 		BCA_Printf("CBCar_Light::Initialise FAILED!\n");
 		FUN_001d5950();
 		FUN_0008cb60(self->effects);
-		FUN_000920b0(self->sound);
-		FUN_000927f0(self->light);
+		FUN_000920b0((struct CBCar_Sound *)self->sound);
+		FUN_000927f0((struct CBCar_Light *)self->light);
 		goto fail;
 	}
 	if (self->scoreInfo[0] != 0 &&
@@ -946,42 +946,42 @@ void CBCar_Game_Initialise(struct CBCar_Game *self)
 		BCA_Printf("CBCar_Game::Initialise - World_ScoreInit FAILED!\n");
 		FUN_001d5950();
 		FUN_0008cb60(self->effects);
-		FUN_000920b0(self->sound);
+		FUN_000920b0((struct CBCar_Sound *)self->sound);
 		if (self->lightInfo[0] != 0)
-			FUN_000927f0(self->light);
+			FUN_000927f0((struct CBCar_Light *)self->light);
 		goto fail;
 	}
-	if (FUN_0008d1f9(self->camera, self->variantPackage, self->cameraInfo) == 0) {
+	if (FUN_0008d1f9((struct CBCar_Camera *)self->camera, self->variantPackage, self->cameraInfo) == 0) {
 		BCA_Printf("CBCar_Game::Initialise - Camera_Init FAILED!\n");
 		FUN_001d5950();
 		FUN_0008cb60(self->effects);
-		FUN_000920b0(self->sound);
+		FUN_000920b0((struct CBCar_Sound *)self->sound);
 		if (self->lightInfo[0] != 0)
-			FUN_000927f0(self->light);
-		FUN_0008e7f0(self->camera);
+			FUN_000927f0((struct CBCar_Light *)self->light);
+		FUN_0008e7f0((struct CBCar_Camera *)self->camera);
 		goto fail;
 	}
-	if (self->goalInfo[0] != 0 && FUN_00091e30(self->goal, self->variantPackage, self->goalInfo) == 0) {
+	if (self->goalInfo[0] != 0 && FUN_00091e30((struct CBCar_Goal *)self->goal, self->variantPackage, self->goalInfo) == 0) {
 		BCA_Printf("CBCar_Goal::Initialise FAILED!\n");
 		FUN_001d5950();
 		FUN_0008cb60(self->effects);
-		FUN_000920b0(self->sound);
+		FUN_000920b0((struct CBCar_Sound *)self->sound);
 		if (self->lightInfo[0] != 0)
-			FUN_000927f0(self->light);
-		FUN_0008e7f0(self->camera);
-		FUN_00091d70(self->goal);
+			FUN_000927f0((struct CBCar_Light *)self->light);
+		FUN_0008e7f0((struct CBCar_Camera *)self->camera);
+		FUN_00091d70((struct CBCar_Goal *)self->goal);
 		goto fail;
 	}
 	if (BCA_FN(FUN_000a0620, int, (struct bkPackage *, char *))(self->variantPackage, self->worldInfo) == 0) {
 		BCA_Printf("CBCar_Game::Initialise - World_Init FAILED!\n");
 		FUN_001d5950();
 		FUN_0008cb60(self->effects);
-		FUN_000920b0(self->sound);
+		FUN_000920b0((struct CBCar_Sound *)self->sound);
 		if (self->lightInfo[0] != 0)
-			FUN_000927f0(self->light);
-		FUN_0008e7f0(self->camera);
+			FUN_000927f0((struct CBCar_Light *)self->light);
+		FUN_0008e7f0((struct CBCar_Camera *)self->camera);
 		if (self->goalInfo[0] != 0)
-			FUN_00091d70(self->goal);
+			FUN_00091d70((struct CBCar_Goal *)self->goal);
 		FUN_0009eda0();
 		goto fail;
 	}
@@ -989,12 +989,12 @@ void CBCar_Game_Initialise(struct CBCar_Game *self)
 		BCA_Printf("CBCar_Game::Initialise - Player_Init FAILED!\n");
 		FUN_001d5950();
 		FUN_0008cb60(self->effects);
-		FUN_000920b0(self->sound);
+		FUN_000920b0((struct CBCar_Sound *)self->sound);
 		if (self->lightInfo[0] != 0)
-			FUN_000927f0(self->light);
-		FUN_0008e7f0(self->camera);
+			FUN_000927f0((struct CBCar_Light *)self->light);
+		FUN_0008e7f0((struct CBCar_Camera *)self->camera);
 		if (self->goalInfo[0] != 0)
-			FUN_00091d70(self->goal);
+			FUN_00091d70((struct CBCar_Goal *)self->goal);
 		FUN_0009eda0();
 		FUN_000a4c20();
 		FUN_0009abb0();
@@ -1003,16 +1003,16 @@ void CBCar_Game_Initialise(struct CBCar_Game *self)
 		FUN_000a1a70();
 		goto fail;
 	}
-	if (FUN_0008c0c0(self->debug) == 0) {
+	if (FUN_0008c0c0((struct CBCar_Debug *)self->debug) == 0) {
 		BCA_Printf("CBCar_Game::Initialise - debug.Initialise FAILED!\n");
 		FUN_001d5950();
 		FUN_0008cb60(self->effects);
-		FUN_000920b0(self->sound);
+		FUN_000920b0((struct CBCar_Sound *)self->sound);
 		if (self->lightInfo[0] != 0)
-			FUN_000927f0(self->light);
-		FUN_0008e7f0(self->camera);
+			FUN_000927f0((struct CBCar_Light *)self->light);
+		FUN_0008e7f0((struct CBCar_Camera *)self->camera);
 		if (self->goalInfo[0] != 0)
-			FUN_00091d70(self->goal);
+			FUN_00091d70((struct CBCar_Goal *)self->goal);
 		FUN_0009eda0();
 		FUN_000a4c20();
 		FUN_0009c2d0();
@@ -1020,7 +1020,7 @@ void CBCar_Game_Initialise(struct CBCar_Game *self)
 		FUN_000a1390();
 		FUN_000a3450();
 		FUN_000a1a70();
-		FUN_0008cae0(self->debug);
+		FUN_0008cae0((struct CBCar_Debug *)self->debug);
 		goto fail;
 	}
 	object = BCA_NEW(8, s_GameFile, 0x1cc, 0x1001);
@@ -1068,10 +1068,10 @@ void CBCar_Game_Shutdown(struct CBCar_Game *self)
 		return;
 	FUN_001d5950();
 	FUN_0008cb60(self->effects);
-	FUN_000920b0(self->sound);
-	FUN_000927f0(self->light);
-	FUN_0008e7f0(self->camera);
-	FUN_00091d70(self->goal);
+	FUN_000920b0((struct CBCar_Sound *)self->sound);
+	FUN_000927f0((struct CBCar_Light *)self->light);
+	FUN_0008e7f0((struct CBCar_Camera *)self->camera);
+	FUN_00091d70((struct CBCar_Goal *)self->goal);
 	FUN_0009eda0();
 	FUN_000a4c20();
 	FUN_0009c2d0();
@@ -1079,7 +1079,7 @@ void CBCar_Game_Shutdown(struct CBCar_Game *self)
 	FUN_000a1390();
 	FUN_000a3450();
 	FUN_000a1a70();
-	FUN_0008cae0(self->debug);
+	FUN_0008cae0((struct CBCar_Debug *)self->debug);
 	object = self->explosions;
 	if (object != NULL) {
 		BCA_FN(FUN_000a3bf0, void, (void *))(object);
@@ -1141,7 +1141,7 @@ int CBCar_Game_Process(struct CBCar_Game *self, int top)
 			}
 		} else if (DAT_002baed8[i * 10] == 0) {
 			FUN_00096b00(i);
-			FUN_000890f0(self->players[i] + 0x10);
+			FUN_000890f0((struct CBCarAI *)(self->players[i] + 0x10));
 			BCAR_PLAYER(self, i, 0, int) = 0;
 		}
 	}
@@ -1159,7 +1159,7 @@ int CBCar_Game_Process(struct CBCar_Game *self, int top)
 		self->crowdTimer = self->crowdTimer - dt;
 		if (self->crowdTimer <= 0.0f) {
 			self->crowdTimer = (float)bca_rand() * 0x1.2c0258p-7f + 150.0f;
-			FUN_00092120(self->sound, (bca_rand() % 2) + 0xf, 0xff, 0, -1);
+			FUN_00092120((struct CBCar_Sound *)self->sound, (bca_rand() % 2) + 0xf, 0xff, 0, -1);
 		}
 	} else {
 		BCA_FN(FUN_000792f0, void, (void *, float, int))(DAT_002ecfac,
@@ -1172,23 +1172,23 @@ int CBCar_Game_Process(struct CBCar_Game *self, int top)
 	if (self->explosions != NULL)
 		BCA_FN(FUN_000a3aa0, void, (void *, float))(self->explosions, dt);
 	if (self->floatyScores != NULL)
-		BCA_FN(FUN_000a0b70, void, (void *, float, float))(self->floatyScores, dt, FUN_0008e8d1(self->camera));
-	FUN_0008bfa0(self->debug, self->state == 3);
+		BCA_FN(FUN_000a0b70, void, (void *, float, float))(self->floatyScores, dt, FUN_0008e8d1((struct CBCar_Camera *)self->camera));
+	FUN_0008bfa0((struct CBCar_Debug *)self->debug, self->state == 3);
 	BCA_FN(FUN_0009f250, void, (float, int))(dt, (unsigned int)self->state >= 3);
 	FUN_0008cb80(self->effects, dt * (1.0f / 60.0f));
 	BCA_FN(FUN_0009d100, void, (float, int))(dt, self->state == 3);
-	FUN_00091db0(self->goal, self->state == 3);
+	FUN_00091db0((struct CBCar_Goal *)self->goal, self->state == 3);
 	BCA_FN(FUN_000a41e0, void, (int, float))(self->state == 3, dt);
 	BCA_FN(FUN_000982f0, void, (float, int))(dt, self->state == 3);
 	BCA_FN(FUN_000a11b0, void, (int))(self->state == 3);
 	BCA_FN(FUN_000a2020, void, (int, float))(self->state == 3, dt);
 	BCA_FN(FUN_000991f0, void, (int))((unsigned int)self->state >= 3);
-	FUN_00092a70(self->light, self->state == 3, dt);
+	FUN_00092a70((struct CBCar_Light *)self->light, self->state == 3, dt);
 	BCA_FN(FUN_0009ae00, void, (int))(self->state == 3);
-	FUN_0008d91d(self->camera);
-	FUN_00092340(self->sound, dt);
+	FUN_0008d91d((struct CBCar_Camera *)self->camera);
+	FUN_00092340((struct CBCar_Sound *)self->sound, dt);
 	CBCar_Game_RankCars(self, (unsigned int)self->state <= 3);
-	FUN_0008eceb(self->camera, self->state == 3, dt);
+	FUN_0008eceb((struct CBCar_Camera *)self->camera, self->state == 3, dt);
 	BCA_FN(FUN_000a2d40, void, (int))(self->state == 3);
 	return 0;
 }

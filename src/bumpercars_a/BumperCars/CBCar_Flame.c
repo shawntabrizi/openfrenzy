@@ -340,14 +340,14 @@ void CBCar_Flames_Update(struct CBCar_Flames *self, float dt, int playing)
 				Timer_SetSeconds(f->timer, f->warnTime);
 				Timer_Begin(f->timer);
 				f->time = 0.0f;
-				FUN_00092120(g_BCarGame->sound, 0x18, 0xff, 0, -1);
+				FUN_00092120((struct CBCar_Sound *)g_BCarGame->sound, 0x18, 0xff, 0, -1);
 			} else {
 				CBCar_Flame_UpdateArm(f, dt);
 			}
 			break;
 		case 2:
 			if (Timer_Remaining(f->timer) == 0.0f) {
-				FUN_00092120(g_BCarGame->sound, 0x16, 0xff, 0, -1);
+				FUN_00092120((struct CBCar_Sound *)g_BCarGame->sound, 0x16, 0xff, 0, -1);
 				baFlushAnimations(f->model, *(struct BActorNode **)((char *)f->model + 0x134), 1, 0);
 				baSetNodeTime(f->model, *(struct BActorNode **)((char *)f->model + 0x134), 1, 1);
 				if (f->anims[0] != NULL)

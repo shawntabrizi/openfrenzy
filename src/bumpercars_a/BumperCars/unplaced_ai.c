@@ -284,7 +284,7 @@ unsigned char *CBCarAI_FindNearestToGoal(struct CBCarAI *self)
 		car = AI_CAR(self);
 		if (e != car && E_I(e, 0x20) != 0 && E_I(e, 0x894) != 0 && E_S(e, 0x8a8) == 0 && Ent_SameSide(e, car) == 0 &&
 		    others_targeting(self, e) < 2) {
-			d = FUN_00091aa0(GOAL, E_POS(e));
+			d = FUN_00091aa0((struct CBCar_Goal *)GOAL, E_POS(e));
 			if (d >= 0.0f && d < bestDist) {
 				bestDist = d;
 				best = e;
@@ -637,7 +637,7 @@ void CBCarAI_AvoidFlames(struct CBCarAI *self)
 	dir[1] = dir[1] * self->lookAhead;
 	dir[2] = dir[2] * self->lookAhead;
 	car_probe(self, ray, dir);
-	if (FUN_00095150(FLAMES, ray, E_F(AI_CAR(self), 0xd0), &heading) != 0) {
+	if (FUN_00095150((struct CBCar_Flames *)FLAMES, ray, E_F(AI_CAR(self), 0xd0), &heading) != 0) {
 		self->distance = self->lookAhead;
 		self->state = 2;
 		self->heading = heading;
@@ -645,7 +645,7 @@ void CBCarAI_AvoidFlames(struct CBCarAI *self)
 		Timer_Begin(self->wanderTimer);
 		return;
 	}
-	if (FUN_00095150(FLAMES, ray, E_F(AI_CAR(self), 0xd0), &heading) != 0) {
+	if (FUN_00095150((struct CBCar_Flames *)FLAMES, ray, E_F(AI_CAR(self), 0xd0), &heading) != 0) {
 		self->state = 2;
 		Timer_SetSeconds(self->wanderTimer, WANDER_SECONDS(self));
 		Timer_Begin(self->wanderTimer);
@@ -791,7 +791,7 @@ void CBCarAI_AvoidGoal(struct CBCarAI *self)
 	p[0] = dir[0] + E_POS(car)[0];
 	p[1] = dir[1] + E_POS(car)[1];
 	p[2] = dir[2] + E_POS(car)[2];
-	if (FUN_00091a00(GOAL, p) != NULL) {
+	if (FUN_00091a00((struct CBCar_Goal *)GOAL, p) != NULL) {
 		self->state = 2;
 		car = AI_CAR(self);
 		self->heading = Heading(E_F(car, 0x90), E_F(car, 0x98));
@@ -900,7 +900,7 @@ void CBCarAI_RethinkTarget(struct CBCarAI *self)
 			delta[1] = E_POS(e)[1] - E_POS(car)[1];
 			delta[2] = E_POS(e)[2] - E_POS(car)[2];
 			car_probe(self, ray, NULL);
-			if (FUN_000951f0(FLAMES, ray, E_F(AI_CAR(self), 0xd0), delta) == 0) {
+			if (FUN_000951f0((struct CBCar_Flames *)FLAMES, ray, E_F(AI_CAR(self), 0xd0), delta) == 0) {
 				self->target = e;
 				CBCarAI_Ram(self);
 				return;
@@ -909,7 +909,7 @@ void CBCarAI_RethinkTarget(struct CBCarAI *self)
 	}
 	if (g_BCarGame->variation == 1 && E_I(self->target, 0) != 2) {
 		e = CBCarAI_FindNearest(self, 2);
-		if (e != NULL && FUN_00091aa0(GOAL, E_POS(e)) < FUN_00091aa0(GOAL, E_POS(self->target)))
+		if (e != NULL && FUN_00091aa0((struct CBCar_Goal *)GOAL, E_POS(e)) < FUN_00091aa0((struct CBCar_Goal *)GOAL, E_POS(self->target)))
 			self->target = e;
 	}
 }
