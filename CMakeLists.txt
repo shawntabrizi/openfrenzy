@@ -145,6 +145,20 @@ ExternalProject_Add(guest_main
   INSTALL_COMMAND ""
   BUILD_BYPRODUCTS "${CMAKE_BINARY_DIR}/openfrenzy_smoke.elf" "${CMAKE_BINARY_DIR}/openfrenzy_guest.elf")
 
+# ---------- OpenFrenzy.app (host + guest image + ANGLE, ad-hoc signed; no game data)
+
+set(OPENFRENZY_APP "${CMAKE_BINARY_DIR}/OpenFrenzy.app")
+add_custom_command(OUTPUT "${OPENFRENZY_APP}/Contents/MacOS/openfrenzy"
+  COMMAND "${CMAKE_COMMAND}"
+    "-DAPP=${OPENFRENZY_APP}" "-DHOST=$<TARGET_FILE:openfrenzy>"
+    "-DGUEST=${CMAKE_BINARY_DIR}/openfrenzy_guest.elf" "-DPLIST=${OF_MACOS}/Info.plist"
+    "-DEGL_DIR=${OPENFRENZY_EGL_FRAMEWORKS}" "-DGLES_DIR=${OPENFRENZY_GLES_FRAMEWORKS}"
+    -P "${CMAKE_SOURCE_DIR}/cmake/make_app.cmake"
+  DEPENDS openfrenzy guest_main "${CMAKE_BINARY_DIR}/openfrenzy_guest.elf"
+          "${OF_MACOS}/Info.plist" "${CMAKE_SOURCE_DIR}/cmake/make_app.cmake"
+  COMMENT "Making OpenFrenzy.app")
+add_custom_target(openfrenzy_app ALL DEPENDS "${OPENFRENZY_APP}/Contents/MacOS/openfrenzy")
+
 # ---------- tests: run guest images in the host arena
 
 enable_testing()

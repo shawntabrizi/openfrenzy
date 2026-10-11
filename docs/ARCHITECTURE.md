@@ -363,7 +363,7 @@ the `crt_init`, `crt_exit` and `engine_tail` regions. Ghidra's first analysis mi
 Dropped from OpenCE: Halo game code and its build (`configure.py`, ninja graph), networking
 (`posix_net.c`, `xnet.c`, p2p, UPnP, Discord), the updater, touch input and menus, map
 extraction, config.toml (`port_config.c` + tomlc17), SMAA (needs zlib; `xgpu_post.c` keeps FXAA only), the
-`.app` bundle and installer (not done yet), iOS/Android/Windows/Linux targets.
+installer (the `.app` bundle is built: docs/BUILD.md "Run the app"), iOS/Android/Windows/Linux targets.
 
 The XDK layer still carries Halo names (`HALO_*` macros, `halo_gl*`, `halo_hooks.c`). They are
 kept to ease merges from OpenCE; rename only inside your own module, not across modules.
@@ -387,7 +387,7 @@ Current state: `docs/STATUS.md`. The game plays; these questions are still open:
 
 - 53 rarely called library functions are not identified yet (`docs/LIBRARY_CALLS.md`). The game
   runs without a name for them.
-- The `.app` bundle is not built. Run the host binary with the image (docs/BUILD.md).
+- The `.app` uses Homebrew's SDL3 and FFmpeg; a self-contained, notarized release is not done.
 - Custom soundtracks are not supported. `XFindFirstSoundtrack` always returns none.
 - The debug menu callback FUN_00026d40 is a hand-written weak stub. Only the debug menu reaches it.
 

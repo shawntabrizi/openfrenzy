@@ -40,6 +40,7 @@ the rebase pass). Outputs in `build-<id>/`:
 |---|---|
 | `openfrenzy` | the Darwin host (native arm64) |
 | `openfrenzy_guest.elf` | the game image: decompiled code + weak stubs + platform layer |
+| `OpenFrenzy.app` | the app (target `openfrenzy_app`, part of the default build): host, game image and ANGLE, ad-hoc signed; see "Run the app" |
 | `openfrenzy_smoke.elf` | smoke test: SDL3 window + GLES clear + disc reads |
 | `openfrenzy_platform_check.elf` | links every platform object (catches undefined symbols) |
 | `openfrenzy_skeleton.elf`, `openfrenzy_probe.elf`, `openfrenzy_adrp.elf` | toolchain tests without musl |
@@ -63,6 +64,40 @@ builds without it and the game skips every video (the old `bink_null.c` behaviou
 
 ## 3. Run
 
+### Run the app (no shell, no variables)
+
+`cmake --build build-<id>` also makes `build-<id>/OpenFrenzy.app` (target `openfrenzy_app`,
+`cmake/make_app.cmake`, `port/macos/Info.plist`). Start it with `open build-<id>/OpenFrenzy.app`
+or from the Finder.
+
+| Bundle path | What |
+|---|---|
+| `Contents/MacOS/openfrenzy` | the host; rpath `@executable_path/../Frameworks` |
+| `Contents/Resources/openfrenzy_guest.elf` | the game image |
+| `Contents/Frameworks/libEGL.dylib`, `libGLESv2.dylib` | ANGLE, as plain dylibs (as OpenCE-mac-innerhat does; signed code belongs in `Frameworks`, not `Resources`) |
+
+- The bundle holds no game data. SDL3 and FFmpeg come from Homebrew (`/opt/homebrew/opt/...`),
+  so the app runs only on a Mac with those formulae. It is not a release build (ad-hoc
+  signature, no hardened runtime, no notarization).
+- With no argument the host uses the bundled image (else `openfrenzy_guest.elf` next to the
+  host, so `build-<id>/openfrenzy` with no argument also works), and:
+  - save root and data root: `~/Library/Application Support/OpenFrenzy` (each variable still
+    overrides). The log goes to `openfrenzy.log` there, not to the terminal.
+  - disc image: `OPENFRENZY_ISO`, else `game.xiso.iso` in the data root, else the path in
+    `disc_path.txt` in the save root (the last choice). If none is a valid XDVDFS image, a
+    message box explains what is needed and opens a file dialog (`SDL_ShowOpenFileDialog`).
+    The chosen path goes to `disc_path.txt`; the image is not copied. Quit exits with 1.
+  - `settings.ini` in the save root (made with commented examples on the first run): each
+    `name = value` line sets `OPENFRENZY_<NAME>` (`.` as `_`, upper case) when that variable is
+    not set, so the environment wins. `true`/`yes` and `false`/`no` become `1` and `0`. Examples:
+    `windowed = true`, `display.vsync = false`, `audio.volume = 0.5`. The host applies it
+    (`port/macos/host/host_main.c`); `src/runtime/of_config.c` reads the result as before.
+- A run with a guest argument (`build-<id>/openfrenzy build-<id>/openfrenzy_guest.elf`) is
+  unchanged: no settings file, no dialog, log on stderr. The tests use this form.
+- To choose another disc image: delete `disc_path.txt` (or set `OPENFRENZY_ISO`).
+
+### Run from a shell
+
 The host needs a data root and a save root. Use `orig/` as the data root, so the disc image is
 found at `$OPENFRENZY_DATA_ROOT/game.xiso.iso`.
 
@@ -81,7 +116,7 @@ Environment:
 
 | Variable | Effect |
 |---|---|
-| `OPENFRENZY_DATA_ROOT` | data folder (required for a command-line run) |
+| `OPENFRENZY_DATA_ROOT` | data folder (required for a run with a guest argument; the app defaults to the save root) |
 | `OPENFRENZY_SAVE_ROOT` | save folder (created) |
 | `OPENFRENZY_ISO` | disc image path (default `$OPENFRENZY_DATA_ROOT/game.xiso.iso`) |
 | `OPENFRENZY_WINDOWED=1` | a window instead of borderless fullscreen |

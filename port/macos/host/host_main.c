@@ -4,12 +4,14 @@
 #define SDL_MAIN_HANDLED
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <ctype.h>
 #include <errno.h>
 #include <mach-o/dyld.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -84,6 +86,167 @@ static uint32_t make_boot(void) {
                                      OPENFRENZY_MACOS_PAGE};
     return (uint32_t)(uintptr_t)boot;
 }
+/* ---------- launch without a shell (OpenFrenzy.app; docs/BUILD.md "Run the app") */
+
+/* <save root>/settings.ini: "name = value" lines; each sets OPENFRENZY_<NAME> ('.' as '_',
+   upper case) unless that variable is already set, so the environment still wins.
+   true/yes and false/no become 1 and 0 (OPENFRENZY_WINDOWED reads a number). */
+static const char settings_template[] =
+    "# OpenFrenzy settings. One \"name = value\" a line; # starts a comment.\n"
+    "# Each line sets OPENFRENZY_<NAME> (docs/BUILD.md); an environment variable overrides it.\n"
+    "# windowed = true\n"
+    "# display.vsync = true\n"
+    "# audio.volume = 1.0\n"
+    "# display.anti_aliasing = off\n";
+static char *trim(char *text) {
+    while (*text == ' ' || *text == '\t')
+        text++;
+    char *end = text + strlen(text);
+    while (end > text && (end[-1] == ' ' || end[-1] == '\t' || end[-1] == '\r' || end[-1] == '\n'))
+        *--end = 0;
+    return text;
+}
+static void apply_settings_file(const char *root) {
+    char path[4096], line[1024];
+    snprintf(path, sizeof(path), "%s/settings.ini", root);
+    FILE *file = fopen(path, "r");
+    if (!file) {
+        if ((file = fopen(path, "w"))) {
+            fputs(settings_template, file);
+            fclose(file);
+        }
+        return;
+    }
+    while (fgets(line, sizeof(line), file)) {
+        char *equals = strchr(line, '=');
+        char *name = trim(line);
+        if (!*name || *name == '#' || !equals)
+            continue;
+        *equals = 0;
+        name = trim(name);
+        char *value = trim(equals + 1);
+        char variable[160] = "OPENFRENZY_";
+        size_t length = strlen(variable);
+        for (char *c = name; *c && length + 1 < sizeof(variable); c++)
+            variable[length++] = *c == '.' ? '_' : (char)toupper((unsigned char)*c);
+        variable[length] = 0;
+        if (!strcasecmp(value, "true") || !strcasecmp(value, "yes"))
+            value = "1";
+        else if (!strcasecmp(value, "false") || !strcasecmp(value, "no"))
+            value = "0";
+        if (getenv(variable))
+            host_logf(HOST_LOG_INFO, "settings.ini: %s = %s ignored (environment has %s)", name,
+                      value, variable);
+        else {
+            setenv(variable, value, 0);
+            host_logf(HOST_LOG_INFO, "settings.ini: %s=%s", variable, value);
+        }
+    }
+    fclose(file);
+}
+
+/* nonzero if path is an Xbox disc image: "MICROSOFT*XBOX*MEDIA" at 0x10000 of the game
+   partition, at the offsets that src/vfs/xiso_fs.c tries */
+static int is_disc_image(const char *path) {
+    static const long long partitions[] = {0, 0x18300000, 0x0FD90000, 0x02080000};
+    char magic[20];
+    FILE *file = fopen(path, "rb");
+    int found = 0;
+    if (!file)
+        return 0;
+    for (unsigned i = 0; !found && i < sizeof(partitions) / sizeof(partitions[0]); i++)
+        found = !fseeko(file, partitions[i] + 0x10000, SEEK_SET) &&
+                fread(magic, 1, sizeof(magic), file) == sizeof(magic) &&
+                !memcmp(magic, "MICROSOFT*XBOX*MEDIA", sizeof(magic));
+    fclose(file);
+    return found;
+}
+
+struct dialog_state {
+    volatile int done;
+    char path[4096];
+};
+static void SDLCALL dialog_chosen(void *userdata, const char *const *files, int filter) {
+    (void)filter;
+    struct dialog_state *state = userdata;
+    if (!files)
+        host_logf(HOST_LOG_WARN, "File dialog failed: %s", SDL_GetError());
+    else if (files[0])
+        snprintf(state->path, sizeof(state->path), "%s", files[0]);
+    state->done = 1;
+}
+
+/* Asks for the disc image until the player picks a valid one or quits (exit 1). */
+static void ask_for_disc(char *path, size_t size) {
+    static const SDL_DialogFileFilter filters[] = {{"Xbox disc image (ISO)", "iso;xiso"},
+                                                   {"All files", "*"}};
+    const char *message =
+        "OpenFrenzy needs your own copy of the game as an Xbox disc image (XDVDFS .iso, "
+        "for example made with extract-xiso).\n\nChoose the disc image file. OpenFrenzy "
+        "remembers it. It does not copy it.";
+    for (;;) {
+        const SDL_MessageBoxButtonData buttons[] = {
+            {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Choose Disc Image..."},
+            {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Quit"},
+        };
+        const SDL_MessageBoxData box = {SDL_MESSAGEBOX_INFORMATION, NULL, "OpenFrenzy: game disc",
+                                        message, 2, buttons, NULL};
+        int button = 0;
+        if (!SDL_ShowMessageBox(&box, &button))
+            host_fatal("No disc image, and no dialog (%s). Put game.xiso.iso in %s or set "
+                       "OPENFRENZY_ISO.", SDL_GetError(), data_root);
+        if (button != 1)
+            host_exit(1);
+        struct dialog_state state = {0};
+        SDL_ShowOpenFileDialog(dialog_chosen, &state, NULL, filters, 2, NULL, false);
+        while (!state.done) {
+            SDL_PumpEvents();
+            SDL_Delay(10);
+        }
+        if (state.path[0] && is_disc_image(state.path)) {
+            snprintf(path, size, "%s", state.path);
+            return;
+        }
+        if (state.path[0])
+            message = "That file is not an Xbox disc image (no XDVDFS volume found).\n\n"
+                      "Choose the game's disc image (.iso).";
+    }
+}
+
+/* Bundle launch only: finds the disc image when OPENFRENZY_ISO is not set. Order:
+   <data root>/game.xiso.iso, the path in <save root>/disc_path.txt (the last choice),
+   else a dialog; the choice is stored and passed to the guest as OPENFRENZY_ISO. */
+static void find_disc(void) {
+    char path[4096], stored[4096];
+    const char *environment = getenv("OPENFRENZY_ISO");
+    if (environment && *environment)
+        return;
+    snprintf(path, sizeof(path), "%s/game.xiso.iso", data_root);
+    if (!access(path, F_OK))
+        return;
+    snprintf(stored, sizeof(stored), "%s/disc_path.txt", save_root);
+    FILE *file = fopen(stored, "r");
+    path[0] = 0;
+    if (file) {
+        if (!fgets(path, sizeof(path), file))
+            path[0] = 0;
+        path[strcspn(path, "\r\n")] = 0;
+        fclose(file);
+    }
+    if (!path[0] || !is_disc_image(path)) {
+        if (path[0])
+            host_logf(HOST_LOG_WARN, "Stored disc image is not usable: %s", path);
+        ask_for_disc(path, sizeof(path));
+        if ((file = fopen(stored, "w"))) {
+            fprintf(file, "%s\n", path);
+            fclose(file);
+        } else
+            host_logf(HOST_LOG_WARN, "Cannot store the disc path in %s", stored);
+    }
+    setenv("OPENFRENZY_ISO", path, 1);
+    host_logf(HOST_LOG_INFO, "Disc image: %s", path);
+}
+
 extern void macos_enter_guest_stack(void *top, uint32_t boot) __attribute__((noreturn));
 int main(int argc, char **argv) {
     if (argc > 2) {
@@ -92,8 +255,10 @@ int main(int argc, char **argv) {
     }
     setbuf(stderr, NULL);
     host_install_signal_handlers();
-    char executable[4096], resources[4096], default_image[4096], default_data[4096],
-        default_saves[4096];
+    /* No argument: launched as OpenFrenzy.app (or the bare host). The guest image, data root
+       and save root then have defaults, settings.ini applies and the disc is found or asked for. */
+    int bundle = argc == 1;
+    char executable[4096], default_image[4096], default_saves[4096];
     uint32_t executable_size = sizeof(executable);
     if (_NSGetExecutablePath(executable, &executable_size))
         host_fatal("Executable path is too long");
@@ -101,24 +266,10 @@ int main(int argc, char **argv) {
     if (!slash)
         host_fatal("Cannot locate application resources");
     *slash = 0;
-    snprintf(resources, sizeof(resources), "%s/../Resources", executable);
-    snprintf(default_image, sizeof(default_image), "%s/openfrenzy_guest.elf", resources);
-    snprintf(default_data, sizeof(default_data), "%s/GameData", resources);
-    if (argc == 1 && access(default_data, F_OK)) {
-        char config[4096];
-        snprintf(config, sizeof(config), "%s/GameDataPath.txt", resources);
-        FILE *setting = fopen(config, "r");
-        if (setting) {
-            if (fgets(default_data, sizeof(default_data), setting))
-                default_data[strcspn(default_data, "\r\n")] = 0;
-            fclose(setting);
-        }
-    }
-    const char *root = getenv("OPENFRENZY_DATA_ROOT");
-    if (!root)
-        root = argc == 1 ? default_data : "assets";
-    if (!realpath(root, data_root))
-        host_fatal("Game data folder is missing: %s", root);
+    /* the bundle's Contents/Resources, else next to the host (a build directory) */
+    snprintf(default_image, sizeof(default_image), "%s/../Resources/openfrenzy_guest.elf", executable);
+    if (access(default_image, F_OK))
+        snprintf(default_image, sizeof(default_image), "%s/openfrenzy_guest.elf", executable);
     const char *home = getenv("HOME");
     if (!home)
         host_fatal("HOME is not set");
@@ -126,21 +277,30 @@ int main(int argc, char **argv) {
              "%s/Library/Application Support/OpenFrenzy", home);
     const char *saves = getenv("OPENFRENZY_SAVE_ROOT");
     if (!saves)
-        saves = argc == 1 ? default_saves : "build/macos/saves";
+        saves = bundle ? default_saves : "build/macos/saves";
     if (create_directories(saves) || !realpath(saves, save_root))
         host_fatal("Cannot open saves folder: %s", saves);
-    if (argc == 1) {
+    if (bundle) {
         char log_path[4096];
         snprintf(log_path, sizeof(log_path), "%s/openfrenzy.log", save_root);
         freopen(log_path, "w", stderr);
         setbuf(stderr, NULL);
+        apply_settings_file(save_root);
     }
+    /* the data root holds game.xiso.iso (and screenshots); the app uses the save root */
+    const char *root = getenv("OPENFRENZY_DATA_ROOT");
+    if (!root)
+        root = bundle ? save_root : "assets";
+    if (!realpath(root, data_root))
+        host_fatal("Game data folder is missing: %s", root);
     setenv("OPENFRENZY_DATA_ROOT", data_root, 1);
     setenv("OPENFRENZY_SAVE_ROOT", save_root, 1);
     SDL_SetMainReady();
     SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
         host_fatal("Cannot initialize display: %s", SDL_GetError());
+    if (bundle)
+        find_disc();
     const SDL_DisplayMode *display = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
     if (display && display->h > 0) {
         char width[32];
