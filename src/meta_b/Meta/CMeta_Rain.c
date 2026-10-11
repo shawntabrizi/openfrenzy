@@ -346,7 +346,7 @@ int MetaRain_UpdateDrops(struct BExtraSystem *system, int count, void **items, v
 				vel[0] = (float)mb_rand() * DAT_0028fda8 * MB_RAND_SCALE;
 				vel[1] = ((float)mb_rand() * MB_RAND_SCALE + 1.5f) * DAT_0028fda8; /* 0x002538a0 */
 				vel[2] = (float)mb_rand() * DAT_0028fda8 * MB_RAND_SCALE;
-				FUN_00080d60((int)DAT_002b236c, (undefined4)&p[0x10], (undefined4)vel, 0,
+				FUN_00080d60((struct DebrisType *)DAT_002b236c, (float *)((undefined4)&p[0x10]), (float *)vel, 0,
 					0x3c3c3c);
 			}
 		}

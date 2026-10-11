@@ -22,7 +22,7 @@ C:\BlitzParty\Game\Src\Meta\ (no source path in the XBE; probably CMetaPlayer.cp
 
 /* charlib AI_PlayVoice (FUN_000b0320, thiscall AI player: kind, volume, cooldown, ...) */
 #define MA_VOICE(ai, kind, volume, cooldown) \
-	FUN_000b0320((int)(ai), (kind), (volume), (cooldown), 0, 0xffffffff, 0)
+	FUN_000b0320((void *)(ai), (kind), (volume), (cooldown), 0, 0xffffffff, 0)
 
 /* the squared distance (bkernel FUN_00051540; see puzzles.c) */
 #define MA_DISTANCE_SQ(a, b) (((float (*)(const float *, const float *))FUN_00051540)((a), (b)))
@@ -543,9 +543,9 @@ void FUN_00156c40(int ai, float *target, float damage, int mode, int drop)
 		/* hurt */
 		AI_SetState((void *)ai, 10);
 		if (behind <= 1.5707963f && mode != 1) /* 0x00253898 */
-			FUN_000af690(MA_CHAR(ai), 0x11, 0, 0, DAT_002b05a4, 0.1f, 1);
+			FUN_000af690((void *)MA_CHAR(ai), 0x11, 0, 0, DAT_002b05a4, 0.1f, 1);
 		else
-			FUN_000af690(MA_CHAR(ai), 0x12, 0, 0, DAT_002b05a4, 0.1f, 1);
+			FUN_000af690((void *)MA_CHAR(ai), 0x12, 0, 0, DAT_002b05a4, 0.1f, 1);
 		return;
 	}
 	/* knocked out */
@@ -564,12 +564,12 @@ void FUN_00156c40(int ai, float *target, float damage, int mode, int drop)
 	MA_I32(ai, 0x111c) = 0;
 	if (1.5707963f < behind || mode == 1) {
 		MA_I32(ai, 0x1120) = 0;
-		FUN_000af690(MA_CHAR(ai), 0x14, 0, 0, DAT_002b05a8, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 0x14, 0, 0, DAT_002b05a8, 0.1f, 1);
 		if (mode == 0)
 			MA_F32(MA_CHAR(ai), 0x1d8) = CLMath_WrapAngle(heading + 3.1415925f); /* 0x00256750 */
 	} else {
 		MA_I32(ai, 0x1120) = 1;
-		FUN_000af690(MA_CHAR(ai), 0x13, 0, 0, DAT_002b05a8, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 0x13, 0, 0, DAT_002b05a8, 0.1f, 1);
 		if (mode == 0)
 			MA_F32(MA_CHAR(ai), 0x1d8) = heading;
 	}
@@ -636,7 +636,7 @@ void FUN_00156f30(int ai, int high_detail, undefined4 anim)
 				(struct BActorInstance *)(MA_CHAR(ai) + 0x10));
 	}
 	ma_find_hold_nodes(ai, DAT_002baed4[MA_U16(MA_CHAR(ai), 0x230) * 10]);
-	FUN_000af690(MA_CHAR(ai), (int)anim, 0, 0, 1.0f, 0.0f, 0);
+	FUN_000af690((void *)MA_CHAR(ai), (int)anim, 0, 0, 1.0f, 0.0f, 0);
 	baUpdateAnimations((struct BActorInstance *)(MA_CHAR(ai) + 0x10),
 		(struct BActorNode *)MA_PTR(MA_CHAR(ai), 0x144), 0.0f, NULL);
 	baPrepActorInstance((struct BActorInstance *)(MA_CHAR(ai) + 0x10), 1);
@@ -880,8 +880,8 @@ undefined4 FUN_001577c0(int ai)
 	if (hit != 0 && MA_I32(hit, 0x440) != 0 && 0.0 < t) {
 		CLSamples_PlayGeneric((ma_rand() & 3) + 0xb, 0x7f, 0, 0, NULL);
 		FUN_00153f60(hit);
-		FUN_000b9880(hit, 0);
-		FUN_00165f10(hit);
+		FUN_000b9880((void *)hit, 0);
+		FUN_00165f10((void *)hit);
 		return 1;
 	}
 	return 0;

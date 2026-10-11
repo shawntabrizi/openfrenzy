@@ -282,9 +282,9 @@ void FUN_0015ac80(int *ai, int tile)
 			if ((int)ai != other) {
 				/* half the time the thief cheers, else the victim complains */
 				if ((int)Core_Rand() % 100 < 0x32)
-					FUN_000b0320((int)ai, 6, DAT_00293928, 180.0f, 0, 0xffffffff, 0);
+					FUN_000b0320((void *)ai, 6, DAT_00293928, 180.0f, 0, 0xffffffff, 0);
 				else
-					FUN_000b0320(other, 7, DAT_00293928, 180.0f, 0, 0xffffffff, 0);
+					FUN_000b0320((void *)other, 7, DAT_00293928, 180.0f, 0, 0xffffffff, 0);
 				MA_PRINTF("STEAL!!!\n");
 				MA_SCORE_OF(MA_U16(ai[0xc], 0x230)) = MA_SCORE_OF(MA_U16(ai[0xc], 0x230)) + MA_I16(tile, 0xa);
 				MA_SCORE_OF(MA_U16(MA_PTR(DAT_003075bc[i], 0x30), 0x230)) =

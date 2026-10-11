@@ -460,7 +460,7 @@ uint FUN_00153850(int node)
 		MA_I16(DAT_003075a4, 0x18) = 1;
 		return MA_I32(DAT_0030564c, 0x8c) == 2;
 	case 0x21: /* ANIM_ENDED */
-		object = FUN_000b83f0(MA_I16(node, 8));
+		object = (int)FUN_000b83f0(MA_I16(node, 8));
 		if (object == 0 || MA_I16(object, 0x244) == 0)
 			return 0;
 		return 1;
@@ -625,7 +625,7 @@ static void ma_attach(int index, undefined4 hash, float *offset, int *actor_at, 
 	int object;
 	int actor;
 
-	object = FUN_000b83f0(index);
+	object = (int)FUN_000b83f0(index);
 	actor = object + 0x10;
 	*actor_at = actor;
 	if (actor != 0) {
@@ -670,8 +670,8 @@ void FUN_00154360(int action)
 	case 1: /* destroy the entities */
 		for (node = MA_NEXT(MA_ENTITIES, NULL); node != 0; node = MA_NEXT(MA_ENTITIES, node)) {
 			if (MA_I32(node, 0x3d0) == MA_I16(action, 0x14)) {
-				FUN_000b9880((int)node, 0);
-				FUN_00165f10((int)node);
+				FUN_000b9880((void *)node, 0);
+				FUN_00165f10((void *)node);
 			}
 		}
 		break;
@@ -873,7 +873,7 @@ void FUN_00154360(int action)
 		}
 		break;
 	case 0x20:
-		FUN_000d5970(DAT_003055d4, (undefined4)(int)MA_I16(action, 0x2c), MA_I16(action, 0x2e));
+		FUN_000d5970((void *)DAT_003055d4, (undefined4)(int)MA_I16(action, 0x2c), MA_I16(action, 0x2e));
 		break;
 	case 0x21:
 		CLightningMgr_StrikeGroup((struct CLightningMgr *)DAT_00308460, (short)MA_U16(action, 0x14),
@@ -970,8 +970,8 @@ void FUN_00154360(int action)
 		}
 		break;
 	case 0x32:
-		FUN_000d62c0(DAT_003055d4, (undefined4)(int)MA_FP(action, 0x2c), (undefined4)(int)MA_I16(action, 0x14),
-			(undefined4)(int)DAT_002ea478);
+		FUN_000d62c0((void *)DAT_003055d4, (float *)(int)MA_FP(action, 0x2c), (undefined4)(int)MA_I16(action, 0x14),
+			(float *)(int)DAT_002ea478);
 		break;
 	case 0x33: /* delete camera objects with the tag */
 		camera = DAT_003055d4;
@@ -980,7 +980,7 @@ void FUN_00154360(int action)
 			entity = (int)node;
 			if (MA_I32(entity, 0x40) == MA_I16(action, 0x14)) {
 				node = MA_U32(entity, 4);
-				FUN_000d5bb0(entity);
+				FUN_000d5bb0((void *)entity);
 				MA_DELETE(entity);
 			}
 			node = MA_NEXT(DAT_003055d4 + 0x2b4, node);
@@ -992,7 +992,7 @@ void FUN_00154360(int action)
 		if (MA_I16(action, 0x14) == 0) {
 			Core_Vec4Copy(MA_FP(DAT_003055d4, 0x4b0), MA_FP(DAT_003055d4, 0x4c0));
 			for (i = 0; i < DAT_002b084c; i++)
-				FUN_000d6e80(DAT_003055d4);
+				FUN_000d6e80((void *)DAT_003055d4);
 		} else {
 			MA_F32(DAT_003055d4, 0x4d0) = (float)((double)bmVectorDistance(MA_FP(DAT_003055d4, 0x4b0),
 				MA_FP(DAT_003055d4, 0x4c0)) / (double)MA_I16(action, 0x14));
@@ -1012,16 +1012,16 @@ void FUN_00154360(int action)
 			DAT_002f2878 = 0;
 		break;
 	case 0x37:
-		FUN_000b7380((undefined4)(int)MA_FP(action, 0x3c), MA_F32(action, 0x18), MA_I16(action, 0x32),
+		FUN_000b7380((float *)(int)MA_FP(action, 0x3c), MA_F32(action, 0x18), MA_I16(action, 0x32),
 			(undefined4)(int)MA_I16(action, 0x2c), (undefined4)(int)MA_I16(action, 0x2e),
 			(undefined4)(int)MA_I16(action, 0x30), 0);
 		break;
 	case 0x38:
 		for (node = MA_NEXT(MA_ENTITIES, NULL); node != 0; node = MA_NEXT(MA_ENTITIES, node)) {
 			if (MA_I32(node, 0x3d0) == MA_I16(action, 0x14)) {
-				FUN_000b7490((undefined4)node,
-					(undefined4)(int)baFindNodeByHash((struct BActorNode *)MA_PTR(node, 0x154), MA_U32(action, 0x18)),
-					(undefined4)(int)MA_FP(action, 0x1c), MA_F32(action, 0x3c),
+				FUN_000b7490((void *)node,
+					(void *)(int)baFindNodeByHash((struct BActorNode *)MA_PTR(node, 0x154), MA_U32(action, 0x18)),
+					(float *)(int)MA_FP(action, 0x1c), MA_F32(action, 0x3c),
 					(undefined4)(int)MA_I16(action, 0x2c), (undefined4)(int)MA_I16(action, 0x2e),
 					(undefined4)(int)MA_I16(action, 0x30), (undefined4)(int)MA_I16(action, 0x32));
 				break;
@@ -1035,7 +1035,7 @@ void FUN_00154360(int action)
 		}
 		break;
 	case 0x3a:
-		FUN_00081ed0((undefined4)MA_PTR(action, 0x18), (undefined4)MA_FP(action, 0x2c),
+		FUN_00081ed0((struct DebrisType *)MA_PTR(action, 0x18), (float *)MA_FP(action, 0x2c),
 			(int)MA_F32(action, 0x44), MA_F32(action, 0x3c), MA_F32(action, 0x40), (unsigned int)MA_I16(action, 0x14));
 		break;
 	case 0x3b: /* rumble the pads, weaker with the distance to the entity */
@@ -1117,7 +1117,7 @@ void FUN_00154360(int action)
 	case 0x42:
 		bmVectorRotateXY(rotated, DAT_0028fdd8, MA_F32(action, 0x3c), MA_F32(action, 0x40));
 		FUN_000b72d0((undefined4)(int)MA_I16(action, 0x2c), (undefined4)(int)MA_I16(action, 0x2e),
-			(undefined4)(int)MA_I16(action, 0x30), MA_F32(action, 0x44), (undefined4)(int)rotated,
+			(undefined4)(int)MA_I16(action, 0x30), MA_F32(action, 0x44), (float *)(int)rotated,
 			MA_F32(action, 0x18), 0);
 		break;
 	case 0x43:
@@ -1141,7 +1141,7 @@ void FUN_00154360(int action)
 		}
 		break;
 	case 0x47:
-		FUN_00081a30((undefined4)MA_PTR(action, 0x18), MA_I16(action, 0x14), MA_FP(action, 0x1c),
+		FUN_00081a30((struct DebrisType *)MA_PTR(action, 0x18), MA_I16(action, 0x14), MA_FP(action, 0x1c),
 			MA_FP(action, 0x2c), MA_F32(action, 0x3c), MA_F32(action, 0x3c), MA_F32(action, 0x40),
 			MA_F32(action, 0x44), MA_F32(action, 0x48), 0, MA_U32(action, 0x50));
 		break;

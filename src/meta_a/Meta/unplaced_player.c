@@ -23,10 +23,10 @@ int Actor_AnimQueueCallback(int reason, void *inst, void *node, void *anim, void
 /* charlib AI_PlayVoice (FUN_000b0320, thiscall AI player): play a voice sample of its
    character (kind, volume, float cooldown, ...) */
 #define MA_CHAR_VOICE(ai, kind, volume, cooldown) \
-	FUN_000b0320((int)(ai), (kind), (volume), (cooldown), 0, 0xffffffff, 0)
+	FUN_000b0320((void *)(ai), (kind), (volume), (cooldown), 0, 0xffffffff, 0)
 
 /* charlib FUN_000b02f0 (thiscall AI player): set the state */
-#define MA_SET_STATE(ai, state) FUN_000b02f0((int)(ai), (ushort)(state))
+#define MA_SET_STATE(ai, state) FUN_000b02f0((void *)(ai), (ushort)(state))
 
 static void ma_zero_push(void *ai)
 {
@@ -232,9 +232,9 @@ undefined4 FUN_00151500(int ai)
 	int button;
 
 	if (MA_I32(MA_PTR(ai, 0x6c), 0x14) != 0) {
-		button = (int)FUN_001621d0((undefined4)MA_CHAR(ai));
+		button = (int)FUN_001621d0((void *)MA_CHAR(ai));
 		if (button != 0) {
-			FUN_00162150(button);
+			FUN_00162150((struct CBigRedButton *)button);
 			MA_DEBUG_TEXT(MA_FP(MA_CHAR(ai), 0xd0), 100.0f, 7);
 			return 1;
 		}
@@ -297,7 +297,7 @@ undefined1 FUN_00151660(int ai)
 undefined4 FUN_00151680(int ai, int entered)
 {
 	if (entered != 0) {
-		FUN_000af690(MA_CHAR(ai), 5, 0, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 5, 0, 0, 1.0f, 0.1f, 1);
 		MA_CHAR_VOICE(ai, 1, DAT_00293928, 0.0f);
 	}
 	ma_zero_push((void *)ai);
@@ -309,7 +309,7 @@ undefined4 FUN_001516f0(int *ai, int entered)
 {
 	if (entered != 0) {
 		MA_CHAR_VOICE(ai, 2, DAT_00293928, 0.0f);
-		FUN_000af690(ai[0xc], 0x11, 0, 0, DAT_002b05a4, 0.1f, 1);
+		FUN_000af690((void *)ai[0xc], 0x11, 0, 0, DAT_002b05a4, 0.1f, 1);
 		MA_VFN(ai, 0x18, void (*)(void *, int))(ai, -1);
 		if (DAT_00305658 != 0)
 			FUN_00156ba0((int)ai, 0, 0);
@@ -325,7 +325,7 @@ undefined4 FUN_00151770(int ai, int entered)
 {
 	if (entered != 0) {
 		MA_CHAR_VOICE(ai, 0xb, DAT_00293928, 180.0f);
-		FUN_000af690(MA_CHAR(ai), 7, 0, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 7, 0, 0, 1.0f, 0.1f, 1);
 	}
 	ma_zero_push((void *)ai);
 	return 0;
@@ -466,7 +466,7 @@ undefined4 FUN_00151c60(int *ai, int entered)
 	float y;
 
 	if (entered != 0) {
-		FUN_000af690(ai[0xc], 0x1f, 1, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)ai[0xc], 0x1f, 1, 0, 1.0f, 0.1f, 1);
 		MA_U32(ai[0xc], 0x220) = MA_U32(ai[0xc], 0x220) & 0xfffffffe;
 		ch = ai[0xc];
 		MA_I32(ch, 0x194) = 0;
@@ -477,7 +477,7 @@ undefined4 FUN_00151c60(int *ai, int entered)
 		FUN_00156ba0((int)ai, 0, 1);
 	}
 	/* bob: up when over a vent (meta_b FUN_00163120), else sink */
-	if (FUN_00163120((int)ai, 150.0f, (float)(ma_rand() % DAT_002b0764)) == 0)
+	if (FUN_00163120((void *)ai, 150.0f, (float)(ma_rand() % DAT_002b0764)) == 0)
 		y = MA_F32(ai[0xc], 0x198) - DAT_002b0760 * DAT_0028fda8;
 	else
 		y = DAT_0028fda8 * DAT_002b075c + MA_F32(ai[0xc], 0x198);
@@ -515,7 +515,7 @@ undefined4 FUN_00151e70(int ai, int entered)
 	if (entered != 0) {
 		if (2 < MA_I32(ai, 0x1140))
 			MA_CHAR_VOICE(ai, 4, DAT_00293928, 180.0f);
-		FUN_000af690(MA_CHAR(ai), 0xc, 0, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 0xc, 0, 0, 1.0f, 0.1f, 1);
 		ma_scale_velocity(MA_CHAR(ai), DAT_002b0750);
 	}
 	ma_zero_push((void *)ai);
@@ -526,7 +526,7 @@ undefined4 FUN_00151e70(int ai, int entered)
 undefined4 FUN_00151f20(int ai, int entered)
 {
 	if (entered != 0) {
-		FUN_000af690(MA_CHAR(ai), 0, 1, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 0, 1, 0, 1.0f, 0.1f, 1);
 		ma_scale_velocity(MA_CHAR(ai), DAT_002b0750);
 	}
 	ma_zero_push((void *)ai);
@@ -540,7 +540,7 @@ undefined4 FUN_00151f20(int ai, int entered)
 undefined4 FUN_00151ff0(int ai, int entered)
 {
 	if (entered != 0)
-		FUN_000af690(MA_CHAR(ai), 0xb, 1, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 0xb, 1, 0, 1.0f, 0.1f, 1);
 	ma_zero_push((void *)ai);
 	if (DAT_002b076c < MA_F32(ai, 0x40)) {
 		if (ma_rand() % 0x1e == 0)
@@ -558,7 +558,7 @@ undefined4 FUN_00152080(int ai, int entered)
 	if (entered != 0) {
 		MA_I32(ai, 0x10e4) = 1;
 		if (DAT_00305650 == 0 || MA_I16(ai, 0x38) != 4) {
-			FUN_000af690(MA_CHAR(ai), 1, 1, 0, 0.0f, DAT_0028fda8 * 0.1f, 1); /* 0x002536cc */
+			FUN_000af690((void *)MA_CHAR(ai), 1, 1, 0, 0.0f, DAT_0028fda8 * 0.1f, 1); /* 0x002536cc */
 		} else {
 			baFlushAnimations((void *)(MA_CHAR(ai) + 0x10), (struct BActorNode *)MA_PTR(MA_CHAR(ai), 0x144), 1, 0);
 			MA_I16(MA_CHAR(ai), 0x236) = 0;
@@ -615,7 +615,7 @@ undefined4 FUN_00152260(int ai, int entered)
 			MA_I32(MA_PTR(MA_CHAR(ai), 0x18c), 0x1b0) = 0;
 			MA_I32(MA_PTR(MA_CHAR(ai), 0x18c), 0x1b8) = 0;
 		}
-		FUN_000af690(MA_CHAR(ai), 2, 0, 0, 1.0f, 0.3f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 2, 0, 0, 1.0f, 0.3f, 1);
 		if (MA_F32(ai, 0x10e8) <= MA_F32(ai, 0x54))
 			MA_F32(MA_CHAR(ai), 0x1d8) = CLMath_HeadingXZ(MA_FP(ai, 0x7c));
 		if (MA_I16(MA_CHAR(ai), 0x230) == 0) {
@@ -661,7 +661,7 @@ undefined4 FUN_001523d0(int *ai, int entered)
 			blend = DAT_002b078c[3];
 			anim = MA_I32(ai[0xc], 0x274) == 0 ? 0xe : 4;
 		}
-		FUN_000af690(ai[0xc], anim, 0, 0, speed, blend, sync);
+		FUN_000af690((void *)ai[0xc], anim, 0, 0, speed, blend, sync);
 		MA_I16(ai, 0x1092) = 0;
 	}
 	if (DAT_002b0788 <= MA_F32(ai, 0x40) || MA_F32(ai, 0x40) < DAT_00305654) {
@@ -699,7 +699,7 @@ undefined4 FUN_00152600(int *ai, int entered)
 	best_turn = 1.5707963f;
 	MA_F32(ai, 0x1128) = 1.6022122f; /* 0x3fcd154a */
 	if (entered != 0) {
-		FUN_000af690(ai[0xc], 0x10, 0, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)ai[0xc], 0x10, 0, 0, 1.0f, 0.1f, 1);
 		MA_I16(ai, 0x1092) = 0;
 		player = 0;
 		do {
@@ -749,7 +749,7 @@ undefined4 FUN_00152800(int ai, int entered)
 	int ch;
 
 	if (entered != 0) {
-		FUN_000af690(MA_CHAR(ai), 6, 0, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 6, 0, 0, 1.0f, 0.1f, 1);
 		ma_scale_velocity(MA_CHAR(ai), DAT_002b0750);
 	}
 	ch = MA_CHAR(ai);
@@ -766,7 +766,7 @@ undefined4 FUN_001528c0(int ai, int entered)
 	int ch;
 
 	if (entered != 0) {
-		FUN_000af690(MA_CHAR(ai), 6, 0, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 6, 0, 0, 1.0f, 0.1f, 1);
 		FUN_0015ac80((int *)ai, FUN_00159380(MA_CHAR(ai) + 0xd0, 0));
 		ma_scale_velocity(MA_CHAR(ai), DAT_002b0750);
 	}
@@ -790,7 +790,7 @@ undefined4 FUN_001528c0(int ai, int entered)
 undefined4 FUN_001529f0(int ai, int entered)
 {
 	if (entered != 0)
-		FUN_000af690(MA_CHAR(ai), 10, 1, 0, 1.0f, 0.3f, 1);
+		FUN_000af690((void *)MA_CHAR(ai), 10, 1, 0, 1.0f, 0.3f, 1);
 	ma_push_from_stick((void *)ai);
 	return 0;
 }
@@ -821,7 +821,7 @@ undefined4 FUN_00152b30(int *ai, int entered)
 
 	if (entered != 0) {
 		MA_CHAR_VOICE(ai, 3, DAT_00293928, 0.0f);
-		FUN_000af690(ai[0xc], 0x13, 0, 0, DAT_002b05a8, 0.1f, 1);
+		FUN_000af690((void *)ai[0xc], 0x13, 0, 0, DAT_002b05a8, 0.1f, 1);
 		ai[0x448] = 1;
 		MA_VFN(ai, 0x18, void (*)(void *, int))(ai, -1);
 	}
@@ -839,7 +839,7 @@ undefined4 FUN_00152b30(int *ai, int entered)
 		MA_F32(ai, 0x84) = k * MA_F32(ai, 0x84);
 	}
 	if (-1 < ai[0x448] && MA_F32(ai, 0x10d8) <= MA_F32(ai, 0x40)) {
-		FUN_000af690(ai[0xc], ai[0x448] == 0 ? 0x16 : 0x15, 0, 0, 1.0f, 0.1f, 1);
+		FUN_000af690((void *)ai[0xc], ai[0x448] == 0 ? 0x16 : 0x15, 0, 0, 1.0f, 0.1f, 1);
 		ai[0x448] = -1;
 	}
 	return 0;

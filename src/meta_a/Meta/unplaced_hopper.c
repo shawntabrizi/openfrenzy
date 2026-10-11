@@ -24,7 +24,7 @@ them over. Original file probably C:\BlitzParty\Game\Src\Hopper\<player>.cpp.
 /* charlib FUN_000af690: play a character animation
    (character, animation, layer, loop, speed, blend time, flags) */
 #define MA_CHAR_ANIM(ch, anim, layer, loop, speed, blend, flags) \
-	FUN_000af690((int)(ch), (anim), (layer), (loop), (speed), (blend), (flags))
+	FUN_000af690((void *)(ch), (anim), (layer), (loop), (speed), (blend), (flags))
 
 /* charlib FUN_000af580: blend to an animation (character, animation, float blend time) */
 static void ma_char_blend(int ch, int anim, float blend)
@@ -34,7 +34,7 @@ static void ma_char_blend(int ch, int anim, float blend)
 }
 
 /* charlib FUN_000b0320 (thiscall controller): play a voice sample of the character (kind, volume, ...) */
-#define MA_CHAR_VOICE(ctl, kind, volume) FUN_000b0320((int)(ctl), (kind), (volume), 0, 0, 0xffffffff, 0)
+#define MA_CHAR_VOICE(ctl, kind, volume) FUN_000b0320((void *)(ctl), (kind), (volume), 0, 0, 0xffffffff, 0)
 
 static void ma_zero_velocity(void *ctl)
 {

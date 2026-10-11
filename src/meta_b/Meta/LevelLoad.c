@@ -1667,7 +1667,7 @@ int LevelLoad_Load(int zone, int part)
 						{
 							CLIntroCam_Load((int)map, (undefined4)DAT_003055d4);
 							ParseMap_Free(map);
-							FUN_000d7420(DAT_003055d4, 0, 2);
+							FUN_000d7420((void *)DAT_003055d4, 0, 2);
 							goto next;
 						}
 						msg = "InitialiseCamera - Error parsing camera LOM file [%s]\n";

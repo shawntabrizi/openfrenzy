@@ -86,7 +86,7 @@ void CBomb_LightFuses(int tag)
 		{
 			bomb->timer = bomb->fuse;
 			MB_F32(bomb->actor, 0x334) = 1.0f;
-			FUN_000ae820((int)bomb->actor, 6.0f, bomb->fuse);
+			FUN_000ae820((void *)bomb->actor, 6.0f, bomb->fuse);
 		}
 	}
 }
@@ -212,7 +212,7 @@ struct CBomb *CBomb_Construct(struct CBomb *self, int kind, float *pos, int tag)
 		MB_PTR(self->actor, 0x324) = DAT_002b0ab8;
 		MB_PTR(self->actor, 0x264) = baFindSubObject(
 			(struct BActorInstance *)MB_ADDR(self->actor, 0x10), "pulse");
-		FUN_000af690((int)self->actor, 0, 1, 0, 1.0f, 0.0f, 1);
+		FUN_000af690((void *)self->actor, 0, 1, 0, 1.0f, 0.0f, 1);
 		self->timer = -1.0f;
 		break;
 	case 3:
@@ -392,7 +392,7 @@ void *CBomb_Delete(struct CBomb *self)
 		if (MB_I32(DAT_003075bc[i], 0x1c) == (int)MB_ADDR(self->actor, 0xd0))
 			MB_I32(DAT_003075bc[i], 0x1c) = 0;
 	}
-	FUN_000adfc0((int)self->actor);
+	FUN_000adfc0((void *)self->actor);
 	if (self->bombPos != NULL)
 		self->bombPos->used = 0;
 	MB_DELETE(self);
@@ -447,14 +447,14 @@ void *CBomb_Explode(struct CBomb *self)
 	case 1:
 	case 2:
 	case 4:
-		FUN_000b7380((undefined4)pos, 5000.0f, 0x32, 0x7f, 0x3c, 0, 0);
+		FUN_000b7380((float *)pos, 5000.0f, 0x32, 0x7f, 0x3c, 0, 0);
 		if (self->explosion != NULL)
 			CMetaExplosion_Start(self->explosion, pos);
 		break;
 	case 3:
 		if (self->explosion != NULL)
 			CMetaExplosion_Start(self->explosion, pos);
-		FUN_000b7380((undefined4)pos, 5000.0f, 6, 0x7f, 100, 0x50, 0);
+		FUN_000b7380((float *)pos, 5000.0f, 6, 0x7f, 100, 0x50, 0);
 		break;
 	}
 	if (MB_I32(DAT_0030564c, 0x68) == 1)
@@ -633,7 +633,7 @@ static void bomb_light(struct CBomb *self)
 {
 	self->timer = self->fuse;
 	MB_F32(self->actor, 0x334) = 1.0f;
-	FUN_000ae820((int)self->actor, 6.0f, self->fuse);
+	FUN_000ae820((void *)self->actor, 6.0f, self->fuse);
 }
 
 /* 0x00161560  Meta (file inferred: CBomb.cpp)
@@ -740,7 +740,7 @@ void *CBomb_Update(struct CBomb *self)
 			step[0] = step[0] * scale;
 			step[1] = step[1] * scale;
 			step[2] = scale * step[2];
-			FUN_00080d60((int)DAT_002b215c, (undefined4)pos, (undefined4)step, 1, 0xffffffffu);
+			FUN_00080d60((struct DebrisType *)DAT_002b215c, (float *)pos, (float *)step, 1, 0xffffffffu);
 		}
 	}
 	if (self->dropInterval > 0.0f)
@@ -751,7 +751,7 @@ void *CBomb_Update(struct CBomb *self)
 		{
 			t = (self->dropInterval - self->dropAccum) / DAT_0028fda8 + 1.0f;
 			FUN_00050ff0(step, MB_FP(self->actor, 0x1a4), t, MB_FP(self->actor, 0xd0), 1.0f - t);
-			FUN_00080d60((int)self->dropType, (undefined4)step, (undefined4)DAT_002ea478, 0,
+			FUN_00080d60((struct DebrisType *)self->dropType, (float *)step, (float *)DAT_002ea478, 0,
 				0xffffffffu);
 			self->dropAccum = self->dropAccum - self->dropInterval;
 			while (self->dropInterval < self->dropAccum)
@@ -759,7 +759,7 @@ void *CBomb_Update(struct CBomb *self)
 				t = self->dropInterval / DAT_0028fda8 + t;
 				FUN_00050ff0(step, MB_FP(self->actor, 0x1a4), t, MB_FP(self->actor, 0xd0),
 					1.0f - t);
-				FUN_00080d60((int)self->dropType, (undefined4)step, (undefined4)DAT_002ea478, 0,
+				FUN_00080d60((struct DebrisType *)self->dropType, (float *)step, (float *)DAT_002ea478, 0,
 					0xffffffffu);
 				self->dropAccum = self->dropAccum - self->dropInterval;
 			}

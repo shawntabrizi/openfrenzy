@@ -198,8 +198,8 @@ void FUN_0014dca0(int *self)
 		FUN_00156580(DAT_003075bc[i]);
 		MA_I32(DAT_003075bc[i], 0x1124) = 0;
 		MA_VFN(DAT_003075bc[i], 0x24, void (*)(void *))((void *)DAT_003075bc[i]);
-		FUN_000d62c0(DAT_003055d4, MA_I32(DAT_003075bc[i], 0x30) + 0xd0, 0,
-			MA_I32(DAT_003075bc[i], 0x30) + 0x194);
+		FUN_000d62c0((void *)DAT_003055d4, (float *)(MA_I32(DAT_003075bc[i], 0x30) + 0xd0), 0,
+			(float *)(MA_I32(DAT_003075bc[i], 0x30) + 0x194));
 	}
 	FUN_00044b00(3, MA_U32(DAT_003055d0, 0x48), 0);
 	bdSetNearFar(MA_F32(self, 0x58), MA_F32(self, 0x5c));
@@ -220,7 +220,7 @@ void FUN_0014dca0(int *self)
 		DAT_002baef0[10] = (ma_rand() & 0xf) + 3;
 		DAT_002baef0[20] = (ma_rand() & 0xf) + 3;
 		DAT_002baef0[30] = (ma_rand() & 0xf) + 3;
-		FUN_000d7420(DAT_003055d4, (undefined4 *)0, 5);
+		FUN_000d7420((void *)DAT_003055d4, (undefined4 *)0, 5);
 	}
 	FUN_000b69d0(1, 0);
 }
@@ -309,11 +309,11 @@ void FUN_0014df90(int self)
 
 	/* the rumble effect names (classlib_ui CRumble at 0x002ed324) */
 	FUN_00080a20((int *)DAT_002ed324);
-	FUN_00080aa0((undefined4 *)DAT_002ed324, (undefined4)"Bomb Fall");
-	FUN_00080aa0((undefined4 *)DAT_002ed324, (undefined4)"Air Raid");
-	FUN_00080aa0((undefined4 *)DAT_002ed324, (undefined4)"Conveyor");
-	FUN_00080aa0((undefined4 *)DAT_002ed324, (undefined4)"Squished : Fish, Crate");
-	FUN_00080aa0((undefined4 *)DAT_002ed324, (undefined4)"Generic Knock Down");
+	FUN_00080aa0((undefined4 *)DAT_002ed324, (char *)"Bomb Fall");
+	FUN_00080aa0((undefined4 *)DAT_002ed324, (char *)"Air Raid");
+	FUN_00080aa0((undefined4 *)DAT_002ed324, (char *)"Conveyor");
+	FUN_00080aa0((undefined4 *)DAT_002ed324, (char *)"Squished : Fish, Crate");
+	FUN_00080aa0((undefined4 *)DAT_002ed324, (char *)"Generic Knock Down");
 
 	menu = ma_new_tweak_menu("Players", 0x218);
 	MA_PTR(self, 0x54) = menu;
@@ -364,8 +364,8 @@ void FUN_0014ea80(void)
 				MA_VFN(DAT_003075bc[i], 0x24, void (*)(void *))((void *)DAT_003075bc[i]);
 			if (2500.0f <= MA_F32(MA_CHAR(DAT_003075bc[i]), 0xd4)) /* 0x00268700 */
 				MA_VFN(DAT_003075bc[i], 0x24, void (*)(void *))((void *)DAT_003075bc[i]);
-			if (FUN_00163120(DAT_003075bc[i], 150.0f, 0.0f) != 0 && MA_I16(DAT_003075bc[i], 0x36) != 0xe)
-				FUN_000b02f0(DAT_003075bc[i], 0xe);
+			if (FUN_00163120((void *)DAT_003075bc[i], 150.0f, 0.0f) != 0 && MA_I16(DAT_003075bc[i], 0x36) != 0xe)
+				FUN_000b02f0((void *)DAT_003075bc[i], 0xe);
 			if (0 < MA_I32(MA_PTR(MA_CHAR(DAT_003075bc[i]), 0x18c), 0x1d0))
 				FUN_00157be0((int *)DAT_003075bc[i], i);
 			if (0.0f < DAT_003045a4[i])
@@ -436,7 +436,7 @@ void FUN_0014ea80(void)
 	FUN_0015b730();
 	FUN_00043790();
 	if (DAT_002f7a30 == 0) {
-		FUN_000d6e80(DAT_003055d4);
+		FUN_000d6e80((void *)DAT_003055d4);
 		if (MA_I32(DAT_003055d4, 0x568) == 5)
 			bdSetFieldOfView(1.2217305f, 0.0f); /* 0x3f9c61aa: 70 degrees */
 	}
@@ -483,7 +483,7 @@ void FUN_0014ee80(int self, int active)
 	FUN_000ba460();
 	FUN_0015e710();
 	if (DAT_003055d8 != 0) {
-		FUN_0003c690(MA_I32(self, 0xa0), 0);
+		FUN_0003c690((struct BExtraSystem *)MA_I32(self, 0xa0), 0);
 		FUN_001642c0();
 	}
 	for (i = 0; i < DAT_002bae94; i++) {
@@ -518,7 +518,7 @@ void FUN_0014ee80(int self, int active)
 				character = DAT_002baed4[i * 10];
 				colour = (const unsigned char *)&DAT_00290718 + character * 0x60;
 				if (MA_I32(DAT_003055d0, 0x40) == 2) {
-					FUN_000b0b00(DAT_003075bc[i]);
+					FUN_000b0b00((void *)DAT_003075bc[i]);
 					if (MA_I32(DAT_003075bc[i], 0x28) != 0 ||
 						(float)MA_I32(DAT_003075bc[i], 0x10b4) < MA_F32(DAT_003075bc[i], 0x20))
 						text = ma_goal_names[MA_I32(DAT_003075bc[i], 4)];
@@ -601,7 +601,7 @@ void FUN_0014f4a0(void)
 
 	memory = MA_NEW(0x574, ma_file_gamemode_meta, 0x8fc, 0x1001);
 	if (memory != NULL) {
-		DAT_003055d4 = FUN_000d63f0((int)memory, 5);
+		DAT_003055d4 = (int)FUN_000d63f0((void *)memory, 5);
 		return;
 	}
 	DAT_003055d4 = 0;
@@ -708,7 +708,7 @@ void FUN_0014f670(int self)
 	bLoadPackageResources((struct bkPackage *)MA_PTR(self, 0x70), 0xffffffff, 0xdefa, 0);
 	Sprite_LoadDefs((struct CSpriteDef *)DAT_002b0d30, 0xb, 0);
 	Sprite_LoadDefs((struct CSpriteDef *)s_aisteam1_00290f00, 6, 0);
-	FUN_000827f0((undefined4)FUN_000b4bd0, 4000);
+	FUN_000827f0((void *)FUN_000b4bd0, 4000);
 	FUN_000b9bf0();
 	FUN_00160720();
 	FUN_00159fb0(0);
@@ -810,11 +810,11 @@ static void ma_free_players(void)
 	for (i = 0; i < DAT_002bae94; i++) {
 		if (DAT_003075bc[i] != 0) {
 			if (MA_I32(DAT_003075bc[i], 0x5c) != 0) {
-				FUN_00048970(MA_U32(DAT_003075bc[i], 0x5c));
+				FUN_00048970((struct biMap *)MA_U32(DAT_003075bc[i], 0x5c));
 				MA_I32(DAT_003075bc[i], 0x5c) = 0;
 			}
 			if (MA_I32(DAT_003075bc[i], 0x74) != 0) {
-				FUN_00048970(MA_U32(DAT_003075bc[i], 0x74));
+				FUN_00048970((struct biMap *)MA_U32(DAT_003075bc[i], 0x74));
 				MA_I32(DAT_003075bc[i], 0x74) = 0;
 			}
 			player = DAT_003075bc[i];
@@ -855,7 +855,7 @@ void FUN_0014faf0(int self)
 	ma_free_route_buffers();
 	camera = DAT_003055d4;
 	if (DAT_003055d4 != 0) {
-		FUN_000d64a0(DAT_003055d4);
+		FUN_000d64a0((void *)DAT_003055d4);
 		MA_DELETE(camera);
 		DAT_003055d4 = 0;
 	}
@@ -958,7 +958,7 @@ void FUN_0014fe50(int self)
 	ma_free_route_buffers();
 	camera = DAT_003055d4;
 	if (DAT_003055d4 != 0) {
-		FUN_000d64a0(DAT_003055d4);
+		FUN_000d64a0((void *)DAT_003055d4);
 		MA_DELETE(camera);
 		DAT_003055d4 = 0;
 	}
@@ -1196,7 +1196,7 @@ void FUN_00150510(int self)
 		return;
 	switch (MA_I32(self, 0x68)) {
 	case 0:
-		if (FUN_0007a900((float *)DAT_002ecfac) == 0)
+		if (FUN_0007a900((int)(float *)DAT_002ecfac) == 0)
 			goto wait_a_frame;
 		MA_F32(self, 0x7c) = DAT_002b057c;
 		MA_I32(self, 0x68) = 1;
@@ -1220,14 +1220,14 @@ void FUN_00150510(int self)
 			CLMusic_Switch(DAT_002baed4[winner * 10], 0xb4, -0xff, 0xb4, 1, 0);
 		if (MA_I32(DAT_0030564c, 0x94) == 0) {
 			if (-1 < winner) {
-				FUN_000d7420(DAT_003055d4, (undefined4 *)MA_I32(DAT_003075bc[winner], 0x30), 1);
-				FUN_000af690(MA_CHAR(DAT_003075bc[winner]), 0x1b, 0, 0, 1.0f, 0.2f, 1);
-				FUN_000af690(MA_CHAR(DAT_003075bc[winner]), 0x23, 1, 1, 1.0f, 0.3f, 1);
+				FUN_000d7420((void *)DAT_003055d4, (undefined4 *)MA_I32(DAT_003075bc[winner], 0x30), 1);
+				FUN_000af690((void *)MA_CHAR(DAT_003075bc[winner]), 0x1b, 0, 0, 1.0f, 0.2f, 1);
+				FUN_000af690((void *)MA_CHAR(DAT_003075bc[winner]), 0x23, 1, 1, 1.0f, 0.3f, 1);
 			}
 			for (i = 0; i < DAT_002bae94; i++) {
 				if (winner != i) {
-					FUN_000af690(MA_CHAR(DAT_003075bc[i]), 0x1c, 0, 0, 1.0f, 0.2f, 1);
-					FUN_000af690(MA_CHAR(DAT_003075bc[i]), 0x24, 1, 1, 1.0f, 0.03f, 1);
+					FUN_000af690((void *)MA_CHAR(DAT_003075bc[i]), 0x1c, 0, 0, 1.0f, 0.2f, 1);
+					FUN_000af690((void *)MA_CHAR(DAT_003075bc[i]), 0x24, 1, 1, 1.0f, 0.03f, 1);
 				}
 			}
 		} else {
@@ -1249,14 +1249,14 @@ void FUN_00150510(int self)
 				start = MA_I32(DAT_0030564c, 0x94);
 				if (MA_I32(start, i * 4 + 0x90) == 0) {
 					ma_place_player(start, i, &winner_pos, &other_pos);
-					FUN_000af690(MA_CHAR(DAT_003075bc[i]), 0x1c, 0, 0, 1.0f, 0.2f, 1);
+					FUN_000af690((void *)MA_CHAR(DAT_003075bc[i]), 0x1c, 0, 0, 1.0f, 0.2f, 1);
 					anim = 0x24;
 				} else {
 					ma_place_player(start, i, &winner_pos, &other_pos);
-					FUN_000af690(MA_CHAR(DAT_003075bc[i]), 0x1b, 0, 0, 1.0f, 0.2f, 1);
+					FUN_000af690((void *)MA_CHAR(DAT_003075bc[i]), 0x1b, 0, 0, 1.0f, 0.2f, 1);
 					anim = 0x23;
 				}
-				FUN_000af690(MA_CHAR(DAT_003075bc[i]), anim, 1, 1, 1.0f, 0.03f, 1);
+				FUN_000af690((void *)MA_CHAR(DAT_003075bc[i]), anim, 1, 1, 1.0f, 0.03f, 1);
 				ch = MA_CHAR(DAT_003075bc[i]);
 				MA_I32(ch, 0x1a4) = MA_I32(ch, 0xd0);
 				MA_I32(ch, 0x1a8) = MA_I32(ch, 0xd4);
@@ -1277,7 +1277,7 @@ void FUN_00150510(int self)
 				centre[0] = centre[0] + MA_F32(ch, 0xd0);
 				centre[1] = centre[1] + MA_F32(ch, 0xd4);
 				centre[2] = centre[2] + MA_F32(ch, 0xd8);
-				FUN_000af970(MA_CHAR(DAT_003075bc[i]), (float *)MA_PTR(DAT_0030564c, 0x94));
+				FUN_000af970((void *)MA_CHAR(DAT_003075bc[i]), (float *)MA_PTR(DAT_0030564c, 0x94));
 				MA_I32(MA_CHAR(DAT_003075bc[i]), 0x1e8) = MA_I32(MA_CHAR(DAT_003075bc[i]), 0x1d8);
 			}
 			/* camera: from the podium's camera position to the players' centre
@@ -1292,7 +1292,7 @@ void FUN_00150510(int self)
 			centre[1] = centre[1] * scale;
 			centre[2] = centre[2] * scale;
 			memcpy(&view[4], centre, sizeof centre);
-			FUN_000d7420(DAT_003055d4, view, 3);
+			FUN_000d7420((void *)DAT_003055d4, view, 3);
 		}
 		MA_F32(self, 0x7c) = DAT_002baea8 != 0 ? 390.0f : 240.0f;
 		MA_I32(self, 0x68) = 2;
@@ -1412,7 +1412,7 @@ void FUN_00150ce0(int self, int active)
 			}
 			FUN_00163d40();
 		}
-		FUN_00164730((int)MA_ADDR(self, 0xa0));
+		FUN_00164730((struct CMetaRain *)MA_ADDR(self, 0xa0));
 		if (MA_I32(self, 0x68) == 9) {
 			MA_VFN(MA_PTR(self, 0x30), 0x18, void (*)(void *, int))(MA_PTR(self, 0x30), 1);
 			if (MA_U8(MA_PTR(self, 0x30), 0x138) == 0)
@@ -1422,7 +1422,7 @@ void FUN_00150ce0(int self, int active)
 		}
 		for (i = 0; i < DAT_002bae94; i++) {
 			if (MA_I32(self, 0x88) == 5)
-				FUN_00163120(DAT_003075bc[i], 0.0f, 0.0f);
+				FUN_00163120((void *)DAT_003075bc[i], 0.0f, 0.0f);
 		}
 	}
 	if (MA_I32(self, 0x68) != 9 && MA_I32(self, 0x68) != 3) {

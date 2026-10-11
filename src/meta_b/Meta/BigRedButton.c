@@ -76,7 +76,7 @@ struct CBigRedButton *BigRedButton_FindPressable(void)
 Releases the button: plays "off" and goes up. Returns 1. */
 int CBigRedButton_Release(struct CBigRedButton *self)
 {
-	FUN_000af690((int)MB_ADDR(self->model, 0x10), 1, 0, 0, 1.0f, 0.0f, 1);
+	FUN_000af690((void *)MB_ADDR(self->model, 0x10), 1, 0, 0, 1.0f, 0.0f, 1);
 	self->state = 3;
 	DAT_0030905c++;
 	return 1;
@@ -187,7 +187,7 @@ int CBigRedButton_Update(struct CBigRedButton *self)
 		}
 		break;
 	case 2:
-		FUN_000b3e40((int)self->model, 0);
+		FUN_000b3e40((void *)self->model, 0);
 		if (MB_I16(self->model, 0x244) == 0)
 			return 1;
 		self->prevState = self->state;
@@ -195,7 +195,7 @@ int CBigRedButton_Update(struct CBigRedButton *self)
 		self->presses++;
 		return 1;
 	case 3:
-		FUN_000b3e40((int)self->model, 0);
+		FUN_000b3e40((void *)self->model, 0);
 		if (MB_I16(self->model, 0x244) != 0)
 		{
 			self->prevState = self->state;
@@ -253,7 +253,7 @@ int CBigRedButton_Press(struct CBigRedButton *self)
 			MB_F32(player, 0x1130) = -60.0f;
 		}
 	}
-	FUN_000af690((int)MB_ADDR(self->model, 0x10), 0, 0, 0, 1.0f, 0.0f, 1);
+	FUN_000af690((void *)MB_ADDR(self->model, 0x10), 0, 0, 0, 1.0f, 0.0f, 1);
 	CLSamples_PlayGeneric(4, 0x7f, 0, 0, NULL);
 	self->state = 2;
 	DAT_0030905c++;

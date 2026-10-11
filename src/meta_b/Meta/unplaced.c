@@ -235,7 +235,7 @@ void CMetaVent_Emit(struct CMetaVent *self, int index)
 	if (self->parent != NULL)
 		FUN_00051170(vel, vel, MB_F32(self->parent, 0x1f8));
 	FUN_00050ff0(pos, pos, 1.0f, vel, (float)mb_rand() * DAT_0028fda8 * MB_RAND_SCALE);
-	particle = (void *)FUN_00080d60((int)self->type[index], (undefined4)pos, (undefined4)vel, 0,
+	particle = (void *)FUN_00080d60((struct DebrisType *)self->type[index], (float *)pos, (float *)vel, 0,
 		(uint)self->colour[index]);
 	if (self->type[index] == (void *)DAT_002b1ef4)
 		MB_F32(particle, 0x8c) = self->radius * 0.02f;  /* 0x0025588c */
@@ -784,7 +784,7 @@ void CMetaEmitter_Emit(struct CMetaEmitter *self)
 		if ((self->flags & 2) != 0)
 		{
 			emitter_velocity(self, vel);
-			FUN_00080d60((int)self->ptype, (undefined4)pos, (undefined4)vel, 0, self->colour);
+			FUN_00080d60((struct DebrisType *)self->ptype, (float *)pos, (float *)vel, 0, self->colour);
 			return;
 		}
 	}
@@ -818,7 +818,7 @@ void CMetaEmitter_Emit(struct CMetaEmitter *self)
 		{
 			emitter_velocity(self, vel);
 			FUN_00051170(vel, vel, angle);
-			FUN_00080d60((int)self->ptype, (undefined4)pos, (undefined4)vel, 0, self->colour);
+			FUN_00080d60((struct DebrisType *)self->ptype, (float *)pos, (float *)vel, 0, self->colour);
 			return;
 		}
 	}
@@ -826,7 +826,7 @@ void CMetaEmitter_Emit(struct CMetaEmitter *self)
 	{
 		return;
 	}
-	FUN_00080d60((int)self->ptype, (undefined4)pos, (undefined4)DAT_002ea478, 0, self->colour);
+	FUN_00080d60((struct DebrisType *)self->ptype, (float *)pos, (float *)DAT_002ea478, 0, self->colour);
 }
 
 /* 0x00163ae0  Meta (file unknown)
@@ -1038,7 +1038,7 @@ void MetaPlatform_MakeDust(void *platform)
 			vel[0] = vel[0] * k;
 			vel[2] = vel[2] * k;
 			vel[1] = vel[1] * k * 0.5f;
-			FUN_00080d60((int)(DAT_00291600 + 0x160), (undefined4)pos, (undefined4)vel, 0, colour);
+			FUN_00080d60((struct DebrisType *)(DAT_00291600 + 0x160), (float *)pos, (float *)vel, 0, colour);
 			flip = 1;
 		}
 		else
@@ -1047,7 +1047,7 @@ void MetaPlatform_MakeDust(void *platform)
 			vel[0] = vel[0] * k;
 			vel[1] = vel[1] * k;
 			vel[2] = vel[2] * k;
-			FUN_00080d60((int)(DAT_00291600 + 0x1b8), (undefined4)pos, (undefined4)vel, 0, colour);
+			FUN_00080d60((struct DebrisType *)(DAT_00291600 + 0x1b8), (float *)pos, (float *)vel, 0, colour);
 			flip = 0;
 		}
 	}

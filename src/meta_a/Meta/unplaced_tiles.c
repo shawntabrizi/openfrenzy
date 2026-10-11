@@ -230,7 +230,7 @@ void FUN_001592e0(int board)
 		if (*platform == 0)
 			CLColl_GroundProbe(MA_FP(node, -0x10), 0.0f, NULL, (void **)platform, 0);
 		else
-			*platform = FUN_000b83f0(*platform);
+			*platform = (int)FUN_000b83f0(*platform);
 		if (*platform == 0)
 			MA_PRINTF("Moveable tile isn't on platform!\n");
 	}

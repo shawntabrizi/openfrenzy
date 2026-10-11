@@ -148,7 +148,7 @@ undefined4 FUN_001586d0(int ai)
 			return 1;
 		if (MA_I16(ai, 0x98) != 0)
 			return 1;
-		found = FUN_000b9c90((undefined4)(MA_CHAR(ai) + 0xd0), -1);
+		found = (int)FUN_000b9c90((float *)(MA_CHAR(ai) + 0xd0), -1);
 		if (found == MA_I32(ai, 0x10))
 			return 0;
 		MA_I32(ai, 0x10) = found;
@@ -195,7 +195,7 @@ undefined4 FUN_001586d0(int ai)
 		tile = MA_I32(ai, 0xc);
 		if (tile != 0 && MA_I32(tile, 0x30) != 0 && MA_U8(MA_PTR(tile, 0x44), 0x3d5) != 0 &&
 			((MA_I32(tile, 0x3c) == 1 && MA_I32(tile, 0x34) == 0) || MA_I32(tile, 0x3c) == 0)) {
-			if (MA_I16(ai, 0x98) == 0 && FUN_001621d0((undefined4)MA_CHAR(ai)) == 0)
+			if (MA_I16(ai, 0x98) == 0 && FUN_001621d0((void *)MA_CHAR(ai)) == 0)
 				return 0;
 			MA_I32(MA_PTR(ai, 0x6c), 0x14) = 1;
 			if (FUN_00151500(ai) == 0)
@@ -262,7 +262,7 @@ uint FUN_00158d90(int ai, uint mode)
 	/* 0x00158260: a goal: a safe one by caution, else the nearest */
 	if (ma_rand() % 100 < *(int *)((char *)&DAT_0029074c +
 			DAT_002baed4[MA_U16(MA_CHAR(ai), 0x230) * 10] * 0x60)) {
-		goal = FUN_00166ad0(MA_U16(MA_CHAR(ai), 0x230));
+		goal = (int)FUN_00166ad0(MA_U16(MA_CHAR(ai), 0x230));
 		if (goal != 0)
 			goto have_goal;
 		MA_PRINTF("\n\n*** NO SAFE GOAL!!\n\n");
@@ -323,7 +323,7 @@ button:
 	if (ma_rand() % 0x96 < *(int *)((char *)&DAT_00290740 + 4 +
 			DAT_002baed4[MA_U16(MA_CHAR(ai), 0x230) * 10] * 0x60) &&
 		FUN_000b9c40(-1) != 0) {
-		MA_I32(ai, 0x10) = FUN_000b9c90((undefined4)(MA_CHAR(ai) + 0xd0), -1);
+		MA_I32(ai, 0x10) = (int)FUN_000b9c90((float *)(MA_CHAR(ai) + 0xd0), -1);
 		if (MA_I32(ai, 0x10) != 0) {
 			roll = (uint)ma_route(ai, MA_FP(MA_PTR(ai, 0x10), 0xd0));
 			MA_I32(ai, 4) = 5;
