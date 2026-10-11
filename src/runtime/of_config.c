@@ -53,6 +53,7 @@ static struct setting settings[] =
 	{ "debug.gl_debug", "false" },
 	{ "debug.gpu_debug_flat", "false" },
 	{ "debug.gpu_stats", "false" },
+	{ "debug.draw_cache_check", "false" },
 	{ "debug.gpu_trace_constants", "false" },
 	{ "debug.null_renderer", "false" },
 	{ "debug.texture_log", "false" },

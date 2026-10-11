@@ -113,11 +113,37 @@ static struct
 	BOOL enabled;
 } lights[LIGHT_SLOTS];
 
+/* the groups of ff[] whose inputs changed since d3d8_ff_uniforms last ran
+(it recomputes and compares only these) */
+#define GROUP_WORLD_VIEW 0x01 /* world-view and normal matrices */
+#define GROUP_PROJECTION 0x02
+#define GROUP_TEXTURE 0x04
+#define GROUP_MATERIAL 0x08
+#define GROUP_LIGHTS 0x10 /* in camera space: the view matrix too */
+#define GROUP_ALL 0x1f
+
+static unsigned long dirty_groups = GROUP_ALL;
+
+void d3d8_ff_transform_changed(DWORD state)
+{
+	if (state == D3DTS_VIEW)
+		dirty_groups |= GROUP_WORLD_VIEW | GROUP_LIGHTS;
+	else if (state == D3DTS_WORLD)
+		dirty_groups |= GROUP_WORLD_VIEW;
+	else if (state == D3DTS_PROJECTION)
+		dirty_groups |= GROUP_PROJECTION;
+	else if (state >= D3DTS_TEXTURE0 && state < D3DTS_TEXTURE0 + D3DTSS_MAXSTAGES)
+		dirty_groups |= GROUP_TEXTURE;
+}
+
 /* 0x001f54a0 */
 void WINAPI D3DDevice_SetMaterial(CONST D3DMATERIAL8 *new_material)
 {
 	if (new_material)
+	{
 		material = *new_material;
+		dirty_groups |= GROUP_MATERIAL;
+	}
 }
 
 /* 0x001f5cd0 */
@@ -132,6 +158,7 @@ HRESULT WINAPI D3DDevice_SetLight(DWORD index, CONST D3DLIGHT8 *light)
 	}
 	lights[index].light = *light;
 	lights[index].set = TRUE;
+	dirty_groups |= GROUP_LIGHTS;
 	return S_OK;
 }
 
@@ -154,6 +181,7 @@ HRESULT WINAPI D3DDevice_LightEnable(DWORD index, BOOL enable)
 		lights[index].set = TRUE;
 	}
 	lights[index].enabled = enable != 0;
+	dirty_groups |= GROUP_LIGHTS;
 	return S_OK;
 }
 
@@ -551,33 +579,55 @@ static void transform_point(const D3DMATRIX *m, const D3DVECTOR *v, float w, flo
 	out[3] = 0.0f;
 }
 
-BOOL d3d8_ff_uniforms(const D3DMATRIX *transforms, float uniforms[D3D8_FF_UNIFORM_COUNT][4])
+/* rows of ff[] per group */
+#define WORLD_VIEW_ROWS 4 /* and D3D8_FF_NORMAL's 4 */
+#define PROJECTION_ROWS 4
+#define TEXTURE_ROWS (4 * D3DTSS_MAXSTAGES)
+#define MATERIAL_ROWS (D3D8_FF_AMBIENT - D3D8_FF_MATERIAL)
+#define LIGHT_ROWS (D3D8_FF_UNIFORM_COUNT - D3D8_FF_LIGHTS)
+
+/* fills the groups' rows of uniforms (and only those) from the current
+state; rows of a group that nothing fills are zero */
+static void compute_groups(const D3DMATRIX *transforms, unsigned long groups, DWORD ambient,
+	float uniforms[D3D8_FF_UNIFORM_COUNT][4])
 {
-	static float last[D3D8_FF_UNIFORM_COUNT][4];
-	static BOOL have_last;
 	const D3DMATRIX *view = &transforms[D3DTS_VIEW];
-	D3DMATRIX world_view;
 	unsigned long indices[D3D8_FF_MAX_LIGHTS], count, index;
-	DWORD ambient = D3D__RenderState[D3DRS_AMBIENT];
 	int stage;
 
-	memset(uniforms, 0, sizeof(float) * 4 * D3D8_FF_UNIFORM_COUNT);
-	matrix_multiply(&transforms[D3DTS_WORLD], view, &world_view);
-	memcpy(uniforms[D3D8_FF_WORLDVIEW], &world_view._11, 16 * sizeof(float));
-	memcpy(uniforms[D3D8_FF_PROJECTION], &transforms[D3DTS_PROJECTION]._11, 16 * sizeof(float));
-	normal_matrix(&world_view, &uniforms[D3D8_FF_NORMAL]);
-	for (stage = 0; stage < D3DTSS_MAXSTAGES; stage++)
-		memcpy(uniforms[D3D8_FF_TEXTURE + stage * 4], &transforms[D3DTS_TEXTURE0 + stage]._11, 16 * sizeof(float));
-	color_value(&material.Diffuse, uniforms[D3D8_FF_MATERIAL + 0]);
-	color_value(&material.Ambient, uniforms[D3D8_FF_MATERIAL + 1]);
-	color_value(&material.Specular, uniforms[D3D8_FF_MATERIAL + 2]);
-	color_value(&material.Emissive, uniforms[D3D8_FF_MATERIAL + 3]);
-	uniforms[D3D8_FF_MATERIAL + 4][0] = material.Power;
+	if (groups & GROUP_WORLD_VIEW)
+	{
+		D3DMATRIX world_view;
+
+		memset(uniforms[D3D8_FF_NORMAL], 0, 4 * 4 * sizeof(float));
+		matrix_multiply(&transforms[D3DTS_WORLD], view, &world_view);
+		memcpy(uniforms[D3D8_FF_WORLDVIEW], &world_view._11, 16 * sizeof(float));
+		normal_matrix(&world_view, &uniforms[D3D8_FF_NORMAL]);
+	}
+	if (groups & GROUP_PROJECTION)
+		memcpy(uniforms[D3D8_FF_PROJECTION], &transforms[D3DTS_PROJECTION]._11, 16 * sizeof(float));
+	if (groups & GROUP_TEXTURE)
+	{
+		for (stage = 0; stage < D3DTSS_MAXSTAGES; stage++)
+			memcpy(uniforms[D3D8_FF_TEXTURE + stage * 4], &transforms[D3DTS_TEXTURE0 + stage]._11, 16 * sizeof(float));
+	}
+	if (groups & GROUP_MATERIAL)
+	{
+		memset(uniforms[D3D8_FF_MATERIAL], 0, MATERIAL_ROWS * 4 * sizeof(float));
+		color_value(&material.Diffuse, uniforms[D3D8_FF_MATERIAL + 0]);
+		color_value(&material.Ambient, uniforms[D3D8_FF_MATERIAL + 1]);
+		color_value(&material.Specular, uniforms[D3D8_FF_MATERIAL + 2]);
+		color_value(&material.Emissive, uniforms[D3D8_FF_MATERIAL + 3]);
+		uniforms[D3D8_FF_MATERIAL + 4][0] = material.Power;
+	}
+	/* (the ambient row is compared by its render state: d3d8_ff_uniforms) */
 	uniforms[D3D8_FF_AMBIENT][0] = (float)((ambient >> 16) & 0xff) / 255.0f;
 	uniforms[D3D8_FF_AMBIENT][1] = (float)((ambient >> 8) & 0xff) / 255.0f;
 	uniforms[D3D8_FF_AMBIENT][2] = (float)(ambient & 0xff) / 255.0f;
 	uniforms[D3D8_FF_AMBIENT][3] = (float)((ambient >> 24) & 0xff) / 255.0f;
-
+	if (!(groups & GROUP_LIGHTS))
+		return;
+	memset(uniforms[D3D8_FF_LIGHTS], 0, LIGHT_ROWS * 4 * sizeof(float));
 	count = active_lights(indices);
 	for (index = 0; index < count; index++)
 	{
@@ -605,11 +655,61 @@ BOOL d3d8_ff_uniforms(const D3DMATRIX *transforms, float uniforms[D3D8_FF_UNIFOR
 		u[6][1] = cosf(light->Theta * 0.5f);
 		u[6][2] = cosf(light->Phi * 0.5f);
 	}
-	if (have_last && !memcmp(last, uniforms, sizeof(last)))
+}
+
+/* copies rows first..first+count-1 of fresh into uniforms; TRUE if they differed */
+static BOOL update_rows(float uniforms[D3D8_FF_UNIFORM_COUNT][4], const float fresh[D3D8_FF_UNIFORM_COUNT][4],
+	int first, int count)
+{
+	size_t bytes = (size_t)count * 4 * sizeof(float);
+
+	if (!memcmp(uniforms[first], fresh[first], bytes))
 		return FALSE;
-	memcpy(last, uniforms, sizeof(last));
-	have_last = TRUE;
+	memcpy(uniforms[first], fresh[first], bytes);
 	return TRUE;
+}
+
+BOOL d3d8_ff_uniforms(const D3DMATRIX *transforms, float uniforms[D3D8_FF_UNIFORM_COUNT][4])
+{
+	/* (another array than last time: all of it is computed) */
+	static const void *last_array;
+	static DWORD last_ambient;
+	float fresh[D3D8_FF_UNIFORM_COUNT][4];
+	DWORD ambient = D3D__RenderState[D3DRS_AMBIENT];
+	BOOL have_last = last_array == (const void *)uniforms;
+	unsigned long groups = have_last ? dirty_groups : GROUP_ALL;
+	BOOL changed = !have_last;
+
+	if (!groups && ambient == last_ambient)
+		return FALSE;
+	compute_groups(transforms, groups, ambient, fresh);
+	if (!have_last || ambient != last_ambient)
+		changed |= update_rows(uniforms, fresh, D3D8_FF_AMBIENT, 1);
+	if (groups & GROUP_WORLD_VIEW)
+	{
+		changed |= update_rows(uniforms, fresh, D3D8_FF_WORLDVIEW, WORLD_VIEW_ROWS);
+		changed |= update_rows(uniforms, fresh, D3D8_FF_NORMAL, 4);
+	}
+	if (groups & GROUP_PROJECTION)
+		changed |= update_rows(uniforms, fresh, D3D8_FF_PROJECTION, PROJECTION_ROWS);
+	if (groups & GROUP_TEXTURE)
+		changed |= update_rows(uniforms, fresh, D3D8_FF_TEXTURE, TEXTURE_ROWS);
+	if (groups & GROUP_MATERIAL)
+		changed |= update_rows(uniforms, fresh, D3D8_FF_MATERIAL, MATERIAL_ROWS);
+	if (groups & GROUP_LIGHTS)
+		changed |= update_rows(uniforms, fresh, D3D8_FF_LIGHTS, LIGHT_ROWS);
+	dirty_groups = 0;
+	last_ambient = ambient;
+	last_array = uniforms;
+	return changed;
+}
+
+BOOL d3d8_ff_uniforms_check(const D3DMATRIX *transforms, const float uniforms[D3D8_FF_UNIFORM_COUNT][4])
+{
+	float full[D3D8_FF_UNIFORM_COUNT][4];
+
+	compute_groups(transforms, GROUP_ALL, D3D__RenderState[D3DRS_AMBIENT], full);
+	return !memcmp(full, uniforms, sizeof(full));
 }
 
 /* ---------- texture stages as register combiners */

@@ -86,9 +86,20 @@ char *d3d8_ff_vertex_glsl(const struct d3d8_ff_vertex_key *key);
 #define D3D8_FF_AMBIENT 33
 #define D3D8_FF_LIGHTS 34
 
-/* fills ff[] from the transforms (D3DTS_MAX of them) and the light and
-material state; returns TRUE if anything differs from the last call */
+/* brings ff[] up to date with the transforms (D3DTS_MAX of them) and the
+light and material state; returns TRUE if anything differs from the last
+call. uniforms keeps the values between calls: only the groups whose
+inputs changed (d3d8_ff_transform_changed, SetMaterial, SetLight,
+LightEnable, D3DRS_AMBIENT) are computed and compared again (all of them
+when the array is not the one of the last call) */
 BOOL d3d8_ff_uniforms(const D3DMATRIX *transforms, float uniforms[D3D8_FF_UNIFORM_COUNT][4]);
+
+/* D3DDevice_SetTransform calls this for each transform it sets */
+void d3d8_ff_transform_changed(DWORD state);
+
+/* debug.draw_cache_check: TRUE if uniforms equal ff[] computed whole from
+the current state */
+BOOL d3d8_ff_uniforms_check(const D3DMATRIX *transforms, const float uniforms[D3D8_FF_UNIFORM_COUNT][4]);
 
 /* ---------- pixel processing */
 

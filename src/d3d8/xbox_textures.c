@@ -848,15 +848,27 @@ static unsigned long bucket_index(DWORD data, DWORD format_word, DWORD size_word
 }
 
 /* palettized textures are cached per palette contents: the game rewrites
-palettes freely, and often cycles a texture through a few of them */
+palettes freely, and often cycles a texture through a few of them. (Hashed
+for every draw that binds one: eight independent lanes, not one chain of
+256 dependent multiplies, which was most of a MouseWhack frame's lookups.) */
+#define PALETTE_HASH_LANES 8
+
 static unsigned long palette_hash(const D3DCOLOR *palette)
 {
-	unsigned long hash = 2166136261UL, index;
+	unsigned long lanes[PALETTE_HASH_LANES], hash = 2166136261UL;
+	int index, lane;
 
 	if (!palette)
 		return 0;
-	for (index = 0; index < 256; index++)
-		hash = (hash ^ palette[index]) * 16777619UL;
+	for (lane = 0; lane < PALETTE_HASH_LANES; lane++)
+		lanes[lane] = 2166136261UL + (unsigned long)lane;
+	for (index = 0; index < 256; index += PALETTE_HASH_LANES)
+	{
+		for (lane = 0; lane < PALETTE_HASH_LANES; lane++)
+			lanes[lane] = (lanes[lane] ^ palette[index + lane]) * 16777619UL;
+	}
+	for (lane = 0; lane < PALETTE_HASH_LANES; lane++)
+		hash = (hash ^ lanes[lane]) * 16777619UL;
 	return hash ? hash : 1;
 }
 

@@ -769,6 +769,101 @@ the virtual pad's Rumble callback itself and logs each request. New log switch
   ProMotion display at 120 Hz was not set to 60 Hz; frame dumps were off, so the 52 fps of the
   earlier run with dumps every 600 frames was not run again; nobody looked at the motion.
 
+## Draw overhead (integration round 6, fix-d3d8-draw-overhead)
+
+Follow-up to "Left (not fixed)" in the frame pacing section above. Changes in `src/d3d8`:
+
+- Fixed-function uniforms (d3d8_ff.c): a dirty flag for each group of `ff[]` (world-view and
+  normal matrix, projection, texture matrices, material, lights). `D3DDevice_SetTransform`
+  (through `d3d8_ff_transform_changed`), `SetMaterial`, `SetLight` and `LightEnable` set
+  them; a view change also sets the lights (they are in camera space). `d3d8_ff_uniforms`
+  computes and compares only the dirty groups, plus the ambient row when `D3DRS_AMBIENT`
+  changed. Before, each FVF draw computed all 90 rows and compared 1440 bytes.
+- Palettized textures (xbox_textures.c, `palette_hash`): each draw that binds one hashed its
+  256-entry palette as one chain of 256 dependent multiplies (most of `xgpu_texture_get`).
+  Now 8 independent lanes (the compiler makes them NEON). Only the cache key changes.
+- Vertex streams (d3d8_gl.c, `setup_streams`): a `DrawVertices` draw (not a quad list) with
+  one stream that is streamed puts its vertices at a multiple of the stride in the stream
+  buffer, and gives that vertex as `first` to `glDrawArrays`. The attribute pointers stay the
+  same from draw to draw. Before, each draw changed the attribute offset; ANGLE then built
+  the vertex descriptor again, set the vertex buffers and looked up the Metal pipeline by
+  hash. Indexed draws, quad lists and draws with more than one stream (or a mirrored stream)
+  are as before.
+- `D3DDevice_Clear` sets its color, depth and stencil masks and the scissor through the GL
+  state cache, and no longer calls `xgpu_gl_state_invalidate`. In MouseWhack this is 5
+  clears a frame, so 5 fewer cache invalidations a frame. The GPU stats line
+  (`OPENFRENZY_DEBUG_GPU_STATS=true`) now also gives `state invalidations` a frame: 2-3 after
+  (the "before" build has no counter).
+- New check mode `OPENFRENZY_DEBUG_DRAW_CACHE_CHECK=true` (docs/BUILD.md). New unit test
+  `test_ff_uniforms` in src/d3d8/tests/d3d8_test.c (15 checks; it fails when an entry point
+  does not set its dirty flag).
+
+Step 3 of the task (a cheaper path for the glClear after a render-target change): no change
+was necessary. The glClear time was not the clear. At the first GL call after
+`glBindFramebuffer`, ANGLE ends the previous render pass and only then encodes its recorded
+draws into Metal (`RenderCommandEncoder::encodeMetalEncoder`: `drawPrimitives`,
+`setVertexBuffer`, `setRenderPipelineState`). The clear only shows where this deferred work
+runs. When the draws change less state, this time falls with them (884 to 160 samples below).
+The shadow projectors still need their own render targets.
+
+Measurements: MacBook Pro M3 Max, window, outside the sandbox, videos skipped, drawn at
+2560x1920, before = HEAD 4498a8c, after = the same tree plus these changes (built in a separate
+worktree, so other agents' uncommitted work is in neither). Scripts:
+`build-fix-d3d8-draw-overhead/run/perf.sh`, `summary.sh`, `dumps.sh`, `cmpdumps.py`. Other
+agents' game processes ran on the same Mac during the runs (one at about 70 % of a core);
+before and after ran directly one after the other.
+
+| Board path, 300 s (`input_mv.txt`) | Frames (after the first window) | Average fps | Lowest 10 s window | Frames over 20 ms | Worst frame | GL draw time a frame, frames with > 5000 draws |
+|---|---|---|---|---|---|---|
+| before | 16714 | 59.7 | 56.5 fps | 48 | 337 ms | 4.69 ms |
+| after | 16811 | 60.0 | 59.6 fps | 53 | 114 ms | 2.11 ms |
+
+The 10 s windows before: 56.8 60.0 60.0 60.0 59.8 60.0 59.9 59.8 60.0 60.0 58.1 58.1 60.0 58.2 ...
+56.5 59.5 ...; after: every window 60.0 except the first (57.3, title load), 59.6 and 59.9. The
+frames over 20 ms and the worst frames are scene loads (as in round 5); they did not change.
+
+Main thread, `sample <pid> 10` at 70 s (MouseWhack on the board path), symbolized with
+`symsample.py` (inclusive samples of about 7500):
+
+| Function | before | after |
+|---|---|---|
+| CGameMode_MouseWhack_Draw (the frame's work) | 6895 | 3709 |
+| D3DDevice_Present (mostly the wait for the vertical blank: idle) | 458 | 3738 |
+| GL_DrawArrays (ANGLE draw calls) | 2392 | 947 |
+| of these: PipelineCache::getRenderPipeline | 578 | 2 |
+| of these: VertexArrayMtl::setupDraw | 615 | 311 |
+| guest_glVertexAttribPointer | 261 | 0 |
+| guest_glClear (ends of render passes) | 884 | 160 |
+| prepare_draw | 2081 | 1042 |
+| memcmp | 642 | 390 |
+| xgpu_texture_get | 610 | 69 |
+| d3d8_ff_uniforms | 269 | 9 |
+
+So MouseWhack's frame work went from about 93 % to about 49 % of the main thread. MouseWhack
+direct launch (`OPENFRENZY_GAME=MouseWhack`, 70 s): 60 fps both, GL draw time 4.84 to 2.14 ms
+a frame (about 9000 draws a frame).
+
+Correctness:
+- Check mode, 0 mismatches: board path 150 s with all three changes (menus, character
+  select, Map, MouseWhack; about 56 million draws checked), and MouseWhack direct 40 s with the
+  final build (the unit test and a small change to how d3d8_ff_uniforms detects a new array
+  came after the board check).
+- d3d8 tests (`src/d3d8/tests/run_tests.sh`, headless and `--window`): 138 checks, 0 failed.
+  ctest 6/6 on 4498a8c; on master 05333b6 with these changes, ctest 19/19 (the 13 gameplay
+  tests too: board to the first minigame and the 12 direct launches, headless).
+- Frame dumps (title, board path to MouseWhack, MouseWhack and TankedUp direct; 640x480,
+  `OPENFRENZY_DISPLAY_RESOLUTION_SCALING=original`): byte-for-byte equality between runs is
+  not possible. Two runs of the same "before" binary already differ in 1-96 % of the pixels
+  after frame 0, because the game runs on real time (animation phase, the CPU characters'
+  random picks, the input times). Frame 0 of every scene is the same before and after. I
+  compared the frames side by side by eye: the same scenes, models, shadows, HUD, text and
+  menus, with no missing or wrong geometry.
+- Not verified: an exact pixel comparison (needs a deterministic time source); slower Macs;
+  indexed draws use the old path, so no gain there; a ProMotion display at 120 Hz.
+- Left: prepare_draw is still about 14 % of the main thread in MouseWhack (the pixel shader key
+  and the draw-uniform inputs are built and compared on each draw), setup_streams about 11 %
+  (the vertex upload into the stream buffer), and memcmp 5 %.
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and

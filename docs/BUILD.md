@@ -160,6 +160,7 @@ Environment:
 | `OPENFRENZY_DEBUG_VIRTUAL_PADS=<n>[,script]` | attach n SDL virtual gamepads and drive them from a timed script (buttons, sticks, triggers, unplug and re-plug); the host logs each rumble request. See "Virtual gamepads" below |
 | `OPENFRENZY_DEBUG_INPUT_LOG=true` | log each new pad state the game reads (`XInputGetState`) and each `XInputSetState` (motor speeds) (`src/input/xinput_sdl.c`) |
 | `OPENFRENZY_DEBUG_SKIP_VIDEOS=true` | skip the Bink videos (boot logos, attract video), as builds without FFmpeg do. Boot reaches the title in a few seconds instead of about 75 s; use it for scripted runs whose presses assume the title at once (`START@6000`) |
+| `OPENFRENZY_DEBUG_DRAW_CACHE_CHECK=true` | each draw compares the renderer's cached GL state with `glGetIntegerv` and its fixed-function uniforms with a full recomputation; logs the first 20 mismatches and, every 600 frames, `draw cache check: N draws checked, U uniform mismatches, S state mismatches`. Slow (many glGet calls a draw); for tests of `src/d3d8` only |
 | `OPENFRENZY_DSOUND_CAPTURE=<path>` | write the final audio output (after the limiter) to a WAV file: 48 kHz, stereo, 16-bit. It works without an audio device too (sandbox). See "Audio capture" below |
 | `SDL_VIDEO_DRIVER=dummy` | no window (tests, sandbox) |
 

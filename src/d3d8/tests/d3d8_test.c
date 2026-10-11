@@ -71,6 +71,88 @@ static void test_fvf(void)
 		elements[2].type == D3DVSDT_FLOAT1 && elements[2].reg == D3DVSDE_TEXCOORD1, "texture coordinate sizes");
 }
 
+/* ---------- 1b. fixed-function uniforms: recomputed only when an entry
+point changed their inputs (a missed change would draw with stale
+matrices, lights or material; a skipped compare would upload them on
+every draw) */
+
+static void load_transforms(D3DMATRIX transforms[D3DTS_MAX])
+{
+	int index;
+
+	for (index = 0; index < D3DTS_MAX; index++)
+		D3DDevice_GetTransform((D3DTRANSFORMSTATETYPE)index, &transforms[index]);
+}
+
+static void test_ff_uniforms(void)
+{
+	static float uniforms[D3D8_FF_UNIFORM_COUNT][4];
+	static float other[D3D8_FF_UNIFORM_COUNT][4];
+	D3DMATRIX transforms[D3DTS_MAX], identity, moved;
+	D3DMATERIAL8 material, saved_material = { { 1.0f, 1.0f, 1.0f, 1.0f } };
+	D3DLIGHT8 light;
+
+	memset(&identity, 0, sizeof(identity));
+	identity._11 = identity._22 = identity._33 = identity._44 = 1.0f;
+	D3DDevice_SetTransform(D3DTS_WORLD, &identity);
+	D3DDevice_SetTransform(D3DTS_VIEW, &identity);
+	load_transforms(transforms);
+	d3d8_ff_uniforms(transforms, uniforms);
+	CHECK(!d3d8_ff_uniforms(transforms, uniforms), "ff uniforms: no change, no update");
+
+	moved = identity;
+	moved._41 = 5.0f;
+	D3DDevice_SetTransform(D3DTS_WORLD, &moved);
+	load_transforms(transforms);
+	CHECK(d3d8_ff_uniforms(transforms, uniforms), "ff uniforms: SetTransform(WORLD) updates them");
+	CHECK(uniforms[D3D8_FF_WORLDVIEW + 3][0] == 5.0f, "ff uniforms: world-view row 3 x = %f, expected 5",
+		uniforms[D3D8_FF_WORLDVIEW + 3][0]);
+	D3DDevice_SetTransform(D3DTS_WORLD, &moved);
+	CHECK(!d3d8_ff_uniforms(transforms, uniforms), "ff uniforms: the same matrix again, no update");
+
+	memset(&material, 0, sizeof(material));
+	material.Diffuse.r = 0.25f;
+	material.Power = 8.0f;
+	D3DDevice_SetMaterial(&material);
+	CHECK(d3d8_ff_uniforms(transforms, uniforms), "ff uniforms: SetMaterial updates them");
+	CHECK(uniforms[D3D8_FF_MATERIAL][0] == 0.25f && uniforms[D3D8_FF_MATERIAL + 4][0] == 8.0f,
+		"ff uniforms: material diffuse %f, power %f", uniforms[D3D8_FF_MATERIAL][0], uniforms[D3D8_FF_MATERIAL + 4][0]);
+
+	memset(&light, 0, sizeof(light));
+	light.Type = D3DLIGHT_DIRECTIONAL;
+	light.Diffuse.g = 0.5f;
+	light.Direction.x = 1.0f;
+	D3DDevice_SetLight(0, &light);
+	D3DDevice_LightEnable(0, TRUE);
+	CHECK(d3d8_ff_uniforms(transforms, uniforms), "ff uniforms: SetLight and LightEnable update them");
+	CHECK(uniforms[D3D8_FF_LIGHTS][1] == 0.5f && uniforms[D3D8_FF_LIGHTS + 4][0] == 1.0f,
+		"ff uniforms: light diffuse g %f, direction x %f", uniforms[D3D8_FF_LIGHTS][1], uniforms[D3D8_FF_LIGHTS + 4][0]);
+
+	/* lights are in camera space: a new view turns their direction */
+	memset(&moved, 0, sizeof(moved));
+	moved._12 = 1.0f;
+	moved._21 = -1.0f;
+	moved._33 = moved._44 = 1.0f;
+	D3DDevice_SetTransform(D3DTS_VIEW, &moved);
+	load_transforms(transforms);
+	CHECK(d3d8_ff_uniforms(transforms, uniforms), "ff uniforms: SetTransform(VIEW) updates them");
+	CHECK(near(uniforms[D3D8_FF_LIGHTS + 4][1], 1.0f, 1e-6f), "ff uniforms: light direction in camera space y %f",
+		uniforms[D3D8_FF_LIGHTS + 4][1]);
+	CHECK(d3d8_ff_uniforms_check(transforms, (const float (*)[4])uniforms), "ff uniforms: equal a full computation");
+
+	D3DDevice_LightEnable(0, FALSE);
+	CHECK(d3d8_ff_uniforms(transforms, uniforms), "ff uniforms: LightEnable(FALSE) updates them");
+	CHECK(uniforms[D3D8_FF_LIGHTS][1] == 0.0f, "ff uniforms: a disabled light's rows are zero");
+
+	/* another array (the device's, for the drawing tests) is filled whole */
+	CHECK(d3d8_ff_uniforms(transforms, other), "ff uniforms: another array is filled");
+	CHECK(!memcmp(other, uniforms, sizeof(other)), "ff uniforms: another array gets every row");
+
+	D3DDevice_SetTransform(D3DTS_WORLD, &identity);
+	D3DDevice_SetTransform(D3DTS_VIEW, &identity);
+	D3DDevice_SetMaterial(&saved_material);
+}
+
 /* ---------- 2. CPU model of the NV2A register combiners (nv2a_psh.c) */
 
 struct combiner_inputs
@@ -1134,6 +1216,7 @@ int main(void)
 	setvbuf(stdout, NULL, _IONBF, 0);
 	printf("d3d8_test: started\n");
 	test_fvf();
+	test_ff_uniforms();
 	test_combiners();
 	test_assembler();
 	test_texture_header();

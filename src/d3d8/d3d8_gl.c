@@ -651,6 +651,8 @@ static struct
 	unsigned long draws, immediate_draws, clears, presents;
 	unsigned long skipped_no_program, skipped_no_target, skipped_link;
 	unsigned long target_changes;
+	/* xgpu_gl_state_invalidate calls (each makes the next draw set all state) */
+	unsigned long invalidations;
 	/* vertex and index bytes drawn from the mirror, and streamed */
 	unsigned long mirrored_bytes, streamed_bytes;
 } stats;
@@ -693,6 +695,9 @@ static struct
 	const char *skip_vertex_shaders;
 	const char *dump_shaders;
 	BOOL statistics;
+	/* debug.draw_cache_check: each draw compares the cached state and
+	uniforms with what GL and a full recomputation give (cache_check) */
+	BOOL draw_cache_check;
 } debug_settings;
 
 /* ---------- GL state cache
@@ -806,6 +811,7 @@ static struct
 
 void xgpu_gl_state_invalidate(void)
 {
+	stats.invalidations++;
 	memset(&gl_state, 0xff, sizeof(gl_state));
 }
 
@@ -1692,6 +1698,7 @@ static void gl_initialize(void)
 	debug_settings.dump_shaders = *config_string("debug.gpu_dump_shaders") ?
 		config_string("debug.gpu_dump_shaders") : NULL;
 	debug_settings.statistics = config_boolean("debug.gpu_stats");
+	debug_settings.draw_cache_check = config_boolean("debug.draw_cache_check");
 	{
 		GLint renderbuffer_size = 0;
 
@@ -2156,7 +2163,10 @@ void WINAPI D3DDevice_SetViewport(CONST D3DVIEWPORT8 *viewport)
 void WINAPI D3DDevice_SetTransform(D3DTRANSFORMSTATETYPE state, CONST D3DMATRIX *matrix)
 {
 	if ((unsigned long)state < D3DTS_MAX)
+	{
 		device.transforms[state] = *matrix;
+		d3d8_ff_transform_changed((DWORD)state);
+	}
 }
 
 void WINAPI D3DDevice_GetTransform(D3DTRANSFORMSTATETYPE state, D3DMATRIX *matrix)
@@ -3835,6 +3845,124 @@ static unsigned long model_light_register(int light)
 	return (unsigned long)(XGPU_VERTEX_CONSTANT_BIAS + (light ? -80 + light : -82));
 }
 
+/* debug.draw_cache_check: the cached GL state against GL's own (glGet),
+and the fixed-function uniforms against a full recomputation. Values the
+cache does not know (all ones) are not compared. */
+static struct
+{
+	unsigned long draws, uniform_mismatches, state_mismatches;
+} cache_check_counts;
+
+static void cache_check_mismatch(const char *name, long cached, long actual)
+{
+	if (cache_check_counts.state_mismatches++ < 20)
+		platform_log("draw cache check: %s cached %ld, GL %ld (frame %lu)", name, cached, actual, device.frame);
+}
+
+/* count values of query against cached (unknown, all ones: not compared) */
+static void cache_check_integers(const char *name, GLenum query, const GLint *cached, int count)
+{
+	GLint actual[4] = { 0 };
+	int index;
+
+	if (cached[0] == -1)
+		return;
+	glGetIntegerv(query, actual);
+	for (index = 0; index < count; index++)
+	{
+		if (actual[index] != cached[index])
+		{
+			cache_check_mismatch(name, cached[index], actual[index]);
+			return;
+		}
+	}
+}
+
+static void cache_check_integer(const char *name, GLenum query, GLuint cached)
+{
+	GLint value = (GLint)cached;
+
+	cache_check_integers(name, query, &value, 1);
+}
+
+static void cache_check_enable(const char *name, GLenum capability, unsigned char cached)
+{
+	GLint value = 0;
+	unsigned char actual;
+
+	glGetIntegerv(capability, &value);
+	actual = value ? 1 : 0;
+	if (cached != 0xff && cached != actual)
+		cache_check_mismatch(name, cached, actual);
+}
+
+static void cache_check(BOOL fixed_function)
+{
+	int unit;
+
+	cache_check_counts.draws++;
+	if (fixed_function && !d3d8_ff_uniforms_check(device.transforms, (const float (*)[4])ff_uniforms) &&
+		cache_check_counts.uniform_mismatches++ < 20)
+	{
+		platform_log("draw cache check: fixed-function uniforms differ from the state (frame %lu)", device.frame);
+	}
+	cache_check_integer("program", GL_CURRENT_PROGRAM, gl_state.program);
+	cache_check_integer("framebuffer", GL_DRAW_FRAMEBUFFER_BINDING, gl_state.framebuffer);
+	cache_check_integers("viewport", GL_VIEWPORT, gl_state.viewport, 4);
+	cache_check_integers("scissor", GL_SCISSOR_BOX, gl_state.scissor, 4);
+	cache_check_enable("scissor test", GL_SCISSOR_TEST, gl_state.scissor_test);
+	cache_check_enable("depth test", GL_DEPTH_TEST, gl_state.depth_test);
+	cache_check_enable("stencil test", GL_STENCIL_TEST, gl_state.stencil_test);
+	cache_check_enable("blend", GL_BLEND, gl_state.blend);
+	cache_check_enable("cull face", GL_CULL_FACE, gl_state.cull_face);
+	if (gl_state.depth_test == 1)
+		cache_check_integer("depth function", GL_DEPTH_FUNC, gl_state.depth_function);
+	if (gl_state.depth_mask != 0xff)
+	{
+		GLint mask = 0;
+
+		glGetIntegerv(GL_DEPTH_WRITEMASK, &mask);
+		if ((mask ? 1 : 0) != gl_state.depth_mask)
+			cache_check_mismatch("depth mask", gl_state.depth_mask, mask ? 1 : 0);
+	}
+	if (gl_state.color_mask != 0xff)
+	{
+		GLint mask[4] = { 0, 0, 0, 0 };
+		int actual;
+
+		glGetIntegerv(GL_COLOR_WRITEMASK, mask);
+		actual = (mask[0] ? 1 : 0) | (mask[1] ? 2 : 0) | (mask[2] ? 4 : 0) | (mask[3] ? 8 : 0);
+		if (actual != gl_state.color_mask)
+			cache_check_mismatch("color mask", gl_state.color_mask, actual);
+	}
+	if (gl_state.stencil_test == 1)
+		cache_check_integer("stencil write mask", GL_STENCIL_WRITEMASK, gl_state.stencil_write_mask);
+	if (gl_state.blend == 1)
+	{
+		cache_check_integer("blend source", GL_BLEND_SRC_RGB, gl_state.blend_source);
+		cache_check_integer("blend destination", GL_BLEND_DST_RGB, gl_state.blend_destination);
+		cache_check_integer("blend equation", GL_BLEND_EQUATION_RGB, gl_state.blend_equation);
+	}
+	if (gl_state.cull_face == 1)
+	{
+		cache_check_integer("cull mode", GL_CULL_FACE_MODE, gl_state.cull_mode);
+		cache_check_integer("front face", GL_FRONT_FACE, gl_state.front_face);
+	}
+	cache_check_integer("array buffer", GL_ARRAY_BUFFER_BINDING, gl_state.array_buffer);
+	if (gl_state.active_texture != (GLenum)-1)
+	{
+		for (unit = 0; unit < D3DTSS_MAXSTAGES; unit++)
+		{
+			glActiveTexture(GL_TEXTURE0 + (GLenum)unit);
+			cache_check_integer("texture 2d", GL_TEXTURE_BINDING_2D, gl_state.textures[unit][0]);
+			cache_check_integer("texture cube", GL_TEXTURE_BINDING_CUBE_MAP, gl_state.textures[unit][1]);
+			cache_check_integer("texture 3d", GL_TEXTURE_BINDING_3D, gl_state.textures[unit][2]);
+			cache_check_integer("sampler", GL_SAMPLER_BINDING, gl_state.samplers[unit]);
+		}
+		glActiveTexture(gl_state.active_texture);
+	}
+}
+
 static struct program_entry *prepare_draw(BOOL immediate)
 {
 	struct vertex_shader_object *program = current_program();
@@ -4122,6 +4250,8 @@ static struct program_entry *prepare_draw(BOOL immediate)
 		}
 	}
 	/* and a program that has had them since needs none of them */
+	if (debug_settings.draw_cache_check)
+		cache_check(program->fvf != 0);
 	if (entry->uniforms_serial == draw_uniforms_serial)
 		return entry;
 	entry->uniforms_serial = draw_uniforms_serial;
@@ -4707,7 +4837,15 @@ static const unsigned char *stream_memory(unsigned long stream)
 	return PLATFORM_PHYSICAL_TO_VIRTUAL(device.streams[stream].data);
 }
 
-static void setup_streams(unsigned long first, unsigned long count)
+/* returns the vertex the draw starts at: 0, or with base_allowed (a draw
+that can start at any vertex, glDrawArrays' first) and one stream that is
+streamed, the stream's vertex in the stream buffer. Its vertices then go at
+a multiple of its stride and the attributes keep pointing at the buffer's
+start, so that consecutive draws leave the attributes as they are: ANGLE
+describes the vertex layout and looks up the pipeline again whenever an
+attribute changes (most of its time for each draw in MouseWhack's ~9000
+draws a frame). */
+static unsigned long setup_streams(unsigned long first, unsigned long count, BOOL base_allowed)
 {
 	struct vertex_shader_object *declaration = device.vertex_shader;
 	GLuint stream_buffers[16];
@@ -4715,6 +4853,8 @@ static void setup_streams(unsigned long first, unsigned long count)
 	BOOL placed[16] = { FALSE };
 	BOOL enabled[XGPU_VERTEX_ATTRIBUTE_COUNT] = { FALSE };
 	unsigned long index, total = 0;
+	unsigned long placed_count = 0, base_vertex = 0;
+	long based_stream = -1;
 #ifndef HALO_GLES
 	struct vertex_layout layout;
 	unsigned long streams_used = 0;
@@ -4735,6 +4875,7 @@ static void setup_streams(unsigned long first, unsigned long count)
 		if (!device.streams[stream].data || element->type == D3DVSDT_NONE || placed[stream])
 			continue;
 		placed[stream] = TRUE;
+		placed_count++;
 		stream_buffers[stream] = 0;
 		base = (unsigned long)stream_memory(stream) + first * stride;
 #ifdef HALO_GLES
@@ -4745,8 +4886,24 @@ static void setup_streams(unsigned long first, unsigned long count)
 			continue;
 		stream_buffers[stream] = 0;
 		total += (bytes + 15) & ~15UL;
+#ifdef HALO_GLES
+		if (base_allowed && stride && !(stride & 3))
+			based_stream = (long)stream;
+#endif
 	}
-	stream_reserve(total);
+	if (placed_count != 1)
+		based_stream = -1;
+	if (based_stream >= 0)
+	{
+		unsigned long stride = device.streams[based_stream].stride;
+
+		/* (the room for the padding too, so that the upload cannot orphan
+		the buffer after it) */
+		stream_reserve(total + stride);
+		device.stream_offset += (stride - device.stream_offset % stride) % stride;
+	}
+	else
+		stream_reserve(total);
 	for (index = 0; index < declaration->element_count; index++)
 	{
 		const struct vertex_element *element = &declaration->elements[index];
@@ -4770,6 +4927,11 @@ static void setup_streams(unsigned long first, unsigned long count)
 #endif
 			stream_buffers[stream] = device.stream_buffer;
 			stats.streamed_bytes += bytes;
+			if ((long)stream == based_stream)
+			{
+				base_vertex = stream_offsets[stream] / stride;
+				stream_offsets[stream] = 0;
+			}
 		}
 #ifdef HALO_GLES
 		if (element->type == D3DVSDT_NORMPACKED3)
@@ -4818,6 +4980,7 @@ static void setup_streams(unsigned long first, unsigned long count)
 		if (!enabled[index])
 			state_attribute_value(index, declaration->packed_mask & (1UL << index) ? NULL : device.attributes[index]);
 	}
+	return base_vertex;
 }
 
 static GLenum primitive_mode(D3DPRIMITIVETYPE type)
@@ -4877,10 +5040,12 @@ void WINAPI D3DDevice_SetIndices(D3DIndexBuffer *index_data, UINT base_vertex_in
 
 void WINAPI D3DDevice_DrawVertices(D3DPRIMITIVETYPE primitive_type, UINT start_vertex, UINT vertex_count)
 {
+	unsigned long base;
+
 	if (!vertex_count || !prepare_draw(FALSE))
 		return;
 	trace_draw("draw", primitive_type, vertex_count, NULL);
-	setup_streams(start_vertex, vertex_count);
+	base = setup_streams(start_vertex, vertex_count, primitive_type != D3DPT_QUADLIST);
 	if (primitive_type == D3DPT_QUADLIST)
 	{
 		unsigned long count;
@@ -4892,7 +5057,7 @@ void WINAPI D3DDevice_DrawVertices(D3DPRIMITIVETYPE primitive_type, UINT start_v
 	}
 	else
 	{
-		glDrawArrays(primitive_mode(primitive_type), 0, (GLsizei)vertex_count);
+		glDrawArrays(primitive_mode(primitive_type), (GLint)base, (GLsizei)vertex_count);
 	}
 	gl_check_errors("draw");
 }
@@ -4938,7 +5103,7 @@ void WINAPI D3DDevice_DrawIndexedVertices(D3DPRIMITIVETYPE primitive_type, UINT 
 	index_extent(index_data, vertex_count, generation, mirrored, &minimum, &maximum);
 	trace_draw("indexed", primitive_type, vertex_count, NULL);
 	/* (the streams from the base vertex on: index i is vertex base + i) */
-	setup_streams(device.base_vertex_index + minimum, maximum - minimum + 1);
+	setup_streams(device.base_vertex_index + minimum, maximum - minimum + 1, FALSE);
 	if (mirrored)
 	{
 		/* the attributes start at vertex minimum */
@@ -5104,6 +5269,23 @@ void WINAPI D3DDevice_SetVertexDataColor(INT reg, D3DCOLOR color)
 
 /* ---------- clearing */
 
+/* the clear's scissor rectangle, through the state cache */
+static void clear_scissor(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+	if (gl_state.scissor[0] != x || gl_state.scissor[1] != y || gl_state.scissor[2] != width ||
+		gl_state.scissor[3] != height)
+	{
+		gl_state.scissor[0] = x;
+		gl_state.scissor[1] = y;
+		gl_state.scissor[2] = width;
+		gl_state.scissor[3] = height;
+		glScissor(x, y, width, height);
+	}
+}
+
+/* (the masks and the scissor go through the state cache, which keeps the
+rest of the cached state valid for the draws after the clear: render
+targets are cleared many times a frame, the player shadows' for each player) */
 void WINAPI D3DDevice_Clear(DWORD count, CONST D3DRECT *rectangles, DWORD flags, D3DCOLOR color, float z, DWORD stencil)
 {
 	float rgba[4];
@@ -5124,25 +5306,41 @@ void WINAPI D3DDevice_Clear(DWORD count, CONST D3DRECT *rectangles, DWORD flags,
 	{
 		/* the Xbox clears the channels named (D3DCLEAR_TARGET_R, _G, _B, _A):
 		the fog screen clears only alpha, leaving the picture under the fog */
-		glColorMask((flags & D3DCLEAR_TARGET_R) != 0, (flags & D3DCLEAR_TARGET_G) != 0,
-			(flags & D3DCLEAR_TARGET_B) != 0, (flags & D3DCLEAR_TARGET_A) != 0);
+		unsigned char color_mask = (unsigned char)(((flags & D3DCLEAR_TARGET_R) ? 1 : 0) |
+			((flags & D3DCLEAR_TARGET_G) ? 2 : 0) | ((flags & D3DCLEAR_TARGET_B) ? 4 : 0) |
+			((flags & D3DCLEAR_TARGET_A) ? 8 : 0));
+
+		if (gl_state.color_mask != color_mask)
+		{
+			gl_state.color_mask = color_mask;
+			glColorMask((color_mask & 1) != 0, (color_mask & 2) != 0, (color_mask & 4) != 0, (color_mask & 8) != 0);
+		}
 		glClearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
 		mask |= GL_COLOR_BUFFER_BIT;
 	}
 	if (has_depth && (flags & D3DCLEAR_ZBUFFER))
 	{
-		glDepthMask(GL_TRUE);
+		if (gl_state.depth_mask != 1)
+		{
+			gl_state.depth_mask = 1;
+			glDepthMask(GL_TRUE);
+		}
 		glClearDepth(z);
 		mask |= GL_DEPTH_BUFFER_BIT;
 	}
 	if (has_depth && (flags & D3DCLEAR_STENCIL))
 	{
-		glStencilMask(0xff);
+		if (gl_state.stencil_write_mask != 0xff)
+		{
+			gl_state.stencil_write_mask = 0xff;
+			glStencilMask(0xff);
+		}
 		glClearStencil((GLint)stencil);
 		mask |= GL_STENCIL_BUFFER_BIT;
 	}
 	if (!mask)
 		return;
+	state_enable(&gl_state.scissor_test, GL_SCISSOR_TEST, TRUE);
 	if (!count || !rectangles)
 	{
 		/* the NV2A clips a viewport-less clear to the viewport, which is what
@@ -5150,15 +5348,11 @@ void WINAPI D3DDevice_Clear(DWORD count, CONST D3DRECT *rectangles, DWORD flags,
 		GLint x0 = target_pixel((float)device.viewport.X, 0);
 		GLint y0 = target_pixel((float)device.viewport.Y, 1);
 
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(x0, y0, target_pixel((float)(device.viewport.X + device.viewport.Width), 0) - x0,
+		clear_scissor(x0, y0, target_pixel((float)(device.viewport.X + device.viewport.Width), 0) - x0,
 			target_pixel((float)(device.viewport.Y + device.viewport.Height), 1) - y0);
 		glClear(mask);
-		glDisable(GL_SCISSOR_TEST);
-		xgpu_gl_state_invalidate();
 		return;
 	}
-	glEnable(GL_SCISSOR_TEST);
 	for (index = 0; index < count; index++)
 	{
 		INT left = rectangles[index].x1 > device.viewport.X ? rectangles[index].x1 : device.viewport.X;
@@ -5173,12 +5367,9 @@ void WINAPI D3DDevice_Clear(DWORD count, CONST D3DRECT *rectangles, DWORD flags,
 			continue;
 		x0 = target_pixel((float)(left + UI_OFFSET), 0);
 		y0 = target_pixel((float)top, 1);
-		glScissor(x0, y0, target_pixel((float)(right + UI_OFFSET), 0) - x0,
-			target_pixel((float)bottom, 1) - y0);
+		clear_scissor(x0, y0, target_pixel((float)(right + UI_OFFSET), 0) - x0, target_pixel((float)bottom, 1) - y0);
 		glClear(mask);
 	}
-	glDisable(GL_SCISSOR_TEST);
-	xgpu_gl_state_invalidate();
 }
 
 /* ---------- the anti-aliasing passes */
@@ -5497,13 +5688,16 @@ void WINAPI D3DDevice_Present(CONST RECT *source_rectangle, CONST RECT *destinat
 	stats.presents++;
 	if (debug_settings.statistics && device.frame % 60 == 0)
 	{
-		platform_log("frame %lu: %lu draws, %lu immediate, %lu clears, %lu target changes; skipped %lu no program, %lu no target, %lu link; "
+		platform_log("frame %lu: %lu draws, %lu immediate, %lu clears, %lu target changes, %lu state invalidations; skipped %lu no program, %lu no target, %lu link; "
 			"%lu KB mirrored, %lu KB streamed",
 			device.frame, stats.draws / stats.presents, stats.immediate_draws / stats.presents, stats.clears / stats.presents,
-			stats.target_changes / stats.presents, stats.skipped_no_program, stats.skipped_no_target, stats.skipped_link,
+			stats.target_changes / stats.presents, stats.invalidations / stats.presents, stats.skipped_no_program, stats.skipped_no_target, stats.skipped_link,
 			stats.mirrored_bytes / stats.presents / 1024, stats.streamed_bytes / stats.presents / 1024);
 		memset(&stats, 0, sizeof(stats));
 	}
+	if (debug_settings.draw_cache_check && device.frame % 600 == 0)
+		platform_log("draw cache check: %lu draws checked, %lu uniform mismatches, %lu state mismatches",
+			cache_check_counts.draws, cache_check_counts.uniform_mismatches, cache_check_counts.state_mismatches);
 	platform_pump_events();
 
 	pthread_mutex_lock(&vertical_blank_lock);
