@@ -179,12 +179,12 @@ tests above.
   FUN_001c2080.
 - `docs/LIBRARY_CALLS.md` lists 53 library functions as unidentified. The game runs without a
   name for them.
-- `-Wint-conversion`, `-Wincompatible-pointer-types` and `-Wincompatible-function-pointer-types`
-  are errors in the game build (audits: `docs/INTEGRATION_NOTES.md`, "int/pointer conversion
-  audit" and "Object pointer type audit"; no real bug in 1038 hits). The game flags still hide
-  `-Wpointer-sign` (126 hits), `-Wparentheses` (16), `-Wnonportable-include-path` (853) and three
-  classes with 0 hits. The platform layer, runtime and musl compile with `-w` (516 hits of the
-  default set, none of the audited classes). Counts and risk: "Object pointer type audit".
+- `-Wint-conversion`, `-Wincompatible-pointer-types`, `-Wincompatible-function-pointer-types`
+  and `-Wparentheses` are errors in the game build (audits: `docs/INTEGRATION_NOTES.md`,
+  "int/pointer conversion audit", "Object pointer type audit" and "Operator grouping and pointer
+  sign"; no real bug in 1054 hits). The game flags still hide `-Wpointer-sign` (126 hits, checked:
+  none changes behaviour) and `-Wnonportable-include-path` (853). The platform layer, runtime
+  and musl compile with `-w` (516 hits of the default set, none of the audited classes).
 - The `.app` has an ad-hoc signature and no notarization (that needs the owner's Apple
   Developer account; steps in `docs/BUILD.md`). It bundles Homebrew's FFmpeg, which is GPL
   and links unused encoders (18 MB of the 47 MB in `Frameworks`).
@@ -212,9 +212,9 @@ tests above.
    Xbox-style gamepad (buttons, sticks, rumble, unplug message), start the `.app` from the
    Finder and pick the disc image in its dialog.
 3. Done: the `-Wint-conversion` and `-Wincompatible-function-pointer-types` audit (774 hits
-   to 0) and the `-Wincompatible-pointer-types` audit (264 hits to 0). No real bug found; all
-   three are errors now. Open, low priority: look at the 16 `-Wparentheses` hits, then remove
-   the `-Wno-` flags with 0 hits.
+   to 0), the `-Wincompatible-pointer-types` audit (264 hits to 0) and the `-Wparentheses`
+   audit (16 hits to 0). No real bug found; all four are errors now. `-Wpointer-sign` was
+   scanned (126 hits, no real case) and stays off.
 4. Run a full 6-stage tournament and Minigame Frenzy at the current commit (the last ones ran
    before the draw-overhead and input changes). Add a long tournament test under a new ctest
    label if its run time is acceptable.

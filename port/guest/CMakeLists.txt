@@ -216,12 +216,13 @@ add_custom_target(game_decls DEPENDS "${GEN}/of_decls.h")
 # int<->pointer conversions and object and function pointer type mismatches are errors (the
 # audits in docs/INTEGRATION_NOTES.md made all of them explicit). A -Wno-incompatible-pointer-types
 # would also turn off its subgroup incompatible-function-pointer-types: do not add one.
+# Operator grouping (-Wparentheses) is an error too: every grouping is explicit and matches the
+# original. -Wpointer-sign stays off (126 hits, none changes behaviour; same notes).
 set(GAME_FLAGS ${GUEST_CODE_FLAGS} -std=gnu11 -D_GNU_SOURCE -DHALO_LINUX_PLATFORM_LAYER
     -DHALO_ARM64_GUEST=1 -DOPENFRENZY_GUEST=1 -DOPENFRENZY_GAME=1
     -Werror=int-conversion -Werror=incompatible-pointer-types
-    -Werror=incompatible-function-pointer-types
-    -Wno-pointer-sign -Wno-parentheses -Wno-unused-value -Wno-microsoft-anon-tag
-    -Wno-nonportable-include-path -Wno-ignored-pragmas
+    -Werror=incompatible-function-pointer-types -Werror=parentheses
+    -Wno-pointer-sign -Wno-nonportable-include-path
     "SHELL:-include ${SRC}/runtime/include/linux/halo_linux_prefix.h"
     "SHELL:-include ${GEN}/platform_msvc_semantics.h"
     "SHELL:-include ${SRC}/include/of_game.h"

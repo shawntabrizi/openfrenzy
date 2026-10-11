@@ -803,9 +803,9 @@ flag is `-w`):
 | Where | Flag | Hits | Risk |
 |---|---|---:|---|
 | game | `-Wno-nonportable-include-path` | 853 | none for the code; an `#include` case mismatch breaks only a build on a case-sensitive file system |
-| game | `-Wno-pointer-sign` | 126 | low: `char *` vs `unsigned char *`, same width; the callee's type decides how a byte is read |
-| game | `-Wno-parentheses` | 16 (13 `&`/`|`, 3 `<<`/`+`) | low to medium: C precedence decides; a hand-written Ghidra expression can be grouped wrongly. Worth a short look |
-| game | `-Wno-unused-value`, `-Wno-microsoft-anon-tag`, `-Wno-ignored-pragmas` | 0 each | none now; the flags can go |
+| game | `-Wno-pointer-sign` | 126 | checked in the follow-up below: no real case; the flag stays |
+| game | `-Wno-parentheses` | 16 (13 `&` in `|`, 3 `+`/`-` in `>>`) | checked and fixed in the follow-up below; now an error |
+| game | `-Wno-unused-value`, `-Wno-microsoft-anon-tag`, `-Wno-ignored-pragmas` | 0 each | removed in the follow-up below |
 | platform layer (`ofplatform`, smoke, platform check) | `-w` | 80 (62 nonportable-include-path, 18 `weak identifier ... never declared`, the pragma lines noted in "Build warnings") | low |
 | guest runtime | `-w` | 3 (2 unsupported-visibility, 1 macro-redefined) | low |
 | musl (`guestc`) | `-w` | 433 (232 shift-op-parentheses, 184 unsupported-visibility, 7 string-plus-int, 6 tautological compare, 2 constant-conversion, 1 parentheses, 1 deprecated-non-prototype) | low: upstream musl code, its own idioms |
@@ -815,6 +815,52 @@ The `-w` counts are for clang's default set only; `-Wint-conversion` and
 `-Wincompatible-pointer-types` are in that set, so the platform layer, runtime and musl have no
 hit of the two audited classes either. Calls through explicit function casts and vtables stay
 outside these warnings (see the audit above).
+
+### Operator grouping and pointer sign (fix-ptrtypes, follow-up)
+
+**`-Wparentheses`: 16 hits, no real bug.** 13 are `&` inside `|` (colour packing and flag
+masks), 3 are `+`/`-` inside `>>`. All are in bdisplay (xbDisplay.c, xbDrawprim.c,
+xbRender.c, xbTexture.c) and engine_misc (engine_tail/unplaced.c 0x001ebdb0). C groups `&`
+before `|` and `+`/`-` before `>>`. Each line has the same grouping as the Ghidra export of its
+function (0x00041ee0, 0x00042020, 0x0003f710, 0x00044b00, 0x00044e20, 0x00045330, 0x00041890,
+0x001ebdb0). The shifts are also checked in the x86 code: 0x0004221c `sub esi, eax` then
+`sar esi, 0xa`, and the BMP file size of 0x000426e0 `lea eax, [edi + 0x34]` then `shr eax, 2`.
+Fix: explicit parentheses with the same grouping.
+
+**Flags:** `-Wno-parentheses` removed and `-Werror=parentheses` added (a probe stops on `a & 1 | b`
+and on `if (y = x)`). `-Wno-unused-value`, `-Wno-microsoft-anon-tag` and `-Wno-ignored-pragmas`
+removed (0 hits each). The clean build still prints 230 warning lines.
+
+**`-Wpointer-sign`: 126 hits, no real bug. The flag stays.** A sign mismatch at a call does not
+change how the callee reads memory: the callee's own type decides. So only a callee whose
+parameter sign differs from the x86 code, or a caller that widens, compares or indexes with the
+other sign, can be a bug. The 121 call hits go to 11 prototypes (clang's notes):
+
+| Hits | Callee | Check |
+|---:|---|---|
+| 62, 26 | `bkWideStrcpy`, `bkWideStrlen` (`short *` given for `ushort *`) | copy and test for 0 only |
+| 10 | `bkStringToWide` (`byte *` for `const char *`) | widens each byte with `(byte)`; the original zero-extends (0x0004a341 `movzx cx, cl`) |
+| 1 | `LevelLoad_Lookup` (`byte *` for `const char *`) | `strcmp` equality only |
+| 8 | `bdRestoreRenderStates` (`int[]` for `unsigned int *`) | copies the words |
+| 4 | `bdRenderTargetGetInfo` (COverlay +0x3c0..0x3cc) | writes the four words; the readers of the fields have their own types |
+| 1 | `bkLoadPackageBackground` (`int *size` for `uint *`) | a package size, below 2 GB |
+| 1, 1, 1 | `biAddRumbleList`, `CLHud_SetScores`, `CLHud_CreateScoreTexts` (`undefined4 *` for `int *`) | the callee reads with its own type |
+| 5 | `CLRumble_AddEffect` (`undefined4 *` for `int *self`) | object pointer |
+
+The other 5 hits are mousewhack CBBash_Splat.c addresses (`MW_A`, a `char *`) stored in
+`unsigned char *` locals that are only used for offsets, `memcpy` and casts. Plain `char` is
+signed on the guest target (no `__CHAR_UNSIGNED__` for arm64_32-apple-watchos), as on x86.
+
+Proof that the code did not change: the game IR is byte-identical before and after for 414 of
+415 objects. The one difference is again `bdisplay/BDISPLAY/xbDisplay.c`: the two inline-asm
+`!srcloc` byte offsets, +10 (8 parentheses at line 169, 2 at line 246).
+
+Verified (build-fix-ptrtypes, clean build): 230 warning lines, `ctest -LE gameplay` 6/6,
+`ctest -L gameplay -j8 --timeout 300` 13/13 (240 s), all 31 `src/*/tests/run_tests.sh` pass
+(300 s alarm each). No minigame run beyond the gameplay tests: no real bug.
+
+Still hidden in the game build: `-Wno-pointer-sign` (126, checked above) and
+`-Wno-nonportable-include-path` (853). The `-w` layers are as in the table above.
 
 ### Gamepad path with virtual pads (fix-gamepad-virtual-test, round 6)
 
