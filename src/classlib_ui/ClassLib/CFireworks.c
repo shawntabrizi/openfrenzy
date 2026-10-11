@@ -47,7 +47,7 @@ void CLPoints_Add(int *self, float *pos, unsigned int colour)
 	int point;
 
 	if ((unsigned int)self[0x22] < 1) {
-		FUN_0003f790(self[self[0x23] + 1]);
+		FUN_0003f790((struct bdVertexBuffer *)self[self[0x23] + 1]);
 		/* +0x94 is the point size (float): bdDrawPointSprites takes it in a float register */
 		((void (*)(int, int, int, float))FUN_000406d0)(self[self[0x23] + 1], 0, self[0],
 			*(float *)&self[0x25]);

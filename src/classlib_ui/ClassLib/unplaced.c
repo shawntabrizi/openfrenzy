@@ -701,7 +701,7 @@ void CLScreen_DrawDarken(int alpha, int music)
 	FUN_000416c0(0, 0);
 	FUN_00044b00(6, 1, 0);
 	FUN_00044b00(10, 0, 0);
-	FUN_0003f2d0(4, (int)clu_darken_quad, 4);
+	FUN_0003f2d0(4, (void *)clu_darken_quad, 4);
 	FUN_00044b00(5, 1, 0);
 	FUN_00044b00(6, 0, 0);
 	FUN_00044b00(7, 3, 0);
@@ -762,7 +762,7 @@ int CLFade_Draw(float step)
 	clu_fade_quad[1].colour = colour;
 	clu_fade_quad[2].colour = colour;
 	clu_fade_quad[3].colour = colour;
-	FUN_0003f2d0(4, (int)clu_fade_quad, 4);
+	FUN_0003f2d0(4, (void *)clu_fade_quad, 4);
 	FUN_00043b70(1);
 	FUN_00046d60(saved);
 	return 0;
@@ -780,7 +780,7 @@ void CLLoading_AddPackage(undefined4 package, int cutscene)
 		name = "mgLoading";
 	else
 		name = "csLoading";
-	if (FUN_0004d320(0, package, (undefined4)name, &size, 0) != 0) {
+	if (FUN_0004d320(0, (const char *)package, (const char *)name, &size, 0) != 0) {
 		DAT_002ba9ac = DAT_002ba9ac + size;
 		DAT_002ba9b0 = DAT_002ba9b0 + 1;
 	}
@@ -792,17 +792,17 @@ void CLMusic_FadeOut(int frames)
 {
 	int root;
 
-	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	root = (int)FUN_0002b5b0((struct CGameModeStack *)DAT_002ba750, (const char *)"Root");
 	if (0 < frames)
 		frames = -frames;
 	if (clu_music_custom != 0) {
-		FUN_00055df0(clu_music_custom);
+		FUN_00055df0((struct BPlayList *)clu_music_custom);
 		clu_music_track = -1;
 	}
 	*(int *)(root + 100) = 0;
 	*(int *)(root + 0x6c) = frames;
 	if (*(int *)(root + 0x54) != 0 && *(int *)(root + 0x5c) + frames < 1) {
-		FUN_000563f0(*(int *)(root + 0x54));
+		FUN_000563f0((struct BAudioStream *)(*(int *)(root + 0x54)));
 		*(int *)(root + 0x54) = 0;
 		clu_music_track = -1;
 	}
@@ -841,11 +841,11 @@ void CLSprite_DrawBlurred(undefined4 a1, undefined4 a2, undefined4 a3, float *po
 			FUN_00043930((undefined4 *)matrix);
 			if (sprite != 0) {
 				*(int *)(sprite + 0x88) = 0;
-				FUN_00043400(a1, a2, a3, (undefined4)local_pos, a5, a6, a7,
-					     (undefined4)(int)((double)falpha * (double)*weight), (undefined4)FUN_00072060,
-					     (undefined4)sprite);
+				FUN_00043400((struct bdFont *)a1, (const unsigned short *)a2, a3, (struct bdPrintFormat *)local_pos, a5, a6, a7,
+					     (undefined4)(int)((double)falpha * (double)*weight), (void *)FUN_00072060,
+					     (void *)sprite);
 			} else {
-				FUN_00043400(a1, a2, a3, (undefined4)local_pos, a5, a6, a7,
+				FUN_00043400((struct bdFont *)a1, (const unsigned short *)a2, a3, (struct bdPrintFormat *)local_pos, a5, a6, a7,
 					     (undefined4)(int)((double)falpha * (double)*weight), 0, 0);
 			}
 			weight++;
@@ -859,7 +859,7 @@ Restarts the custom soundtrack on a random track. */
 void CLMusic_NextCustomTrack(void)
 {
 	if (DAT_002bae84 != 0) {
-		FUN_00055e30(DAT_002bae84);
+		FUN_00055e30((struct BPlayList *)DAT_002bae84);
 		DAT_002bae84 = (int)FUN_00055c40(DAT_002bae80 + -1);
 	}
 }
@@ -874,7 +874,7 @@ void CLMusic_Play(int track, undefined4 start, undefined4 volume, undefined4 fad
 	int root;
 	int limit;
 
-	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	root = (int)FUN_0002b5b0((struct CGameModeStack *)DAT_002ba750, (const char *)"Root");
 	if (DAT_003055e0 == 2 || track < 0)
 		return;
 	if (DAT_002bae84 == 0 || disc_only != 0)
@@ -886,7 +886,7 @@ void CLMusic_Play(int track, undefined4 start, undefined4 volume, undefined4 fad
 	clu_music_track = track;
 	if (*(int *)(root + 0x54) != 0) {
 		if (*(int *)(root + 0x58) != 0)
-			FUN_000563f0(*(int *)(root + 0x58));
+			FUN_000563f0((struct BAudioStream *)(*(int *)(root + 0x58)));
 		*(int *)(root + 0x58) = *(int *)(root + 0x54);
 		*(int *)(root + 0x60) = *(int *)(root + 0x5c);
 		*(int *)(root + 0x68) = *(int *)(root + 100);
@@ -904,16 +904,16 @@ void CLMusic_Play(int track, undefined4 start, undefined4 volume, undefined4 fad
 	if (DAT_002bae84 != 0 && disc_only == 0) {
 		CLMusic_NextCustomTrack();
 		clu_music_custom = DAT_002bae84;
-		FUN_00055ff0(DAT_002bae84, clu_music_track, 2, volume, 0, 0);
+		FUN_00055ff0((struct BPlayList *)DAT_002bae84, clu_music_track, 2, volume, 0, 0);
 		return;
 	}
 	clu_music_custom = 0;
 	if (*(int *)(root + 0x74) == 0 && *(int *)(root + 0x54) != 0) {
 		CLMusic_NextCustomTrack();
 		/* the original pushes a seventh argument (0) that the callee does not read */
-		FUN_00056370(*(int *)(root + 0x54), flags, start, 0, 0, 0);
+		FUN_00056370((struct BAudioStream *)(*(int *)(root + 0x54)), flags, start, 0, 0, 0);
 		if ((clu_music_flags(track) & 0x800000) == 0)
-			FUN_00056590(*(int *)(root + 0x54), 1);
+			FUN_00056590((struct BAudioStream *)(*(int *)(root + 0x54)), 1);
 	}
 }
 
@@ -963,7 +963,7 @@ void CLMusic_PlayRandom(unsigned int kinds, int force, undefined4 volume, int fa
 		return;
 	}
 	track = CLU_Rand();
-	track = track % (int)FUN_00055fd0(DAT_002bae84);
+	track = track % (int)FUN_00055fd0((struct BPlayList *)DAT_002bae84);
 	if (DAT_002bae84 == 0)
 		same = clu_music_custom == 0;
 	else
@@ -973,7 +973,7 @@ void CLMusic_PlayRandom(unsigned int kinds, int force, undefined4 volume, int fa
 	if (track == clu_music_track)
 		return;
 	CLMusic_FadeOut(fade_out);
-	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	root = (int)FUN_0002b5b0((struct CGameModeStack *)DAT_002ba750, (const char *)"Root");
 	if (DAT_003055e0 == 2 || track < 0)
 		return;
 	if (DAT_002bae84 == 0) {
@@ -985,7 +985,7 @@ void CLMusic_PlayRandom(unsigned int kinds, int force, undefined4 volume, int fa
 	clu_music_track = track;
 	if (*(int *)(root + 0x54) != 0) {
 		if (*(int *)(root + 0x58) != 0)
-			FUN_000563f0(*(int *)(root + 0x58));
+			FUN_000563f0((struct BAudioStream *)(*(int *)(root + 0x58)));
 		*(int *)(root + 0x58) = *(int *)(root + 0x54);
 		*(int *)(root + 0x60) = *(int *)(root + 0x5c);
 		*(int *)(root + 0x68) = *(int *)(root + 100);
@@ -1003,15 +1003,15 @@ void CLMusic_PlayRandom(unsigned int kinds, int force, undefined4 volume, int fa
 	if (DAT_002bae84 != 0) {
 		CLMusic_NextCustomTrack();
 		clu_music_custom = DAT_002bae84;
-		FUN_00055ff0(DAT_002bae84, clu_music_track, 2, volume, 0, 0);
+		FUN_00055ff0((struct BPlayList *)DAT_002bae84, clu_music_track, 2, volume, 0, 0);
 		return;
 	}
 	clu_music_custom = 0;
 	if (*(int *)(root + 0x74) == 0 && *(int *)(root + 0x54) != 0) {
 		CLMusic_NextCustomTrack();
-		FUN_00056370(*(int *)(root + 0x54), flags, 0, 0, 0, 0);
+		FUN_00056370((struct BAudioStream *)(*(int *)(root + 0x54)), flags, 0, 0, 0, 0);
 		if ((clu_music_flags(track) & 0x800000) == 0)
-			FUN_00056590(*(int *)(root + 0x54), 1);
+			FUN_00056590((struct BAudioStream *)(*(int *)(root + 0x54)), 1);
 	}
 }
 
@@ -1042,7 +1042,7 @@ void CLDebris_Start(void)
 		return;
 	DAT_002ed348 = 1;
 	if (DAT_002ed34c != 0)
-		FUN_0003c8b0(DAT_002ed34c);
+		FUN_0003c8b0((struct BExtraSystem *)DAT_002ed34c);
 	FUN_00086350((int *)DAT_00290ea8);
 	FUN_00085200();
 }
@@ -1055,7 +1055,7 @@ Stops the debris effects. */
 void CLDebris_Stop(void)
 {
 	FUN_000863c0((int *)DAT_00290ea8);
-	FUN_0003c690(DAT_002ed34c, 0);
+	FUN_0003c690((struct BExtraSystem *)DAT_002ed34c, 0);
 	FUN_000861b0((undefined4 *)DAT_00290ea8);
-	FUN_0003c690(DAT_002ed44c, 0);
+	FUN_0003c690((struct BExtraSystem *)DAT_002ed44c, 0);
 }

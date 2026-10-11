@@ -80,11 +80,11 @@ HUD constructor: clears the object and loads the fonts. */
 int *CLHud_Construct(int *self)
 {
 	memset(self, 0, 100 * 4);
-	self[7] = FUN_0004bb30(0, "mslcd.ttf", 3, 0xdefa);
-	clu_font_light = FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
+	self[7] = (int)FUN_0004bb30(0, "mslcd.ttf", 3, 0xdefa);
+	clu_font_light = (int)FUN_0004bb30(0, "handgotl.ttf", 3, 0xdefa);
 	self[0xe] = 0;
 	self[0x10] = 0;
-	self[8] = FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
+	self[8] = (int)FUN_0004bb30(0, "handgotb.ttf", 3, 0xdefa);
 	self[0xf] = 0x4e6e6b28; /* 1e9f */
 	return self;
 }
@@ -283,17 +283,17 @@ void CLHud_Create(void)
 		clu_hud = 0;
 	else
 		clu_hud = (int)CLHud_Construct((int *)memory);
-	clu_ai_ring = FUN_0004bb30(0, "ai_player_ring.bmp", 0, 0xdefa);
-	clu_ai_ring_nogoal = FUN_0004bb30(0, "ai_player_ringnogoal.bmp", 0, 0xdefa);
+	clu_ai_ring = (int)FUN_0004bb30(0, "ai_player_ring.bmp", 0, 0xdefa);
+	clu_ai_ring_nogoal = (int)FUN_0004bb30(0, "ai_player_ringnogoal.bmp", 0, 0xdefa);
 	for (i = 0; i < 4; i++) {
 		OV_F(clu_hud, 0xa8 + i * 4) = 275.0f;
 		clu_marker_y[i] = 50.0f;
 		clu_marker_x[i] = 0.0f;
 	}
-	clu_position_textures[0] = FUN_0004bb30(0, "pos1.bmp", 0, 0xdefa);
-	clu_position_textures[1] = FUN_0004bb30(0, "pos2.bmp", 0, 0xdefa);
-	clu_position_textures[2] = FUN_0004bb30(0, "pos3.bmp", 0, 0xdefa);
-	clu_position_textures[3] = FUN_0004bb30(0, "pos4.bmp", 0, 0xdefa);
+	clu_position_textures[0] = (int)FUN_0004bb30(0, "pos1.bmp", 0, 0xdefa);
+	clu_position_textures[1] = (int)FUN_0004bb30(0, "pos2.bmp", 0, 0xdefa);
+	clu_position_textures[2] = (int)FUN_0004bb30(0, "pos3.bmp", 0, 0xdefa);
+	clu_position_textures[3] = (int)FUN_0004bb30(0, "pos4.bmp", 0, 0xdefa);
 	OV_I(clu_hud, 200) = 1;
 }
 
@@ -630,7 +630,7 @@ void CLHud_CreateScoreBoxes(int self)
 		DESC_I(desc, 0x264) = 0x7f;
 		DESC_I(desc, 0x37c) = 0;
 		CLHud_DescZoomIn(desc);
-		DESC_I(desc, 4) = FUN_0004bb30(0, "vs.bmp", 0, 0xdefa);
+		DESC_I(desc, 4) = (int)FUN_0004bb30(0, "vs.bmp", 0, 0xdefa);
 		OV_I(self, 0xd4) = COverlay_Create((int *)desc);
 		OV_S(OV_I(self, 0xd4), 0x54) = 1;
 		DESC_S(desc, 0x24c) = 1;
@@ -691,12 +691,12 @@ void CLHud_CreateScoreBoxes(int self)
 		DESC_U(desc, 0x290) = 0x8000;
 		rgb = (const unsigned char *)&clu_characters[DAT_002baed4[player * 10]].colour;
 		if (DAT_002baed0 != 0) {
-			DESC_I(desc, 4) = FUN_0004bb30(0, (char *)clu_characters[DAT_002baed4[player * 10]].portrait, 0, 0xdefa);
+			DESC_I(desc, 4) = (int)FUN_0004bb30(0, (char *)clu_characters[DAT_002baed4[player * 10]].portrait, 0, 0xdefa);
 			DESC_F(desc, 0x250) = 127.0f;
 			DESC_F(desc, 0x254) = 127.0f;
 			DESC_F(desc, 0x258) = 127.0f;
 		} else {
-			DESC_I(desc, 4) = FUN_0004bb30(0, "score4.tga", 0, 0xdefa);
+			DESC_I(desc, 4) = (int)FUN_0004bb30(0, "score4.tga", 0, 0xdefa);
 			DESC_F(desc, 0x250) = (float)(rgb[0] / 3);
 			DESC_F(desc, 0x254) = (float)(rgb[1] / 3);
 			DESC_F(desc, 0x258) = (float)(rgb[2] / 3);
@@ -708,13 +708,13 @@ void CLHud_CreateScoreBoxes(int self)
 
 		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
 		DESC_F(desc, 0x25c) = 127.0f;
-		DESC_I(desc, 4) = FUN_0004bb30(0, "scoreline.tga", 0, 0xdefa);
+		DESC_I(desc, 4) = (int)FUN_0004bb30(0, "scoreline.tga", 0, 0xdefa);
 		OV_I(self, 0x100 + player * 4) = COverlay_CreateChild(box, desc);
 
 		CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
 		DESC_U(desc, 0x290) = 0x8000;
 		DESC_F(desc, 0x25c) = 127.0f;
-		DESC_I(desc, 4) = FUN_0004bb30(0, "cpu.tga", 0, 0xdefa);
+		DESC_I(desc, 4) = (int)FUN_0004bb30(0, "cpu.tga", 0, 0xdefa);
 		child = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
 		OV_I(self, 0xe0 + player * 4) = child;
 		OV_S(child, 0x54) = (short)DAT_002baed8[player * 10];
@@ -724,7 +724,7 @@ void CLHud_CreateScoreBoxes(int self)
 			CLHud_DescCharacterColour(desc, DAT_002baed4[player * 10]);
 			DESC_F(desc, 0x25c) = 127.0f;
 			sprintf(name, "score%d.tga", k + 1);
-			DESC_I(desc, 4) = FUN_0004bb30(0, name, 0, 0xdefa);
+			DESC_I(desc, 4) = (int)FUN_0004bb30(0, name, 0, 0xdefa);
 			child = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
 			*rank_slot = child;
 			rank_slot++;
@@ -868,7 +868,7 @@ void CLHud_CreateScoreLabels(int self, char *text, int flag)
 		DESC_F(desc, 0x30c) = 200.0f;
 		FUN_0004a330((ushort *)((unsigned char *)desc + 0x48), (byte *)text);
 		OV_I(self, 0x28 + player * 4) = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
-		if (flag != 0 && (texture = FUN_0004bb30(0, "cheqflag.bmp", 0, 0xdefa)) != 0) {
+		if (flag != 0 && (texture = (int)FUN_0004bb30(0, "cheqflag.bmp", 0, 0xdefa)) != 0) {
 			memset(desc, 0, sizeof(desc));
 			DESC_I(desc, 0x288) = 0;
 			DESC_F(desc, 0x250) = 127.0f;
@@ -894,7 +894,7 @@ void CLHud_Destroy(void)
 	clu_ai_ring = 0;
 	clu_ai_ring_nogoal = 0;
 	if (clu_hud != 0)
-		FUN_0004c110(clu_hud);
+		FUN_0004c110((void *)clu_hud);
 	clu_hud = 0;
 }
 
@@ -1030,7 +1030,7 @@ trace:
 	origin[1] = 60.0f;
 	origin[2] = 600.0f;
 	origin[3] = 1.0f;
-	FUN_000846c0(OV_I(overlay, 0x74), (undefined4)clu_trace_ramp, (undefined4)origin);
+	FUN_000846c0(OV_I(overlay, 0x74), (struct CProjRayType *)clu_trace_ramp, (float *)origin);
 	return overlay;
 }
 
@@ -1129,7 +1129,7 @@ int CLHud_UpdateCountdown(int self)
 				OV_S(OV_I(self, 0xd8), 0x54) = 0;
 				OV_I(OV_I(self, 0xd8), 0x2f4) = 1;
 				OV_I(OV_I(self, 0xd8), 0x2f8) = 1;
-				CLSamples_Play(FUN_0004bb30(0, "scorebarping.wav", 2, 0xdefa), 0xff, 0, 0, NULL);
+				CLSamples_Play((int)FUN_0004bb30(0, "scorebarping.wav", 2, 0xdefa), 0xff, 0, 0, NULL);
 			}
 			OV_I(self, 0x10) = CLHud_ShowCountdown(1);
 			OV_F(self, 0xc) = OV_F(self, 0) * 0.33333334f;
@@ -1385,7 +1385,7 @@ create:
 		if (DAT_002baed0 == 0) {
 			marker = COverlay_CreateChild(OV_I(self, 0xf0 + player * 4), desc);
 			clu_rank_markers[player] = marker;
-			OV_I(marker, 0x408) = FUN_0004bb30(0, "scorebarping.wav", 2, 0xdefa);
+			OV_I(marker, 0x408) = (int)FUN_0004bb30(0, "scorebarping.wav", 2, 0xdefa);
 			OV_U(clu_rank_markers[player], 0x3e4) = clu_rank_delays[rank];
 			OV_S(OV_I(self, 0xe0 + player * 4), 0x54) = 1;
 			OV_S(clu_rank_markers[player], 0x54) = 1;
@@ -1520,13 +1520,13 @@ void CLHud_DrawAIRing(int player, float *pos, float *target)
 	clu_ring_quad[1].colour = colour;
 	clu_ring_quad[2].colour = colour;
 	clu_ring_quad[3].colour = colour;
-	FUN_000416c0(0, target != NULL ? clu_ai_ring : clu_ai_ring_nogoal);
+	FUN_000416c0(0, (struct bdTexture *)(target != NULL ? clu_ai_ring : clu_ai_ring_nogoal));
 	FUN_00044b00(6, 1, 0);
 	FUN_00044b00(10, 1, 0);
 	FUN_00044b00(3, 0, 0);
 	FUN_00044b00(5, 0, 0);
 	FUN_00044b00(7, 2, 0);
-	FUN_0003f2d0(4, (int)clu_ring_quad, 4);
+	FUN_0003f2d0(4, (void *)clu_ring_quad, 4);
 	FUN_00046d60(saved_state);
 }
 
@@ -1569,13 +1569,13 @@ void CLHud_DrawAIRingAngle(int player, float *pos, float angle)
 	clu_ring2_quad[1].colour = colour;
 	clu_ring2_quad[2].colour = colour;
 	clu_ring2_quad[3].colour = colour;
-	FUN_000416c0(0, angle != 0.0f ? clu_ai_ring : clu_ai_ring_nogoal);
+	FUN_000416c0(0, (struct bdTexture *)(angle != 0.0f ? clu_ai_ring : clu_ai_ring_nogoal));
 	FUN_00044b00(6, 1, 0);
 	FUN_00044b00(10, 1, 0);
 	FUN_00044b00(3, 0, 0);
 	FUN_00044b00(5, 0, 0);
 	FUN_00044b00(7, 2, 0);
-	FUN_0003f2d0(4, (int)clu_ring2_quad, 4);
+	FUN_0003f2d0(4, (void *)clu_ring2_quad, 4);
 	FUN_00046d60(saved_state);
 }
 
@@ -1640,14 +1640,14 @@ void CLHud_ShowResultBoxes(void)
 		OV_S(OV_I(clu_hud, 0xe0 + player * 4), 0x54) = 1;
 		if (DAT_002baed8[player * 10] == 0) {
 			OV_I(OV_I(clu_hud, 0xf0 + player * 4), 0x60) =
-				FUN_0004bb30(0, (char *)clu_characters[DAT_002baed4[player * 10]].portrait, 0, 0xdefa);
+				(int)FUN_0004bb30(0, (char *)clu_characters[DAT_002baed4[player * 10]].portrait, 0, 0xdefa);
 			OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x364) =
 				(float)((double)OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x364) * 1.25);
 			OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x368) =
 				(float)((double)OV_F(OV_I(clu_hud, 0xf0 + player * 4), 0x368) * 1.25);
 		} else {
 			OV_I(OV_I(clu_hud, 0xf0 + player * 4), 0x60) =
-				FUN_0004bb30(0, (char *)DAT_00283898[DAT_002baed4[player * 10]], 0, 0xdefa);
+				(int)FUN_0004bb30(0, (char *)DAT_00283898[DAT_002baed4[player * 10]], 0, 0xdefa);
 		}
 		box = OV_I(clu_hud, 0xf0 + player * 4);
 		OV_F(box, 0x2ac) = 127.0f;
@@ -1670,7 +1670,7 @@ void CLHud_InitBarGeometry(int self)
 	double w36;
 	double half;
 
-	texture = FUN_0004bb30(0, "score4.tga", 0, 0xdefa);
+	texture = (int)FUN_0004bb30(0, "score4.tga", 0, 0xdefa);
 	OV_I(self, 0x5c) = texture;
 	w36 = (double)(int)(*(unsigned short *)(texture + 0x2e) - 0x24);
 	OV_F(self, 0x68) = (float)atan2(w36, (double)(int)(*(unsigned short *)(texture + 0x30) - 0x23));
@@ -1731,7 +1731,7 @@ void CLHud_DrawScoreBars(int self, float s0, float s1, float s2, float s3, float
 	FUN_00044b00(4, 0, 0);
 	FUN_00044b00(7, 1, 0);
 	FUN_00043930((undefined4 *)DAT_002855f0);
-	FUN_000416c0(0, OV_I(self, 0x5c));
+	FUN_000416c0(0, (struct bdTexture *)OV_I(self, 0x5c));
 	for (i = 0; i < 4; i++) {
 		if (score[i] > 1.0f)
 			score[i] = 1.0f;
@@ -1766,7 +1766,7 @@ void CLHud_DrawScoreBars(int self, float s0, float s1, float s2, float s3, float
 			CLHud_BarVertex(0, (float)cx, (float)cy, colour, (float)cu, (float)cv);
 			CLHud_BarVertex(1, (float)cx, y0, colour, (float)cu, 1.0f);
 			CLHud_BarVertex(2, (float)(t * w * 0.5 + x0), y0, colour, (float)(t * 0.5), 1.0f);
-			FUN_0003f2d0(4, (int)clu_bar_quad, 3);
+			FUN_0003f2d0(4, (void *)clu_bar_quad, 3);
 		} else if (a <= OV_F(self, 0x6c)) {
 			/* right edge */
 			t = tan((double)a - (double)1.5707963f);
@@ -1776,7 +1776,7 @@ void CLHud_DrawScoreBars(int self, float s0, float s1, float s2, float s3, float
 			CLHud_BarVertex(2, (float)(w + x0), (float)((1.0 - t) * h * 0.5 + y0), colour, 1.0f,
 					(float)((t + 1.0) * 0.5));
 			CLHud_BarVertex(3, (float)(w + x0), y0, colour, 1.0f, 1.0f);
-			FUN_0003f2d0(4, (int)clu_bar_quad, 4);
+			FUN_0003f2d0(4, (void *)clu_bar_quad, 4);
 		} else if (a <= OV_F(self, 0x70)) {
 			/* bottom edge */
 			t = -((double)sin_a / (double)cos_a);
@@ -1786,7 +1786,7 @@ void CLHud_DrawScoreBars(int self, float s0, float s1, float s2, float s3, float
 			CLHud_BarVertex(2, (float)cx, (float)cy, colour, (float)cu, (float)cv);
 			CLHud_BarVertex(3, (float)(w + x0), (float)(h + y0), colour, 1.0f, 0.0f);
 			CLHud_BarVertex(4, (float)(t * w * 0.5 + x0), (float)(h + y0), colour, (float)(t * 0.5), 0.0f);
-			FUN_0003f2d0(4, (int)clu_bar_quad, 5);
+			FUN_0003f2d0(4, (void *)clu_bar_quad, 5);
 		} else {
 			/* left edge */
 			tf = (float)tan((double)a - (double)4.712389f);
@@ -1799,7 +1799,7 @@ void CLHud_DrawScoreBars(int self, float s0, float s1, float s2, float s3, float
 			CLHud_BarVertex(5, x0, (float)(h + y0), colour, 0.0f, 0.0f);
 			CLHud_BarVertex(6, (float)cx, (float)cy, colour, (float)cu, (float)cv);
 			CLHud_BarVertex(7, x0, (float)((1.0 - t) * h * 0.5 + y0), colour, 0.0f, (float)((t + 1.0) * 0.5));
-			FUN_0003f2d0(4, (int)clu_bar_quad, 8);
+			FUN_0003f2d0(4, (void *)clu_bar_quad, 8);
 		}
 	}
 	FUN_000416c0(0, 0);

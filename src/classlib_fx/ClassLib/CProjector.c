@@ -44,9 +44,9 @@ void CProjTrail_Draw(CProjTrail *self)
 			count = CLF_DrawPolylineClipped((int)n, self->points, self->widths, self->extra,
 			                                self->colours, self->vertices, 0.0f);
 			if (2 < count) {
-				FUN_000416c0(0, self->texture);
+				FUN_000416c0(0, (struct bdTexture *)self->texture);
 				if (DAT_00290dbc != 0)
-					FUN_0003f360(4, (int)self->vertices, count);
+					FUN_0003f360(4, (void *)self->vertices, count);
 			}
 		}
 	}

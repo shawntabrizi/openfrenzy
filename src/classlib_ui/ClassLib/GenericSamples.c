@@ -149,7 +149,7 @@ void CLSamples_LoadCharacter(int character)
 			for (i = 0; i < set->count; i++) {
 				sprintf(name, "%s\\%s%02d.wav", clu_characters[character].name, clu_voice_kinds[kind], i);
 				_strlwr(name);
-				set->samples[i] = FUN_0004bb30(0, name, 2, 0xdefa);
+				set->samples[i] = (int)FUN_0004bb30(0, name, 2, 0xdefa);
 			}
 		}
 	}
@@ -165,7 +165,7 @@ void CLSamples_LoadGeneric(void)
 	int kind;
 
 	for (i = 0; i < CL_GENERIC_SAMPLE_COUNT; i++) {
-		clu_generic_samples[i] = FUN_0004bb30(0, (char *)clu_generic_names[i], 2, 0xdefa);
+		clu_generic_samples[i] = (int)FUN_0004bb30(0, (char *)clu_generic_names[i], 2, 0xdefa);
 		if (clu_generic_samples[i] == 0)
 			CLU_DebugPrintf("Couldn't Load %s\n", clu_generic_names[i]);
 	}
@@ -176,7 +176,7 @@ void CLSamples_LoadGeneric(void)
 			"CGameMode_Root::Pushed *** Could not load package 'Packages\\Character Voice SFX' ***\n");
 		return;
 	}
-	FUN_0004b870(clu_charvoice_package, 0xffffffff, 0xdefa, 0);
+	FUN_0004b870((struct bkPackage *)clu_charvoice_package, 0xffffffff, 0xdefa, 0);
 	for (character = 0; character < CL_CHARACTER_COUNT; character++) {
 		for (kind = 0; kind < CL_VOICE_KIND_COUNT; kind++)
 			for (i = 0; i < 10; i++)
@@ -195,8 +195,8 @@ int CLSamples_Play(int sample, int volume, int arg3, unsigned int flags, float *
 	if (sample == 0)
 		return -1;
 	if (pos == NULL)
-		return FUN_00054ba0(sample, volume, 0, arg3, flags);
-	return FUN_00054c30(sample, pos, volume, arg3, flags, clu_sample_min_distance, clu_sample_max_distance);
+		return FUN_00054ba0((struct BSample *)sample, volume, 0, arg3, flags);
+	return FUN_00054c30((struct BSample *)sample, pos, volume, arg3, flags, clu_sample_min_distance, clu_sample_max_distance);
 }
 
 /* 0x00071400  ClassLib/GenericSamples.cpp (inferred)
@@ -224,7 +224,7 @@ void CLSamples_Shutdown(void)
 	if (clu_commentator_package != 0)
 		FUN_0004fe80((int *)clu_commentator_package);
 	if (clu_commentator_memory != 0) {
-		FUN_0004c110(clu_commentator_memory);
+		FUN_0004c110((void *)clu_commentator_memory);
 		clu_commentator_memory = 0;
 	}
 	if (clu_welsh_package != 0)
@@ -282,7 +282,7 @@ void CLSamples_LoadCommentary(void)
 			for (i = 0; i < set->count; i++) {
 				sprintf(name, "%s%02d.wav", clu_commentary_kinds[kind], i);
 				_strlwr(name);
-				set->samples[i] = FUN_0004bb30(0, name, 2, 0xdefa);
+				set->samples[i] = (int)FUN_0004bb30(0, name, 2, 0xdefa);
 			}
 		}
 	}
@@ -322,7 +322,7 @@ void CLSamples_LoadWelsh(void)
 		FUN_0004fe80((int *)clu_welsh_package);
 	clu_welsh_package = (int)FUN_0004fd50(0, "Packages\\Welsh", 0);
 	if (clu_welsh_package != 0) {
-		FUN_0004b870(clu_welsh_package, 0xffffffff, 0xdefa, 0);
+		FUN_0004b870((struct bkPackage *)clu_welsh_package, 0xffffffff, 0xdefa, 0);
 		CLSamples_LoadCommentary();
 	}
 }
@@ -347,7 +347,7 @@ int CLSamples_PlayGeneric(int index, int volume, int arg3, unsigned int flags, f
 	if (sample == 0)
 		return -1;
 	if (pos == NULL)
-		return FUN_00054ba0(sample, volume, 0, arg3, flags);
+		return FUN_00054ba0((struct BSample *)sample, volume, 0, arg3, flags);
 	return CLSamples_Play(sample, volume, arg3, flags, pos);
 }
 
@@ -412,7 +412,7 @@ void CLSamples_LoadCommentatorSet(int set)
 		FUN_0004fe80((int *)clu_commentator_package);
 	}
 	sprintf(path, "%s\\%s", DAT_002ba544, clu_commentator_packages[set]);
-	clu_commentator_package = (int)FUN_0004fd50(0, path, clu_commentator_memory);
+	clu_commentator_package = (int)FUN_0004fd50(0, path, (void *)clu_commentator_memory);
 	if (clu_commentator_package == 0) {
 		CLU_DebugPrintf("LoadCommentatorSampleSet *** Could not load package *%s **\n", clu_commentator_packages[set]);
 		clu_commentator_set = -1;
@@ -420,7 +420,7 @@ void CLSamples_LoadCommentatorSet(int set)
 		return;
 	}
 	clu_commentator_set = set;
-	FUN_0004b870(clu_commentator_package, 0xffffffff, 0xdefa, 0);
+	FUN_0004b870((struct bkPackage *)clu_commentator_package, 0xffffffff, 0xdefa, 0);
 	CLSamples_LoadCommentary();
 }
 
@@ -512,13 +512,13 @@ void InitMusic(void)
 	int root;
 	int i;
 
-	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	root = (int)FUN_0002b5b0((struct CGameModeStack *)DAT_002ba750, (const char *)"Root");
 	if (*(int *)(root + 0x4c) != 0) {
 		CLU_DebugPrintf("InitMusic() --------------------\n");
 		for (i = 0; i < CL_MUSIC_TRACK_COUNT; i++) {
 			CLU_DebugPrintf("%s\n", clu_music_tracks[i].name);
 			sprintf(name, "%s.wma", clu_music_tracks[i].name);
-			clu_music_samples[i] = FUN_0004bb30(*(int *)(root + 0x4c), name, 9, 0xdefa);
+			clu_music_samples[i] = (int)FUN_0004bb30((struct bkPackage *)(*(int *)(root + 0x4c)), name, 9, 0xdefa);
 		}
 		CLU_DebugPrintf("--------------------------------\n");
 	}

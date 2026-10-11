@@ -67,7 +67,7 @@ int CLIntroCam_Restart(void)
 		return 0;
 	OV_F(clu_intro_cam, 0x18) = 0.0f;
 	OV_U(clu_intro_cam, 0x14) = OV_U(clu_intro_cam, 0x14) & 0xffffffbf;
-	OV_U(clu_intro_cam, 0x1c) = FUN_0003bf10(0);
+	OV_U(clu_intro_cam, 0x1c) = (unsigned int)FUN_0003bf10(0);
 	return 1;
 }
 
@@ -87,7 +87,7 @@ void CLIntroCam_Stop(void)
 	if (clu_intro_cam != 0) {
 		OV_U(clu_intro_cam, 0x14) = OV_U(clu_intro_cam, 0x14) | 0x40;
 		if (OV_I(clu_intro_cam, 0x1c) != 0)
-			FUN_0003bf10(OV_U(clu_intro_cam, 0x1c));
+			FUN_0003bf10((struct BCamera *)OV_U(clu_intro_cam, 0x1c));
 	}
 }
 
@@ -356,11 +356,11 @@ static void CLIntroCam_FreeList(int track, int next_offset)
 	if (next != key) {
 		do {
 			key = *(int *)(next + next_offset);
-			FUN_0004c110(next);
+			FUN_0004c110((void *)next);
 			next = key;
 		} while (key != OV_I(clu_intro_cam, track * 4));
 	}
-	FUN_0004c110(OV_I(clu_intro_cam, track * 4));
+	FUN_0004c110((void *)OV_I(clu_intro_cam, track * 4));
 	OV_I(clu_intro_cam, track * 4) = 0;
 }
 
@@ -374,7 +374,7 @@ void CLIntroCam_Destroy(void)
 	CLIntroCam_FreeList(1, 0x38);
 	CLIntroCam_FreeList(2, 0xc);
 	CLIntroCam_FreeList(3, 0xc);
-	FUN_0004c110(clu_intro_cam);
+	FUN_0004c110((void *)clu_intro_cam);
 	clu_intro_cam = 0;
 }
 
@@ -603,7 +603,7 @@ int CLIntroCam_Update(float step, unsigned char flags)
 	if (OV_U(clu_intro_cam, 0x10) <= (unsigned int)(long long)((double)OV_F(clu_intro_cam, 0x18) + (double)0.5f)) {
 		OV_U(clu_intro_cam, 0x14) = OV_U(clu_intro_cam, 0x14) | 0x40;
 		if (OV_I(clu_intro_cam, 0x1c) != 0)
-			FUN_0003bf10(OV_U(clu_intro_cam, 0x1c));
+			FUN_0003bf10((struct BCamera *)OV_U(clu_intro_cam, 0x1c));
 		return 1;
 	}
 	if ((flags & 1) == 0) {
@@ -716,6 +716,6 @@ int CLIntroCam_Load(int map, undefined4 arg)
 	ParseMap_WalkMap(map, (int)FUN_0007e340, arg, (int)"AnimStream");
 	OV_F(clu_intro_cam, 0x18) = 0.0f;
 	OV_U(clu_intro_cam, 0x14) = OV_U(clu_intro_cam, 0x14) & 0xffffffbf;
-	OV_U(clu_intro_cam, 0x1c) = FUN_0003bf10(0);
+	OV_U(clu_intro_cam, 0x1c) = (unsigned int)FUN_0003bf10(0);
 	return 1;
 }

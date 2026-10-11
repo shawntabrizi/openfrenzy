@@ -82,7 +82,7 @@ The pause object (self) is a C++ object; offsets used here:
 
 /* the text drawer (bdisplay): font, text, length, box, r, g, b, a, callback, context */
 #define CL_DrawText(font, text, len, box, r, g, b, a) \
-	FUN_00043400((font), (undefined4)(text), (undefined4)(len), (undefined4)(box), (r), (g), (b), (a), 0, 0)
+	FUN_00043400((struct bdFont *)(font), (const unsigned short *)(text), (int)(len), (struct bdPrintFormat *)(box), (r), (g), (b), (a), 0, 0)
 #define CL_SetRenderState3(a, b, c) ((void (*)(int, int, int))FUN_00046cb0)((a), (b), (c))
 
 /* text layout of the text drawer */
@@ -123,15 +123,15 @@ void CLPause_CreateInput(int self)
 	OV_I(self, 0x34) = (int)FUN_000488c0(8);
 	for (player = 0; player < DAT_002bae94; player++) {
 		pad = (unsigned int)DAT_002baee0[player * 10];
-		OV_I(self, 0x38 + player * 4) = FUN_00048a10((int *)OV_I(self, 0x34), "Pause", 1, 1, 0, 0, 0);
-		OV_I(self, 0x48 + player * 4) = FUN_00048a10((int *)OV_I(self, 0x34), "Any", 3, 0, 0, 0, 0);
-		FUN_00048b20(OV_I(self, 0x38 + player * 4), pad | 0xc1, 0);
-		FUN_00048b20(OV_I(self, 0x48 + player * 4), pad | 0xc5, pad | 0xc6);
-		FUN_00048b20(OV_I(self, 0x48 + player * 4), pad | 0xc7, pad | 0xc8);
-		FUN_00048b20(OV_I(self, 0x48 + player * 4), pad | 0xc9, pad | 0xca);
-		FUN_00048b20(OV_I(self, 0x48 + player * 4), pad | 0xc3, pad | 0xc4);
-		FUN_00048b20(OV_I(self, 0x48 + player * 4), pad | 0xcb, pad | 0xcc);
-		FUN_00048b20(OV_I(self, 0x48 + player * 4), pad | 0xc2, 0);
+		OV_I(self, 0x38 + player * 4) = (int)FUN_00048a10((int *)OV_I(self, 0x34), "Pause", 1, 1, 0, 0, 0);
+		OV_I(self, 0x48 + player * 4) = (int)FUN_00048a10((int *)OV_I(self, 0x34), "Any", 3, 0, 0, 0, 0);
+		FUN_00048b20((struct biChannel *)OV_I(self, 0x38 + player * 4), pad | 0xc1, 0);
+		FUN_00048b20((struct biChannel *)OV_I(self, 0x48 + player * 4), pad | 0xc5, pad | 0xc6);
+		FUN_00048b20((struct biChannel *)OV_I(self, 0x48 + player * 4), pad | 0xc7, pad | 0xc8);
+		FUN_00048b20((struct biChannel *)OV_I(self, 0x48 + player * 4), pad | 0xc9, pad | 0xca);
+		FUN_00048b20((struct biChannel *)OV_I(self, 0x48 + player * 4), pad | 0xc3, pad | 0xc4);
+		FUN_00048b20((struct biChannel *)OV_I(self, 0x48 + player * 4), pad | 0xcb, pad | 0xcc);
+		FUN_00048b20((struct biChannel *)OV_I(self, 0x48 + player * 4), pad | 0xc2, 0);
 	}
 }
 
@@ -190,7 +190,7 @@ unsigned short *CLPause_SoundtrackName(int soundtrack, int max)
 	if (soundtrack == 0)
 		name = CL_TEXT(0x17c0);
 	else
-		name = (unsigned short *)FUN_00055fe0(soundtrack);
+		name = (unsigned short *)FUN_00055fe0((struct BPlayList *)soundtrack);
 	CLPause_EscapeText(name, clu_soundtrack_name);
 	if (max < FUN_0004b110((short *)clu_soundtrack_name)) {
 		clu_soundtrack_name[max] = 0;
@@ -211,7 +211,7 @@ unsigned short *CLPause_SongName(int soundtrack, int song, int max)
 	if (soundtrack == 0)
 		name = *(unsigned short **)((song + 0x127) * 0x10 + *(int *)(clu_language + 0x20));
 	else
-		name = (unsigned short *)FUN_00055f90(soundtrack, song);
+		name = (unsigned short *)FUN_00055f90((struct BPlayList *)soundtrack, song);
 	CLPause_EscapeText(name, clu_song_name);
 	if (max < FUN_0004b110((short *)clu_song_name)) {
 		clu_song_name[max] = 0;
@@ -242,7 +242,7 @@ int CLPause_NextSoundtrack(int step)
 	if (DAT_002bae84 != 0) {
 		if (clu_music_custom == DAT_002bae84)
 			clu_music_custom = 0;
-		FUN_00055e30(DAT_002bae84);
+		FUN_00055e30((struct BPlayList *)DAT_002bae84);
 		DAT_002bae84 = 0;
 	}
 	for (;;) {
@@ -250,7 +250,7 @@ int CLPause_NextSoundtrack(int step)
 		if (DAT_002bae80 == 0)
 			goto none;
 		if (soundtrack != 0) {
-			FUN_00055e30(soundtrack);
+			FUN_00055e30((struct BPlayList *)soundtrack);
 			if (clu_music_custom == soundtrack)
 				clu_music_custom = 0;
 		}
@@ -259,7 +259,7 @@ int CLPause_NextSoundtrack(int step)
 			goto none;
 		if (soundtrack == 0)
 			continue;
-		if (FUN_00055fd0(soundtrack) != 0)
+		if (FUN_00055fd0((struct BPlayList *)soundtrack) != 0)
 			break;
 	}
 	if (DAT_002bae80 != 0)
@@ -297,13 +297,13 @@ void CLPause_ResumeSound(void)
 	int root;
 	int i;
 
-	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	root = (int)FUN_0002b5b0((struct CGameModeStack *)DAT_002ba750, (const char *)"Root");
 	for (i = 0; i < 2; i++) {
 		if (*(int *)(root + 0x54 + i * 4) != 0)
-			FUN_000565e0(*(int *)(root + 0x54 + i * 4), 0x10);
+			FUN_000565e0((struct BAudioStream *)(*(int *)(root + 0x54 + i * 4)), 0x10);
 	}
 	if (DAT_002bae84 != 0 && DAT_002db810 != 0)
-		FUN_00055f20(DAT_002bae84, 4);
+		FUN_00055f20((struct BPlayList *)DAT_002bae84, 4);
 	FUN_00054800(0);
 }
 
@@ -314,13 +314,13 @@ void CLPause_PauseSound(void)
 	int root;
 	int i;
 
-	root = FUN_0002b5b0((int)DAT_002ba750, (undefined4)"Root");
+	root = (int)FUN_0002b5b0((struct CGameModeStack *)DAT_002ba750, (const char *)"Root");
 	for (i = 0; i < 2; i++) {
 		if (*(int *)(root + 0x54 + i * 4) != 0)
-			FUN_00056590(*(int *)(root + 0x54 + i * 4), 0x10);
+			FUN_00056590((struct BAudioStream *)(*(int *)(root + 0x54 + i * 4)), 0x10);
 	}
 	if (DAT_002bae84 != 0 && DAT_002db810 != 0)
-		FUN_00055eb0(DAT_002bae84, 4);
+		FUN_00055eb0((struct BPlayList *)DAT_002bae84, 4);
 	FUN_00054800(1);
 }
 
@@ -341,7 +341,7 @@ void CLPause_NextSong(int self, int step)
 			step = 0x1b;
 		CLMusic_Switch(step, 0xff, -0x14, 0x14, 0, 0);
 	} else {
-		count = FUN_00055fd0(DAT_002bae84);
+		count = FUN_00055fd0((struct BPlayList *)DAT_002bae84);
 		step = (clu_menu_track + count + step) % count;
 		CLMusic_Switch(step, 0xff, -0x14, 0x14, 0, 0);
 	}
@@ -364,7 +364,7 @@ void CLPause_End(int self, int keep_sound)
 		CLPause_ResumeSound();
 	COverlay_Delete(OV_I(self, 0x84));
 	OV_I(self, 0x84) = 0;
-	FUN_00048970(OV_U(self, 0x1c));
+	FUN_00048970((struct biMap *)OV_U(self, 0x1c));
 	OV_I(self, 0x5c) = 0;
 	for (node = (int)CLList_Next((unsigned int *)clu_overlay_root, NULL); node != 0;
 	     node = (int)CLList_Next((unsigned int *)clu_overlay_root, (unsigned int *)node)) {
@@ -431,7 +431,7 @@ void CLPause_SetPage(int self, int page)
 			}
 		} else {
 			if (DAT_002bae84 != 0) {
-				count = FUN_00055fd0(DAT_002bae84);
+				count = FUN_00055fd0((struct BPlayList *)DAT_002bae84);
 				if (clu_menu_track < count)
 					goto show;
 				goto no_track;
@@ -773,29 +773,29 @@ void CLPause_Begin(int self, int player)
 	clu_menu_track = clu_music_track;
 	CLPause_PauseSound();
 	FUN_0002b8f0(player);
-	FUN_00080230(CLU_ARR(int, 0x002ed324)); /* the rumble manager (CRumble.cpp) stops */
+	FUN_00080230((int)CLU_ARR(int, 0x002ed324)); /* the rumble manager (CRumble.cpp) stops */
 	OV_I(self, 0x7c) = 0;
 	OV_I(self, 0x6c) = 1;
 	OV_I(self, 0x60) = 0;
 	OV_I(self, 0x64) = 0;
 	FUN_00054800(1);
 	OV_I(self, 0x1c) = (int)FUN_000488c0(5);
-	OV_I(self, 0x20) = FUN_00048a10((int *)OV_I(self, 0x1c), "y", 3, 0, 0, 0, 0);
-	OV_I(self, 0x24) = FUN_00048a10((int *)OV_I(self, 0x1c), "x", 3, 0, 0, 0, 0);
-	OV_I(self, 0x28) = FUN_00048a10((int *)OV_I(self, 0x1c), "select", 1, 1, 0, 0, 0);
-	OV_I(self, 0x2c) = FUN_00048a10((int *)OV_I(self, 0x1c), "back", 1, 1, 0, 0, 0);
-	OV_I(self, 0x30) = FUN_00048a10((int *)OV_I(self, 0x1c), "cheat", 1, 0, 0, 0, 0);
-	FUN_00048b20(OV_I(self, 0x20), DAT_002baee0[player * 10] | 0xbe, DAT_002baee0[player * 10] | 0xbd);
-	FUN_00048b20(OV_I(self, 0x24), DAT_002baee0[player * 10] | 0xc0, DAT_002baee0[player * 10] | 0xbf);
-	FUN_00048b20(OV_I(self, 0x20), DAT_002baee0[player * 10] | 0xba, 0);
-	FUN_00048b20(OV_I(self, 0x24), DAT_002baee0[player * 10] | 0xb9, 0);
-	FUN_00048b20(OV_I(self, 0x28), DAT_002baee0[player * 10] | 0xc5, 0);
-	FUN_00048b20(OV_I(self, 0x28), DAT_002baee0[player * 10] | 0xc1, 0);
-	FUN_00048b20(OV_I(self, 0x2c), DAT_002baee0[player * 10] | 0xc6, 0);
-	FUN_00048b20(OV_I(self, 0x2c), DAT_002baee0[player * 10] | 0xc2, 0);
-	FUN_00048b20(OV_I(self, 0x30), DAT_002baee0[player * 10] | 0xcb, 0);
-	FUN_00048d40(OV_I(self, 0x28));
-	FUN_00048d40(OV_I(self, 0x2c));
+	OV_I(self, 0x20) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "y", 3, 0, 0, 0, 0);
+	OV_I(self, 0x24) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "x", 3, 0, 0, 0, 0);
+	OV_I(self, 0x28) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "select", 1, 1, 0, 0, 0);
+	OV_I(self, 0x2c) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "back", 1, 1, 0, 0, 0);
+	OV_I(self, 0x30) = (int)FUN_00048a10((int *)OV_I(self, 0x1c), "cheat", 1, 0, 0, 0, 0);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x20), DAT_002baee0[player * 10] | 0xbe, DAT_002baee0[player * 10] | 0xbd);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x24), DAT_002baee0[player * 10] | 0xc0, DAT_002baee0[player * 10] | 0xbf);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x20), DAT_002baee0[player * 10] | 0xba, 0);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x24), DAT_002baee0[player * 10] | 0xb9, 0);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x28), DAT_002baee0[player * 10] | 0xc5, 0);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x28), DAT_002baee0[player * 10] | 0xc1, 0);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x2c), DAT_002baee0[player * 10] | 0xc6, 0);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x2c), DAT_002baee0[player * 10] | 0xc2, 0);
+	FUN_00048b20((struct biChannel *)OV_I(self, 0x30), DAT_002baee0[player * 10] | 0xcb, 0);
+	FUN_00048d40((struct biChannel *)OV_I(self, 0x28));
+	FUN_00048d40((struct biChannel *)OV_I(self, 0x2c));
 	OV_I(self, 0x68) = player;
 
 	/* the window: an untextured image in the pausing player's colour */
@@ -820,7 +820,7 @@ void CLPause_Begin(int self, int player)
 			sprintf(name, "corner_pause%d.bmp", DAT_002baed4[player * 10] + 1);
 		else
 			sprintf(name, "edge_pause%d.bmp", DAT_002baed4[player * 10] + 1);
-		DESC_I(desc, 4) = FUN_0004bb30(0, name, 0, 0xdefa);
+		DESC_I(desc, 4) = (int)FUN_0004bb30(0, name, 0, 0xdefa);
 		DESC_F(desc, 0x250) = 127.0f;
 		DESC_F(desc, 0x254) = 127.0f;
 		DESC_F(desc, 0x258) = 127.0f;
@@ -1447,7 +1447,7 @@ int CLPause_Update(undefined4 *pause)
 			CLSamples_PlayGeneric(9, 0x7f, 0, 0, NULL);
 			if (OV_I(self, 0x6c) == 1) {
 				CLPause_End(self, 1);
-				FUN_0002b6f0((int)DAT_002ba750, 1);
+				FUN_0002b6f0((struct CGameModeStack *)DAT_002ba750, 1);
 				return 1;
 			}
 			CLPause_BackToMain(self, 6);
@@ -1495,7 +1495,7 @@ quit:
 	return 1;
 
 end_mode:
-	FUN_0002b6f0((int)DAT_002ba750, 1);
+	FUN_0002b6f0((struct CGameModeStack *)DAT_002ba750, 1);
 	CLSamples_ClearQueue();
 	return 1;
 }

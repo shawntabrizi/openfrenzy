@@ -202,17 +202,17 @@ void CParticleEffect_Draw(CParticleEffect *self, int mode, uint drawActors)
 				if (e->on == 1)
 					Texture_SetFrameAtTime(e->texture, CLF_FTOL(e->time * 1000.0f), 1);
 				else
-					FUN_00041580(e->texture, 0);
+					FUN_00041580((struct bdTexture *)e->texture, 0);
 			}
 			if (self->texture1 != 0)
-				FUN_00041600(self->texture1, CLF_FTOL(e->time * 1000.0f));
+				FUN_00041600((struct bdTexture *)self->texture1, CLF_FTOL(e->time * 1000.0f));
 			if (self->texture2 != 0)
-				FUN_00041600(self->texture2, CLF_FTOL(e->time * 1000.0f));
+				FUN_00041600((struct bdTexture *)self->texture2, CLF_FTOL(e->time * 1000.0f));
 			if (mode == 0) {
 				CParticleEffect_PlaceActor(self->actor, e);
 				set_ambient(0x5f, 0x5f, 0x5f);
 				PS_SetState(6, 0, 0);
-				FUN_00034d50(self->actor, 1);
+				FUN_00034d50((struct BActorInstance *)self->actor, 1);
 				FUN_00046d00(6);
 			} else if (e->on == 1 && e->actor != 0) {
 				colour = e->colour;
@@ -230,7 +230,7 @@ void CParticleEffect_Draw(CParticleEffect *self, int mode, uint drawActors)
 				PS_SetState(5, 0, 0);
 				CParticleEffect_PlaceActor(e->actor, e);
 				set_ambient(r, g, b);
-				FUN_00034d50(e->actor, 7);
+				FUN_00034d50((struct BActorInstance *)e->actor, 7);
 				set_ambient(ambient[0], ambient[1], ambient[2]);
 				FUN_00046d00(6);
 				FUN_00046d00(10);
@@ -512,9 +512,9 @@ Release (vtable slot 0): the vertex buffers and arrays. */
 void CParticleSystem_Release(CParticleSystem *self)
 {
 	if (self->vb != 0)
-		FUN_0003f650(self->vb);
+		FUN_0003f650((struct bdVertexBuffer *)self->vb);
 	if (self->pointVB != 0)
-		FUN_0003f650(self->pointVB);
+		FUN_0003f650((struct bdVertexBuffer *)self->pointVB);
 	if (self->h.particles != NULL) {
 		CLF_Free(self->h.particles);
 		self->h.particles = NULL;
@@ -654,7 +654,7 @@ static void PS_BeginPoints(int texture)
 	FUN_000416c0(0, 0);
 	FUN_000416c0(1, 0);
 	FUN_000416c0(2, 0);
-	FUN_000416c0(3, texture);
+	FUN_000416c0(3, (struct bdTexture *)texture);
 }
 
 /* 0x000a9d20  ClassLib/CParticleSystem.cpp
@@ -694,7 +694,7 @@ void CParticleSystem_Draw(CParticleSystem *self)
 			}
 			w = next;
 		}
-		FUN_0003f790(self->vb);
+		FUN_0003f790((struct bdVertexBuffer *)self->vb);
 		nverts = (int)(w - base) / PS_VERTEX;
 	}
 	if (self->h.maxParticles != 0) {
@@ -702,14 +702,14 @@ void CParticleSystem_Draw(CParticleSystem *self)
 		if (points == NULL)
 			return;
 		npoints = PS_WritePoints(&self->h, points, 0);
-		FUN_0003f790(self->pointVB);
+		FUN_0003f790((struct bdVertexBuffer *)self->pointVB);
 	}
 	PS_SetState(6, 1, 0);
 	PS_SetState(5, 0, 0);
 	FUN_00044b00(10, 1, 0);
 	FUN_00043b70(1);
 	if (nverts != 0) {
-		FUN_000416c0(0, self->texture2);
+		FUN_000416c0(0, (struct bdTexture *)self->texture2);
 		PS_DrawVB(4, self->vb, 0, nverts);
 	}
 	if (npoints != 0) {
@@ -910,11 +910,11 @@ void CSparkSystem_Draw(CSparkSystem *self)
 
 	if (self->p.active != 0 && 0 < self->h.numAlive) {
 		FUN_000438b0();
-		FUN_000416c0(0, self->h.texture);
+		FUN_000416c0(0, (struct bdTexture *)self->h.texture);
 		base = PS_LockVB(self->vb, 4);
 		if (base != NULL) {
 			n = PS_WriteBeams(&self->h, base, 0);
-			FUN_0003f790(self->vb);
+			FUN_0003f790((struct bdVertexBuffer *)self->vb);
 			PS_DrawStrips(self->vb, n, 1);
 		}
 	}
@@ -1009,7 +1009,7 @@ Release (vtable slot 0). */
 void CSparkSystem_Release(CSparkSystem *self)
 {
 	if (self->vb != 0)
-		FUN_0003f650(self->vb);
+		FUN_0003f650((struct bdVertexBuffer *)self->vb);
 	if (self->h.particles != NULL) {
 		CLF_Free(self->h.particles);
 		self->h.particles = NULL;
@@ -1097,11 +1097,11 @@ void CSmokeSystem_Draw(CSmokeSystem *self)
 
 	if (self->p.active != 0 && 0 < self->h.numAlive) {
 		FUN_000438b0();
-		FUN_000416c0(0, self->h.texture);
+		FUN_000416c0(0, (struct bdTexture *)self->h.texture);
 		base = PS_LockVB(self->vb, 4);
 		if (base != NULL) {
 			n = PS_WriteSprites(&self->h, base);
-			FUN_0003f790(self->vb);
+			FUN_0003f790((struct bdVertexBuffer *)self->vb);
 			PS_DrawStrips(self->vb, n, 1);
 		}
 	}
@@ -1210,7 +1210,7 @@ Release (vtable slot 0). */
 void CSmokeSystem_Release(CSmokeSystem *self)
 {
 	if (self->vb != 0)
-		FUN_0003f650(self->vb);
+		FUN_0003f650((struct bdVertexBuffer *)self->vb);
 	if (self->h.particles != NULL) {
 		CLF_Free(self->h.particles);
 		self->h.particles = NULL;
@@ -1289,11 +1289,11 @@ void CGlowSystem_Draw(CGlowSystem *self)
 
 	if (self->p.active != 0 && 0 < self->h.numAlive) {
 		FUN_000438b0();
-		FUN_000416c0(0, self->h.texture);
+		FUN_000416c0(0, (struct bdTexture *)self->h.texture);
 		base = PS_LockVB(self->vb, 4);
 		if (base != NULL) {
 			n = PS_WriteSprites(&self->h, base);
-			FUN_0003f790(self->vb);
+			FUN_0003f790((struct bdVertexBuffer *)self->vb);
 			PS_DrawStrips(self->vb, n, 3);
 		}
 	}
@@ -1395,7 +1395,7 @@ Release (vtable slot 0). */
 void CGlowSystem_Release(CGlowSystem *self)
 {
 	if (self->vb != 0)
-		FUN_0003f650(self->vb);
+		FUN_0003f650((struct bdVertexBuffer *)self->vb);
 	if (self->h.particles != NULL) {
 		CLF_Free(self->h.particles);
 		self->h.particles = NULL;
@@ -1461,17 +1461,17 @@ void CSparkPointSystem_Draw(CSparkPointSystem *self)
 	if (base == NULL)
 		return;
 	nverts = PS_WriteBeams(&self->h, base, 1);
-	FUN_0003f790(self->vb);
+	FUN_0003f790((struct bdVertexBuffer *)self->vb);
 	points = (uint *)PS_LockVB(self->pointVB, 4);
 	if (points == NULL)
 		return;
 	npoints = PS_WritePoints(&self->h, points, 1);
-	FUN_0003f790(self->pointVB);
+	FUN_0003f790((struct bdVertexBuffer *)self->pointVB);
 	FUN_00043b70(1);
 	PS_SetState(6, 1, 0);
 	PS_SetState(5, 0, 0);
 	FUN_00044b00(10, 1, 0);
-	FUN_000416c0(0, self->h.texture);
+	FUN_000416c0(0, (struct bdTexture *)self->h.texture);
 	if (nverts != 0)
 		PS_DrawVB(4, self->vb, 0, nverts);
 	PS_BeginPoints(self->texture2);
@@ -1578,9 +1578,9 @@ Release (vtable slot 0). */
 void CSparkPointSystem_Release(CSparkPointSystem *self)
 {
 	if (self->vb != 0)
-		FUN_0003f650(self->vb);
+		FUN_0003f650((struct bdVertexBuffer *)self->vb);
 	if (self->pointVB != 0)
-		FUN_0003f650(self->pointVB);
+		FUN_0003f650((struct bdVertexBuffer *)self->pointVB);
 	if (self->h.particles != NULL) {
 		CLF_Free(self->h.particles);
 		self->h.particles = NULL;

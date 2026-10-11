@@ -254,15 +254,15 @@ void ParseMap_CloseReader(int reader)
 		return;
 	if (OV_I(reader, 0x110) == 1) {
 		if (OV_I(reader, 0x104) != 0) {
-			FUN_0004c110(OV_I(reader, 0x104));
+			FUN_0004c110((void *)OV_I(reader, 0x104));
 			OV_I(reader, 0x104) = 0;
 		}
 	} else if (OV_I(reader, 0x110) == 3 && *(FILE **)(reader + 0x114) != NULL) {
 		fclose(*(FILE **)(reader + 0x114));
-		FUN_0004c110(reader);
+		FUN_0004c110((void *)reader);
 		return;
 	}
-	FUN_0004c110(reader);
+	FUN_0004c110((void *)reader);
 }
 
 /* ---------- building the tree */
@@ -405,13 +405,13 @@ void ParseMap_FreeProperties(int *head)
 		if (property != NULL) {
 			OV_I(property[0], 4) = property[1];
 			*(int *)property[1] = property[0];
-			FUN_0004c110((int)property);
+			FUN_0004c110((void *)property);
 		}
 		property = (int *)head[1];
 	}
 	OV_I(head[0], 4) = head[1];
 	*(int *)head[1] = head[0];
-	FUN_0004c110((int)head);
+	FUN_0004c110((void *)head);
 }
 
 /* 0x0007ef50  ClassLib/ParseMap.cpp (thiscall)
@@ -427,14 +427,14 @@ void ParseMap_FreeNode(int *node)
 		while (child != node[3]) {
 			if (child != 0) {
 				ParseMap_FreeNode((int *)child);
-				FUN_0004c110(child);
+				FUN_0004c110((void *)child);
 			}
 			child = OV_I(node[3], 8);
 		}
 		child = node[3];
 		if (child != 0) {
 			ParseMap_FreeNode((int *)child);
-			FUN_0004c110(child);
+			FUN_0004c110((void *)child);
 		}
 	}
 	OV_I(node[2], 4) = node[1];
@@ -564,7 +564,7 @@ void ParseMap_Free(int *map)
 	root = *map;
 	if (root != 0) {
 		ParseMap_FreeNode((int *)root);
-		FUN_0004c110(root);
+		FUN_0004c110((void *)root);
 	}
-	FUN_0004c110((int)map);
+	FUN_0004c110((void *)map);
 }

@@ -119,7 +119,7 @@ int COverlay_CreateRenderTarget(int self)
 	OV_I(self, 0x3d0) = target;
 	if (target == 0)
 		return 0;
-	FUN_00044a70(target, (undefined4 *)(self + 0x3c0), (undefined4 *)(self + 0x3c4), (undefined4 *)(self + 0x3c8),
+	FUN_00044a70((struct bdRenderTarget *)target, (undefined4 *)(self + 0x3c0), (undefined4 *)(self + 0x3c4), (undefined4 *)(self + 0x3c8),
 		     (undefined4 *)(self + 0x3cc));
 	width = (float)OV_I(self, 0x3c0);
 	OV_F(self, 0x36c) = width;
@@ -135,7 +135,7 @@ void COverlay_InitText(int self, undefined4 *desc)
 {
 	memcpy((void *)(self + 0x5c), desc, 0xec * 4);
 	if (desc[0x11] == 0)
-		OV_I(self, 0xa0) = FUN_0004bb30(0, (char *)(desc + 0xb1), 3, 0xdefa);
+		OV_I(self, 0xa0) = (int)FUN_0004bb30(0, (char *)(desc + 0xb1), 3, 0xdefa);
 	OV_U(self, 0x20) = clu_overlay_functions[5];
 }
 
@@ -274,13 +274,13 @@ void COverlay_DrawImage(int self, int shadow)
 	else
 		FUN_00044b00(10, 0, 0);
 	if ((OV_U(self, 0x2ec) & 0x100) == 0) {
-		FUN_000416c0(0, OV_I(self, 0x60));
+		FUN_000416c0(0, (struct bdTexture *)OV_I(self, 0x60));
 	} else {
 		r = (int)OV_F(self, 0x2ac);
 		g = (int)OV_F(self, 0x2b0);
 		b = (int)OV_F(self, 0x2b4);
 		CL_SetRenderTargetColour(0, r, g, b, (int)OV_F(self, 0x2b8), 1.0f, 2);
-		FUN_000455a0(OV_I(self, 0x3d0), 0);
+		FUN_000455a0((struct bdRenderTarget *)OV_I(self, 0x3d0), 0);
 	}
 	x = (double)OV_F(self, 0x300);
 	y = OV_F(self, 0x304);
@@ -361,7 +361,7 @@ void COverlay_DrawImage(int self, int shadow)
 		clu_image_quad[3].u = OV_F(self, 0x3f4);
 		clu_image_quad[3].v = OV_F(self, 0x404);
 	}
-	FUN_0003f2d0(5, (int)clu_image_quad, 4);
+	FUN_0003f2d0(5, (void *)clu_image_quad, 4);
 	FUN_000416c0(0, 0);
 	FUN_00046d00(3);
 }
@@ -377,7 +377,7 @@ struct CLTextBox {
 
 /* the text drawer: font, text, length, box, r, g, b, a, callback, context */
 #define CL_DrawText(font, text, len, box, r, g, b, a) \
-	FUN_00043400((font), (undefined4)(text), (undefined4)(len), (undefined4)(box), (r), (g), (b), (a), 0, 0)
+	FUN_00043400((struct bdFont *)(font), (const unsigned short *)(text), (int)(len), (struct bdPrintFormat *)(box), (r), (g), (b), (a), 0, 0)
 
 /* 0x000730f0  ClassLib/COverlay.cpp
 Draw function of text overlays: plain text, or glowing text (glow amount 0x3a4) drawn
@@ -508,14 +508,14 @@ void COverlay_InitImage(int self, undefined4 *desc)
 	OV_F(self, 0x404) = 1.0f;
 	texture = desc[1];
 	if (texture == 0)
-		texture = FUN_0004bb30(0, (char *)(desc + 0xb1), 0, 0xdefa);
+		texture = (int)FUN_0004bb30(0, (char *)(desc + 0xb1), 0, 0xdefa);
 	OV_I(self, 0x60) = texture;
 	if ((OV_U(self, 0x2ec) & 0x200) != 0) {
 		glow = (int)CLU_Alloc(0x18, "C:\\BlitzParty\\Game\\Src\\ClassLib\\COverlay.cpp", 0x134, 0x1001);
 		if (glow == 0)
 			glow = 0;
 		else
-			glow = FUN_00082f60(glow, self + 800, *(float *)&desc[0xa1], 0); /* the speed is a float */
+			glow = (int)FUN_00082f60((struct CAnimTex *)glow, (char *)(self + 800), *(float *)&desc[0xa1], 0); /* the speed is a float */
 		OV_I(self, 0x5c) = glow;
 	}
 	if (OV_F(self, 0x364) == 0.0f || OV_F(self, 0x368) == 0.0f) {
@@ -540,15 +540,15 @@ void COverlay_InitModel(int self, undefined4 *desc)
 	if (desc[6] != 0) {
 		OV_U(self, 0x74) = desc[6];
 	} else {
-		resource = FUN_0004bb30(0, (char *)(desc + 0xb1), 1, 0);
+		resource = (int)FUN_0004bb30(0, (char *)(desc + 0xb1), 1, 0);
 		if (resource == 0)
 			return;
-		actor = FUN_00036b20(0, resource, 8, (undefined4)"C:\\BlitzParty\\Game\\Src\\ClassLib\\COverlay.cpp", 0x173);
+		actor = (int)FUN_00036b20(0, (struct BActor *)resource, 8, (const char *)"C:\\BlitzParty\\Game\\Src\\ClassLib\\COverlay.cpp", 0x173);
 		OV_I(self, 0x74) = actor;
-		FUN_00035cc0(actor, 0, 1, 0);
-		FUN_00035cc0(OV_I(self, 0x74), 1, 0, 0);
-		FUN_00034e70(OV_I(self, 0x74), (undefined4 *)OV_I(OV_I(self, 0x74), 0x134), 0x18, 1);
-		FUN_00038190(OV_I(self, 0x74), OV_I(OV_I(self, 0x74), 0x134), 1, 0);
+		FUN_00035cc0((struct BActorInstance *)actor, 0, 1, 0);
+		FUN_00035cc0((struct BActorInstance *)OV_I(self, 0x74), 1, 0, 0);
+		FUN_00034e70((struct BActorInstance *)OV_I(self, 0x74), (undefined4 *)OV_I(OV_I(self, 0x74), 0x134), 0x18, 1);
+		FUN_00038190((void *)OV_I(self, 0x74), (struct BActorNode *)OV_I(OV_I(self, 0x74), 0x134), 1, 0);
 	}
 	OV_U(self, 0x78) = desc[7];
 	OV_U(self, 0x7c) = desc[8];
@@ -566,7 +566,7 @@ void COverlay_InitModel(int self, undefined4 *desc)
 	OV_U(OV_I(self, 0x74), 0xd0) = OV_U(self, 0x374);
 	OV_U(OV_I(self, 0x74), 0xd4) = OV_U(self, 0x37c);
 	OV_U(OV_I(self, 0x74), 0xd8) = OV_U(self, 0x384);
-	FUN_00034bf0(OV_U(self, 0x74), 1);
+	FUN_00034bf0((struct BActorInstance *)OV_U(self, 0x74), 1);
 	OV_U(self, 0x20) = clu_overlay_functions[6];
 }
 
@@ -709,7 +709,7 @@ int COverlay_CreateChild(int parent, undefined4 *desc)
 		OV_I(self, 0x1c) = 0;
 		if (count != 0) {
 			OV_I(self, 0x1c) = (int)FUN_0004c4b0(count * 4, 0,
-							     (undefined4)"C:\\BlitzParty\\Game\\Src\\ClassLib\\COverlay.cpp",
+							     (const char *)"C:\\BlitzParty\\Game\\Src\\ClassLib\\COverlay.cpp",
 							     0x355, 0x2001);
 			count = 0;
 			OV_I(self, 0x58) = 0;
@@ -770,14 +770,14 @@ static void COverlay_DrawModelPass(int self)
 		CL_SetActorTint((int)((double)OV_F(self, 0x2ac) * (double)OV_F(self, 0x2b8) * (double)0.00390625f),
 				(int)((double)OV_F(self, 0x2b0) * (double)OV_F(self, 0x2b8) * (double)0.00390625f),
 				(int)((double)OV_F(self, 0x2b4) * (double)OV_F(self, 0x2b8) * (double)0.00390625f));
-		FUN_00034d50(OV_I(self, 0x74), 7);
+		FUN_00034d50((struct BActorInstance *)OV_I(self, 0x74), 7);
 		FUN_00044b00(6, 0, 0);
 		FUN_00038440(tint_r, tint_g, tint_b);
 	} else if (OV_F(self, 0x2b8) > 0.0f && OV_F(self, 0x2b8) < 256.0f) {
 		FUN_00044b00(6, 1, 0);
 		FUN_00035d50((int)OV_F(self, 0x2b8));
 		FUN_00044b00(10, 0, 0);
-		FUN_00034d50(OV_I(self, 0x74), 7);
+		FUN_00034d50((struct BActorInstance *)OV_I(self, 0x74), 7);
 		FUN_00044b00(6, 0, 0);
 		FUN_00035d50(0x100);
 	} else if (OV_U(self, 0x2b8) == 0x43800000) { /* exactly 256.0f */
@@ -785,7 +785,7 @@ static void COverlay_DrawModelPass(int self)
 		FUN_00044b00(6, 1, 0);
 		FUN_00044b00(7, 3, 0);
 		FUN_00044b00(5, 1, 0);
-		FUN_00034d50(OV_I(self, 0x74), 7);
+		FUN_00034d50((struct BActorInstance *)OV_I(self, 0x74), 7);
 	}
 }
 
@@ -821,7 +821,7 @@ void COverlay_DrawModel(int self)
 	OV_U(OV_I(self, 0x74), 0xd8) = OV_U(self, 0x384);
 	if ((OV_U(self, 0x2ec) & 0x2000) != 0) {
 		OV_F(OV_I(self, 0x74), 0xd4) = -OV_F(self, 0x37c);
-		FUN_00034bf0(OV_U(self, 0x74), 1);
+		FUN_00034bf0((struct BActorInstance *)OV_U(self, 0x74), 1);
 		if (clu_overlay_models == -1)
 			return;
 		COverlay_DrawModelPass(self);
@@ -852,7 +852,7 @@ void COverlay_DrawModel(int self)
 			CL_SetRenderState3(10, 0, 0);
 			FUN_000416c0(0, 0);
 			FUN_000438b0();
-			FUN_0003f2d0(5, (int)clu_shadow_quad, 4);
+			FUN_0003f2d0(5, (void *)clu_shadow_quad, 4);
 			FUN_00046d00(3);
 			FUN_00046d00(6);
 			FUN_00046d00(10);
@@ -860,7 +860,7 @@ void COverlay_DrawModel(int self)
 		}
 	}
 	OV_U(OV_I(self, 0x74), 0xd4) = OV_U(self, 0x37c);
-	FUN_00034bf0(OV_U(self, 0x74), 1);
+	FUN_00034bf0((struct BActorInstance *)OV_U(self, 0x74), 1);
 	if (clu_overlay_models == -1)
 		return;
 	COverlay_DrawModelPass(self);
@@ -921,7 +921,7 @@ int COverlay_Create(int *desc)
 	OV_I(self, 0x1c) = 0;
 	if (count != 0) {
 		OV_I(self, 0x1c) = (int)FUN_0004c4b0(count * 4, 0,
-						     (undefined4)"C:\\BlitzParty\\Game\\Src\\ClassLib\\COverlay.cpp", 0x8a,
+						     (const char *)"C:\\BlitzParty\\Game\\Src\\ClassLib\\COverlay.cpp", 0x8a,
 						     0x2001);
 		count = 0;
 		for (bit = 0; bit < 32; bit++) {
@@ -974,7 +974,7 @@ int COverlay_Delete(int self)
 		}
 	}
 	COverlay_Destroy(self);
-	FUN_0004c110(self);
+	FUN_0004c110((void *)self);
 	return previous;
 }
 
@@ -1019,7 +1019,7 @@ int COverlay_Update(int self)
 		OV_F(self, 0x364) = (float)w;
 	}
 	if (OV_I(self, 0x5c) != 0) {
-		FUN_00082be0(OV_I(self, 0x5c), 1.0f, 1);
+		FUN_00082be0((struct CAnimTex *)OV_I(self, 0x5c), 1.0f, 1);
 		OV_I(self, 0x60) = OV_I(OV_I(self, 0x5c), 8);
 	}
 	for (i = 0; i < OV_I(self, 0x18); i++)
@@ -1041,21 +1041,21 @@ void COverlay_Destroy(int self)
 	     node = (int)CLList_Next((unsigned int *)self, (unsigned int *)COverlay_Delete(node - 0x10)))
 		;
 	if (OV_I(self, 0x74) != 0 && *(char *)(self + 800) != '\0')
-		FUN_00034930(OV_I(self, 0x74));
+		FUN_00034930((struct BActorInstance *)OV_I(self, 0x74));
 	if (OV_I(self, 0xa0) != 0)
 		OV_I(self, 0xa0) = 0;
 	if (OV_I(self, 0x1c) != 0) {
-		FUN_0004c110(OV_I(self, 0x1c));
+		FUN_0004c110((void *)OV_I(self, 0x1c));
 		OV_I(self, 0x1c) = 0;
 	}
 	if (OV_I(self, 0x3d0) != 0) {
-		FUN_000458a0(OV_I(self, 0x3d0));
+		FUN_000458a0((struct bdRenderTarget *)OV_I(self, 0x3d0));
 		OV_I(self, 0x3d0) = 0;
 	}
 	glow = OV_I(self, 0x5c);
 	if (glow != 0) {
 		FUN_001d5950(); /* the glow object's destructor (empty) */
-		FUN_0004c110(glow);
+		FUN_0004c110((void *)glow);
 		OV_I(self, 0x5c) = 0;
 	}
 	FUN_001d5950(); /* the list member's destructor (empty) */
@@ -1145,7 +1145,7 @@ void FUN_00074c10(int self, int shadow)
 		clu_bar_quad[2].x = (float)((double)seg_width + x - (double)1.0f);
 		clu_bar_quad[3].x = (float)x;
 		FUN_000416c0(0, 0);
-		FUN_0003f2d0(5, (int)clu_bar_quad, 4);
+		FUN_0003f2d0(5, (void *)clu_bar_quad, 4);
 		x = (double)next_x;
 		height = height + inc;
 	}

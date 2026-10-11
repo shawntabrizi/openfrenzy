@@ -33,7 +33,7 @@ Plays the "eye" animation on the laser bone. */
 void RefBot_PlayEye(void)
 {
 	if (DAT_002ed448 != NULL) {
-		FUN_00038190(DAT_002ed448->actor, DAT_002ed448->laserNode, 1, 0);
+		FUN_00038190((void *)DAT_002ed448->actor, (struct BActorNode *)DAT_002ed448->laserNode, 1, 0);
 		CLF_PlayAnim(DAT_002ed448->actor, DAT_002ed448->laserNode, DAT_002ed448->anims[3], 0x400,
 		             -1, 0, NULL, 0);
 	}
@@ -54,7 +54,7 @@ void RefBot_StopBeamSound(void)
 	if (DAT_002ed448 != NULL) {
 		CLF_PlaySample(0x15, 0x7f, 0, 0, NULL);
 		CLF_PlaySample(0x16, 0x7f, 0, 0, NULL);
-		FUN_000547a0(DAT_002ea4f4);
+		FUN_000547a0((struct BSample *)DAT_002ea4f4);
 	}
 }
 
@@ -80,7 +80,7 @@ void RefBot_Draw(void)
 		set_state(7, 1, 0);
 		set_state(4, 1, 0);
 		CLF_UpdateActor(DAT_002ed448->actor, 1);
-		FUN_00034d50(DAT_002ed448->actor, 7);
+		FUN_00034d50((struct BActorInstance *)DAT_002ed448->actor, 7);
 		FUN_00046d00(5);
 		FUN_00046d00(3);
 		FUN_00046d00(6);
@@ -113,13 +113,13 @@ void RefBot_Create(void)
 	}
 	DAT_002ed448 = bot;
 	model = CLF_FindTexture(0, DAT_00290df8, 1, 0);
-	DAT_002ed448->actor = FUN_00036b20(0, model, 2, (undefined4)s_RefBotFile, 0x47);
+	DAT_002ed448->actor = (int)FUN_00036b20(0, (struct BActor *)model, 2, (const char *)s_RefBotFile, 0x47);
 	CLF_UpdateActor(DAT_002ed448->actor, 1);
 	DAT_002ed448->laserNode = CLF_FindNode(*(int *)(DAT_002ed448->actor + 0x134), "refrobo_hole");
 	if (DAT_002ed448->laserNode == 0)
 		CLF_Printf("**ERROR** ref bot doesn't have a laser_bone!\n");
-	FUN_00035cc0(DAT_002ed448->actor, 0, 1, 0);
-	FUN_00035cc0(DAT_002ed448->actor, 1, 0, 0);
+	FUN_00035cc0((struct BActorInstance *)DAT_002ed448->actor, 0, 1, 0);
+	FUN_00035cc0((struct BActorInstance *)DAT_002ed448->actor, 1, 0, 0);
 	actor = DAT_002ed448->actor;
 	*(float *)(actor + 0xdc) = 1.0f;
 	*(float *)(actor + 0xd0) = 0.5f;
@@ -175,7 +175,7 @@ void RefBot_Enter(void)
 		DAT_002ed448->active = 1;
 		CLF_PlaySample(0x17, 0x7f, 0, 0, NULL);
 		actor = DAT_002ed448->actor;
-		FUN_00038190(actor, *(int *)(actor + 0x134), 1, 0);
+		FUN_00038190((void *)actor, (struct BActorNode *)(*(int *)(actor + 0x134)), 1, 0);
 		actor = DAT_002ed448->actor;
 		CLF_PlayAnim(actor, *(int *)(actor + 0x134), DAT_002ed448->anims[0], 0x400, -1, 0, NULL, 0);
 		actor = DAT_002ed448->actor;
@@ -193,7 +193,7 @@ void RefBot_Leave(void)
 	if (DAT_002ed448 != NULL) {
 		CLF_PlaySample(0x18, 0x7f, 0, 0, NULL);
 		actor = DAT_002ed448->actor;
-		FUN_00038190(actor, *(int *)(actor + 0x134), 1, 0);
+		FUN_00038190((void *)actor, (struct BActorNode *)(*(int *)(actor + 0x134)), 1, 0);
 		actor = DAT_002ed448->actor;
 		CLF_PlayAnimBlend(actor, *(int *)(actor + 0x134), DAT_002ed448->anims[2], 0x400, -1, 0.025f,
 		                  0, (void *)FUN_00084970, 0);
@@ -221,7 +221,7 @@ void RefBot_Delete(void)
 	CRefBot *bot;
 
 	if (DAT_002ed448 != NULL) {
-		FUN_00034930(DAT_002ed448->actor);
+		FUN_00034930((struct BActorInstance *)DAT_002ed448->actor);
 		AnimTex_DeleteList(&DAT_002ed448->textures);
 		bot = DAT_002ed448;
 		if (bot != NULL) {

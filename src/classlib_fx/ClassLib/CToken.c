@@ -242,7 +242,7 @@ void CToken_DrawShadow(CToken *self)
 	if (self->scale.cur[0] != 0.0f) {
 		CToken_ShadowQuad(self->shadow, self->pos, self->up, DAT_00298d2c * self->scale.cur[0],
 		                  self->angle);
-		FUN_000416c0(0, DAT_002ff9d0);
+		FUN_000416c0(0, (struct bdTexture *)DAT_002ff9d0);
 		TOK_DrawPrimitive(4, self->shadow, 4);
 	}
 }

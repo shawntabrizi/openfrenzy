@@ -29,14 +29,14 @@ void SpriteVB_Draw(CSpriteVB *self)
 		FUN_00044b00(4, 0, 0);
 		for (b = self->next; b != (CSpriteVBBatch *)self; b = b->next)
 			b->numVertices = (int)(b->write - b->start) / 0x1c;
-		FUN_0003f790(self->vb);
+		FUN_0003f790((struct bdVertexBuffer *)self->vb);
 		self->locked = 0;
 		FUN_00044b00(5, 0, 0);
 		FUN_00044b00(6, 1, 0);
 		FUN_00043b70(1);
 		for (b = self->next; b != (CSpriteVBBatch *)self; b = b->next) {
 			key = b->key;
-			FUN_000416c0(0, **(int **)(**(int **)(key + 0xc) + 0x40));
+			FUN_000416c0(0, (struct bdTexture *)(**(int **)(**(int **)(key + 0xc) + 0x40)));
 			FUN_00044b00(7, (*(uint *)(key + 0x28) & 0x400) == 0 ? 3 : 1, 0);
 			flags = *(ushort *)(**(int **)(key + 0xc) + 0x46);
 			if ((flags & 1) == 0) {
@@ -61,7 +61,7 @@ debrisVB.ForceBufferSize(num): recreates the buffer with at least 12000 vertices
 void SpriteVB_ForceBufferSize(CSpriteVB *self, int size)
 {
 	if (self->vb != 0)
-		FUN_0003f650(self->vb);
+		FUN_0003f650((struct bdVertexBuffer *)self->vb);
 	if (size < 12000)
 		size = 12000;
 	self->vbSize = size;
@@ -81,7 +81,7 @@ void SpriteVB_Release(CSpriteVB *self)
 
 	b = self->next;
 	if (self->vb != 0) {
-		FUN_0003f650(self->vb);
+		FUN_0003f650((struct bdVertexBuffer *)self->vb);
 		self->vb = 0;
 		self->vbSize = 0;
 	}
@@ -139,7 +139,7 @@ void SpriteVB_Lock(CSpriteVB *self)
 			CLF_Printf("***WARNING!*** Your debris system Vertex buffer is being resized!\n %d required. "
 			           "Use debrisVB.ForceBufferSize(num) to initialise it",
 			           total);
-			FUN_0003f650(self->vb);
+			FUN_0003f650((struct bdVertexBuffer *)self->vb);
 		}
 		size = 12000;
 		if (11999 < total)

@@ -53,32 +53,32 @@ void CLRumble_FreeTracks(int *self)
 	track = self[1];
 	if (track != 0) {
 		if (OV_I(track, 4) != 0) {
-			FUN_0004c110(OV_I(track, 4));
+			FUN_0004c110((void *)OV_I(track, 4));
 			OV_I(track, 4) = 0;
 		}
 		object = OV_I(track, 0x10);
 		if (object != 0) {
 			FUN_000d2770((int *)object);
-			FUN_0004c110(object);
+			FUN_0004c110((void *)object);
 			OV_I(track, 0x10) = 0;
 		}
-		FUN_0004c110(track);
+		FUN_0004c110((void *)track);
 	}
 	track = self[0];
 	if (track != 0) {
 		if (OV_I(track, 8) != 0) {
-			FUN_0004c110(OV_I(track, 8));
+			FUN_0004c110((void *)OV_I(track, 8));
 			OV_I(track, 8) = 0;
 		}
 		object = OV_I(track, 0x14);
 		if (object != 0) {
 			FUN_000d2770((int *)object);
-			FUN_0004c110(object);
+			FUN_0004c110((void *)object);
 			OV_I(track, 0x14) = 0;
 		}
-		FUN_0004c110(track);
+		FUN_0004c110((void *)track);
 	}
-	FUN_0004c110(self[4]);
+	FUN_0004c110((void *)self[4]);
 	self[4] = 0;
 }
 
@@ -325,23 +325,23 @@ void CLRumble_CreateTweaks(int self, int menu, char *name)
 	if (submenu == 0)
 		submenu = 0;
 	else
-		submenu = FUN_0002e610(submenu, menu, name);
+		submenu = (int)FUN_0002e610((struct CTweakMenu *)submenu, (struct CTweakMenu *)menu, name);
 	OV_I(self, 4) = submenu;
-	FUN_0002f250(submenu, (undefined4)"Left Motor:", self + 0xc, 1, 0, 1, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Amplitude", self + 0x10, 0x80, 1, 0x7fff, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Duration", self + 0x14, 10, 0, 100000, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Attack", self + 0x18, 10, 0, 100000, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Sustain", self + 0x1c, 1, 0, 100, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Delay", self + 0x20, 10, 0, 100000, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Style", self + 0x24, 1, 0, 4, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Right Motor:", self + 0x28, 1, 0, 1, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Amplitude", self + 0x2c, 0x80, 1, 0x7fff, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Duration", self + 0x30, 10, 0, 100000, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Attack", self + 0x34, 10, 0, 100000, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Sustain", self + 0x38, 1, 0, 100, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Delay", self + 0x3c, 10, 0, 100000, 0);
-	FUN_0002f250(OV_I(self, 4), (undefined4)"Style", self + 0x40, 1, 0, 4, 0);
-	FUN_0002f340(OV_I(self, 4), (undefined4)"Test", (undefined4)self);
+	FUN_0002f250((struct CTweakMenu *)submenu, (const char *)"Left Motor:", (int *)(self + 0xc), 1, 0, 1, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Amplitude", (int *)(self + 0x10), 0x80, 1, 0x7fff, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Duration", (int *)(self + 0x14), 10, 0, 100000, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Attack", (int *)(self + 0x18), 10, 0, 100000, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Sustain", (int *)(self + 0x1c), 1, 0, 100, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Delay", (int *)(self + 0x20), 10, 0, 100000, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Style", (int *)(self + 0x24), 1, 0, 4, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Right Motor:", (int *)(self + 0x28), 1, 0, 1, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Amplitude", (int *)(self + 0x2c), 0x80, 1, 0x7fff, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Duration", (int *)(self + 0x30), 10, 0, 100000, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Attack", (int *)(self + 0x34), 10, 0, 100000, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Sustain", (int *)(self + 0x38), 1, 0, 100, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Delay", (int *)(self + 0x3c), 10, 0, 100000, 0);
+	FUN_0002f250((struct CTweakMenu *)OV_I(self, 4), (const char *)"Style", (int *)(self + 0x40), 1, 0, 4, 0);
+	FUN_0002f340((struct CTweakMenu *)OV_I(self, 4), (const char *)"Test", (int *)self);
 }
 
 /* 0x00080a20  ClassLib/CRumble.cpp (thiscall)
@@ -355,7 +355,7 @@ int CLRumble_CreateMenu(int *self)
 		if (menu == 0)
 			menu = 0;
 		else
-			menu = FUN_0002e510(menu, "Rumble Tweaks");
+			menu = (int)FUN_0002e510((struct CTweakMenu *)menu, "Rumble Tweaks");
 		*self = menu;
 	}
 	return 1;
@@ -393,10 +393,10 @@ void CLRumble_FreeEffects(int self)
 		previous = CLList_Remove((int *)(self + 4), (int *)(effect + 0x44));
 		submenu = OV_I(effect, 4);
 		if (submenu != 0) {
-			FUN_0002f3e0(submenu);
-			FUN_0004c110(submenu);
+			FUN_0002f3e0((struct CTweakMenu *)submenu);
+			FUN_0004c110((void *)submenu);
 		}
-		FUN_0004c110(effect);
+		FUN_0004c110((void *)effect);
 		node = (int)CLList_Next((unsigned int *)(self + 4), (unsigned int *)previous);
 	}
 }
@@ -412,8 +412,8 @@ void CLRumble_Shutdown(int *self)
 	CLRumble_FreeEffects((int)clu_rumble);
 	menu = *self;
 	if (menu != 0) {
-		FUN_0002f3e0(menu);
-		FUN_0004c110(menu);
+		FUN_0002f3e0((struct CTweakMenu *)menu);
+		FUN_0004c110((void *)menu);
 	}
 	*self = 0;
 }

@@ -17,7 +17,7 @@ void AnimTex_Advance(CAnimTex *self, float scale, int apply)
 {
 	self->frame = DAT_0028fda8 * self->speed * scale + self->frame;
 	if (apply != 0)
-		FUN_00041600(self->texture, CLF_FTOL(self->frame));
+		FUN_00041600((struct bdTexture *)self->texture, CLF_FTOL(self->frame));
 }
 
 /* 0x00082c20  ClassLib (gap)
@@ -29,7 +29,7 @@ void AnimTex_AdvanceList(CLFList *list, float scale, int apply)
 	for (t = CLF_ListNext(list, NULL); t != NULL; t = CLF_ListNext(list, t)) {
 		t->frame = DAT_0028fda8 * t->speed * scale + t->frame;
 		if (apply != 0)
-			FUN_00041600(t->texture, CLF_FTOL(t->frame));
+			FUN_00041600((struct bdTexture *)t->texture, CLF_FTOL(t->frame));
 	}
 }
 
@@ -40,7 +40,7 @@ void AnimTex_ApplyList(CLFList *list)
 	CAnimTex *t;
 
 	for (t = CLF_ListNext(list, NULL); t != NULL; t = CLF_ListNext(list, t))
-		FUN_00041600(t->texture, CLF_FTOL(t->frame));
+		FUN_00041600((struct bdTexture *)t->texture, CLF_FTOL(t->frame));
 }
 
 /* 0x00082cc0  ClassLib (gap)
@@ -53,7 +53,7 @@ void AnimTex_SetFrameList(CLFList *list, int frame)
 	if (t != NULL) {
 		do {
 			t->frame = (float)frame;
-			FUN_00041600(t->texture, frame);
+			FUN_00041600((struct bdTexture *)t->texture, frame);
 			t = CLF_ListNext(list, t);
 		} while (t != NULL);
 	}
@@ -253,7 +253,7 @@ void PointSprites_Begin(CPointSprites *self)
 	FUN_000416c0(1, 0);
 	FUN_000416c0(2, 0);
 	if (self->texture != 0)
-		FUN_000416c0(3, self->texture);
+		FUN_000416c0(3, (struct bdTexture *)self->texture);
 	FUN_00044b00(3, 0, 0);
 	FUN_00044b00(4, 0, 0);
 	switch (self->blendMode) {
@@ -320,7 +320,7 @@ void Texture_SetFrameAtTime(int tex, int time, int first)
 				if (count <= first)
 					return;
 			}
-			FUN_00041580(tex, first);
+			FUN_00041580((struct bdTexture *)tex, first);
 		}
 	}
 }
@@ -333,7 +333,7 @@ void AnimSwitch_Set(int *self, int on)
 	if (self != NULL) {
 		if (on == 0) {
 			if (*self == 1) {
-				FUN_00038190(self[6], *(int *)(self[6] + 0x134), 1, 0);
+				FUN_00038190((void *)self[6], (struct BActorNode *)(*(int *)(self[6] + 0x134)), 1, 0);
 				*self = 0;
 			}
 		} else if (*self == 0) {
@@ -384,7 +384,7 @@ class) */
 	FUN_000af690((void *)AI_ACTOR(ai), (anim), (loop), (queue), (speed), (blend), (sync))
 #define AI_Sample(ai, kind) \
 	FUN_00071770((char)DAT_002baed4[AI_SLOT(ai) * 10], (kind), NULL, DAT_00293928, 0, -1, 0)
-#define AI_Speech(id) FUN_00133ee0(DAT_003022c8, (id), 0xff, 0)
+#define AI_Speech(id) FUN_00133ee0((void *)DAT_003022c8, (id), 0xff, 0)
 #define AI_VCALL4(ai) (((void (*)(void *))(*(void ***)(ai))[4])(ai))
 
 /* other modules' data */
