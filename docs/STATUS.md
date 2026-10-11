@@ -179,9 +179,10 @@ tests above.
   FUN_001c2080.
 - `docs/LIBRARY_CALLS.md` lists 53 library functions as unidentified. The game runs without a
   name for them.
-- The build hides two warning classes that clang 22 makes errors in C:
-  `-Wno-int-conversion` and `-Wno-incompatible-function-pointer-types` (over 400 errors
-  without them). Real bugs in these classes do not show in the build.
+- `-Wint-conversion` and `-Wincompatible-function-pointer-types` are errors again in the game
+  build (audit: `docs/INTEGRATION_NOTES.md`, "int/pointer conversion audit"). The game flags
+  still hide `-Wincompatible-pointer-types` (264 hits: mismatched object pointer types, not
+  audited), and the platform layer and musl compile with `-w`.
 - The `.app` has an ad-hoc signature and no notarization (that needs the owner's Apple
   Developer account; steps in `docs/BUILD.md`). It bundles Homebrew's FFmpeg, which is GPL
   and links unused encoders (18 MB of the 47 MB in `Frameworks`).
@@ -208,8 +209,9 @@ tests above.
 2. Do the checks that need a person: listen to the sound in a tournament, play with a physical
    Xbox-style gamepad (buttons, sticks, rumble, unplug message), start the `.app` from the
    Finder and pick the disc image in its dialog.
-3. Run the `-Wint-conversion` and `-Wincompatible-function-pointer-types` audit as a separate
-   pass over the game modules, as round 2 did, and fix the real mismatches.
+3. Done: the `-Wint-conversion` and `-Wincompatible-function-pointer-types` audit (774 hits
+   to 0, no real bug found; both are errors now). Open: audit the 264
+   `-Wincompatible-pointer-types` hits the same way.
 4. Run a full 6-stage tournament and Minigame Frenzy at the current commit (the last ones ran
    before the draw-overhead and input changes). Add a long tournament test under a new ctest
    label if its run time is acceptable.

@@ -213,9 +213,13 @@ add_custom_target(game_decls DEPENDS "${GEN}/of_decls.h")
 
 # Game/engine code: the platform flags (so a file may include "xtl.h" for XDK types) plus
 # of_game.h. Warnings stay on, except the ones that Ghidra-shaped code triggers everywhere.
+# int<->pointer conversions and function-pointer type mismatches are errors (the audit in
+# docs/INTEGRATION_NOTES.md made all of them explicit). -Wno-incompatible-pointer-types also
+# turns off its subgroup incompatible-function-pointer-types, so the -Werror= comes after it.
 set(GAME_FLAGS ${GUEST_CODE_FLAGS} -std=gnu11 -D_GNU_SOURCE -DHALO_LINUX_PLATFORM_LAYER
     -DHALO_ARM64_GUEST=1 -DOPENFRENZY_GUEST=1 -DOPENFRENZY_GAME=1
-    -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-incompatible-function-pointer-types
+    -Wno-incompatible-pointer-types
+    -Werror=int-conversion -Werror=incompatible-function-pointer-types
     -Wno-pointer-sign -Wno-parentheses -Wno-unused-value -Wno-microsoft-anon-tag
     -Wno-nonportable-include-path -Wno-ignored-pragmas
     "SHELL:-include ${SRC}/runtime/include/linux/halo_linux_prefix.h"

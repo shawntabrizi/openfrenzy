@@ -653,6 +653,72 @@ The guest image is the same as before: identical symbol table and `.text` bytes 
   is on by default; `-Wimplicit-int-float-conversion` and `-Wfloat-conversion` are not on in
   the build (nothing turns them off; clang does not enable them without a flag).
 
+### int/pointer conversion audit (fix-warnings)
+
+`GAME_FLAGS` hid `-Wint-conversion` and `-Wincompatible-function-pointer-types`. Method: every
+game, engine and platform source of `openfrenzy_guest.elf` (445 units; musl too) was compiled
+again with `-fsyntax-only -ferror-limit=0` and the two classes as warnings (`-w` removed),
+with clang's source ranges and "passing argument to parameter" notes.
+
+| Class | Hits before | After |
+|---|---|---|
+| `-Wint-conversion`, integer to pointer | 663 | 0 |
+| `-Wint-conversion`, pointer to integer | 111 | 0 |
+| `-Wincompatible-function-pointer-types` | 0 | 0 |
+
+By module (before): classlib_ui 263, core_modes_a 181, meta_a 118, classlib_fx 63, meta_b 41,
+demolition_c 35, demolition_b 34, mousewhack 26, hopper 4, foxhunt 3, carryon_a 2,
+bumpercars_a 2, drillers 1, demolition_d 1. The platform modules and musl had no hits.
+The function-pointer class had no hits because the code always casts function pointers
+explicitly (`(void *)FUN_x`, `((T (*)(...))FUN_x)(...)`); clang does not check explicit casts.
+
+Result: **no real bug**. Every hit is the same 32-bit value on both sides (ILP32): an `int`
+local, field or `OV_I`/`MA_I32` read that holds a pointer, given to a typed `.decls`
+prototype, or a typed result (`bLoadResource`, `baInitActorInstance`, ...) stored in an `int`.
+Checks made for the hits that could mean something else:
+
+- `CDemolition_FragBomb_Init(b, self)`: the second parameter is `int type` but gets the bomb
+  system. The original does the same (0x000f3c05 `push edi` = the system, `this` = the new bomb),
+  and the callee stores it at +0x4450. Only the parameter name is wrong.
+- `CLRumble_Pause(0x002ed324)` gets the address (original `mov ecx, 0x2ed324`);
+  `CLHud_UpdateCountdown(DAT_002ecfac)` gets the value (`mov ecx, [0x2ecfac]` at the 12 call
+  sites checked).
+- `FoxHunt_SharkView(p, ...)`: `p` is the pointer read at +0x1c8, as in Ghidra 0x0012a190; the
+  callee compares it with list entries.
+- `Debris_Add((int)(DAT_00291600 + 0x160))`: `DAT_00291600` is `char[]`, so the offsets are bytes
+  (0x00291760 BLEND_SMOKE, 0x002917b8 BLEND_SMOKE_NOGRAV, as in Ghidra 0x000b8d20).
+- `FUN_000c39b0(DAT_002f6ba0, tables, ...)`: the original passes `&DAT_002f6ba0`, the array address.
+- `DcShape_Contains((int)zone, ...)`, `Platform_Smash(hit)`, `MetaPlatform_MakeDust(hit)`,
+  `ai[0xc]` / `MA_CHAR(ai)` to `Actor_PlayAnim`: the object pointer the callee reads.
+
+Fixes (no prototype was wrong in a way that changes a value, so no `.decls` line changed):
+
+- 11 macro definitions whose body did the conversion (83 hits): `AI_Speech`, `CL_DrawText`
+  (COverlay.c, unplaced_pause.c), `MA_CHAR_VOICE` (unplaced_player.c, unplaced_hopper.c),
+  `MA_SET_STATE`, `MA_VOICE`, `MA_CHAR_ANIM`, `CMA_Delete`, `CMA_PlaySample`,
+  `CMA_VectorShape_dtor`. Their `(int)` casts became the parameter type.
+- 691 call sites and assignments: an explicit cast to the type clang names (an existing `(int)` or
+  `(undefined4)` cast is replaced, else the expression is wrapped). A script made these edits
+  from clang's source ranges, so each cast covers exactly the converted expression.
+- `port/guest/CMakeLists.txt`: `-Wno-int-conversion` and `-Wno-incompatible-function-pointer-types`
+  removed; `-Werror=int-conversion -Werror=incompatible-function-pointer-types` added after
+  `-Wno-incompatible-pointer-types` (that flag also turns off its subgroup
+  `incompatible-function-pointer-types`, so the order is important).
+
+Proof that the code did not change: the LLVM IR that guest_cc.py leaves for each game object
+(`*.c.ll`, before the rebase pass) is byte-identical before and after for 414 of 415 objects.
+The one difference (CDemolition_LiftShaft.c) is the place of one `ptrtoint`, the same value.
+
+Verified (build-fix-warnings): clean build with the new flags (230 warning lines, as before),
+`ctest -LE gameplay` 6/6, `ctest -L gameplay -j8` 13/13, all 31 `src/*/tests/run_tests.sh` pass.
+
+Still hidden: `-Wincompatible-pointer-types` (264 hits in the game modules: object pointers of
+different types, for example `undefined4 *` given for `float *`; not audited), the other
+`-Wno-` flags of `GAME_FLAGS`, and all warnings of the platform layer and musl (`-w`).
+Explicit function casts whose parameter types differ from the callee are outside these
+classes: `scripts/check_call_arity.py` and `scripts/check_float_abi.py` cover them for direct calls, and
+calls through vtables are still not covered.
+
 ### Gamepad path with virtual pads (fix-gamepad-virtual-test, round 6)
 
 Until now only scripted pad states (`OPENFRENZY_DEBUG_TEST_INPUT`, which skips SDL) and pushed
