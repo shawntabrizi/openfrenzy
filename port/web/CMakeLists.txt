@@ -104,10 +104,31 @@ endforeach()
 list(FILTER _platform_sources EXCLUDE REGEX "/src/runtime/(of_boot|of_main)\\.c$")
 list(APPEND _platform_sources "${GEN}/xgpu_smaa.c"
      "${WEB}/src/web_gl_host.c" "${WEB}/src/web_memory_watch.c" "${WEB}/src/web_frame.c"
-     "${WEB}/src/web_bink.c" "${WEB}/src/web_icall.c")
+     "${WEB}/src/web_icall.c")
 add_library(ofplatform_web STATIC ${_platform_sources})
 add_dependencies(ofplatform_web web_generated)
 target_compile_options(ofplatform_web PRIVATE ${PLATFORM_FLAGS})
+
+# Bink videos: port/macos/host/host_bink.c as it is (web_bink.c), on an LGPL FFmpeg built for wasm
+# (port/web/ffmpeg.cmake). Off: every BinkOpen fails and the game skips its videos.
+option(OPENFRENZY_WEB_BINK_FFMPEG "Play Bink videos with FFmpeg built for WebAssembly" ON)
+set(_bink_ffmpeg 0)
+set(_ffmpeg_libs)
+if(OPENFRENZY_WEB_BINK_FFMPEG)
+  include("${WEB}/ffmpeg.cmake")
+  openfrenzy_web_ffmpeg()
+  set(_bink_ffmpeg 1)
+  foreach(_lib avformat avcodec swscale avutil)
+    list(APPEND _ffmpeg_libs "${OPENFRENZY_WEB_FFMPEG_DIR}/lib/lib${_lib}.a")
+  endforeach()
+  message(STATUS "Bink video (web): FFmpeg in ${OPENFRENZY_WEB_FFMPEG_DIR}")
+endif()
+add_library(web_bink STATIC "${WEB}/src/web_bink.c")
+target_compile_options(web_bink PRIVATE ${WEB_ABI_FLAGS} -std=gnu11 -D_GNU_SOURCE -w
+  -DOPENFRENZY_BINK_FFMPEG=${_bink_ffmpeg})
+if(OPENFRENZY_WEB_BINK_FFMPEG)
+  target_include_directories(web_bink PRIVATE "${OPENFRENZY_WEB_FFMPEG_DIR}/include")
+endif()
 
 # the C library's side (posix.h, the page's entry point): Emscripten's POSIX only
 add_library(web_runtime STATIC "${WEB}/src/posix_files.c" "${WEB}/src/web_main.c" "${WEB}/src/host_watch_hash.c")
@@ -171,7 +192,8 @@ set(_pre_js "${WEB}/src/web_pre.js")
 add_executable(openfrenzy_web ${_game_sources} "${GEN}/of_crt_init.c" "${SRC}/runtime/of_boot.c")
 add_dependencies(openfrenzy_web web_generated)
 target_compile_options(openfrenzy_web PRIVATE ${GAME_FLAGS})
-target_link_libraries(openfrenzy_web PRIVATE "-Wl,--whole-archive" ofplatform_web "-Wl,--no-whole-archive" web_runtime)
+target_link_libraries(openfrenzy_web PRIVATE "-Wl,--whole-archive" ofplatform_web "-Wl,--no-whole-archive" web_runtime
+  web_bink ${_ffmpeg_libs})
 set(_assertions 0)
 if(OPENFRENZY_WEB_ASSERTIONS)
   set(_assertions 1)

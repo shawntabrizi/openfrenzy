@@ -10,8 +10,8 @@ site (OPFS). No game data is in git or in the build output.
 |---|---|
 | M1 Toolchain: Emscripten, CMake preset, platform layer and game link to `.wasm` | Done |
 | M2 Boot in a browser | Done: title screen at 60 fps in Chrome (headless, Metal GPU) |
-| M3 Play: menus, input, audio, saves | Not started |
-| M4 Bink videos | Not started |
+| M3 Play: menus, input, audio, saves | Done: board path to a minigame's `countdown PLAYING` with real key events; scripted Gamepad API pad drives the menus; sound in the Web Audio graph; the game's files persist in OPFS |
+| M4 Bink videos | Done: MICROSOFT.bik, BLITZ60.bik, ATTRACT.bik play to the last frame, with sound |
 | M5 Quality: settings, 60 fps, browsers | Not started |
 | M6 Tests and docs | Not started |
 
@@ -26,6 +26,24 @@ once (about 1 s from a local SSD in Chrome). Boot reaches "Press START to play" 
 Two web-only renderer changes were needed: each vertex or index upload goes into a buffer
 object of its own (ANGLE on Metal copied the whole 16 MB stream buffer for each partial write:
 4 fps), and immediate-mode vertices are planar (WebGL's stride limit is 255 bytes).
+
+M3: the native board recipe (`tests/run_game_check.py`), sent as real key events through the
+page (Enter is START, Space is A): title, main menu, game size, character select, Map, minigame
+intro, `countdown PLAYING` (56 s), score screen (120 s). Frames: 60 fps for most seconds, short
+dips to 53-58 fps, and slower seconds while a package loads. Gamepad: `drive.mjs --pad` puts a
+scripted standard-mapping pad behind `navigator.getGamepads`; SDL reads it and its START and A
+presses drive the menus to character select (no key event). Sound: an analyser on the Web
+Audio output reads peak 0.1-0.2 during the menu music. Saves: Fuzion Frenzy writes no save
+games; its only file (`z:\debugLog.txt`, `saves/z/debugLog.txt`) is in OPFS after a run and
+stays there. Three bugs that the native build hid were fixed in the game code: 9 functions
+were decompiled as `void` although their callers use the value the original leaves in eax or
+st0 (`CLLoading_AddPackage` returns the package buffer: without it the background loader never
+started on the web).
+
+M4: `port/web/ffmpeg.cmake` builds the native build's LGPL, Bink-only FFmpeg 9.0.2 with
+Emscripten (static, no assembly, about 1 minute, once, into `deps/`), and
+`port/web/src/web_bink.c` compiles `port/macos/host/host_bink.c` unchanged. The module grows
+from 4.2 MB to 5.6 MB.
 
 ## Design (summary; details in docs/ARCHITECTURE.md section 18)
 
