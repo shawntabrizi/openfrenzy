@@ -17,7 +17,7 @@ decompiled C. The XDK libraries (D3D8, DirectSound, XGraphics, XPP) are replaced
 platform layer adapted from OpenCE. Boot videos, attract mode, full 6-stage tournaments,
 Minigame Frenzy, Options and all 45 retail minigame variations work. Play runs at about 60 fps.
 No port fault is open. The main gaps are checks on real hardware (sound heard by a person, a
-physical gamepad) and one toolchain bug that changes some string literals (see "Known bugs").
+physical gamepad).
 
 ## Build and run on this Mac
 
@@ -160,14 +160,15 @@ tests above.
 
 ## Known bugs
 
-1. **Toolchain drops a leading `_` from string literals.** `port/macos/tools/asm_convert.py`
-   changes a quoted `.asciz` string `"_stricmp"` to `"stricmp"`. The runtime test
-   `test_toolchain_strings` fails for this reason (listed in
-   `src/runtime/tests/known_failures.txt`). Checked for this update: the guest image holds
-   `FileCacheRead`, `PadChange`, `MemCardChange`, `AudioBkgLoad1/2` where the source has
-   `"_FileCacheRead"` and so on. These are event names that the game makes and reads with the
-   same changed literal, so no fault was seen. A literal that is compared with text from the
-   disc, or that is a path or format, would be wrong. Not fixed.
+1. Fixed: **Toolchain dropped a leading `_` from string literals.**
+   `port/macos/tools/asm_convert.py` renamed quoted `.ascii`/`.asciz` operands as if they
+   were symbols (`"_stricmp"` became `"stricmp"`), and it split a string at an escaped quote
+   (`\"`). Now the string directives keep their quoted operands as written. 23 literals in
+   14 objects change back to the source text: the game's event names (`_FileCacheRead` and
+   so on), the Rowing suffixes `_a`-`_d`, the d3d8 shader dump name `_lit`, two musl strings,
+   and three musl tables (`iswalpha`, `iswpunct`, `iconv`) that had lost bytes.
+   `test_toolchain_strings` passes. Details: `docs/INTEGRATION_NOTES.md`, "String literals
+   in asm_convert.py".
 2. Hopper, direct launch only: a token pickup after the debug round restart faulted once. The
    original code does the same; the board never restarts the round.
 
@@ -203,9 +204,7 @@ tests above.
 
 ## Next steps (in priority order)
 
-1. Fix the `asm_convert.py` leading-underscore bug (Known bugs 1). Then remove
-   `test_toolchain_strings` from `known_failures.txt`, rebuild, and run all ctest labels and
-   module tests. It silently changes game data in the image.
+1. Done: the `asm_convert.py` leading-underscore bug (Known bugs 1).
 2. Do the checks that need a person: listen to the sound in a tournament, play with a physical
    Xbox-style gamepad (buttons, sticks, rumble, unplug message), start the `.app` from the
    Finder and pick the disc image in its dialog.

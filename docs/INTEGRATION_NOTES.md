@@ -864,6 +864,46 @@ Correctness:
   and the draw-uniform inputs are built and compared on each draw), setup_streams about 11 %
   (the vertex upload into the stream buffer), and memcmp 5 %.
 
+## String literals in asm_convert.py (fix-asm-string-underscore)
+
+Fixes STATUS.md Known bug 1.
+
+- Cause: `asm_convert.py` renames Darwin symbol names (it drops one leading `_`). It sent the
+  operands of every directive through the same renaming, so a quoted `.asciz "_stricmp"` lost
+  its `_`. Its quoted-token pattern also stopped at an escaped quote (`\"`). The text after
+  it was then read as symbols: a `_` at the start of a word in the string was dropped too.
+- Fix: one quoted-token pattern with backslash escapes, for the label match and the
+  operands. `.ascii`, `.asciz`, `.string` and `.byte` keep each quoted operand as written;
+  only the text between the strings goes through the renaming. Symbol names (labels,
+  `.globl`, `.set`, relocations, quoted symbols) change as before.
+- Check: for each of the 1350 guest objects, the `.darwin.s` file was converted again with
+  the old script and compared with the new `.elf.s`. 23 lines in 14 objects differ, all
+  `.ascii`/`.asciz`. No other line changes. The changed literals (now as in the source):
+  - Event names: `_FileCacheRead`, `_FileCacheWrite` (bKernel/xbCache.c), `_PadChange`,
+    `_MemCardChange` (xbVideo.c, unplaced_input.c, BINPUT/input.c, CGameMode_Root.c),
+    `_AudioBkgLoad1`, `_AudioBkgLoad2` (xbAudioStream.c, xbAudioStreamWMA.c). Each name was
+    changed the same way at every use, so the events matched before too.
+  - Rowing (CRowing_World.c): the shape name suffixes `_a`, `_b`, `_c`, `_d` of
+    `map\multiline.ase`. `RowAseImport_ReadShapes` finds a node when its NODE_NAME line
+    contains both texts (`strstr`). Before the fix the texts were `a`-`d`: lanes `a` and `c`
+    took every `raceline` node, and lanes `b` and `d` every `endbox` node. Only the variants
+    with `(g_RowVariant & 0xc) == 4` read this file. No test runs Rowing, so this change is
+    not verified in play.
+  - d3d8_gl.c: the `_lit` suffix of a dumped vertex shader file name
+    (only with the `debug.gpu_dump_shaders` setting).
+  - musl: `iswalpha` lost 6 bytes of its table, `iswpunct` 1 byte, and the `iconv` charmap
+    table 1 byte (a `_` after an escaped quote). Lookups after those offsets read shifted
+    data (wide-character classes, legacy charmap conversions). Also a `_` in `towctrans.c` and
+    `catopen.c` strings.
+- `llvm-strings` of the new `openfrenzy_guest.elf` holds all 15 different literals in `src/`
+  that start with `_` (tests not counted). No code in `src/` or `port/` uses the stripped
+  names (`"FileCacheRead"` and so on).
+- `test_toolchain_strings` is no longer in `src/runtime/tests/known_failures.txt`.
+- Tests (clean build `build-fix-underscore` of 5238003 plus this change): ctest `-LE
+  gameplay` 6/6, ctest `-L gameplay -j8` 13/13 (240 s), all 31 `src/*/tests/run_tests.sh`
+  exit 0 (runtime 8 passed, 0 failed, 0 known failures; d3d8 skips its drawing tests
+  without a window).
+
 ## Audio levels (integration round 3, 2026-10-10)
 
 - New: `OPENFRENZY_DSOUND_CAPTURE=<path>` (WAV of the final output, docs/BUILD.md) and

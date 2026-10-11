@@ -16,7 +16,14 @@ Usage: android_asm_convert.py input.s output.s
 import re
 import sys
 
-IDENT = re.compile(r'"[^"]*"|[A-Za-z_.$][\w.$]*')
+# a quoted token, with backslash escapes such as \" inside it
+QUOTED = r'"(?:[^"\\]|\\.)*"'
+IDENT = re.compile(QUOTED + r'|[A-Za-z_.$][\w.$]*')
+LABEL = re.compile(r'^([A-Za-z_.$][\w.$]*|' + QUOTED + r'):(.*)$')
+
+# openfrenzy: directives whose quoted operands are string data, not symbol names. The
+# symbol renaming (Darwin's leading '_') must not change them: "_stricmp" stays "_stricmp".
+STRING_DIRECTIVES = {".ascii", ".asciz", ".string", ".byte"}
 
 DROP_DIRECTIVES = {
     ".subsections_via_symbols", ".build_version", ".watchos_version_min",
@@ -72,7 +79,7 @@ class Converter:
         self.in_dropped_section = False
         for line in lines:
             text = strip_comment(line).strip()
-            m = re.match(r'^([A-Za-z_.$][\w.$]*|"[^"]*"):', text)
+            m = LABEL.match(text)
             if m and m.group(1)[0] in "lL":
                 self.local_labels.add(m.group(1))
 
@@ -106,6 +113,11 @@ class Converter:
         # rename identifiers outside :lo12: markers
         parts = re.split(r'(:lo12:)', text)
         return "".join(p if p == ":lo12:" else IDENT.sub(repl, p) for p in parts)
+
+    def data_operands(self, text: str) -> str:
+        # string literals stay as written; only the parts between them can hold symbols
+        parts = re.split("(" + QUOTED + ")", text)
+        return "".join(p if p.startswith('"') else self.operands(p) for p in parts)
 
     def emit(self, s: str):
         self.out.append(s)
@@ -154,7 +166,7 @@ class Converter:
         if not stripped:
             return
         # labels
-        m = re.match(r'^([A-Za-z_.$][\w.$]*|"[^"]*"):(.*)$', stripped)
+        m = LABEL.match(stripped)
         if m:
             if not self.in_dropped_section:
                 self.emit(self.sym(m.group(1)) + ":")
@@ -217,6 +229,9 @@ class Converter:
             return
         if op == ".align":
             self.emit(f"\t.p2align {args}")
+            return
+        if op in STRING_DIRECTIVES:
+            self.emit(f"\t{op} {self.data_operands(args)}")
             return
         if op.startswith("."):
             self.emit(f"\t{op} {self.operands(args)}" if args else f"\t{op}")

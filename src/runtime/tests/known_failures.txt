@@ -1,4 +1,3 @@
 # Tests that fail because of a bug outside src/runtime. run_tests.sh reports them as XFAIL
 # (not counted as failures) and as XPASS once they pass: then remove the line.
 # name                     owner   reason
-test_toolchain_strings     architect  port/macos/tools/asm_convert.py drops the leading '_' of quoted .asciz strings ("_stricmp" -> "stricmp"): every guest string literal that starts with '_' is changed
