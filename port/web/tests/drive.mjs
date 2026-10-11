@@ -14,7 +14,9 @@
 //
 // Exit status: 0, or 1 if the game stopped (the page's fatal panel), or 2 on a driver error.
 // Playwright is not in the repository: install it into tools/web-test (git-ignored):
-//   mkdir -p tools/web-test && cd tools/web-test && npm init -y && npm install playwright@1.56.1
+//   mkdir -p tools/web-test && cd tools/web-test && npm init -y && npm install playwright@1.58.2
+//   (and puppeteer-core@24.10.0 for --browser firefox-system; Playwright 1.62.0 in
+//   tools/web-test-webkit for --browser webkit, whose WebKit build is 26.5)
 
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -23,11 +25,81 @@ import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../..');
-const require = createRequire(path.join(root, 'tools/web-test/package.json'));
-const playwright = require('playwright');
+// (WebKit: tools/web-test-webkit, a Playwright whose WebKit build is installed, when it exists)
+const webkitDir = path.join(root, 'tools/web-test-webkit/package.json');
+const require = createRequire(process.argv.includes('webkit') && fs.existsSync(webkitDir) ? webkitDir :
+  path.join(root, 'tools/web-test/package.json'));
+let playwright;
+try {
+  playwright = require('playwright');
+} catch {
+  // (exit 77: ctest reports the test as skipped, docs/WEB.md "Tests")
+  console.log('drive: SKIP: Playwright is not installed in tools/web-test (docs/WEB.md "Tests")');
+  process.exit(77);
+}
+
+// The browser and its page, behind the few calls this driver makes. chrome (the installed
+// Chrome), firefox and webkit go through Playwright (firefox and webkit: Playwright's own
+// builds); firefox-system is the installed Firefox, through Puppeteer and WebDriver BiDi (a
+// stock Firefox has no Playwright protocol).
+async function openBrowser(kind, profile, headless, viewport) {
+  if (kind === 'firefox-system') {
+    const puppeteer = require('puppeteer-core');
+    const browser = await puppeteer.launch({
+      browser: 'firefox', headless, userDataDir: profile,
+      executablePath: process.env.OPENFRENZY_FIREFOX || '/Applications/Firefox.app/Contents/MacOS/firefox',
+      defaultViewport: viewport,
+      extraPrefsFirefox: { 'media.autoplay.default': 0, 'media.autoplay.blocking_policy': 0 },
+    });
+    const page = (await browser.pages())[0] || await browser.newPage();
+    return {
+      version: await browser.version(),
+      close: () => browser.close(),
+      addInitScript: (fn) => page.evaluateOnNewDocument(fn),
+      on: (event, handler) => page.on(event === 'crash' ? 'error' : event, handler),
+      goto: (url) => page.goto(url),
+      waitForFunction: (fn, arg, options) => page.waitForFunction(fn, options || {}, arg),
+      $$eval: (selector, fn) => page.$$eval(selector, fn),
+      textContent: (selector) => page.$eval(selector, (element) => element.textContent),
+      setInputFiles: async (selector, file) => (await page.$(selector)).uploadFile(file),
+      click: (selector) => page.click(selector),
+      screenshot: (options) => page.screenshot(options),
+      // (BiDi names the space bar by its character)
+      keyboard: {
+        down: (key) => page.keyboard.down(key === 'Space' ? ' ' : key),
+        up: (key) => page.keyboard.up(key === 'Space' ? ' ' : key),
+      },
+      evaluate: (fn, arg) => page.evaluate(fn, arg),
+    };
+  }
+  const type = kind === 'firefox' ? 'firefox' : kind === 'webkit' ? 'webkit' : 'chromium';
+  const launch = { headless, viewport };
+  if (type === 'chromium') {
+    launch.channel = 'chrome';
+    launch.args = ['--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'];
+  }
+  const context = await playwright[type].launchPersistentContext(profile, launch);
+  const page = context.pages()[0] || await context.newPage();
+  return {
+    version: context.browser() ? context.browser().version() : kind,
+    close: () => context.close(),
+    addInitScript: (fn) => page.addInitScript(fn),
+    on: (event, handler) => page.on(event, handler),
+    goto: (url) => page.goto(url),
+    waitForFunction: (fn, arg, options) => page.waitForFunction(fn, arg, options),
+    $$eval: (selector, fn) => page.$$eval(selector, fn),
+    textContent: (selector) => page.textContent(selector),
+    setInputFiles: (selector, file) => page.setInputFiles(selector, file),
+    click: (selector) => page.click(selector),
+    screenshot: (options) => page.screenshot(options),
+    keyboard: page.keyboard,
+    evaluate: (fn, arg) => page.evaluate(fn, arg),
+  };
+}
 
 function options(argv) {
-  const out = { site: 'build-web/site', seconds: 60, shots: [], set: [], keys: [], pad: null, browser: 'chrome', port: 8765, headed: false };
+  const out = { site: 'build-web/site', seconds: 60, shots: [], set: [], keys: [], pad: null, browser: 'chrome', port: 8765,
+    headed: false, expect: [], forbid: [], query: [], viewport: { width: 1280, height: 960 } };
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i];
     const value = () => argv[++i];
@@ -39,10 +111,19 @@ function options(argv) {
     else if (name === '--set') out.set.push(value());
     else if (name === '--keys') out.keys.push(value());
     else if (name === '--pad') out.pad = value();
+    else if (name === '--pull') out.pull = value();
     else if (name === '--browser') out.browser = value();
     else if (name === '--port') out.port = Number(value());
     else if (name === '--headed') out.headed = true;
-    else if (name === '--expect') out.expect = value();
+    else if (name === '--expect') out.expect.push(value());
+    else if (name === '--forbid') out.forbid.push(value());
+    else if (name === '--profile') out.profile = value();
+    else if (name === '--min-fps') out.minFps = Number(value());
+    else if (name === '--query') out.query.push(value());
+    else if (name === '--viewport') {
+      const [width, height] = value().split('x').map(Number);
+      out.viewport = { width, height };
+    }
     else throw new Error('unknown option ' + name);
   }
   if (!out.out) throw new Error('--out is needed');
@@ -50,6 +131,10 @@ function options(argv) {
 }
 
 const opts = options(process.argv.slice(2));
+if (opts.iso && !fs.existsSync(opts.iso)) {
+  console.log(`drive: SKIP: no disc image at ${opts.iso} (the player's own; never in the repository)`);
+  process.exit(77);
+}
 fs.mkdirSync(opts.out, { recursive: true });
 const consolePath = path.join(opts.out, 'console.log');
 const consoleFile = fs.createWriteStream(consolePath);
@@ -75,17 +160,10 @@ const hardLimit = setTimeout(() => {
 
 try {
   await sleep(800);
-  const kind = opts.browser === 'firefox' ? 'firefox' : opts.browser === 'webkit' ? 'webkit' : 'chromium';
-  const launch = {
-    headless: !opts.headed,
-    viewport: { width: 1280, height: 960 },
-  };
-  if (kind === 'chromium') {
-    launch.channel = 'chrome';
-    launch.args = ['--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'];
-  }
-  context = await playwright[kind].launchPersistentContext(path.join(root, `tools/web-test/profile-${opts.browser}`), launch);
-  const page = context.pages()[0] || await context.newPage();
+  context = await openBrowser(opts.browser, path.resolve(opts.profile || path.join(root, `tools/web-test/profile-${opts.browser}`)),
+    !opts.headed, opts.viewport);
+  const page = context;
+  record('driver: browser ' + opts.browser + ' ' + context.version);
   // Sound check: every Web Audio node connected to the speakers is also connected to an
   // analyser, whose level the driver logs ("audio: peak P rms R, context C"). Muted headless
   // output does not change what the graph produces.
@@ -135,7 +213,8 @@ try {
   page.on('console', (message) => record(message.text()));
   page.on('pageerror', (error) => record('pageerror: ' + error.message));
   page.on('crash', () => record('driver: the page crashed'));
-  const query = opts.set.map((value) => 'set=' + encodeURIComponent(value)).join('&');
+  // --set NAME=value: ?set=; --query WORD: a page parameter of its own (asyncify, for example)
+  const query = [...opts.set.map((value) => 'set=' + encodeURIComponent(value)), ...opts.query].join('&');
   await page.goto(`http://127.0.0.1:${opts.port}/${query ? '?' + query : ''}`);
   await page.waitForFunction(() => window.openfrenzyReady === true, null, { timeout: 60000 });
   const checks = await page.$$eval('#checks li', (items) => items.map((item) => `${item.className}: ${item.textContent}`));
@@ -226,13 +305,58 @@ try {
     return out;
   });
   record('storage: ' + files.join(', '));
-  if (opts.expect) {
-    const pattern = new RegExp(opts.expect);
-    if (!lines.some((line) => pattern.test(line))) {
-      record(`driver: expected a line matching /${opts.expect}/, found none`);
+  // --pull DIR: copy the files of an OPFS folder (the game's own screenshots, for example
+  // OPENFRENZY_DEBUG_SCREENSHOT_DIRECTORY=/data/saves/shots) into the run's folder
+  if (opts.pull) {
+    const pulled = await page.evaluate(async (folder) => {
+      let directory = await navigator.storage.getDirectory();
+      for (const part of folder.split('/').filter(Boolean)) directory = await directory.getDirectoryHandle(part);
+      const out = [];
+      for await (const [name, handle] of directory.entries()) {
+        if (handle.kind !== 'file') continue;
+        const bytes = new Uint8Array(await (await handle.getFile()).arrayBuffer());
+        let text = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) text += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        out.push([name, btoa(text)]);
+      }
+      return out;
+    }, opts.pull).catch((error) => { record('driver: pull failed: ' + error); return []; });
+    for (const [name, data] of pulled) fs.writeFileSync(path.join(opts.out, name), Buffer.from(data, 'base64'));
+    record(`driver: pulled ${pulled.length} files from ${opts.pull}`);
+  }
+  // --expect PATTERN (any number): each must match a line, in the order given;
+  // --forbid PATTERN (any number): none may match a line of the game's
+  let from = 0;
+  for (const expected of opts.expect) {
+    const pattern = new RegExp(expected);
+    const index = lines.findIndex((line, i) => i >= from && pattern.test(line));
+    if (index < 0) {
+      record(`driver: expected a line matching /${expected}/ (after line ${from}), found none`);
       status = 1;
     } else {
-      record(`driver: found /${opts.expect}/`);
+      record(`driver: found /${expected}/ at line ${index}`);
+      from = index + 1;
+    }
+  }
+  // --min-fps N: the seconds the game reports (web_frame.c, OPENFRENZY_WEB_FRAME_LOG=1), less
+  // the first 5 (start-up), are at N fps or more for 90 % of them
+  if (opts.minFps) {
+    const seconds = lines.map((line) => /web frame: (\d+) fps/.exec(line)).filter(Boolean).map((m) => Number(m[1])).slice(5);
+    const good = seconds.filter((fps) => fps >= opts.minFps).length;
+    const text = `${good} of ${seconds.length} seconds at ${opts.minFps} fps or more`;
+    if (!seconds.length || good < 0.9 * seconds.length) {
+      record('driver: too slow: ' + text);
+      status = 1;
+    } else {
+      record('driver: frame rate: ' + text);
+    }
+  }
+  for (const forbidden of opts.forbid) {
+    const pattern = new RegExp(forbidden);
+    const hit = lines.find((line) => pattern.test(line) && !line.includes('driver:'));
+    if (hit) {
+      record(`driver: forbidden /${forbidden}/: ${hit}`);
+      status = 1;
     }
   }
 } catch (error) {

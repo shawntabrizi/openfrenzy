@@ -12,7 +12,12 @@ port/web/CMakeLists.txt), whose canvas then fills the page.
   File System, which port/web/src/web_main.c mounts at /data.
 - Query parameters, for testing: ?set=NAME=value (any number) passes an environment variable
   to the game (the OPENFRENZY_* settings, docs/BUILD.md); ?play starts the game at once when
-  the disc image is there.
+  the disc image is there; ?asyncify loads the Asyncify build even where JSPI is. For browsers
+  that cannot be driven (Safari): ?image-url=/__disc imports the disc image from the local
+  server (scripts/web_serve.py --disc), and ?report posts the log lines to it (--report).
+- Two builds of the game: openfrenzy.js (JSPI, the default) and, when the site has it,
+  openfrenzy-asyncify.js for browsers without JSPI (Safari 26; port/web/CMakeLists.txt
+  OPENFRENZY_WEB_ASYNCIFY).
 */
 
 'use strict';
@@ -29,9 +34,13 @@ const WEB_FRAMES_SHOWN = 0, WEB_MOUSE_WANTED = 1, WEB_FPS = 2, WEB_LONGEST_FRAME
 
 const log = [];
 
+let reportQueue = params.has('report') ? [] : null;
+
 function logLine(text) {
   for (const line of String(text).replace(/\r/g, '').split('\n')) {
-    if (line !== '') log.push(line);
+    if (line === '') continue;
+    log.push(line);
+    if (reportQueue) reportQueue.push(`[${(performance.now() / 1000).toFixed(1)}] ${line}`);
   }
   if (log.length > MAXIMUM_LOG_LINES) log.splice(0, log.length - MAXIMUM_LOG_LINES);
 }
@@ -101,12 +110,31 @@ function memoryAvailable() {
   }
 }
 
+// the build to load: openfrenzy.js needs JSPI; openfrenzy-asyncify.js (if the site has it) not
+let gameScript = 'openfrenzy.js';
+
+async function siteHas(name) {
+  try {
+    return (await fetch(name, { method: 'HEAD', cache: 'no-store' })).ok;
+  } catch {
+    return false;
+  }
+}
+
 async function runChecks() {
   $('checks').textContent = '';
   addCheck('isolated', window.crossOriginIsolated, 'Threads (cross-origin isolation)',
     'the server must send the COOP and COEP headers (scripts/web_serve.py does)');
-  addCheck('jspi', typeof WebAssembly.Suspending === 'function', 'WebAssembly stack switching (JSPI)',
-    'Chrome or Edge 137 or later have it; docs/WEB.md lists the others');
+  const jspi = typeof WebAssembly.Suspending === 'function';
+  const fallback = await siteHas('openfrenzy-asyncify.js');
+  if ((!jspi || params.has('asyncify')) && fallback) {
+    gameScript = 'openfrenzy-asyncify.js';
+    addCheck('jspi', true, jspi ? 'The Asyncify build (?asyncify)' :
+      'No WebAssembly stack switching (JSPI): the Asyncify build, which is slower');
+  } else {
+    addCheck('jspi', jspi, 'WebAssembly stack switching (JSPI)',
+      'Chrome, Edge and Firefox have it; docs/WEB.md lists the others');
+  }
   addCheck('webgl', typeof OffscreenCanvas !== 'undefined' && await workerWebGL2(), 'WebGL 2 from a worker');
   addCheck('opfs', !!(navigator.storage && navigator.storage.getDirectory), "The site's private storage (OPFS)");
   addCheck('memory', window.crossOriginIsolated && memoryAvailable(), 'Memory for the game (2.1 GB)',
@@ -157,7 +185,16 @@ function setImporting(importing) {
   $('play').disabled = importing || !canPlay();
 }
 
-function importImage(file) {
+if (reportQueue) {
+  setInterval(() => {
+    if (!reportQueue.length) return;
+    const body = reportQueue.join('\n');
+    reportQueue = [];
+    fetch('/__report', { method: 'POST', body }).catch(() => {});
+  }, 1000);
+}
+
+function importImage(file, url) {
   const worker = new Worker('import-worker.js');
   $('import-progress').hidden = false;
   $('import-bar').style.width = '0';
@@ -190,7 +227,7 @@ function importImage(file) {
     setImporting(false);
     $('import-text').textContent = 'The copy failed: ' + event.message;
   };
-  worker.postMessage({ file });
+  worker.postMessage(url ? { url } : { file });
 }
 
 $('image-input').addEventListener('change', (event) => {
@@ -387,7 +424,8 @@ async function play() {
   canvas.focus();
   watchFrames();
   try {
-    await loadScript('openfrenzy.js');
+    logLine('page: loading ' + gameScript);
+    await loadScript(gameScript);
     const options = {
       canvas,
       arguments: gameArguments(),
@@ -480,6 +518,21 @@ $('canvas').addEventListener('contextmenu', (event) => event.preventDefault());
   }
   if (results.opfs) await refreshData();
   else updatePlay();
+  logLine('page: checks: ' + Object.entries(results).map(([k, v]) => `${k} ${v ? 'good' : 'bad'}`).join(', '));
+  // ?wipe (automated runs): remove everything this site keeps in this browser
+  if (params.has('wipe')) {
+    const root = await navigator.storage.getDirectory();
+    for await (const [name] of root.entries()) await root.removeEntry(name, { recursive: true }).catch(() => {});
+    logLine('page: wiped the storage');
+    await refreshData();
+    return;
+  }
   window.openfrenzyReady = true;
+  if (params.has('image-url') && !dataReady && /^\/__disc$/.test(params.get('image-url'))) {
+    const started = performance.now();
+    importImage(null, params.get('image-url'));
+    while (!dataReady) await new Promise((resolve) => setTimeout(resolve, 500));
+    logLine(`page: image imported in ${((performance.now() - started) / 1000).toFixed(1)} s`);
+  }
   if (params.has('play')) play();
 })();

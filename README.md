@@ -55,6 +55,17 @@ brew install python cmake ninja llvm@22 lld@22 sdl3
 cmake -S . -B build -G Ninja && cmake --build build && ctest --test-dir build
 ```
 
+## Web build
+
+The game also runs in a desktop browser as WebAssembly (Chrome, Firefox 157; not Safari 26.6),
+with your own disc image, which the page copies into the browser's storage once. See
+`docs/WEB.md`:
+
+```sh
+brew install emscripten
+cmake --preset web && cmake --build build-web && python3 -I scripts/web_serve.py build-web/site
+```
+
 ## Status
 
 Fuzion Frenzy plays natively on Apple Silicon macOS: boot videos, attract mode, full tournaments,

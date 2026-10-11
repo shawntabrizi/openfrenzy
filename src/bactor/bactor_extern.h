@@ -30,7 +30,7 @@ Owner: bactor. Other modules: do not rely on these names.
 /* 0x0004c480: allocation (size, file, line, flags): operator new */
 #define ba_bkAlloc ((void *(*)(unsigned int, const char *, int, int))FUN_0004c480)
 /* 0x0004c4b0: allocation filled with a byte (size, fill, file, line, flags) */
-#define ba_bkAllocFill ((void *(*)(unsigned int, int, const char *, int, int))FUN_0004c4b0)
+#define ba_bkAllocFill ((void *(*)(unsigned int, unsigned char, const char *, int, int))FUN_0004c4b0)
 /* 0x0004c420: named allocation (size, fill, file, line, flags, name) */
 #define ba_bkAllocNamedFill ((void *(*)(unsigned int, unsigned char, const char *, int, int, const char *))FUN_0004c420)
 /* 0x0004bf10: named allocation (size, file, line, flags, name, 0) */

@@ -14,6 +14,7 @@ cmake_minimum_required(VERSION 3.24)
 # cmake -S . -B build-web -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/web-toolchain.cmake
 if(CMAKE_TOOLCHAIN_FILE MATCHES "web-toolchain\\.cmake$")
   project(openfrenzy_web C)
+  enable_testing()
   add_subdirectory(port/web)
   return()
 endif()

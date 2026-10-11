@@ -40,6 +40,44 @@ function allZero(bytes) {
   return true;
 }
 
+// a disc image from a URL (?image-url=, automated runs: scripts/web_serve.py --disc), read once
+// in order from the response's stream (no check of the volume: the test gives the image)
+async function copyFromUrl(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url}: ${response.status}`);
+  const total = Number(response.headers.get('Content-Length') || 0);
+  const root = await navigator.storage.getDirectory();
+  await root.removeEntry('game.json').catch(() => {});
+  await root.removeEntry('game.xiso.iso').catch(() => {});
+  const handle = await root.getFileHandle('game.xiso.iso', { create: true });
+  const access = await handle.createSyncAccessHandle();
+  const reader = response.body.getReader();
+  let offset = 0;
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (!allZero(value)) access.write(value, { at: offset });
+      offset += value.length;
+      if ((offset & 0x7ffffff) < value.length) postMessage({ type: 'progress', done: offset, total });
+    }
+    access.truncate(offset);
+    access.flush();
+  } finally {
+    access.close();
+  }
+  const marker = await (await root.getFileHandle('game.json', { create: true })).createSyncAccessHandle();
+  try {
+    const text = new TextEncoder().encode(JSON.stringify({ name: url, size: offset, partition: 0, copied: new Date().toISOString() }));
+    marker.truncate(0);
+    marker.write(text, { at: 0 });
+    marker.flush();
+  } finally {
+    marker.close();
+  }
+  return offset;
+}
+
 async function copy(file) {
   const partition = await findPartition(file);
   if (partition < 0) {
@@ -84,7 +122,7 @@ async function copy(file) {
 
 onmessage = async (event) => {
   try {
-    const bytes = await copy(event.data.file);
+    const bytes = event.data.url ? await copyFromUrl(event.data.url) : await copy(event.data.file);
     postMessage({ type: 'done', bytes });
   } catch (error) {
     postMessage({ type: 'error', message: String(error && error.message ? error.message : error) });

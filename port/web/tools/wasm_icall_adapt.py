@@ -60,6 +60,8 @@ def main():
     parser.add_argument("--binaryen", required=True, help="the directory of wasm-dis and wasm-opt")
     parser.add_argument("--opt", default="-O2")
     parser.add_argument("--map")
+    parser.add_argument("--no-stubs", action="store_true",
+                        help="fail if LLVM left any trapping _bitcast_invalid stub (the Asyncify build has no adapter)")
     parser.add_argument("input")
     parser.add_argument("output")
     args = parser.parse_args()
@@ -118,7 +120,7 @@ def main():
 
         # ---------- the call sites
         text = "\n".join(lines)
-        call_types = sorted({int(t) for t in re.findall(r"\(call_indirect \$0 \(type \$(\d+)\)", text)})
+        call_types = sorted({int(t) for t in re.findall(r"\(call_indirect (?:\$0 )?\(type \$(\d+)\)", text)})
         if "return_call_indirect" in text or "call_ref" in text:
             sys.exit("wasm_icall_adapt: tail calls or call_ref are not handled")
 
@@ -131,7 +133,7 @@ def main():
 
         adapted = [t for t in call_types if adaptable(types[t])]
         callee_types = sorted({t for t in entry_type.values() if adaptable(types[t])})
-        text = re.sub(r"\(call_indirect \$0 \(type \$(\d+)\)",
+        text = re.sub(r"\(call_indirect (?:\$0 )?\(type \$(\d+)\)",
                       lambda m: f"(call $__of_icall_{m.group(1)}" if int(m.group(1)) in adapted else m.group(0),
                       text)
         has_report = "(func $of_web_icall_mismatch " in text
@@ -160,6 +162,12 @@ def main():
                 else:
                     operands.append(convert(None, "none", p))
             return operands
+
+        if args.no_stubs:
+            stubs = re.findall(r" \(func \$(\.L\S+?_bitcast_invalid(?:_\d+)?)", text)
+            if stubs:
+                sys.exit("wasm_icall_adapt: --no-stubs: direct calls through a cast that trap (give the cast the "
+                         "callee's parameter types): " + ", ".join(stubs))
 
         bitcast_fixed = []
         def fix_bitcast(match):

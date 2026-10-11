@@ -25,9 +25,9 @@ started: main's). Present is called only from that thread.
 
 /* resolves at the worker's next animation frame (Chrome and Firefox give workers
 requestAnimationFrame for OffscreenCanvas), else at the next turn of its event loop */
-EM_ASYNC_JS(void, web_wait_animation_frame, (int use_timeout), {
+EM_ASYNC_JS(void, web_wait_animation_frame, (void), {
 	await new Promise((resolve) => {
-		if (!use_timeout && typeof requestAnimationFrame === 'function')
+		if (typeof requestAnimationFrame === 'function')
 			requestAnimationFrame(() => resolve());
 		else
 			setTimeout(resolve, 0);
@@ -46,7 +46,7 @@ void web_frame_set_main_thread(void)
 void web_frame_yield(void)
 {
 	static double second_start, previous, waited, worked, yield_end;
-	static int frames;
+	static int frames, log = -1;
 	static double longest;
 	double now, before;
 
@@ -56,7 +56,7 @@ void web_frame_yield(void)
 	before = emscripten_get_now();
 	if (yield_end > 0.0)
 		worked += before - yield_end;
-	web_wait_animation_frame(getenv("OPENFRENZY_WEB_FRAME_WAIT") != NULL);
+	web_wait_animation_frame();
 	now = emscripten_get_now();
 	yield_end = now;
 	waited += now - before;
@@ -71,7 +71,9 @@ void web_frame_yield(void)
 		__atomic_store_n(&web_shared[_web_fps], frames, __ATOMIC_RELAXED);
 		__atomic_store_n(&web_shared[_web_longest_frame_us], (int32_t)(longest * 1000.0), __ATOMIC_RELAXED);
 		/* OPENFRENZY_WEB_FRAME_LOG=1: once a second, the frames and where their time went */
-		if (getenv("OPENFRENZY_WEB_FRAME_LOG"))
+		if (log < 0)
+			log = getenv("OPENFRENZY_WEB_FRAME_LOG") != NULL;
+		if (log)
 			fprintf(stderr, "web frame: %d fps, longest %.1f ms, game %.0f ms, waiting for the browser %.0f ms\n",
 				frames, longest, worked, waited);
 		worked = 0.0;

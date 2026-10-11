@@ -146,7 +146,7 @@ void CGameMode_MetaVote_Load(struct CGameMode_MetaVote *self)
 			if (self->keep[player] < 0)
 				self->keep[player] = 0;
 		}
-		self->tokens[player] = ((void *(*)(unsigned int, int, const char *, int, unsigned int))FUN_0004c4b0)(
+		self->tokens[player] = ((void *(*)(unsigned int, unsigned char, const char *, int, unsigned int))FUN_0004c4b0)(
 			0x3c0, 0, cmb_file_metavote, 0xac, 0x2001);
 		self->token_count[player] = 0;
 	}

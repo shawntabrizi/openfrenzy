@@ -434,8 +434,26 @@ at commit `e0b581b1`, CC0):
   a cast that LLVM could not fix) the same adapted body, and fails the build if one is left.
   Emscripten therefore links at `-O1` and the tool runs `wasm-opt -O2` afterwards. Direct
   calls are checked at link time (`--fatal-warnings`).
+- **Without JSPI (Safari 26).** `OPENFRENZY_WEB_ASYNCIFY=ON` links the same objects a second
+  time with Asyncify (the yield) and `EMULATE_FUNCTION_POINTER_CASTS` (the mismatched calls):
+  Asyncify instruments the module inside Emscripten's link, before any post-link step, so the
+  call adapter cannot be used there. It needs no LLVM trapping stub in the module either: the
+  main build's adapter fails the build if one exists (`--no-stubs`). The page loads this build
+  only where `WebAssembly.Suspending` is missing.
 - **No weak stubs.** `gen/of_stubs.c` is not linked: every table function has a definition, and
   a missing one is a link error.
 - **Inline assembly.** The data files' file-scope assembly is Mach-O syntax for the native
   toolchain; `port/web/tools/wasm_inline_asm.py` applies `asm_convert.py`'s symbol rule (one
   leading `_` dropped, `.weak_definition` to `.weak`) to compiled copies.
+- **Renderer.** WebGL 2 is ES 3.0 without texture swizzle (textures are put in RGBA order on
+  the CPU), with a 255-byte stride limit (immediate vertices are planar) and with partial
+  buffer writes that ANGLE on Metal turns into whole-buffer copies (each upload gets a buffer
+  object of its own). All under `HALO_WEB` in `src/d3d8`.
+- **Bink and files.** `port/macos/host/host_bink.c` is compiled into the module unchanged, on
+  an LGPL FFmpeg built with Emscripten. The disc image and the save root are in the browser's
+  OPFS (WasmFS) at `/data`; the vfs reads the image with `pread` as natively.
+- **Return values the native build hid.** A function decompiled as `void` whose callers read
+  eax (or st0) works natively by chance (x0 often holds the value) and fails on the web (a
+  `void` callee gives 0 or its first argument). Nine were found and fixed from the disassembly
+  (docs/WEB.md "Status", commit cf43790). Treat a `void` prototype that a caller casts to a
+  value-returning type as a bug to check.

@@ -189,17 +189,17 @@ set_source_files_properties("${SRC}/runtime/of_boot.c" PROPERTIES COMPILE_DEFINI
 
 set(_library_js "${WEB}/src/web_library.js")
 set(_pre_js "${WEB}/src/web_pre.js")
-add_executable(openfrenzy_web ${_game_sources} "${GEN}/of_crt_init.c" "${SRC}/runtime/of_boot.c")
-add_dependencies(openfrenzy_web web_generated)
-target_compile_options(openfrenzy_web PRIVATE ${GAME_FLAGS})
-target_link_libraries(openfrenzy_web PRIVATE "-Wl,--whole-archive" ofplatform_web "-Wl,--no-whole-archive" web_runtime
-  web_bink ${_ffmpeg_libs})
+# the game's objects, linked twice when OPENFRENZY_WEB_ASYNCIFY is on
+add_library(game_web_objects OBJECT ${_game_sources} "${GEN}/of_crt_init.c" "${SRC}/runtime/of_boot.c")
+add_dependencies(game_web_objects web_generated)
+target_compile_options(game_web_objects PRIVATE ${GAME_FLAGS})
+
 set(_assertions 0)
 if(OPENFRENZY_WEB_ASSERTIONS)
   set(_assertions 1)
 endif()
-target_link_options(openfrenzy_web PRIVATE
-  -O1 -pthread "--use-port=${SDL_PORT}"
+set(_link_common
+  -pthread "--use-port=${SDL_PORT}"
   # a direct call whose type does not match its callee is an error, not a trap at run time
   -Wl,--fatal-warnings
   # the game's main on a worker of its own, where it may block; the page's thread passes events
@@ -209,8 +209,6 @@ target_link_options(openfrenzy_web PRIVATE
   "-sOFFSCREENCANVASES_TO_PTHREAD=#canvas"
   -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
   -sGL_ENABLE_GET_PROC_ADDRESS=1
-  # one yield to the browser per frame, from inside the game's loops (web_frame.c)
-  -sJSPI=1
   # the page's storage (OPFS) at /data: the disc image, saves, settings
   -sWASMFS=1 -lopfs.js
   # the Xbox contiguous window is the top 128 MB (web_main.c)
@@ -226,8 +224,22 @@ target_link_options(openfrenzy_web PRIVATE
   --profiling-funcs
   "SHELL:--js-library ${_library_js}"
   "SHELL:--pre-js ${_pre_js}")
-set_target_properties(openfrenzy_web PROPERTIES OUTPUT_NAME openfrenzy SUFFIX ".js"
-  RUNTIME_OUTPUT_DIRECTORY "${SITE}" LINK_DEPENDS "${_library_js};${_pre_js};${SDL_PORT}")
+
+function(openfrenzy_web_executable target output)
+  add_executable(${target} $<TARGET_OBJECTS:game_web_objects>)
+  target_link_libraries(${target} PRIVATE "-Wl,--whole-archive" ofplatform_web "-Wl,--no-whole-archive" web_runtime
+    web_bink ${_ffmpeg_libs})
+  target_link_options(${target} PRIVATE ${_link_common} ${ARGN})
+  set_target_properties(${target} PROPERTIES OUTPUT_NAME ${output} SUFFIX ".js"
+    RUNTIME_OUTPUT_DIRECTORY "${SITE}" LINK_DEPENDS "${_library_js};${_pre_js};${SDL_PORT}")
+endfunction()
+
+# The main build: one yield to the browser per frame with JSPI, from inside the game's loops
+# (web_frame.c). Emscripten links at -O1 (no Binaryen): the call adapter below needs the module
+# before any inlining, and runs wasm-opt itself.
+openfrenzy_web_executable(openfrenzy_web openfrenzy -O1 -sJSPI=1)
+# (a change of the adapter relinks, so that its post-build step runs again)
+set_property(TARGET openfrenzy_web APPEND PROPERTY LINK_DEPENDS "${WEB}/tools/wasm_icall_adapt.py")
 
 # Indirect calls whose declared type is not the callee's are adapted after the link, as
 # AArch64 would pass the arguments (port/web/tools/wasm_icall_adapt.py, docs/WEB.md).
@@ -238,13 +250,31 @@ endif()
 if(NOT EXISTS "${_binaryen}/wasm-opt")
   message(FATAL_ERROR "port/web: Binaryen (wasm-opt, wasm-dis) not found next to Emscripten (${OPENFRENZY_EM_ROOT})")
 endif()
+# (no LLVM trapping stub may be left for the Asyncify build, which cannot use the adapter)
+set(_no_stubs)
+if(OPENFRENZY_WEB_ASYNCIFY)
+  set(_no_stubs --no-stubs)
+endif()
 add_custom_command(TARGET openfrenzy_web POST_BUILD
   COMMAND "${Python3_EXECUTABLE}" -I "${WEB}/tools/wasm_icall_adapt.py" --binaryen "${_binaryen}"
-          "--opt=${OPENFRENZY_WEB_WASM_OPT}" --map "${CMAKE_BINARY_DIR}/openfrenzy.icall.txt"
+          "--opt=${OPENFRENZY_WEB_WASM_OPT}" --map "${CMAKE_BINARY_DIR}/openfrenzy.icall.txt" ${_no_stubs}
           "${SITE}/openfrenzy.wasm" "${SITE}/openfrenzy.adapted.wasm"
   COMMAND "${CMAKE_COMMAND}" -E rename "${SITE}/openfrenzy.adapted.wasm" "${SITE}/openfrenzy.wasm"
   COMMENT "Adapting indirect calls (wasm_icall_adapt.py)"
   VERBATIM)
+
+# For browsers without JSPI (Safari 26): the same objects with Asyncify for the yield and
+# Emscripten's function pointer cast emulation for the mismatched calls (the adapter's br_table
+# thunks could not be unwound by Asyncify, which instruments the module first).
+option(OPENFRENZY_WEB_ASYNCIFY "Also build openfrenzy-asyncify.js for browsers without JSPI" OFF)
+if(OPENFRENZY_WEB_ASYNCIFY)
+  # FFmpeg and SDL are never on the stack at the yield (web_frame.c is called from the game's
+  # Present, outside them), so they need no Asyncify instrumentation
+  openfrenzy_web_executable(openfrenzy_web_asyncify openfrenzy-asyncify -O2 -sASYNCIFY=1
+    -sEMULATE_FUNCTION_POINTER_CASTS=1 -sASYNCIFY_STACK_SIZE=1048576
+    "-sASYNCIFY_REMOVE=['ff_*','av_*','avcodec_*','avformat_*','avio_*','sws_*','SDL_*']")
+  add_dependencies(openfrenzy_web_asyncify openfrenzy_web)
+endif()
 
 # ---------- the page (port/web/site), copied beside openfrenzy.js
 
@@ -259,5 +289,46 @@ endforeach()
 add_custom_target(web_site ALL DEPENDS ${_site_outputs})
 
 # ---------- tests (ctest --test-dir build-web -L web): docs/WEB.md "Tests"
+#
+# Each test serves build-web/site on 127.0.0.1, runs the game in the installed Chrome
+# (headless, through Playwright in tools/web-test, git-ignored) with a profile of its own in
+# the build directory, and checks the game's log (port/web/tests/drive.mjs). The first test
+# copies the player's disc image into that profile's storage. Without Playwright or the disc
+# image the tests are skipped (exit 77). They share the profile and the port: RESOURCE_LOCK.
 
 enable_testing()
+find_program(OPENFRENZY_NODE node)
+set(OPENFRENZY_ISO "${CMAKE_SOURCE_DIR}/orig/game.xiso.iso" CACHE FILEPATH "Game disc image (the player's own)")
+if(OPENFRENZY_NODE)
+  set(_drive "${OPENFRENZY_NODE}" "${WEB}/tests/drive.mjs" --site "${SITE}" --iso "${OPENFRENZY_ISO}"
+    --profile "${CMAKE_BINARY_DIR}/test-profile" --port 8791
+    --set OPENFRENZY_BKLOG=1 --set OPENFRENZY_WEB_FRAME_LOG=1
+    --forbid "RuntimeError" --forbid "worker sent an error" --forbid "pageerror"
+    --forbid "OpenFrenzy fault" --forbid "UNIMPLEMENTED" --forbid "Out of memory" --forbid "[Aa]ssert")
+  # boot with the Bink videos: the root mode, the two logo videos to their last frame, sound
+  # (the title follows the attract video; web_board reaches it with the videos off)
+  add_test(NAME web_boot COMMAND ${_drive} --out "${CMAKE_BINARY_DIR}/test-web/boot" --seconds 30 --shots 10
+    --expect "Top of stack now: Root" --expect "bink: closed after 105 of 105 frames"
+    --expect "bink: closed after 172 of 172 frames" --expect "audio: peak 0\\.[0-9]*[1-9]")
+  # the native board recipe (tests/run_game_check.py) as key events: menus, character select,
+  # the Map, a minigame to its countdown; 60 fps for 90 % of the seconds (55 or more)
+  set(_keys "6:Enter,9:Space,11:Space,13:Space,16:Enter,20:Enter,24:Enter,28:Enter,32:Space,36:Enter")
+  foreach(_t RANGE 40 118 3)
+    string(APPEND _keys ",${_t}:Space")
+  endforeach()
+  add_test(NAME web_board COMMAND ${_drive} --out "${CMAKE_BINARY_DIR}/test-web/board" --seconds 120 --shots 60,119
+    --set OPENFRENZY_DEBUG_SKIP_VIDEOS=true --keys "${_keys}" --min-fps 55
+    --expect "Top of stack now: CharacterSelect" --expect "Top of stack now: Map" --expect "countdown PLAYING")
+  # a scripted Gamepad API pad (standard mapping) through SDL: START and A to character select
+  add_test(NAME web_gamepad COMMAND ${_drive} --out "${CMAKE_BINARY_DIR}/test-web/gamepad" --seconds 25
+    --set OPENFRENZY_DEBUG_SKIP_VIDEOS=true --pad "6:9,9:0,11:0,13:0" --expect "Top of stack now: CharacterSelect")
+  set_tests_properties(web_boot web_board web_gamepad PROPERTIES LABELS web SKIP_RETURN_CODE 77
+    RESOURCE_LOCK web_browser TIMEOUT 400)
+  # the call adapter's AArch64 argument rules and the inline assembly converter, on small
+  # modules run in Node (no browser, no game data)
+  add_test(NAME web_tools COMMAND "${Python3_EXECUTABLE}" -I "${WEB}/tests/test_web_tools.py"
+    --binaryen "${_binaryen}" --node "${OPENFRENZY_NODE}")
+  set_tests_properties(web_tools PROPERTIES LABELS web TIMEOUT 120)
+else()
+  message(STATUS "port/web: node not found: no web tests (docs/WEB.md \"Tests\")")
+endif()

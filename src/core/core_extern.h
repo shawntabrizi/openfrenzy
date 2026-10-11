@@ -247,7 +247,7 @@ extern uint32_t DAT_002bc898[256], DAT_002bd640[256], DAT_002bc490[256], DAT_002
 /* ---------- other */
 
 /* 0x0004c4b0 allocate (size, 0, file, line, 0x2001) */
-#define ext_Alloc ((void *(*)(unsigned int, int, const char *, int, int))FUN_0004c4b0)
+#define ext_Alloc ((void *(*)(unsigned int, unsigned char, const char *, int, int))FUN_0004c4b0)
 /* 0x00051e60 rotation about Y into a matrix */
 #define ext_MatrixRotateY ((void (*)(float *, float))FUN_00051e60)
 /* 16-bit swprintf, MSVC form (src/runtime/msvc_wide.c; the XBE's 0x001df180) */

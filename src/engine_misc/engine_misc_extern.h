@@ -27,7 +27,7 @@ Owner: engine_misc. Other modules: do not rely on these names.
 /* 0x0004c480: allocation (size, file, line, flags): the game's operator new */
 #define em_bkAlloc ((void *(*)(int, const char *, int, int))FUN_0004c480)
 /* 0x0004c4b0: zeroed allocation (size, fill byte 0, file, line, flags) */
-#define em_bkAllocZero ((void *(*)(int, int, const char *, int, int))FUN_0004c4b0)
+#define em_bkAllocZero ((void *(*)(int, unsigned char, const char *, int, int))FUN_0004c4b0)
 /* 0x0004c110: free */
 #define em_bkFree ((void (*)(void *))FUN_0004c110)
 /* 0x0004c280: returns the name of an allocation group (used as a heap block name) */

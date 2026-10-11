@@ -60,7 +60,7 @@ extern int DAT_002ed340;          /* classlib_fx: debris off */
 #define ext_MusicStop ((void (*)(void *))FUN_000563f0)
 /* 0x00056370 bsPlayAudioStream (stream, flags, volume, pan, frequency, callback, ...) */
 #define ext_MusicPlay ((int (*)(void *, unsigned int, int, int, int, void *, ...))FUN_00056370)
-#define ext_MusicLoop ((void (*)(void *, int))FUN_00056590)
+#define ext_MusicLoop ((void (*)(void *, unsigned char))FUN_00056590)
 #define ext_MusicVolume ((int (*)(void *, int, int, int))FUN_000564e0)
 #define ext_MusicMaster ((void (*)(int))FUN_00056530)
 

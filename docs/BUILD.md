@@ -139,6 +139,23 @@ library. The configure line:
 - With `-DOPENFRENZY_BINK_FFMPEG=OFF` nothing is downloaded or built, the host has no FFmpeg and
   the game skips every video (the old `bink_null.c` behaviour).
 
+### Web build (WebAssembly)
+
+The game also builds for a desktop browser (`docs/WEB.md`: design, browsers, tests, limits).
+It needs Emscripten (`brew install emscripten`; tested with 6.0.12) and uses its own build
+directory, `build-web`:
+
+```sh
+cmake --preset web                                       # cmake/web-toolchain.cmake, Ninja
+cmake --build build-web                                  # build-web/site/
+python3 -I scripts/web_serve.py build-web/site           # http://127.0.0.1:8000/ (COOP/COEP)
+ctest --test-dir build-web -L web --output-on-failure    # needs Playwright in tools/web-test
+```
+
+The page asks for your disc image once and keeps a copy in the browser's storage. The first
+configure builds an LGPL FFmpeg for WebAssembly into `deps/` (about 1 minute). The native build
+is not affected: `cmake -S . -B build` works as before.
+
 ## 3. Run
 
 ### Run the app (no shell, no variables)
