@@ -6,8 +6,8 @@ player's own disc image (`game.xiso.iso`) with a file picker and keeps a copy in
 private storage for the site (OPFS), so the player picks it once. No game data is in git or in
 the build output.
 
-The rule of the README applies: do not publish built binaries. Build the site yourself and run
-it on your own computer (`scripts/web_serve.py` serves it on 127.0.0.1 only).
+A hosted build is at <https://shawntabrizi.github.io/openfrenzy/> (see "Hosting"). To run
+your own build on your computer, `scripts/web_serve.py` serves it on 127.0.0.1 only.
 
 ## Status
 
@@ -82,6 +82,37 @@ starts the game; `?wipe` then removes everything the site keeps in that browser.
 Fuzion Frenzy writes no save games: its only file is the debug log (`z:\debugLog.txt`, in the
 storage as `saves/z/debugLog.txt`). Settings are the page's (localStorage). **Delete the disc
 image** removes the copy.
+
+## Hosting
+
+GitHub Actions builds the site from source on each push to `master` and publishes it on GitHub
+Pages: <https://shawntabrizi.github.io/openfrenzy/> (`.github/workflows/pages.yml`). The job
+runs on Ubuntu 24.04 with emsdk at the same Emscripten version as above (6.0.12), configures
+the `web` preset with `OPENFRENZY_WEB_ASYNCIFY=ON`, builds FFmpeg (LGPL, Bink only) from its
+pinned source, and uploads `build-web/site`. FFmpeg and the Emscripten cache (`deps/`) are
+cached between runs. It needs nothing from `orig/`. Before the upload it checks that the site
+holds only the page's files (the list in the workflow): no game data is published. The page
+asks each player for their own disc image, as above.
+
+GitHub Pages cannot send the COOP and COEP headers. The page loads
+`coi-serviceworker.js` first (coi-serviceworker 0.1.7, MIT,
+`port/third_party/coi-serviceworker`): on the first visit it registers a service worker for
+the page's folder (`/openfrenzy/`), which adds COOP `same-origin` and COEP `require-corp` to
+every response of the site, and reloads the page once. Then `crossOriginIsolated` is true, and
+the game's workers, OPFS and the OffscreenCanvas work as with `web_serve.py`. Where the server
+sends the headers itself (`web_serve.py`), the page is already isolated and the script does
+nothing. A browser that blocks service workers (some private windows) cannot run the hosted
+page.
+
+`drive.mjs --url URL` runs a hosted site instead of `--site` (no local server; it waits for the
+service worker's reload):
+
+```sh
+node port/web/tests/drive.mjs --url https://shawntabrizi.github.io/openfrenzy/ \
+  --iso orig/game.xiso.iso --profile /tmp/pages-profile --out /tmp/pages --seconds 40 --shots 30
+```
+
+The disc image goes only into that browser profile's storage; nothing is uploaded.
 
 ## Browsers
 
@@ -213,8 +244,8 @@ Details and the reasons: `docs/ARCHITECTURE.md` section 18. In short:
   (`OPENFRENZY_WEB_ASYNCIFY=ON`), which is slower: Asyncify instruments every function that
   can reach the frame yield, and Emscripten's function pointer cast emulation (which Asyncify
   needs instead of the call adapter) widens every indirect call.
-- The page must be cross-origin isolated by its server (no service worker fallback, which
-  OpenCE has for GitHub Pages).
+- The page must be cross-origin isolated: by its server's headers, or by the service worker
+  of `coi-serviceworker.js` where the server cannot send them (see "Hosting").
 - WebGL: two `GL_INVALID_OPERATION` errors from `glBlitFramebuffer` at Present in the first
   frames (when the back buffer's size changes); the frames after them have none
   (`OPENFRENZY_DEBUG_GL_DEBUG=true` finds them; that setting reads every GL error back from the
@@ -242,12 +273,15 @@ Details and the reasons: `docs/ARCHITECTURE.md` section 18. In short:
 | `port/web/site/` | the page (`index.html`, `app.js`, `style.css`) and the disc image importer (`import-worker.js`) |
 | `port/web/tests/drive.mjs` | the browser driver of the tests |
 | `scripts/web_serve.py` | the local server (COOP/COEP, 127.0.0.1) |
+| `port/third_party/coi-serviceworker/` | the service worker that isolates the hosted page (MIT) |
+| `.github/workflows/pages.yml` | the GitHub Pages build and deployment |
 
 ## Licences
 
-The site's code is the project's (CC0) and OpenCE's (CC0). `openfrenzy.wasm` also contains
-SDL 3 (zlib licence), Emscripten's C library (MIT and University of Illinois/NCSA; musl: MIT)
+The site's code is the project's (CC0) and OpenCE's (CC0), and `coi-serviceworker.js`
+(coi-serviceworker 0.1.7, MIT). `openfrenzy.wasm` also contains SMAA (MIT), SDL 3 (zlib licence), Emscripten's C library (MIT and University of Illinois/NCSA; musl: MIT)
 and FFmpeg 9.0.2 (LGPL 2.1 or later; `deps/ffmpeg-web-*/LICENSES/SOURCE.txt` has the source and
 the configure line). FFmpeg is linked statically: the source and the build files to build it
-again and relink are in this repository. The build writes these notices to
-`build-web/site/licenses.txt`, which the page links in its footer.
+again and relink are in this repository. The build writes these notices, a link to this
+repository's source and the CC0 text to `build-web/site/licenses.txt`, which the page links in
+its footer.

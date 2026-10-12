@@ -12,6 +12,10 @@
 // server and this script stop after --seconds (and a hard limit of --seconds + 600 s for the
 // copy and the start).
 //
+// --url URL runs a site served elsewhere instead (the hosted build: docs/WEB.md "Hosting"); no
+// server is started, and the driver waits until the page is cross-origin isolated (its service
+// worker reloads it once on the first visit).
+//
 // Exit status: 0, or 1 if the game stopped (the page's fatal panel), or 2 on a driver error.
 // Playwright is not in the repository: install it into tools/web-test (git-ignored):
 //   mkdir -p tools/web-test && cd tools/web-test && npm init -y && npm install playwright@1.58.2
@@ -109,6 +113,7 @@ function options(argv) {
     const name = argv[i];
     const value = () => argv[++i];
     if (name === '--site') out.site = value();
+    else if (name === '--url') out.url = value();
     else if (name === '--iso') out.iso = value();
     else if (name === '--seconds') out.seconds = Number(value());
     else if (name === '--shots') out.shots = value().split(',');
@@ -155,7 +160,7 @@ function record(text) {
   consoleFile.write(line + '\n');
 }
 
-const server = spawn('python3', ['-I', path.join(root, 'scripts/web_serve.py'), path.resolve(opts.site),
+const server = opts.url ? null : spawn('python3', ['-I', path.join(root, 'scripts/web_serve.py'), path.resolve(opts.site),
   '--port', String(opts.port), '--timeout', String(opts.seconds + 900)],
   { stdio: ['ignore', 'inherit', 'inherit'], env: { ...process.env, WEB_SERVE_QUIET: '1' } });
 
@@ -164,7 +169,7 @@ let status = 0;
 const hardLimit = setTimeout(() => {
   record('driver: hard time limit reached');
   if (context) context.close().catch(() => {});
-  server.kill('SIGKILL');
+  if (server) server.kill('SIGKILL');
   process.exit(2);
 }, (opts.seconds + 900) * 1000);
 
@@ -250,8 +255,22 @@ try {
   page.on('crash', () => record('driver: the page crashed'));
   // --set NAME=value: ?set=; --query WORD: a page parameter of its own (asyncify, for example)
   const query = [...opts.set.map((value) => 'set=' + encodeURIComponent(value)), ...opts.query].join('&');
-  await page.goto(`http://127.0.0.1:${opts.port}/${query ? '?' + query : ''}`);
-  await page.waitForFunction(() => window.openfrenzyReady === true, null, { timeout: 60000 });
+  const base = opts.url || `http://127.0.0.1:${opts.port}/`;
+  await page.goto(query ? base + (base.includes('?') ? '&' : '?') + query : base);
+  // (a hosted page may reload itself once to become isolated: wait across that navigation)
+  const readyBy = Date.now() + 60000;
+  for (;;) {
+    try {
+      await page.waitForFunction(() => window.openfrenzyReady === true && window.crossOriginIsolated !== false,
+        null, { timeout: Math.max(1000, readyBy - Date.now()) });
+      await sleep(1000);
+      if (await page.evaluate(() => window.openfrenzyReady === true && window.crossOriginIsolated !== false)) break;
+    } catch (error) {
+      if (Date.now() >= readyBy) throw error;
+      await sleep(500);
+    }
+  }
+  record('driver: crossOriginIsolated ' + await page.evaluate(() => window.crossOriginIsolated));
   const checks = await page.$$eval('#checks li', (items) => items.map((item) => `${item.className}: ${item.textContent}`));
   record('checks: ' + checks.join(' | '));
   let data = await page.textContent('#data-status');
@@ -433,7 +452,7 @@ try {
 } finally {
   clearTimeout(hardLimit);
   if (context) await context.close().catch(() => {});
-  server.kill();
+  if (server) server.kill();
   consoleFile.end();
 }
 console.log(`drive: status ${status}, ${lines.length} console lines in ${consolePath}`);

@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OpenFrenzy</title>
+<!-- cross-origin isolation where the server cannot send COOP/COEP (GitHub Pages): a service
+     worker adds them and reloads the page once (port/third_party/coi-serviceworker). COEP
+     require-corp in every browser, as scripts/web_serve.py sends it. -->
+<script>window.coi = { coepCredentialless: () => false };</script>
+<script src="coi-serviceworker.js"></script>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 </head>

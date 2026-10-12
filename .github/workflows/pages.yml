@@ -1,0 +1,98 @@
+# Builds the web build (docs/WEB.md) from source and publishes build-web/site on GitHub Pages:
+# https://shawntabrizi.github.io/openfrenzy/
+#
+# The site has no game data: the page asks each player for their own disc image. The build
+# needs nothing from orig/ (git-ignored); the last check fails the job if the site holds any
+# file but the expected ones.
+name: Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # the version docs/WEB.md was measured with (Homebrew's emscripten 6.0.12)
+  EMSDK_VERSION: 6.0.12
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Cache Emscripten
+        id: emsdk-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/emsdk
+          key: emsdk-${{ runner.os }}-${{ env.EMSDK_VERSION }}
+
+      - name: Install Emscripten ${{ env.EMSDK_VERSION }}
+        env:
+          EMSDK_DIR: ${{ runner.temp }}/emsdk
+        run: |
+          if [ ! -x "$EMSDK_DIR/emsdk" ]; then
+            git clone --depth 1 --branch "$EMSDK_VERSION" https://github.com/emscripten-core/emsdk.git "$EMSDK_DIR"
+          fi
+          "$EMSDK_DIR/emsdk" install "$EMSDK_VERSION"
+          "$EMSDK_DIR/emsdk" activate "$EMSDK_VERSION"
+          echo "EMSDK=$EMSDK_DIR" >> "$GITHUB_ENV"
+          echo "$EMSDK_DIR/upstream/emscripten" >> "$GITHUB_PATH"
+          "$EMSDK_DIR/upstream/emscripten/emcc" --version | head -1
+
+      # FFmpeg (LGPL, Bink only) built from its pinned source, and the Emscripten cache (SDL's
+      # port, the system libraries): both in deps/, rebuilt when their inputs change
+      - name: Cache FFmpeg and the Emscripten cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            deps/ffmpeg-web-*
+            deps/emscripten-cache
+          key: web-deps-${{ runner.os }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('port/web/ffmpeg.cmake', 'port/macos/dependencies.json', 'port/web/openfrenzy_sdl3.py') }}
+
+      - name: Configure
+        run: cmake --preset web -DOPENFRENZY_WEB_ASYNCIFY=ON
+
+      - name: Build
+        run: cmake --build build-web
+
+      - name: Check the site (no game data)
+        run: |
+          cd build-web/site
+          ls -la
+          expected="app.js coi-serviceworker.js import-worker.js index.html licenses.txt openfrenzy-asyncify.js openfrenzy-asyncify.wasm openfrenzy.js openfrenzy.wasm style.css"
+          actual="$(find . -type f | sed 's|^\./||' | LC_ALL=C sort | tr '\n' ' ' | sed 's/ $//')"
+          if [ "$actual" != "$expected" ]; then
+            echo "unexpected site files: $actual"
+            exit 1
+          fi
+          grep -q "Source code (the exact archive this build used" licenses.txt
+          grep -q "coi-serviceworker 0.1.7" licenses.txt
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: build-web/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

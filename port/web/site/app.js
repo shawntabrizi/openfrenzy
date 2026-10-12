@@ -124,7 +124,7 @@ async function siteHas(name) {
 async function runChecks() {
   $('checks').textContent = '';
   addCheck('isolated', window.crossOriginIsolated, 'Threads (cross-origin isolation)',
-    'the server must send the COOP and COEP headers (scripts/web_serve.py does)');
+    'the server must send the COOP and COEP headers (scripts/web_serve.py does), or the page\'s service worker must run: reload the page');
   const jspi = typeof WebAssembly.Suspending === 'function';
   const fallback = await siteHas('openfrenzy-asyncify.js');
   if ((!jspi || params.has('asyncify')) && fallback) {

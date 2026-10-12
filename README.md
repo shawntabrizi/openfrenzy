@@ -58,8 +58,12 @@ cmake -S . -B build -G Ninja && cmake --build build && ctest --test-dir build
 ## Web build
 
 The game also runs in a desktop browser as WebAssembly (Chrome, Firefox 157; Safari 26.6 through a slower Asyncify build),
-with your own disc image, which the page copies into the browser's storage once. See
-`docs/WEB.md`:
+with your own disc image, which the page copies into the browser's storage once.
+
+**Play in the browser: <https://shawntabrizi.github.io/openfrenzy/>** (you need your own disc
+image of the game).
+
+To build and run the site yourself, see `docs/WEB.md`:
 
 ```sh
 brew install emscripten
@@ -86,8 +90,9 @@ of the original executable. Expect errors that a human did not catch.
   trademark of Microsoft.
 - The project's own work is released under CC0 1.0 (`LICENSE.md`). That licence does not cover the
   original game, its data or its trademarks.
-- Do not publish built binaries of this project. Build it yourself from source with your own copy
-  of the game.
+- The project publishes a web build (GitHub Pages, built from this repository's source by
+  GitHub Actions). It contains no game data: no disc image, executable, videos, sounds or
+  textures. Each player supplies their own legally obtained copy of the game.
 
 ## Credits
 

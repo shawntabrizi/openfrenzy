@@ -279,6 +279,9 @@ endif()
 # ---------- the page (port/web/site), copied beside openfrenzy.js
 
 file(GLOB _site_files CONFIGURE_DEPENDS "${WEB}/site/*")
+# the service worker that isolates the page where the host sends no COOP/COEP (GitHub Pages)
+set(_coi "${R}/port/third_party/coi-serviceworker")
+list(APPEND _site_files "${_coi}/coi-serviceworker.js")
 set(_site_outputs)
 foreach(_f ${_site_files})
   get_filename_component(_name "${_f}" NAME)
@@ -286,15 +289,19 @@ foreach(_f ${_site_files})
     DEPENDS "${_f}")
   list(APPEND _site_outputs "${SITE}/${_name}")
 endforeach()
-# licenses.txt: the licences of the third-party code in the modules (FFmpeg's LGPL notice with
-# its source and configure line, SDL, Emscripten's runtime and C library)
+# licenses.txt: the licences of the site's code (FFmpeg's LGPL notice with its source and
+# configure line, SMAA, coi-serviceworker, SDL, Emscripten's runtime and C library, CC0)
 set(_licence_head "${GEN}/licenses-head.txt")
-file(WRITE "${_licence_head}" "OpenFrenzy web build: third-party licences
+file(WRITE "${_licence_head}" "OpenFrenzy web build: licences
 
-openfrenzy.wasm and openfrenzy-asyncify.wasm contain, besides OpenFrenzy's own code (CC0) and
-OpenCE's (CC0): FFmpeg (LGPL 2.1 or later; its notice, source and configure line follow), SDL 3
-(zlib licence) and Emscripten's runtime and C library (MIT / University of Illinois NCSA; its
-musl part: MIT). The game's data is not part of this site: the player supplies it.
+OpenFrenzy's own code and OpenCE's are released under CC0 1.0 (the last text below). Source:
+https://github.com/shawntabrizi/openfrenzy
+
+openfrenzy.wasm and openfrenzy-asyncify.wasm also contain: FFmpeg (LGPL 2.1 or later; its
+notice, the exact source archive and the configure line follow), SMAA (MIT), SDL 3 (zlib
+licence) and Emscripten's runtime and C library (MIT / University of Illinois NCSA; its musl
+part: MIT). coi-serviceworker.js is coi-serviceworker 0.1.7 (MIT). The game's data is not part
+of this site: the player supplies a legally obtained copy.
 
 ")
 set(_licence_parts "${_licence_head}")
@@ -302,21 +309,28 @@ if(OPENFRENZY_WEB_BINK_FFMPEG)
   list(APPEND _licence_parts "${OPENFRENZY_WEB_FFMPEG_DIR}/LICENSES/SOURCE.txt"
        "${OPENFRENZY_WEB_FFMPEG_DIR}/LICENSES/COPYING.LGPLv2.1")
 endif()
-file(GLOB _sdl_licence "${OPENFRENZY_EM_CACHE}/ports/openfrenzy_sdl3/SDL-*/LICENSE.txt")
+list(APPEND _licence_parts "${R}/port/third_party/smaa/LICENSE" "${_coi}/LICENSE")
+# SDL's licence is in the port's source, which the first compile fetches (openfrenzy_sdl3.py):
+# not there yet at configure time in a new cache, so read after the game is built
+file(STRINGS "${SDL_PORT}" _sdl_version REGEX "^VERSION = ")
+string(REGEX REPLACE "^VERSION = \"([^\"]+)\"$" "\\1" _sdl_version "${_sdl_version}")
+set(_sdl_licence "${OPENFRENZY_EM_CACHE}/ports/openfrenzy_sdl3/SDL-release-${_sdl_version}/LICENSE.txt")
 # (emsdk has Emscripten's LICENSE in its root; Homebrew one level up)
 set(_em_licence "${OPENFRENZY_EM_ROOT}/LICENSE")
 if(NOT EXISTS "${_em_licence}")
   get_filename_component(_em_licence "${OPENFRENZY_EM_ROOT}/../LICENSE" ABSOLUTE)
 endif()
-if(NOT _sdl_licence OR NOT EXISTS "${_em_licence}")
-  message(FATAL_ERROR "port/web: the SDL or Emscripten licence file is missing (${_sdl_licence} ${_em_licence})")
+if(NOT EXISTS "${_em_licence}")
+  message(FATAL_ERROR "port/web: the Emscripten licence file is missing (${_em_licence})")
 endif()
-list(APPEND _licence_parts ${_sdl_licence} "${_em_licence}")
 add_custom_command(OUTPUT "${SITE}/licenses.txt"
-  COMMAND "${CMAKE_COMMAND}" -E cat ${_licence_parts} > "${SITE}/licenses.txt"
-  DEPENDS ${_licence_parts} VERBATIM)
+  COMMAND "${CMAKE_COMMAND}" -E cat ${_licence_parts} "${_sdl_licence}" "${_em_licence}" "${R}/LICENSE.md"
+          > "${SITE}/licenses.txt"
+  DEPENDS ${_licence_parts} "${_em_licence}" "${R}/LICENSE.md" VERBATIM)
 list(APPEND _site_outputs "${SITE}/licenses.txt")
 add_custom_target(web_site ALL DEPENDS ${_site_outputs})
+# (after the link, which fetched SDL's source)
+add_dependencies(web_site openfrenzy_web)
 
 # ---------- tests (ctest --test-dir build-web -L web): docs/WEB.md "Tests"
 #
