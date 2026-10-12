@@ -2,7 +2,7 @@
 //
 //   node port/web/tests/drive.mjs --site build-web/site --iso orig/game.xiso.iso \
 //        --seconds 60 --shots 10,30,60 --out /tmp/run [--set NAME=value ...] [--keys "..."]
-//        [--browser chrome|firefox|webkit] [--headed]
+//        [--browser chrome|firefox|webkit] [--headed] [--pads N] [--pad "..."] [--mark RE]
 //
 // It serves the site itself (scripts/web_serve.py on 127.0.0.1, a fixed port so that the
 // browser's storage, which belongs to the origin, is found again), opens it in a browser with
@@ -103,7 +103,7 @@ async function openBrowser(kind, profile, headless, viewport) {
 }
 
 function options(argv) {
-  const out = { site: 'build-web/site', seconds: 60, shots: [], set: [], keys: [], pad: null, browser: 'chrome', port: 8765,
+  const out = { site: 'build-web/site', seconds: 60, shots: [], set: [], keys: [], pad: [], pads: 0, browser: 'chrome', port: 8765,
     headed: false, expect: [], forbid: [], query: [], viewport: { width: 1280, height: 960 } };
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i];
@@ -111,11 +111,13 @@ function options(argv) {
     if (name === '--site') out.site = value();
     else if (name === '--iso') out.iso = value();
     else if (name === '--seconds') out.seconds = Number(value());
-    else if (name === '--shots') out.shots = value().split(',').map(Number);
+    else if (name === '--shots') out.shots = value().split(',');
+    else if (name === '--mark') out.mark = value();
     else if (name === '--out') out.out = value();
     else if (name === '--set') out.set.push(value());
     else if (name === '--keys') out.keys.push(value());
-    else if (name === '--pad') out.pad = value();
+    else if (name === '--pad') out.pad.push(value());
+    else if (name === '--pads') out.pads = Number(value());
     else if (name === '--pull') out.pull = value();
     else if (name === '--browser') out.browser = value();
     else if (name === '--port') out.port = Number(value());
@@ -132,6 +134,9 @@ function options(argv) {
     else throw new Error('unknown option ' + name);
   }
   if (!out.out) throw new Error('--out is needed');
+  // (--pad alone: one pad, as before --pads)
+  if (out.pad.length && !out.pads) out.pads = 1;
+  if (!(out.pads >= 0 && out.pads <= 4)) throw new Error('--pads takes 0 to 4');
   return out;
 }
 
@@ -185,23 +190,46 @@ try {
       }
       return result;
     };
-    // --pad: a scripted gamepad of the standard mapping (the Gamepad API has no pad in a headless
-    // browser). navigator.getGamepads returns it; window.openfrenzyPad(button, down) presses
-    // standard button indices (0 A, 1 B, 2 X, 3 Y, 9 Start, 12-15 the d-pad).
-    window.openfrenzyPadInstall = () => {
-      const pad = {
-        id: 'OpenFrenzy scripted pad (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard',
-        timestamp: performance.now(), axes: [0, 0, 0, 0],
-        buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
-        vibrationActuator: null,
+    // --pad / --pads: scripted gamepads of the standard mapping (the Gamepad API has no pad in a
+    // headless browser). Pads 0 to count - 1 are connected, each with its own id, index and
+    // gamepadconnected event; navigator.getGamepads returns them (null for the free indices).
+    // window.openfrenzyPad(pad, button, down) presses standard button indices (0 A, 1 B, 2 X,
+    // 3 Y, 9 Start, 12-15 the d-pad) and returns false for a pad that is not connected;
+    // window.openfrenzyPadPlug(pad, connected) unplugs a pad (gamepaddisconnected) or plugs in a
+    // new one at that index (gamepadconnected) and returns false when there is nothing to do.
+    window.openfrenzyPadInstall = (count) => {
+      const pads = [null, null, null, null];
+      const announce = (pad, type) => {
+        const event = new Event(type);
+        Object.defineProperty(event, 'gamepad', { value: pad });
+        window.dispatchEvent(event);
       };
-      navigator.getGamepads = () => [pad, null, null, null];
-      const event = new Event('gamepadconnected');
-      Object.defineProperty(event, 'gamepad', { value: pad });
-      window.dispatchEvent(event);
-      window.openfrenzyPad = (button, down) => {
+      window.openfrenzyPadPlug = (index, connected) => {
+        if (!!pads[index] === connected) return false;
+        if (!connected) {
+          const pad = pads[index];
+          pads[index] = null;
+          pad.connected = false;
+          announce(pad, 'gamepaddisconnected');
+          return true;
+        }
+        pads[index] = {
+          id: `OpenFrenzy scripted pad ${index} (STANDARD GAMEPAD)`, index, connected: true, mapping: 'standard',
+          timestamp: performance.now(), axes: [0, 0, 0, 0],
+          buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
+          vibrationActuator: null,
+        };
+        announce(pads[index], 'gamepadconnected');
+        return true;
+      };
+      navigator.getGamepads = () => [...pads];
+      for (let index = 0; index < count; index++) window.openfrenzyPadPlug(index, true);
+      window.openfrenzyPad = (index, button, down) => {
+        const pad = pads[index];
+        if (!pad) return false;
         pad.buttons[button] = { pressed: down, touched: down, value: down ? 1 : 0 };
         pad.timestamp = performance.now();
+        return true;
       };
     };
     // the key events the page receives (to tell a driver problem from a game one)
@@ -239,19 +267,45 @@ try {
     record('data: ' + data);
     if (!/ready/.test(data)) throw new Error('the disc image was not copied');
   }
-  if (opts.pad) await page.evaluate(() => window.openfrenzyPadInstall());
+  if (opts.pads) {
+    await page.evaluate((count) => window.openfrenzyPadInstall(count), opts.pads);
+    record(`driver: ${opts.pads} scripted pads connected`);
+  }
   await page.click('#play');
   const start = Date.now();
-  let padIndex = 0;
-  const shots = [...opts.shots].sort((a, b) => a - b);
+  // --mark RE: the time of the first console line that matches RE is the mark; a --shots or
+  // --pad time "mSECONDS" is SECONDS after the mark (never, if no line matches)
+  let markAt = null;
+  let markScanned = 0;
+  const parseTime = (text) => text.startsWith('m') ? { at: Number(text.slice(1)), relative: true } : { at: Number(text), relative: false };
+  const due = (item) => item.relative ? (markAt === null ? Infinity : markAt + item.at) : item.at;
+  // --pad "SECONDS:[PAD/]BUTTON[+HOLD_MS],..." (any number): PAD 0-3 (default 0); a press is
+  // released HOLD_MS later (default 150) without holding up the rest. BUTTON "unplug" / "plug"
+  // unplugs the pad / plugs it in again.
+  const padItems = opts.pad.flatMap((script) => script.split(',')).map((item) => {
+    const [when, what] = item.split(':');
+    const [target, hold] = what.split('+');
+    const [pad, button] = target.includes('/') ? target.split('/') : ['0', target];
+    return { ...parseTime(when), pad: Number(pad), button: /plug/.test(button) ? button : Number(button), hold: Number(hold || 150) };
+  });
+  const padReleases = [];
+  const shots = opts.shots.map(parseTime);
   let keyIndex = 0;
   while ((Date.now() - start) / 1000 < opts.seconds) {
     const elapsed = (Date.now() - start) / 1000;
-    if (shots.length && elapsed >= shots[0]) {
-      const at = shots.shift();
-      await page.screenshot({ path: path.join(opts.out, `shot-${String(at).padStart(4, '0')}.png`) });
+    if (opts.mark && markAt === null) {
+      const pattern = new RegExp(opts.mark);
+      for (; markScanned < lines.length && markAt === null; markScanned++) {
+        if (pattern.test(lines[markScanned]) && !lines[markScanned].includes('driver:')) markAt = elapsed;
+      }
+      if (markAt !== null) record(`driver: mark /${opts.mark}/ at ${elapsed.toFixed(1)} s`);
+    }
+    for (const shot of shots.filter((item) => due(item) <= elapsed).sort((a, b) => due(a) - due(b))) {
+      shots.splice(shots.indexOf(shot), 1);
+      const name = (shot.relative ? 'm' : '') + String(shot.at).padStart(shot.relative ? 3 : 4, '0');
+      await page.screenshot({ path: path.join(opts.out, `shot-${name}.png`) });
       const fps = await page.textContent('#fps');
-      record(`driver: screenshot at ${at} s (${fps})`);
+      record(`driver: screenshot ${name} at ${elapsed.toFixed(1)} s (${fps})`);
     }
     // --keys "SECONDS:KEY[+HOLD_MS],..." presses keys through the page (real DOM events)
     for (const script of opts.keys) {
@@ -271,19 +325,24 @@ try {
       const level = await page.evaluate(() => window.openfrenzyAudioLevel());
       record(`audio: peak ${level.peak.toFixed(3)} rms ${level.rms.toFixed(4)}, context ${level.state}, ${level.taps} taps`);
     }
-    // --pad "SECONDS:BUTTON[+HOLD_MS],...": standard button indices on the scripted pad
-    if (opts.pad) {
-      const items = opts.pad.split(',');
-      while (padIndex < items.length) {
-        const [when, what] = items[padIndex].split(':');
-        if (Number(when) > elapsed) break;
-        const [button, hold] = what.split('+');
-        await page.evaluate((b) => window.openfrenzyPad(Number(b), true), button);
-        await sleep(Number(hold || 150));
-        await page.evaluate((b) => window.openfrenzyPad(Number(b), false), button);
-        record(`driver: pad button ${button} at ${elapsed.toFixed(1)} s`);
-        padIndex++;
+    // --pad: standard button indices on the scripted pads
+    for (const item of padItems.filter((entry) => due(entry) <= elapsed).sort((a, b) => due(a) - due(b))) {
+      padItems.splice(padItems.indexOf(item), 1);
+      const { pad, button, hold } = item;
+      if (typeof button === 'string') {
+        const done = await page.evaluate(([p, c]) => window.openfrenzyPadPlug(p, c), [pad, button === 'plug']);
+        record(`driver: pad ${pad} ${button} at ${elapsed.toFixed(1)} s${done ? '' : ' (nothing to do)'}`);
+      } else if (await page.evaluate(([p, b]) => window.openfrenzyPad(p, b, true), [pad, button])) {
+        padReleases.push({ at: Date.now() + hold, pad, button });
+        record(`driver: pad ${pad} button ${button} at ${elapsed.toFixed(1)} s`);
+      } else {
+        record(`driver: pad ${pad} button ${button} at ${elapsed.toFixed(1)} s: pad ${pad} is not connected`);
       }
+    }
+    for (let i = padReleases.length - 1; i >= 0; i--) {
+      if (padReleases[i].at > Date.now()) continue;
+      const { pad, button } = padReleases.splice(i, 1)[0];
+      await page.evaluate(([p, b]) => window.openfrenzyPad(p, b, false), [pad, button]);
     }
     const fatal = await page.evaluate(() => window.openfrenzyFatal || null);
     if (fatal) {
@@ -292,9 +351,11 @@ try {
       status = 1;
       break;
     }
-    await sleep(250);
+    // (sooner when a pad press is due for release)
+    await sleep(Math.max(10, Math.min(250, ...padReleases.map((r) => r.at - Date.now()))));
   }
-  for (const at of shots) record(`driver: screenshot at ${at} s not taken (the run ended first)`);
+  for (const shot of shots) record(`driver: screenshot at ${shot.relative ? 'm' : ''}${shot.at} s not taken (the run ended first)`);
+  for (const item of padItems) record(`driver: pad ${item.pad} ${item.button} at ${item.relative ? 'm' : ''}${item.at} s not done (the run ended first)`);
   // what the site keeps in its private storage (OPFS), for the saves check
   const files = await page.evaluate(async () => {
     const out = [];

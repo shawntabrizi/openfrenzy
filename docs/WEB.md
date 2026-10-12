@@ -65,7 +65,9 @@ The server must send the cross-origin isolation headers (COOP `same-origin`, COE
 Controls (the native keyboard map, `src/input/xinput_map.c`): arrow keys or WASD move, Space or
 J is A, Backspace or K is B, F or U is X, R or I is Y, Enter or Escape is START, Tab is BACK, Q
 and E are the triggers. A gamepad (standard mapping) works once one of its buttons is pressed
-(a browser shows a page a gamepad only then). Sound starts after the first click or key press.
+(a browser shows a page a gamepad only then). Up to 4 gamepads, as natively: each takes the
+lowest free Xbox port in connection order and keeps it; the first shares port 0 (player 1) with
+the keyboard. Sound starts after the first click or key press.
 
 Address parameters (for testing): `?set=NAME=value` sets an `OPENFRENZY_*` variable (any
 number; `docs/BUILD.md`), for example `?set=OPENFRENZY_GAME=Hopper&set=OPENFRENZY_VARIATION=2`
@@ -87,7 +89,7 @@ Checked on one Mac (Apple Silicon M3 Max, macOS 26), each with the same build:
 
 | Browser | Result |
 |---|---|
-| Chrome 154 (installed, headless through Playwright) | Plays: boot videos, title, menus, character select, Map, minigames, score screen, a full 6-stage tournament to the winner and back to the title; 60 fps; sound in the Web Audio graph; real key events and a scripted Gamepad API pad |
+| Chrome 154 (installed, headless through Playwright) | Plays: boot videos, title, menus, character select, Map, minigames, score screen, a full 6-stage tournament to the winner and back to the title; 60 fps; sound in the Web Audio graph; real key events and scripted Gamepad API pads (4 at once, each a human player, unplugged and plugged in again during a minigame) |
 | Firefox 157 (installed, headless through Puppeteer and WebDriver BiDi) | Plays: boot videos with sound, the board path with real key events to a minigame's `countdown PLAYING` (114 of 115 seconds at 55 fps or more), Hopper at 60-61 fps; the game's own screenshot of its frame is correct. A browser screenshot of the page shows the canvas black (the worker draws it; OpenCE notes the same); taking one stalls the game for about 10 s |
 | WebKit 26.5 (Playwright's build) | Plays: Hopper to `countdown PLAYING`, 50-61 fps, picture correct |
 | Safari 26.6.2 (installed) | No JSPI (`WebAssembly.Suspending` is undefined). With the Asyncify build (`OPENFRENZY_WEB_ASYNCIFY=ON`): the checks pass, the image is imported from the test server (1.0 s), the game boots and the scripted pad (`OPENFRENZY_DEBUG_TEST_INPUT`) takes it into Hopper's intro and the minigame. The frame rate was not measured: the display was locked, and Safari slows (about 6 fps) and then stops the animation frames of a window that cannot be seen, so the game waits. Without the Asyncify build the page says that JSPI is missing |
@@ -132,7 +134,7 @@ mkdir -p tools/web-test && cd tools/web-test && npm init -y && npm install playw
 cd ../.. && ctest --test-dir build-web -L web --output-on-failure
 ```
 
-Four tests (`port/web/CMakeLists.txt`). Three are runs of `port/web/tests/drive.mjs` in the
+Five tests (`port/web/CMakeLists.txt`). Four are runs of `port/web/tests/drive.mjs` in the
 installed Chrome, headless, with a profile of its own in `build-web/test-profile` (the first
 test copies `orig/game.xiso.iso` into it) and the server on 127.0.0.1:8791:
 
@@ -141,11 +143,13 @@ test copies `orig/game.xiso.iso` into it) and the server on 127.0.0.1:8791:
 | `web_boot` (30 s) | the game's root mode, MICROSOFT.bik and BLITZ60.bik decoded to their last frame, sound in the Web Audio output |
 | `web_board` (120 s) | the native board recipe as key events: character select, Map, a minigame's `countdown PLAYING`; 55 fps or more for 90 % of the seconds |
 | `web_gamepad` (25 s) | a scripted standard-mapping pad (`navigator.getGamepads`) through SDL: START and A to character select |
+| `web_gamepad_4` (100 s) | 4 scripted pads at once (Gamepad API indices 0-3): `bInitInput found 4 connected input devices`; pads 1-3 join at character select and each picks a character; START, the Map, A to a minigame. From its first `countdown 3` each of pads 1-3 is unplugged and plugged in again: the game pauses (`Paused!`, "Controller N has been disconnected") only for a human player's pad; A on pad 0 does not end that pause, A on the pad does (`End pause`). Then pad 3's d-pad reaches port 3 (`xinput: port 3 ... buttons 0x0004`). It fails with 3 pads (`--pads 3`) and with 4 pads when pad 3 does not join (player 4 is then a CPU player and its pad's unplug does not pause) |
 | `web_tools` (1 s) | `port/web/tests/test_web_tools.py`: the call adapter on small modules run in Node (each call traps before the adapter and gives the AArch64 result after it: an extra argument dropped, a missing one 0, integer and float classes apart, a double to a float parameter, a void callee's first integer argument), and the inline assembly converter's names |
 
 Each test fails on a wasm trap (`RuntimeError`), a worker error, `OpenFrenzy fault`,
 `UNIMPLEMENTED`, `Out of memory` or an assertion. Without Playwright or the disc image they are
-skipped (exit 77). They run one at a time (one profile, one port).
+skipped (exit 77). They run one at a time (one profile, one port). If the Mac sleeps during a
+run, the run stops and ctest reports a timeout: keep it awake (`caffeinate -i ctest ...`).
 
 `drive.mjs` by hand (logs, screenshots and the game's files in `--out`):
 
@@ -157,7 +161,12 @@ node port/web/tests/drive.mjs --site build-web/site --iso orig/game.xiso.iso --o
 Options: `--browser chrome|firefox|webkit|firefox-system` (`firefox-system` is the installed
 Firefox through Puppeteer: `npm install puppeteer-core@24.10.0` in `tools/web-test`; `webkit`
 uses Playwright 1.62.0 in `tools/web-test-webkit`, whose WebKit build is installed),
-`--pad "S:BUTTON[+MS],..."` (standard button indices: 0 A, 1 B, 9 START), `--expect RE`,
+`--pads N` (N scripted standard-mapping pads, 0-4, each with its own Gamepad API index, id and
+`gamepadconnected` event; default 1 when `--pad` is given), `--pad "S:[PAD/]BUTTON[+MS],..."`
+(any number; PAD 0-3, default 0; standard button indices: 0 A, 1 B, 9 START, 12-15 the d-pad;
+BUTTON `unplug` / `plug` disconnects the pad / connects a new one at its index), `--mark RE` (the
+time of the first game line that matches RE; a `--pad` or `--shots` time `mS` is S seconds
+after it, for steps that must wait for the game, such as a minigame's start), `--expect RE`,
 `--forbid RE`, `--min-fps N`, `--pull DIR` (copy an OPFS folder, for example the game's own
 BMP screenshots: `--set OPENFRENZY_DEBUG_SCREENSHOT_EVERY=600 --set
 OPENFRENZY_DEBUG_SCREENSHOT_DIRECTORY=/data/saves --pull saves`), `--viewport WxH`,
@@ -212,6 +221,8 @@ Details and the reasons: `docs/ARCHITECTURE.md` section 18. In short:
   GPU process and runs at 2 fps).
 - No touch controls and no custom soundtracks (as natively).
 - Audible sound was not checked by a person: the tests read the Web Audio output's level.
+- Gamepads were checked only with scripted Gamepad API pads (a headless browser has no pad):
+  a physical pad in a browser (its button layout, the browser's mapping of it, rumble) was not.
 - Only one Mac was used. No measurement on a slower machine.
 
 ## Files

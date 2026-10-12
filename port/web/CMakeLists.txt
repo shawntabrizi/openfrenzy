@@ -352,7 +352,29 @@ if(OPENFRENZY_NODE)
   # a scripted Gamepad API pad (standard mapping) through SDL: START and A to character select
   add_test(NAME web_gamepad COMMAND ${_drive} --out "${CMAKE_BINARY_DIR}/test-web/gamepad" --seconds 25
     --set OPENFRENZY_DEBUG_SKIP_VIDEOS=true --pad "6:9,9:0,11:0,13:0" --expect "Top of stack now: CharacterSelect")
-  set_tests_properties(web_boot web_board web_gamepad PROPERTIES LABELS web SKIP_RETURN_CODE 77
+  # four scripted pads at once, each a human player: pads 1-3 join at character select and pick
+  # (pad 0 has player 1); START, the Map, A to a minigame. From its first "countdown 3" (the
+  # mark) each of pads 1-3 is unplugged and plugged in again: the game pauses only for a
+  # human player's pad ("Paused!", "Controller N has been disconnected"); A on pad 0 must not
+  # end that pause, A on the pad itself does. Then pad 3's d-pad reaches port 3 in the game.
+  # With pad 3 left out (--pads 3) or not joined (a CPU player 4) the test fails.
+  set(_pads4 "6:9,9:0,11:0,13:0,20:1/0,20.5:2/0,21:3/0,23:1/15,23:2/15,23:3/14,26:0,26.5:1/0,27:2/0,27.5:3/0,31:9,35:9")
+  foreach(_t RANGE 38 64 2)
+    string(APPEND _pads4 ",${_t}:0")
+  endforeach()
+  set(_pads4_expect)
+  foreach(_p 1 2 3)
+    list(APPEND _pads4_expect --expect "driver: pad ${_p} unplug" --expect "driver: pad ${_p} plug"
+      --expect " Paused!$" --expect "driver: pad 0 button 0" --expect "driver: pad ${_p} button 0" --expect "End pause")
+  endforeach()
+  string(APPEND _pads4 ",m6:1/unplug,m7.5:1/plug,m8.5:0,m9.5:1/0,m10.5:2/unplug,m12:2/plug,m13:0,m14:2/0"
+    ",m15:3/unplug,m16.5:3/plug,m17.5:0,m18.5:3/0,m19.5:3/14+2500")
+  add_test(NAME web_gamepad_4 COMMAND ${_drive} --out "${CMAKE_BINARY_DIR}/test-web/gamepad4" --seconds 100
+    --set OPENFRENZY_DEBUG_SKIP_VIDEOS=true --set OPENFRENZY_DEBUG_INPUT_LOG=true
+    --pads 4 --pad "${_pads4}" --mark " countdown 3$" --shots 30,m8,m17,m19.3,m22
+    --expect "bInitInput found 4 connected input devices" --expect "Top of stack now: CharacterSelect"
+    --expect "driver: mark" ${_pads4_expect} --expect "xinput: port 3 packet [0-9]+: buttons 0x0004")
+  set_tests_properties(web_boot web_board web_gamepad web_gamepad_4 PROPERTIES LABELS web SKIP_RETURN_CODE 77
     RESOURCE_LOCK web_browser TIMEOUT 400)
   # the call adapter's AArch64 argument rules and the inline assembly converter, on small
   # modules run in Node (no browser, no game data)
